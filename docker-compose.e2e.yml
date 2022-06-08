@@ -1,0 +1,24 @@
+version: '3.7'
+
+services:
+  backend:
+    container_name: blocks-api-backend-e2e
+    build:
+      context: .
+      target: development
+    volumes:
+      - .:/usr/src/app
+      - backend-e2e-node-modules:/usr/src/app/node_modules
+    ports:
+      - ${PORT}:${PORT}
+      - 9229:9229
+    command: ./docker/e2e.command.sh
+    env_file:
+      - .env
+    networks:
+      - webnet
+    tty: true
+networks:
+  webnet:
+volumes:
+  backend-e2e-node-modules:

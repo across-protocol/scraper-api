@@ -1,0 +1,23 @@
+version: '3.7'
+
+services:
+  backend:
+    container_name: blocks-api-backend
+    build:
+      context: .
+      target: development
+    volumes:
+      - .:/usr/src/app
+      - backend-node-modules:/usr/src/app/node_modules
+    ports:
+      - ${PORT}:${PORT}
+      - 9229:9229
+    command: ./docker/dev.command.sh
+    env_file:
+      - .env
+    networks:
+      - webnet
+networks:
+  webnet:
+volumes:
+  backend-node-modules:
