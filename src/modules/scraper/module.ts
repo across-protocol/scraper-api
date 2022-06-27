@@ -7,7 +7,7 @@ import { Web3Module } from "../web3/module";
 
 import { ScraperQueue } from "./adapter/messaging";
 import { BlockNumberConsumer } from "./adapter/messaging/BlockNumberConsumer";
-import { BlocksBatchConsumer } from "./adapter/messaging/BlocksBatchConsumer";
+import { BlocksEventsConsumer } from "./adapter/messaging/BlocksEventsConsumer";
 import { DepositReferralConsumer } from "./adapter/messaging/DepositReferralConsumer";
 import { FillEventsConsumer } from "./adapter/messaging/FillEventsConsumer";
 import { TokenDetailsConsumer } from "./adapter/messaging/TokenDetailsConsumer";
@@ -21,7 +21,7 @@ import { ScraperQueuesService } from "./service/ScraperQueuesService";
   providers: [
     ScraperService,
     ScraperQueuesService,
-    BlocksBatchConsumer,
+    BlocksEventsConsumer,
     FillEventsConsumer,
     BlockNumberConsumer,
     TokenDetailsConsumer,
@@ -35,7 +35,7 @@ import { ScraperQueuesService } from "./service/ScraperQueuesService";
       name: ScraperQueue.BlockNumber,
     }),
     BullModule.registerQueue({
-      name: ScraperQueue.BlocksBatch,
+      name: ScraperQueue.BlocksEvents,
     }),
     BullModule.registerQueue({
       name: ScraperQueue.TokenDetails,

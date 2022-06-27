@@ -6,7 +6,7 @@ import { ScraperQueue } from "../adapter/messaging";
 @Injectable()
 export class ScraperQueuesService {
   public constructor(
-    @InjectQueue(ScraperQueue.BlocksBatch) private blocksBatchQueue: Queue,
+    @InjectQueue(ScraperQueue.BlocksEvents) private blocksEventsQueue: Queue,
     @InjectQueue(ScraperQueue.FillEvents) private fillEventsQueue: Queue,
     @InjectQueue(ScraperQueue.BlockNumber) private blockNumberQueue: Queue,
     @InjectQueue(ScraperQueue.TokenDetails) private tokenDetailsQueue: Queue,
@@ -14,8 +14,8 @@ export class ScraperQueuesService {
   ) {}
 
   public async publishMessage<T>(queue: ScraperQueue, message: T) {
-    if (queue === ScraperQueue.BlocksBatch) {
-      await this.blocksBatchQueue.add(message);
+    if (queue === ScraperQueue.BlocksEvents) {
+      await this.blocksEventsQueue.add(message);
     } else if (queue === ScraperQueue.FillEvents) {
       await this.fillEventsQueue.add(message);
     } else if (queue === ScraperQueue.BlockNumber) {
@@ -28,8 +28,8 @@ export class ScraperQueuesService {
   }
 
   public async publishMessagesBulk<T>(queue: ScraperQueue, messages: T[]) {
-    if (queue === ScraperQueue.BlocksBatch) {
-      await this.blocksBatchQueue.addBulk(messages.map((m) => ({ data: m })));
+    if (queue === ScraperQueue.BlocksEvents) {
+      await this.blocksEventsQueue.addBulk(messages.map((m) => ({ data: m })));
     } else if (queue === ScraperQueue.FillEvents) {
       await this.fillEventsQueue.addBulk(messages.map((m) => ({ data: m })));
     } else if (queue === ScraperQueue.BlockNumber) {

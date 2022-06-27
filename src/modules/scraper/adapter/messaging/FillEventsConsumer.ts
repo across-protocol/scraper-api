@@ -1,7 +1,7 @@
 import { OnQueueFailed, Process, Processor } from "@nestjs/bull";
 import { Logger } from "@nestjs/common";
 import { Job } from "bull";
-import { BlocksBatchQueueMessage, FillEventsQueueMessage, ScraperQueue } from ".";
+import { BlocksEventsQueueMessage, FillEventsQueueMessage, ScraperQueue } from ".";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Deposit } from "../../model/deposit.entity";
 import { LessThan, MoreThan, Repository } from "typeorm";
@@ -35,7 +35,7 @@ export class FillEventsConsumer {
           where: { sourceChainId: originChainId, depositId: LessThan(depositId) },
           order: { depositId: "desc" },
         });
-        await this.scraperQueuesService.publishMessage<BlocksBatchQueueMessage>(ScraperQueue.BlocksBatch, {
+        await this.scraperQueuesService.publishMessage<BlocksEventsQueueMessage>(ScraperQueue.BlocksEvents, {
           chainId: originChainId,
           from: olderDeposit.blockNumber,
           to: newerDeposit.blockNumber,

@@ -1,12 +1,12 @@
 export enum ScraperQueue {
-  BlocksBatch = "BlocksBatch",
+  BlocksEvents = "BlocksEvents",
   FillEvents = "FillEvents",
   BlockNumber = "BlockNumber",
   TokenDetails = "TokenDetails",
   DepositReferral = "DepositReferral",
 }
 
-export type BlocksBatchQueueMessage = {
+export type BlocksEventsQueueMessage = {
   chainId: number;
   from: number;
   to: number;

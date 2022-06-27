@@ -1,16 +1,17 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { EthProvidersService } from "../web3/services/EthProvidersService";
 import { QueueObject } from "async";
+import retry from "async-retry";
+import { InjectRepository } from "@nestjs/typeorm";
+import { Repository } from "typeorm";
+
 import { ChainIds } from "../web3/model/ChainId";
 import { FundsDepositedEvent, FilledRelayEvent } from "@across-protocol/contracts-v2/dist/typechain/SpokePool";
 import { AppConfig } from "../configuration/configuration.service";
-import { InjectRepository } from "@nestjs/typeorm";
-import { Repository } from "typeorm";
 import { ProcessedBlock } from "./model/ProcessedBlock.entity";
 import { TypedEvent } from "@across-protocol/contracts-v2/dist/typechain/common";
-import retry from "async-retry";
 import { ScraperQueuesService } from "./service/ScraperQueuesService";
-import { BlocksBatchQueueMessage, ScraperQueue } from "./adapter/messaging";
+import { BlocksEventsQueueMessage, ScraperQueue } from "./adapter/messaging";
 
 type Task = Record<string, { from: number; to: number }>;
 
@@ -54,7 +55,7 @@ export class ScraperService {
 
     for (const chainId of Object.keys(blockRanges)) {
       const { from, to } = blockRanges[chainId];
-      await this.scraperQueuesService.publishMessage<BlocksBatchQueueMessage>(ScraperQueue.BlocksBatch, {
+      await this.scraperQueuesService.publishMessage<BlocksEventsQueueMessage>(ScraperQueue.BlocksEvents, {
         chainId: parseInt(chainId),
         from,
         to,

@@ -1,24 +1,23 @@
-import { FundsDepositedEvent } from "@across-protocol/contracts-v2/dist/typechain/SpokePool";
 import { OnQueueFailed, Process, Processor } from "@nestjs/bull";
 import { Logger } from "@nestjs/common";
 import { Job } from "bull";
+import { InjectRepository } from "@nestjs/typeorm";
+import { Repository } from "typeorm";
+
 import { EthProvidersService } from "../../../web3/services/EthProvidersService";
 import {
   BlockNumberQueueMessage,
-  BlocksBatchQueueMessage,
+  BlocksEventsQueueMessage,
   FillEventsQueueMessage,
   ScraperQueue,
-  TokenDetailsQueueMessage,
 } from ".";
-import { FilledRelayEvent } from "@across-protocol/contracts-v2/dist/typechain/ArbitrumSpokePool";
-import { InjectRepository } from "@nestjs/typeorm";
+import { FundsDepositedEvent, FilledRelayEvent } from "@across-protocol/contracts-v2/dist/typechain/SpokePool";
 import { Deposit } from "../../model/deposit.entity";
-import { Repository } from "typeorm";
 import { ScraperQueuesService } from "../../service/ScraperQueuesService";
 
-@Processor(ScraperQueue.BlocksBatch)
-export class BlocksBatchConsumer {
-  private logger = new Logger(BlocksBatchConsumer.name);
+@Processor(ScraperQueue.BlocksEvents)
+export class BlocksEventsConsumer {
+  private logger = new Logger(BlocksEventsConsumer.name);
 
   constructor(
     private providers: EthProvidersService,
@@ -27,7 +26,7 @@ export class BlocksBatchConsumer {
   ) {}
 
   @Process({ concurrency: 5 })
-  private async process(job: Job<BlocksBatchQueueMessage>) {
+  private async process(job: Job<BlocksEventsQueueMessage>) {
     const { chainId, from, to } = job.data;
     const depositEvents: FundsDepositedEvent[] = await this.providers
       .getSpokePoolEventQuerier(chainId)
@@ -76,6 +75,6 @@ export class BlocksBatchConsumer {
 
   @OnQueueFailed()
   private onQueueFailed(job: Job, error: Error) {
-    this.logger.error(`${ScraperQueue.BlocksBatch} ${JSON.stringify(job.data)} failed: ${error}`);
+    this.logger.error(`${ScraperQueue.BlocksEvents} ${JSON.stringify(job.data)} failed: ${error}`);
   }
 }
