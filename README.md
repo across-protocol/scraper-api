@@ -1,6 +1,6 @@
-# Blocks API
+# Scraper API
 
-API service for serving blocks data.
+API service for serving Across V2 data.
 
 ## Usage example
 

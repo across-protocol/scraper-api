@@ -1,4 +1,5 @@
 #!/bin/bash
 
-npm i
-npm run start:dev
+yarn install
+yarn db:migration:run
+yarn start:dev

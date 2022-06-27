@@ -2,9 +2,9 @@ FROM node:16-stretch AS development
 
 WORKDIR /usr/src/app
 COPY package*.json ./
-RUN npm install
+RUN yarn install
 COPY . .
-RUN npm run build
+RUN yarn build
 
 FROM node:16-stretch AS production
 
@@ -13,7 +13,7 @@ ENV NODE_ENV=${NODE_ENV}
 
 WORKDIR /usr/src/app
 COPY package*.json ./
-RUN npm install --only=production
+RUN yarn install --production
 COPY . .
 COPY --from=development /usr/src/app/dist ./dist
 

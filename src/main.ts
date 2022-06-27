@@ -17,8 +17,8 @@ async function bootstrap() {
   app.useGlobalPipes(new ValidationPipe());
 
   const options = new DocumentBuilder()
-    .setTitle("Blocks API")
-    .setDescription("Blocks API spec")
+    .setTitle("Scraper API")
+    .setDescription("Scraper API spec")
     .setVersion("1.0")
     .addTag("health")
     .build();

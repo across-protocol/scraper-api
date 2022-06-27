@@ -1,4 +1,5 @@
 #!/bin/bash
 
-npm i
-npm run test:e2e
+yarn install
+yarn db:migration:run
+yarn test:e2e
