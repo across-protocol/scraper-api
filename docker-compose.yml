@@ -1,0 +1,56 @@
+version: '3.7'
+
+services:
+  backend:
+    container_name: scraper-api-backend
+    build:
+      context: .
+      target: development
+    volumes:
+      - .:/usr/src/app
+      - backend-node-modules:/usr/src/app/node_modules
+    ports:
+      - ${PORT}:${PORT}
+      - 9229:9229
+    command: ./docker/dev.command.sh
+    env_file:
+      - .env
+    networks:
+      - webnet
+    depends_on:
+      - postgres
+      - redis
+  postgres:
+    container_name: scraper-api-postgres
+    image: postgres:12.2
+    environment:
+      TZ: GMT
+      POSTGRES_USER: ${DB_USERNAME}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_DATABASE_NAME}
+      PG_DATA: /var/lib/postgresql/data
+    ports:
+      - 5432:5432
+    volumes:
+      - scraper-api-pgdata:/var/lib/postgresql/data
+    networks:
+      - webnet
+  redis:
+    container_name: scraper-api-redis
+    image: redis:6.2-alpine
+    restart: always
+    ports:
+      - 6379:6379
+    command: ["redis-server", "--appendonly", "yes"]   
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+    networks:
+      - webnet
+    volumes: 
+      - scraper-api-redis-volume:/data
+networks:
+  webnet:
+volumes:
+  backend-node-modules:
+  scraper-api-pgdata:
+  scraper-api-redis-volume:
