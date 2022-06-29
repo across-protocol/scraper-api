@@ -6,12 +6,14 @@ import {
   JoinColumn,
   ManyToOne,
   PrimaryGeneratedColumn,
+  Unique,
   UpdateDateColumn,
 } from "typeorm";
 
 export type TransferStatus = "pending" | "filled";
 
 @Entity()
+@Unique("UK_deposit_depositId_sourceChainId", ["depositId", "sourceChainId"])
 export class Deposit {
   @PrimaryGeneratedColumn()
   id: number;
@@ -26,7 +28,7 @@ export class Deposit {
   destinationChainId: number;
 
   @Column({ nullable: true })
-  depositDate: Date;
+  depositDate?: Date;
 
   @Column()
   depositorAddr: string;
@@ -64,6 +66,9 @@ export class Deposit {
 
   @Column({ nullable: true })
   referralAddress?: string;
+
+  @Column({ type: "decimal", nullable: true })
+  usdPrice: string;
 
   @CreateDateColumn()
   createdAt: Date;

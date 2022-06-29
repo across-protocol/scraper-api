@@ -11,7 +11,9 @@ export class ScraperQueuesService {
     @InjectQueue(ScraperQueue.BlockNumber) private blockNumberQueue: Queue,
     @InjectQueue(ScraperQueue.TokenDetails) private tokenDetailsQueue: Queue,
     @InjectQueue(ScraperQueue.DepositReferral) private depositReferralQueue: Queue,
-  ) {}
+  ) {
+    
+  }
 
   public async publishMessage<T>(queue: ScraperQueue, message: T) {
     if (queue === ScraperQueue.BlocksEvents) {

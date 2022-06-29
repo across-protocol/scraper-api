@@ -2,7 +2,8 @@ import { OnQueueFailed, Process, Processor } from "@nestjs/bull";
 import { Logger } from "@nestjs/common";
 import { Job } from "bull";
 import { InjectRepository } from "@nestjs/typeorm";
-import { Repository } from "typeorm";
+import { Repository, QueryFailedError } from "typeorm";
+import fs from "fs";
 
 import { EthProvidersService } from "../../../web3/services/EthProvidersService";
 import {
@@ -40,10 +41,12 @@ export class BlocksEventsConsumer {
     for (const event of depositEvents) {
       const { transactionHash, blockNumber } = event;
       const { depositId, originChainId, destinationChainId, amount, originToken, depositor } = event.args;
-      const deposit = await this.depositRepository.findOne({
-        where: { sourceChainId: event.args.originChainId.toNumber(), depositId: event.args.depositId },
-      });
-      if (!deposit) {
+
+      const stream = fs.createWriteStream('deposit.txt', { flags: 'a' });
+      stream.write(`${chainId} ${depositId}`);
+      stream.end('\n');
+
+      try {
         const result = await this.depositRepository.insert({
           depositId,
           sourceChainId: originChainId.toNumber(),
@@ -60,6 +63,15 @@ export class BlocksEventsConsumer {
         await this.scraperQueuesService.publishMessage<BlockNumberQueueMessage>(ScraperQueue.BlockNumber, {
           depositId: result.identifiers[0].id,
         });
+      } catch (error) {
+        if (error instanceof QueryFailedError && error.driverError?.code === "23505") {
+          // Ignore duplicate key value violates unique constraint error.
+          this.logger.warn(error);
+          console.log(1);
+        } else {
+          console.log(2);
+          throw error;
+        }
       }
     }
 
@@ -70,6 +82,11 @@ export class BlocksEventsConsumer {
       totalFilledAmount: e.args.totalFilledAmount.toString(),
       transactionHash: e.transactionHash,
     }));
+    for (const e of fillEvents) {
+      const stream = fs.createWriteStream('fill.txt', {flags: 'a'});
+        stream.write(`${chainId} ${e.args.depositId}`);
+        stream.end('\n');
+    }
     await this.scraperQueuesService.publishMessagesBulk<FillEventsQueueMessage>(ScraperQueue.FillEvents, fillMessages);
   }
 
