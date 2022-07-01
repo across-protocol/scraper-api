@@ -14,7 +14,8 @@ export class MarketPriceService {
 
   public async getCachedHistoricMarketPrice(date: Date, symbol: string) {
     const formattedDate = DateTime.fromJSDate(date).toFormat("dd-LL-yyyy");
-    let price = await this.historicMarketPriceRepository.findOne({ where: { date: formattedDate, symbol } });
+    const dbFormattedDate = DateTime.fromJSDate(date).toFormat("yyyy-LL-dd");
+    let price = await this.historicMarketPriceRepository.findOne({ where: { date: dbFormattedDate, symbol } });
 
     if (!price) {
       const cgPrice = await this.coinGeckoService.getHistoricPrice(formattedDate, symbol);
@@ -25,7 +26,7 @@ export class MarketPriceService {
       price = this.historicMarketPriceRepository.create({
         symbol,
         usd: usd.toString(),
-        date: formattedDate,
+        date: dbFormattedDate,
       });
       price = await this.historicMarketPriceRepository.save(price);
     }

@@ -4,6 +4,7 @@ export enum ScraperQueue {
   BlockNumber = "BlockNumber",
   TokenDetails = "TokenDetails",
   DepositReferral = "DepositReferral",
+  TokenPrice = "TokenPrice",
 }
 
 export type BlocksEventsQueueMessage = {
@@ -29,5 +30,9 @@ export type TokenDetailsQueueMessage = {
 };
 
 export type DepositReferralQueueMessage = {
+  depositId: number;
+};
+
+export type TokenPriceQueueMessage = {
   depositId: number;
 };

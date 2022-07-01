@@ -20,10 +20,7 @@ export class FillEventsConsumer {
   @Process()
   private async process(job: Job<FillEventsQueueMessage>) {
     const { depositId, originChainId, realizedLpFeePct, totalFilledAmount, transactionHash } = job.data;
-    let deposit = await this.depositRepository.findOne({ where: { sourceChainId: originChainId, depositId } });
-    console.log(
-      `depositId ${depositId} sourceChainId ${deposit?.sourceChainId} destinationChainId ${deposit?.destinationChainId}`,
-    );
+    const deposit = await this.depositRepository.findOne({ where: { sourceChainId: originChainId, depositId } });
     if (!deposit) {
       const newerDeposit = await this.depositRepository.findOne({
         where: { sourceChainId: originChainId, depositId: MoreThan(depositId) },
@@ -47,15 +44,9 @@ export class FillEventsConsumer {
       }
       throw new Error("Deposit not found in db");
     }
-    console.log(
-      `depositId ${depositId} deposit.fillTxs ${deposit.fillTxs.toString()} transactionHash ${transactionHash}: ${deposit.fillTxs.includes(
-        transactionHash,
-      )}`,
-    );
+
     if (deposit.fillTxs.includes(transactionHash)) return;
-    console.log(
-      `previous depositId ${depositId} sourceChainId ${deposit.sourceChainId} destinationChainId ${deposit.destinationChainId} fillTxs ${deposit.fillTxs} status ${deposit.status}`,
-    );
+
     deposit.realizedLpFeePct = BigNumber.from(deposit.realizedLpFeePct).add(realizedLpFeePct).toString();
 
     if (BigNumber.from(deposit.filled).lt(totalFilledAmount)) {
@@ -65,10 +56,7 @@ export class FillEventsConsumer {
     deposit.fillTxs = [...deposit.fillTxs, transactionHash];
     deposit.status = BigNumber.from(deposit.amount).eq(deposit.filled) ? "filled" : "pending";
 
-    deposit = await this.depositRepository.save(deposit);
-    console.log(
-      `after depositId ${depositId} sourceChainId ${deposit.sourceChainId} destinationChainId ${deposit.destinationChainId} fillTxs ${deposit.fillTxs} status ${deposit.status}`,
-    );
+    await this.depositRepository.save(deposit);
   }
 
   @OnQueueFailed()

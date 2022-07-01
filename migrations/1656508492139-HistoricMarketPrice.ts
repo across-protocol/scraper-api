@@ -13,11 +13,9 @@ export class HistoricMarketPrice1656508492139 implements MigrationInterface {
             CONSTRAINT "UK_historyic_market_price_symbol_date" UNIQUE ("symbol", "date"), 
             CONSTRAINT "PK_b0a22436b47e742187aa7408561" PRIMARY KEY ("id")
         )`);
-    await queryRunner.query(`ALTER TABLE "deposit" ADD "usdPrice" numeric`);
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
-    await queryRunner.query(`ALTER TABLE "deposit" DROP COLUMN "usdPrice"`);
     await queryRunner.query(`DROP TABLE "historic_market_price"`);
   }
 }

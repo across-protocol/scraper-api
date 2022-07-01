@@ -42,10 +42,6 @@ export class BlocksEventsConsumer {
       const { transactionHash, blockNumber } = event;
       const { depositId, originChainId, destinationChainId, amount, originToken, depositor } = event.args;
 
-      const stream = fs.createWriteStream('deposit.txt', { flags: 'a' });
-      stream.write(`${chainId} ${depositId}`);
-      stream.end('\n');
-
       try {
         const result = await this.depositRepository.insert({
           depositId,
@@ -67,9 +63,7 @@ export class BlocksEventsConsumer {
         if (error instanceof QueryFailedError && error.driverError?.code === "23505") {
           // Ignore duplicate key value violates unique constraint error.
           this.logger.warn(error);
-          console.log(1);
         } else {
-          console.log(2);
           throw error;
         }
       }
@@ -82,11 +76,6 @@ export class BlocksEventsConsumer {
       totalFilledAmount: e.args.totalFilledAmount.toString(),
       transactionHash: e.transactionHash,
     }));
-    for (const e of fillEvents) {
-      const stream = fs.createWriteStream('fill.txt', {flags: 'a'});
-        stream.write(`${chainId} ${e.args.depositId}`);
-        stream.end('\n');
-    }
     await this.scraperQueuesService.publishMessagesBulk<FillEventsQueueMessage>(ScraperQueue.FillEvents, fillMessages);
   }
 

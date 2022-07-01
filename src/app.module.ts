@@ -1,7 +1,6 @@
 import { BullModule } from "@nestjs/bull";
 import { Module } from "@nestjs/common";
 import { ConfigModule } from "@nestjs/config";
-import { ScheduleModule } from "@nestjs/schedule";
 import { TypeOrmModule } from "@nestjs/typeorm";
 import configuration from "./modules/configuration";
 import { DatabaseModule } from "./modules/database/database.module";
@@ -27,7 +26,6 @@ import { Web3Module } from "./modules/web3/module";
       imports: [DatabaseModule],
       useExisting: TypeOrmDefaultConfigService,
     }),
-    ScheduleModule.forRoot(),
     HealthModule,
     Web3Module,
     ScraperModule,
