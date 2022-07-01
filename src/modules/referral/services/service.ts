@@ -1,51 +1,35 @@
 import { Injectable } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
-import { IsNull, Not, Repository } from "typeorm";
+import { Repository } from "typeorm";
 import { Deposit } from "../../scraper/model/deposit.entity";
 import BigNumber from "bignumber.js";
-import { getReferralsQuery } from "./queries";
+import {
+  getReferralsQuery,
+  getReferralTransfersQuery,
+  getReferralVolumeQuery,
+  getReferreeWalletsQuery,
+  getTotalReferralRewardsQuery,
+} from "./queries";
 @Injectable()
 export class ReferralService {
   constructor(@InjectRepository(Deposit) private depositRepository: Repository<Deposit>) {}
 
   public async getReferralSummary(address: string) {
-    const referreeWalletsResult = await this.depositRepository.query(
-      `select count(*) from (
-        select distinct on (d."depositorAddr") d."depositorAddr"
-        from deposit d
-        where d."referralAddress" = $1 and
-              d."depositDate" is not null and
-              d."tokenId" is not null and
-              d."priceId" is not null and
-              d.status = 'filled'
-      ) t`,
-      [address],
-    );
-    const referreeWallets = parseInt(referreeWalletsResult[0].count);
-    const transfers = await this.depositRepository.count({
-      where: {
-        referralAddress: address,
-        depositDate: Not(IsNull()),
-        tokenId: Not(IsNull()),
-        priceId: Not(IsNull()),
-        status: "filled",
-      },
-    });
-    const volumeData = await this.depositRepository.manager.query(
-      `
-      select sum(d.amount / power(10, t.decimals) * hmp.usd) as volume
-      from deposit d
-        join token t on d."tokenId" = t.id
-        join historic_market_price hmp on d."priceId" = hmp.id
-      where d."referralAddress" = $1
-        and d."depositDate" is not null
-        and d."tokenId" is not null
-        and d."priceId" is not null
-        and d.status = 'filled'`,
-      [address],
-    );
+    const referreeWalletsQuery = getReferreeWalletsQuery();
+    const referralTransfersQuery = getReferralTransfersQuery();
+    const referralVolumeQuery = getReferralVolumeQuery();
+    const totalReferralRewardsQuery = getTotalReferralRewardsQuery();
+    const [referreeWalletsResult, transfersResult, volumeResult, totalReferralRewardsResult] = await Promise.all([
+      this.depositRepository.query(referreeWalletsQuery, [address]),
+      this.depositRepository.query(referralTransfersQuery, [address]),
+      this.depositRepository.query(referralVolumeQuery, [address]),
+      this.depositRepository.manager.query(totalReferralRewardsQuery, [address]),
+    ]);
 
-    const volume = volumeData[0].volume || 0;
+    const rewardsAmount = new BigNumber(totalReferralRewardsResult[0].acxRewards || 0);
+    const transfers = parseInt(transfersResult[0].count);
+    const referreeWallets = parseInt(referreeWalletsResult[0].count);
+    const volume = volumeResult[0].volume || 0;
     const { referralRate, tier } = this.getTierLevelAndBonus(transfers, volume);
 
     return {
@@ -53,7 +37,7 @@ export class ReferralService {
       transfers,
       volume,
       referralRate,
-      rewardsAmount: "TODO",
+      rewardsAmount,
       tier,
     };
   }

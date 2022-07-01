@@ -3,15 +3,9 @@ import { Logger } from "@nestjs/common";
 import { Job } from "bull";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository, QueryFailedError } from "typeorm";
-import fs from "fs";
 
 import { EthProvidersService } from "../../../web3/services/EthProvidersService";
-import {
-  BlockNumberQueueMessage,
-  BlocksEventsQueueMessage,
-  FillEventsQueueMessage,
-  ScraperQueue,
-} from ".";
+import { BlockNumberQueueMessage, BlocksEventsQueueMessage, FillEventsQueueMessage, ScraperQueue } from ".";
 import { FundsDepositedEvent, FilledRelayEvent } from "@across-protocol/contracts-v2/dist/typechain/SpokePool";
 import { Deposit } from "../../model/deposit.entity";
 import { ScraperQueuesService } from "../../service/ScraperQueuesService";
