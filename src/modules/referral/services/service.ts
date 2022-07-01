@@ -22,7 +22,7 @@ export class ReferralService {
       [address],
     );
     const referreeWallets = parseInt(referreeWalletsResult[0].count);
-    const transfersCount = await this.depositRepository.count({
+    const transfers = await this.depositRepository.count({
       where: {
         referralAddress: address,
         depositDate: Not(IsNull()),
@@ -45,15 +45,15 @@ export class ReferralService {
       [address],
     );
 
-    const transfersVolumeUsd = volumeData[0].volume || 0;
-    const { referralRate, tier } = this.getTierLevelAndBonus(transfersCount, transfersVolumeUsd);
+    const volume = volumeData[0].volume || 0;
+    const { referralRate, tier } = this.getTierLevelAndBonus(transfers, volume);
 
     return {
       referreeWallets,
-      transfersCount,
-      transfersVolumeUsd,
+      transfers,
+      volume,
       referralRate,
-      rewardsTokenAmount: "TODO",
+      rewardsAmount: "TODO",
       tier,
     };
   }
