@@ -89,14 +89,13 @@ export const getReferreeWalletsQuery = () => {
 };
 
 export const getReferralTransfersQuery = () => {
-  return `select count(*) from (
+  return `select count(*)
     from deposit d
     where d."referralAddress" = $1 and
           d."depositDate" is not null and
           d."tokenId" is not null and
           d."priceId" is not null and
-          d.status = 'filled'
-    ) t`;
+          d.status = 'filled'`;
 };
 
 export const getReferralVolumeQuery = () => {
