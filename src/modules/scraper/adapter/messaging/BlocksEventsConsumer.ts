@@ -2,15 +2,10 @@ import { OnQueueFailed, Process, Processor } from "@nestjs/bull";
 import { Logger } from "@nestjs/common";
 import { Job } from "bull";
 import { InjectRepository } from "@nestjs/typeorm";
-import { Repository } from "typeorm";
+import { Repository, QueryFailedError } from "typeorm";
 
 import { EthProvidersService } from "../../../web3/services/EthProvidersService";
-import {
-  BlockNumberQueueMessage,
-  BlocksEventsQueueMessage,
-  FillEventsQueueMessage,
-  ScraperQueue,
-} from ".";
+import { BlockNumberQueueMessage, BlocksEventsQueueMessage, FillEventsQueueMessage, ScraperQueue } from ".";
 import { FundsDepositedEvent, FilledRelayEvent } from "@across-protocol/contracts-v2/dist/typechain/SpokePool";
 import { Deposit } from "../../model/deposit.entity";
 import { ScraperQueuesService } from "../../service/ScraperQueuesService";
@@ -40,10 +35,8 @@ export class BlocksEventsConsumer {
     for (const event of depositEvents) {
       const { transactionHash, blockNumber } = event;
       const { depositId, originChainId, destinationChainId, amount, originToken, depositor } = event.args;
-      const deposit = await this.depositRepository.findOne({
-        where: { sourceChainId: event.args.originChainId.toNumber(), depositId: event.args.depositId },
-      });
-      if (!deposit) {
+
+      try {
         const result = await this.depositRepository.insert({
           depositId,
           sourceChainId: originChainId.toNumber(),
@@ -60,6 +53,13 @@ export class BlocksEventsConsumer {
         await this.scraperQueuesService.publishMessage<BlockNumberQueueMessage>(ScraperQueue.BlockNumber, {
           depositId: result.identifiers[0].id,
         });
+      } catch (error) {
+        if (error instanceof QueryFailedError && error.driverError?.code === "23505") {
+          // Ignore duplicate key value violates unique constraint error.
+          this.logger.warn(error);
+        } else {
+          throw error;
+        }
       }
     }
 

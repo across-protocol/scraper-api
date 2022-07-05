@@ -80,18 +80,28 @@ export class ScraperService {
         where: { chainId: parseInt(chainId) },
       });
       const configStartBlockNumber = this.appConfig.values.web3.spokePoolContracts[chainId].startBlockNumber;
-      const from = (previousProcessedBlock?.latestBlock || configStartBlockNumber || 0) + 1;
-      const to = Math.min(latestBlocks[chainId], from + this.getMinBlockRange(parseInt(chainId)));
-      if (from <= to) {
-        blockRanges[chainId] = { from, to };
+      let from = 1;
+
+      if (previousProcessedBlock) {
+        from = previousProcessedBlock.latestBlock + 1;
+      } else if (configStartBlockNumber) {
+        from = configStartBlockNumber;
       }
 
-      if (!previousProcessedBlock) {
-        previousProcessedBlock = this.processedBlockRepository.create({ chainId: parseInt(chainId), latestBlock: to });
-      } else {
-        previousProcessedBlock.latestBlock = to;
+      const to = Math.min(latestBlocks[chainId] - 1, from + this.getMinBlockRange(parseInt(chainId)));
+      if (from < to) {
+        blockRanges[chainId] = { from, to };
+
+        if (!previousProcessedBlock) {
+          previousProcessedBlock = this.processedBlockRepository.create({
+            chainId: parseInt(chainId),
+            latestBlock: to,
+          });
+        } else {
+          previousProcessedBlock.latestBlock = to;
+        }
+        await this.processedBlockRepository.save(previousProcessedBlock);
       }
-      await this.processedBlockRepository.save(previousProcessedBlock);
     }
 
     return blockRanges;

@@ -6,9 +6,10 @@ import { Block } from "../web3/model/block.entity";
 import { Deposit } from "../scraper/model/deposit.entity";
 import { Token } from "../web3/model/token.entity";
 import { Transaction } from "../web3/model/transaction.entity";
+import { HistoricMarketPrice } from "../market-price/model/historic-market-price.entity";
 
 // TODO: Add db entities here
-const entities = [ProcessedBlock, Block, Deposit, Token, Transaction];
+const entities = [ProcessedBlock, Block, Deposit, Token, Transaction, HistoricMarketPrice];
 
 @Injectable()
 export class TypeOrmDefaultConfigService implements TypeOrmOptionsFactory {

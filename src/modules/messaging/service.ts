@@ -18,6 +18,7 @@ export class BullConfigService implements SharedBullConfigurationFactory {
       defaultJobOptions: {
         backoff: { type: "capped" },
         attempts: Number.MAX_SAFE_INTEGER,
+        removeOnComplete: true,
       },
       settings: {
         backoffStrategies: {

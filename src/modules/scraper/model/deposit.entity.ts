@@ -6,12 +6,15 @@ import {
   JoinColumn,
   ManyToOne,
   PrimaryGeneratedColumn,
+  Unique,
   UpdateDateColumn,
 } from "typeorm";
+import { HistoricMarketPrice } from "../../market-price/model/historic-market-price.entity";
 
 export type TransferStatus = "pending" | "filled";
 
 @Entity()
+@Unique("UK_deposit_depositId_sourceChainId", ["depositId", "sourceChainId"])
 export class Deposit {
   @PrimaryGeneratedColumn()
   id: number;
@@ -26,7 +29,7 @@ export class Deposit {
   destinationChainId: number;
 
   @Column({ nullable: true })
-  depositDate: Date;
+  depositDate?: Date;
 
   @Column()
   depositorAddr: string;
@@ -46,12 +49,19 @@ export class Deposit {
   @Column()
   tokenAddr: string;
 
-  @Column()
+  @Column({ nullable: true })
   tokenId?: number;
 
   @ManyToOne(() => Token)
   @JoinColumn([{ name: "tokenId", referencedColumnName: "id" }])
   token?: Token;
+
+  @Column({ nullable: true })
+  priceId?: number;
+
+  @ManyToOne(() => HistoricMarketPrice)
+  @JoinColumn([{ name: "priceId", referencedColumnName: "id" }])
+  price?: HistoricMarketPrice;
 
   @Column()
   depositTxHash: string;

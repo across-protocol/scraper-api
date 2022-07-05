@@ -21,25 +21,26 @@ export class FillEventsConsumer {
   private async process(job: Job<FillEventsQueueMessage>) {
     const { depositId, originChainId, realizedLpFeePct, totalFilledAmount, transactionHash } = job.data;
     const deposit = await this.depositRepository.findOne({ where: { sourceChainId: originChainId, depositId } });
-
     if (!deposit) {
       const newerDeposit = await this.depositRepository.findOne({
         where: { sourceChainId: originChainId, depositId: MoreThan(depositId) },
         order: { depositId: "asc" },
       });
-      const now = new Date();
-      const diffMinutes = Math.round((now.getTime() - newerDeposit.createdAt.getTime()) / 60000);
+      const olderDeposit = await this.depositRepository.findOne({
+        where: { sourceChainId: originChainId, depositId: LessThan(depositId) },
+        order: { depositId: "desc" },
+      });
 
-      if (diffMinutes >= 20) {
-        const olderDeposit = await this.depositRepository.findOne({
-          where: { sourceChainId: originChainId, depositId: LessThan(depositId) },
-          order: { depositId: "desc" },
-        });
-        await this.scraperQueuesService.publishMessage<BlocksEventsQueueMessage>(ScraperQueue.BlocksEvents, {
-          chainId: originChainId,
-          from: olderDeposit.blockNumber,
-          to: newerDeposit.blockNumber,
-        });
+      if (newerDeposit && olderDeposit) {
+        const now = new Date();
+        const diffMinutes = Math.round((now.getTime() - newerDeposit.createdAt.getTime()) / 60000);
+        if (diffMinutes >= 20) {
+          await this.scraperQueuesService.publishMessage<BlocksEventsQueueMessage>(ScraperQueue.BlocksEvents, {
+            chainId: originChainId,
+            from: olderDeposit.blockNumber,
+            to: newerDeposit.blockNumber,
+          });
+        }
       }
       throw new Error("Deposit not found in db");
     }

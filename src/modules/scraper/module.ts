@@ -1,8 +1,10 @@
+import { HttpModule } from "@nestjs/axios";
 import { BullModule } from "@nestjs/bull";
-import { Module } from "@nestjs/common";
+import { forwardRef, Module } from "@nestjs/common";
 import { TypeOrmModule } from "@nestjs/typeorm";
 
 import { AppConfigModule } from "../configuration/configuration.module";
+import { MarketPriceModule } from "../market-price/module";
 import { Web3Module } from "../web3/module";
 
 import { ScraperQueue } from "./adapter/messaging";
@@ -11,6 +13,7 @@ import { BlocksEventsConsumer } from "./adapter/messaging/BlocksEventsConsumer";
 import { DepositReferralConsumer } from "./adapter/messaging/DepositReferralConsumer";
 import { FillEventsConsumer } from "./adapter/messaging/FillEventsConsumer";
 import { TokenDetailsConsumer } from "./adapter/messaging/TokenDetailsConsumer";
+import { TokenPriceConsumer } from "./adapter/messaging/TokenPriceConsumer";
 import { ScraperController } from "./entry-point/http/controller";
 import { Deposit } from "./model/deposit.entity";
 import { ProcessedBlock } from "./model/ProcessedBlock.entity";
@@ -26,11 +29,14 @@ import { ScraperQueuesService } from "./service/ScraperQueuesService";
     BlockNumberConsumer,
     TokenDetailsConsumer,
     DepositReferralConsumer,
+    TokenPriceConsumer,
   ],
   imports: [
     Web3Module,
     AppConfigModule,
     TypeOrmModule.forFeature([ProcessedBlock, Deposit]),
+    MarketPriceModule,
+    HttpModule,
     BullModule.registerQueue({
       name: ScraperQueue.BlockNumber,
     }),
@@ -41,6 +47,12 @@ import { ScraperQueuesService } from "./service/ScraperQueuesService";
       name: ScraperQueue.TokenDetails,
     }),
     BullModule.registerQueue({
+      name: ScraperQueue.TokenPrice,
+      defaultJobOptions: {
+        removeOnComplete: true,
+      },
+    }),
+    BullModule.registerQueue({
       name: ScraperQueue.DepositReferral,
     }),
     BullModule.registerQueue({
@@ -48,6 +60,7 @@ import { ScraperQueuesService } from "./service/ScraperQueuesService";
       defaultJobOptions: {
         backoff: 120 * 1000,
         attempts: Number.MAX_SAFE_INTEGER,
+        removeOnComplete: true,
       },
     }),
   ],
