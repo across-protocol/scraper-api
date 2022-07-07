@@ -12,6 +12,10 @@ import {
 import { HistoricMarketPrice } from "../../market-price/model/historic-market-price.entity";
 
 export type TransferStatus = "pending" | "filled";
+export type DepositFillTx = {
+  hash: string,
+  totalFilledAmount: string,
+}
 
 @Entity()
 @Unique("UK_deposit_depositId_sourceChainId", ["depositId", "sourceChainId"])
@@ -67,7 +71,7 @@ export class Deposit {
   depositTxHash: string;
 
   @Column({ type: "jsonb", default: [] })
-  fillTxs: string[];
+  fillTxs: DepositFillTx[];
 
   @Column()
   blockNumber: number;
