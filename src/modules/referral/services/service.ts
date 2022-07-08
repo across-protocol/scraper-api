@@ -109,12 +109,9 @@ export class ReferralService {
 
   public extractReferralAddress(data: string) {
     const referralData = this.subtractFunctionArgsFromCallData(data);
-    if (referralData.length >= 40) {
-      let address: string | undefined = undefined;
+    if (referralData.length === 40) {
       try {
-        const potentialAddress = referralData.slice(referralData.length - 40);
-        address = ethers.utils.getAddress(`0x${potentialAddress}`);
-        return address;
+        return ethers.utils.getAddress(`0x${referralData}`);
       } catch {
         return undefined;
       }
