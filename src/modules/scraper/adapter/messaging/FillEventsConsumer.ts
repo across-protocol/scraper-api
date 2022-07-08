@@ -45,7 +45,7 @@ export class FillEventsConsumer {
       throw new Error("Deposit not found in db");
     }
 
-    if (deposit.fillTxs.includes(transactionHash)) return;
+    if (deposit.fillTxs.includes({ hash: transactionHash, totalFilledAmount })) return;
 
     deposit.realizedLpFeePct = BigNumber.from(deposit.realizedLpFeePct).add(realizedLpFeePct).toString();
 
@@ -53,7 +53,7 @@ export class FillEventsConsumer {
       deposit.filled = totalFilledAmount;
     }
 
-    deposit.fillTxs = [...deposit.fillTxs, transactionHash];
+    deposit.fillTxs = [...deposit.fillTxs, { hash: transactionHash, totalFilledAmount }];
     deposit.status = BigNumber.from(deposit.amount).eq(deposit.filled) ? "filled" : "pending";
 
     await this.depositRepository.save(deposit);
