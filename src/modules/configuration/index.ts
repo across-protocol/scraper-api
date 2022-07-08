@@ -17,6 +17,9 @@ export default registerAs("config", () => {
     },
     app: {
       port: parseInt(process.env.PORT, 10),
+      referralDelimiterStartTimestamp: process.env.REFERRAL_DELIMITER_START_TIMESTAMP
+        ? parseInt(process.env.REFERRAL_DELIMITER_START_TIMESTAMP)
+        : undefined,
     },
     web3: {
       providers: {

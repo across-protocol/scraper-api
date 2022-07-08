@@ -1,12 +1,14 @@
 import { OnQueueFailed, Process, Processor } from "@nestjs/bull";
 import { Logger } from "@nestjs/common";
 import { Job } from "bull";
-import { DepositReferralQueueMessage, ScraperQueue } from ".";
-import { InjectRepository } from "@nestjs/typeorm";
-import { Deposit } from "../../model/deposit.entity";
 import { Repository } from "typeorm";
+import { InjectRepository } from "@nestjs/typeorm";
+import { DepositReferralQueueMessage, ScraperQueue } from ".";
+import { Deposit } from "../../model/deposit.entity";
 import { EthProvidersService } from "../../../web3/services/EthProvidersService";
-import { ethers } from "ethers";
+import { AppConfig } from "../../../configuration/configuration.service";
+import { ReferralService } from "src/modules/referral/services/service";
+import { ChainIds } from "src/modules/web3/model/ChainId";
 
 @Processor(ScraperQueue.DepositReferral)
 export class DepositReferralConsumer {
@@ -15,44 +17,36 @@ export class DepositReferralConsumer {
   constructor(
     @InjectRepository(Deposit) private depositRepository: Repository<Deposit>,
     private ethProvidersService: EthProvidersService,
+    private referralService: ReferralService,
+    private appConfig: AppConfig,
   ) {}
 
   @Process({ concurrency: 10 })
   private async process(job: Job<DepositReferralQueueMessage>) {
     const { depositId } = job.data;
     const deposit = await this.depositRepository.findOne({ where: { id: depositId } });
-    if (!deposit) throw new Error("Deposit not found");
+    if (!deposit) return;
     const { depositTxHash, sourceChainId } = deposit;
     const transaction = await this.ethProvidersService.getCachedTransaction(sourceChainId, depositTxHash);
+    const block = await this.ethProvidersService.getCachedBlock(sourceChainId, transaction.blockNumber);
+    const blockTimestamp = parseInt((new Date(block.date).getTime() / 1000).toFixed(0));
 
     if (!transaction) throw new Error("Transaction not found");
-    const referralAddress = this.extractReferralAddress(transaction.data);
-    await this.depositRepository.update({ id: deposit.id }, { referralAddress });
-  }
 
-  private extractReferralAddress(data: string) {
-    const coder = new ethers.utils.AbiCoder();
-    // strip hex method identifier
-    const dataNoMethod = ethers.utils.hexDataSlice(data, 4);
-    // keep method hex identifier
-    const methodHex = data.replace(dataNoMethod.replace("0x", ""), "");
-    const decodedData = coder.decode(
-      ["address", "address", "uint256", "uint256", "uint64", "uint32"],
-      ethers.utils.hexDataSlice(data, 4),
-    );
-    const encoded = coder.encode(["address", "address", "uint256", "uint256", "uint64", "uint32"], decodedData);
-    const fullEncoded = methodHex + encoded.replace("0x", "");
-    const referralData = data.replace(fullEncoded, "");
-    if (referralData.length >= 40) {
-      const potentialAddress = referralData.slice(referralData.length - 40);
-      try {
-        const address = ethers.utils.getAddress(`0x${potentialAddress}`);
-        return address;
-      } catch {
-        return undefined;
+    const { referralDelimiterStartTimestamp } = this.appConfig.values.app;
+    let referralAddress: string | undefined = undefined;
+
+    if (referralDelimiterStartTimestamp && blockTimestamp >= referralDelimiterStartTimestamp) {
+      referralAddress = this.referralService.extractReferralAddressUsingDelimiter(transaction.data);
+    } else {
+      referralAddress = this.referralService.extractReferralAddress(transaction.data);
+
+      if (referralAddress) {
+        const nonce = await this.ethProvidersService.getProvider(ChainIds.mainnet).getTransactionCount(referralAddress);
+        if (nonce === 0) referralAddress = undefined;
       }
     }
-    return undefined;
+    await this.depositRepository.update({ id: deposit.id }, { referralAddress: referralAddress || null });
   }
 
   @OnQueueFailed()

@@ -10,6 +10,10 @@ import {
   getReferreeWalletsQuery,
   getTotalReferralRewardsQuery,
 } from "./queries";
+import { ethers } from "ethers";
+
+const REFERRAL_ADDRESS_DELIMITER = "d00dfeeddeadbeef";
+
 @Injectable()
 export class ReferralService {
   constructor(@InjectRepository(Deposit) private depositRepository: Repository<Deposit>) {}
@@ -70,5 +74,51 @@ export class ReferralService {
     }
 
     return { referralRate: 0.4, tier: 1 };
+  }
+
+  public subtractFunctionArgsFromCallData(data: string) {
+    const coder = new ethers.utils.AbiCoder();
+    // strip hex method identifier
+    const dataNoMethod = ethers.utils.hexDataSlice(data, 4);
+    // keep method hex identifier
+    const methodHex = data.replace(dataNoMethod.replace("0x", ""), "");
+    const decodedData = coder.decode(
+      ["address", "address", "uint256", "uint256", "uint64", "uint32"],
+      ethers.utils.hexDataSlice(data, 4),
+    );
+    const encoded = coder.encode(["address", "address", "uint256", "uint256", "uint64", "uint32"], decodedData);
+    const fullEncoded = methodHex + encoded.replace("0x", "");
+    return data.replace(fullEncoded, "");
+  }
+
+  public extractReferralAddressUsingDelimiter(data: string) {
+    const referralData = this.subtractFunctionArgsFromCallData(data);
+
+    if (referralData.indexOf(REFERRAL_ADDRESS_DELIMITER) !== -1) {
+      const addressIndex = referralData.indexOf(REFERRAL_ADDRESS_DELIMITER) + REFERRAL_ADDRESS_DELIMITER.length;
+      const potentialAddress = referralData.slice(addressIndex, addressIndex + 40);
+
+      if (potentialAddress.length === 40) {
+        const address = ethers.utils.getAddress(`0x${potentialAddress}`);
+        return address;
+      }
+      return undefined;
+    }
+    return undefined;
+  }
+
+  public extractReferralAddress(data: string) {
+    const referralData = this.subtractFunctionArgsFromCallData(data);
+    if (referralData.length >= 40) {
+      let address: string | undefined = undefined;
+      try {
+        const potentialAddress = referralData.slice(referralData.length - 40);
+        address = ethers.utils.getAddress(`0x${potentialAddress}`);
+        return address;
+      } catch {
+        return undefined;
+      }
+    }
+    return undefined;
   }
 }

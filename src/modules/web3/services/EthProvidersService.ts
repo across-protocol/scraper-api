@@ -99,8 +99,13 @@ export class EthProvidersService {
 
     if (!transaction) {
       const web3Transaction = await this.getProvider(chainId).getTransaction(hash);
-      const { data } = web3Transaction;
-      transaction = this.transactionRepository.create({ chainId, data, hash });
+      const { data, blockNumber } = web3Transaction;
+      transaction = this.transactionRepository.create({
+        chainId,
+        data,
+        hash,
+        blockNumber,
+      });
       transaction = await this.transactionRepository.save(transaction);
     }
 
