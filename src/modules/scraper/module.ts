@@ -5,6 +5,7 @@ import { TypeOrmModule } from "@nestjs/typeorm";
 
 import { AppConfigModule } from "../configuration/configuration.module";
 import { MarketPriceModule } from "../market-price/module";
+import { ReferralModule } from "../referral/module";
 import { Web3Module } from "../web3/module";
 
 import { ScraperQueue } from "./adapter/messaging";
@@ -37,6 +38,7 @@ import { ScraperQueuesService } from "./service/ScraperQueuesService";
     TypeOrmModule.forFeature([ProcessedBlock, Deposit]),
     MarketPriceModule,
     HttpModule,
+    ReferralModule,
     BullModule.registerQueue({
       name: ScraperQueue.BlockNumber,
     }),

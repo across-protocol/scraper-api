@@ -6,6 +6,7 @@ import { ReferralService } from "./services/service";
 
 @Module({
   controllers: [ReferralController],
+  exports: [ReferralService],
   providers: [ReferralService],
   imports: [TypeOrmModule.forFeature([Deposit])],
 })
