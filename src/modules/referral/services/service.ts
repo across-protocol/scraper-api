@@ -11,12 +11,16 @@ import {
   getTotalReferralRewardsQuery,
 } from "./queries";
 import { ethers } from "ethers";
+import { AppConfig } from "src/modules/configuration/configuration.service";
 
 const REFERRAL_ADDRESS_DELIMITER = "d00dfeeddeadbeef";
 
 @Injectable()
 export class ReferralService {
-  constructor(@InjectRepository(Deposit) private depositRepository: Repository<Deposit>) {}
+  constructor(
+    @InjectRepository(Deposit) private depositRepository: Repository<Deposit>,
+    private appConfig: AppConfig,
+  ) {}
 
   public async getReferralSummary(address: string) {
     const referreeWalletsQuery = getReferreeWalletsQuery();
@@ -27,7 +31,7 @@ export class ReferralService {
       this.depositRepository.query(referreeWalletsQuery, [address]),
       this.depositRepository.query(referralTransfersQuery, [address]),
       this.depositRepository.query(referralVolumeQuery, [address]),
-      this.depositRepository.manager.query(totalReferralRewardsQuery, [address]),
+      this.depositRepository.manager.query(totalReferralRewardsQuery, [address, this.appConfig.values.acxUsdPrice]),
     ]);
 
     const rewardsAmount = new BigNumber(totalReferralRewardsResult[0].acxRewards || 0);
@@ -48,7 +52,12 @@ export class ReferralService {
 
   public async getReferrals(address: string, limit = 10, offset = 0) {
     const query = getReferralsQuery();
-    const result = await this.depositRepository.manager.query(query, [address, limit, offset]);
+    const result = await this.depositRepository.manager.query(query, [
+      address,
+      this.appConfig.values.acxUsdPrice,
+      limit,
+      offset,
+    ]);
 
     return {
       referrals: result.map((item) => ({ ...item, acxRewards: new BigNumber(item.acxRewards) })),

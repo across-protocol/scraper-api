@@ -4,10 +4,10 @@ export const getReferralsQuery = () => {
       *,
       case
         when d."depositorAddr" = $1 and d."referralAddress" = $1
-          then cast(d."realizedLpFeeUsd" * (1 + d."referralRate") / 0.025 * power(10, 18) as varchar)
+          then cast(d."realizedLpFeeUsd" * (1 + d."referralRate") / $2 * power(10, 18) as varchar)
         when d."depositorAddr" = $1
-        then cast(d."realizedLpFeeUsd" * (1 + d."referralRate") / 0.025 * 0.25 * power(10, 18) as varchar)
-        else cast(d."realizedLpFeeUsd" * (1 + d."referralRate") / 0.025 * 0.75 * power(10, 18) as varchar)
+        then cast(d."realizedLpFeeUsd" * (1 + d."referralRate") / $2 * 0.25 * power(10, 18) as varchar)
+        else cast(d."realizedLpFeeUsd" * (1 + d."referralRate") / $2 * 0.75 * power(10, 18) as varchar)
       end as "acxRewards"
     from (
       select d."depositTxHash",
@@ -35,8 +35,8 @@ export const getReferralsQuery = () => {
     ) as d
     where d."referralAddress" = $1 or
     (d."depositorAddr" = $1 and d."referralAddress" is not null)
-    limit $2
-    offset $3;
+    limit $3
+    offset $4;
   `;
 };
 
@@ -46,10 +46,10 @@ export const getTotalReferralRewardsQuery = () => {
       sum(
         case
           when d."depositorAddr" = $1 and d."referralAddress" = $1
-            then d."realizedLpFeeUsd" * (1 + d."referralRate") / 0.025 * power(10, 18)
+            then d."realizedLpFeeUsd" * (1 + d."referralRate") / $2 * power(10, 18)
           when d."depositorAddr" = $1
-          then d."realizedLpFeeUsd" * (1 + d."referralRate") / 0.025 * 0.25 * power(10, 18)
-          else d."realizedLpFeeUsd" * (1 + d."referralRate") / 0.025 * 0.75 * power(10, 18)
+          then d."realizedLpFeeUsd" * (1 + d."referralRate") / $2 * 0.25 * power(10, 18)
+          else d."realizedLpFeeUsd" * (1 + d."referralRate") / $2 * 0.75 * power(10, 18)
         end
       ) as "acxRewards"
     from (

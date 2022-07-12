@@ -58,5 +58,6 @@ export default registerAs("config", () => {
         },
       },
     },
+    acxUsdPrice: 0.1,
   };
 });
