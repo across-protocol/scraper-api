@@ -4,10 +4,10 @@ export const getReferralsQuery = () => {
       *,
       case
         when d."depositorAddr" = $1 and d."referralAddress" = $1
-          then cast(d."realizedLpFeeUsd" * (1 + d."referralRate") / $2 * power(10, 18) as varchar)
+          then cast(d."realizedLpFeeUsd" * (1 + d."referralRate") / $2 * power(10, 18) * d.multiplier as varchar)
         when d."depositorAddr" = $1
-        then cast(d."realizedLpFeeUsd" * (1 + d."referralRate") / $2 * 0.25 * power(10, 18) as varchar)
-        else cast(d."realizedLpFeeUsd" * (1 + d."referralRate") / $2 * 0.75 * power(10, 18) as varchar)
+        then cast(d."realizedLpFeeUsd" * (1 + d."referralRate") / $2 * 0.25 * power(10, 18) * d.multiplier as varchar)
+        else cast(d."realizedLpFeeUsd" * (1 + d."referralRate") / $2 * 0.75 * power(10, 18) * d.multiplier as varchar)
       end as "acxRewards"
     from (
       select d."depositTxHash",
@@ -26,7 +26,11 @@ export const getReferralsQuery = () => {
         when d1."referralCount" >= 5 or d1."referralVolume" >= 100000 then 0.6
         when d1."referralCount" >= 3 or d1."referralVolume" >= 50000 then 0.5
         else 0.4
-      end as "referralRate"
+      end as "referralRate",
+      case
+          when d."depositDate"::date <= '2022-08-01' then 4
+          else 1
+      end as multiplier
       from deposit d
       join "deposit_referral_stats" d1 on d.id = d1.id
       join token t on d."tokenId" = t.id
@@ -46,10 +50,10 @@ export const getTotalReferralRewardsQuery = () => {
       sum(
         case
           when d."depositorAddr" = $1 and d."referralAddress" = $1
-            then d."realizedLpFeeUsd" * (1 + d."referralRate") / $2 * power(10, 18)
+            then d."realizedLpFeeUsd" * (1 + d."referralRate") / $2 * power(10, 18) * d.multiplier
           when d."depositorAddr" = $1
-          then d."realizedLpFeeUsd" * (1 + d."referralRate") / $2 * 0.25 * power(10, 18)
-          else d."realizedLpFeeUsd" * (1 + d."referralRate") / $2 * 0.75 * power(10, 18)
+          then d."realizedLpFeeUsd" * (1 + d."referralRate") / $2 * 0.25 * power(10, 18) * d.multiplier
+          else d."realizedLpFeeUsd" * (1 + d."referralRate") / $2 * 0.75 * power(10, 18) * d.multiplier
         end
       ) as "acxRewards"
     from (
@@ -65,7 +69,11 @@ export const getTotalReferralRewardsQuery = () => {
         when d1."referralCount" >= 5 or d1."referralVolume" >= 100000 then 0.6
         when d1."referralCount" >= 3 or d1."referralVolume" >= 50000 then 0.5
         else 0.4
-      end as "referralRate"
+      end as "referralRate",
+      case
+          when d."depositDate"::date <= '2022-08-01' then 4
+          else 1
+      end as multiplier
       from deposit d
       join "deposit_referral_stats" d1 on d.id = d1.id
       join token t on d."tokenId" = t.id
