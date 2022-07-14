@@ -28,7 +28,7 @@ export const getReferralsQuery = () => {
         else 0.4
       end as "referralRate",
       case
-          when d."depositDate"::date <= '2022-08-01' then 4
+          when d."depositDate"::date <= '2022-08-01' then 3
           else 1
       end as multiplier
       from deposit d
@@ -71,7 +71,7 @@ export const getTotalReferralRewardsQuery = () => {
         else 0.4
       end as "referralRate",
       case
-          when d."depositDate"::date <= '2022-08-01' then 4
+          when d."depositDate"::date <= '2022-08-01' then 3
           else 1
       end as multiplier
       from deposit d
