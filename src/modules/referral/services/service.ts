@@ -31,14 +31,14 @@ export class ReferralService {
       this.depositRepository.query(referreeWalletsQuery, [address]),
       this.depositRepository.query(referralTransfersQuery, [address]),
       this.depositRepository.query(referralVolumeQuery, [address]),
-      this.depositRepository.manager.query(totalReferralRewardsQuery, [address, this.appConfig.values.acxUsdPrice]),
+      this.depositRepository.query(totalReferralRewardsQuery, [address, this.appConfig.values.acxUsdPrice]),
     ]);
 
-    const rewardsAmount = new BigNumber(totalReferralRewardsResult[0].acxRewards || 0);
+    const rewardsAmount = totalReferralRewardsResult[0]?.acxRewards || "0";
     const transfers = parseInt(transfersResult[0].count);
     const referreeWallets = parseInt(referreeWalletsResult[0].count);
     const volume = volumeResult[0].volume || 0;
-    const { referralRate, tier } = this.getTierLevelAndBonus(transfers, volume);
+    const { referralRate, tier } = this.getTierLevelAndBonus(referreeWallets, volume);
 
     return {
       referreeWallets,
