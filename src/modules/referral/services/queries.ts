@@ -50,10 +50,10 @@ export const getTotalReferralRewardsQuery = () => {
       sum(
         case
           when d."depositorAddr" = $1 and d."referralAddress" = $1
-            then d."realizedLpFeeUsd" * (1 + d."referralRate") / $2 * power(10, 18) * d.multiplier
+            then cast(d."realizedLpFeeUsd" * (1 + d."referralRate") / $2 * power(10, 18) * d.multiplier as decimal)
           when d."depositorAddr" = $1
-          then d."realizedLpFeeUsd" * (1 + d."referralRate") / $2 * 0.25 * power(10, 18) * d.multiplier
-          else d."realizedLpFeeUsd" * (1 + d."referralRate") / $2 * 0.75 * power(10, 18) * d.multiplier
+          then cast(d."realizedLpFeeUsd" * (1 + d."referralRate") / $2 * 0.25 * power(10, 18) * d.multiplier as decimal)
+          else cast(d."realizedLpFeeUsd" * (1 + d."referralRate") / $2 * 0.75 * power(10, 18) * d.multiplier as decimal)
         end
       ) as "acxRewards"
     from (
