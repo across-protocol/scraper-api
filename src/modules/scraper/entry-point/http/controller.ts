@@ -1,9 +1,14 @@
 import { Body, Controller, Post, Req } from "@nestjs/common";
 import { ApiTags } from "@nestjs/swagger";
 import { Request } from "express";
-import { BlocksEventsQueueMessage, DepositReferralQueueMessage, ScraperQueue } from "../../adapter/messaging";
+import {
+  BlocksEventsQueueMessage,
+  DepositReferralQueueMessage,
+  ScraperQueue,
+  TokenPriceQueueMessage,
+} from "../../adapter/messaging";
 import { ScraperQueuesService } from "../../service/ScraperQueuesService";
-import { SubmitReferralAddressJobBody, ProcessBlocksBody } from "./dto";
+import { SubmitReferralAddressJobBody, ProcessBlocksBody, ProcessPricesBody } from "./dto";
 
 @Controller()
 export class ScraperController {
@@ -18,6 +23,17 @@ export class ScraperController {
       from,
       to,
     });
+  }
+
+  @Post("scraper/prices")
+  @ApiTags("scraper")
+  async submitPricesJobs(@Body() body: ProcessPricesBody) {
+    const { fromDepositId, toDepositId } = body;
+    for (let depositId = fromDepositId; depositId <= toDepositId; depositId++) {
+      await this.scraperQueuesService.publishMessage<TokenPriceQueueMessage>(ScraperQueue.TokenPrice, {
+        depositId,
+      });
+    }
   }
 
   @Post("scraper/referral-address")

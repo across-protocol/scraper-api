@@ -50,9 +50,6 @@ import { ScraperQueuesService } from "./service/ScraperQueuesService";
     }),
     BullModule.registerQueue({
       name: ScraperQueue.TokenPrice,
-      defaultJobOptions: {
-        removeOnComplete: true,
-      },
     }),
     BullModule.registerQueue({
       name: ScraperQueue.DepositReferral,

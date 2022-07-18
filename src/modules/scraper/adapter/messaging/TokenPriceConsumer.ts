@@ -22,9 +22,9 @@ export class TokenPriceConsumer {
     const { depositId } = job.data;
     const deposit = await this.depositRepository.findOne({ where: { id: depositId }, relations: ["token"] });
 
-    if (!deposit) throw new Error("Deposit not found");
-    if (!deposit.tokenId || !deposit.token) throw new Error("Deposit has not token");
-    const previousDate = DateTime.now().minus({ days: 1 }).toJSDate();
+    if (!deposit) return;
+    if (!deposit.tokenId || !deposit.token || !deposit.depositDate) throw new Error("Invalid deposit");
+    const previousDate = DateTime.fromISO(deposit.depositDate.toISOString()).minus({ days: 1 }).toJSDate();
     const price = await this.marketPriceService.getCachedHistoricMarketPrice(
       previousDate,
       deposit.token.symbol.toLowerCase(),
