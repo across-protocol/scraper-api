@@ -55,7 +55,7 @@ export class ReferralService {
       transfers,
       volume,
       referralRate,
-      rewardsAmount,
+      rewardsAmount: new BigNumber(rewardsAmount).decimalPlaces(0, 1),
       tier,
       activeRefereesCount,
     };
