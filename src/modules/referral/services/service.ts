@@ -71,7 +71,7 @@ export class ReferralService {
     ]);
 
     return {
-      referrals: result.map((item) => ({ ...item, acxRewards: new BigNumber(item.acxRewards) })),
+      referrals: result.map((item) => ({ ...item, acxRewards: new BigNumber(item.acxRewards).decimalPlaces(0, 1) })),
       pagination: {
         limit,
         offset,
