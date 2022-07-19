@@ -48,10 +48,8 @@ export class FillEventsConsumer {
     if (deposit.fillTxs.includes({ hash: transactionHash, totalFilledAmount })) return;
 
     deposit.realizedLpFeePct = new BigNumber(deposit.realizedLpFeePct).plus(realizedLpFeePct).toString();
-    // for referrals, the realized lp fee should be capped at 0.12% * amount
-    const maxRealizedLpFeePct = new BigNumber(deposit.amount)
-      .multipliedBy(0.0012)
-      .decimalPlaces(0, BigNumber.ROUND_DOWN);
+    // for referrals, the realized lp fee should be capped at 0.12%
+    const maxRealizedLpFeePct = new BigNumber(10).pow(18).times(0.0012);
     deposit.realizedLpFeePctCapped = BigNumber.min(deposit.realizedLpFeePct, maxRealizedLpFeePct).toString();
 
     if (new BigNumber(deposit.filled).lt(totalFilledAmount)) {
