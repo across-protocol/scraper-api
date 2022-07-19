@@ -19,7 +19,7 @@ export const getReferralsQuery = () => {
         d."depositorAddr",
         d."referralAddress",
         d."depositDate",
-        (d."realizedLpFeePct" / power(10, 18)) * (d.amount / power(10, t.decimals)) * hmp.usd as "realizedLpFeeUsd",
+        (d."realizedLpFeePctCapped" / power(10, 18)) * (d.amount / power(10, t.decimals)) * hmp.usd as "realizedLpFeeUsd",
       case
         when d1."referralCount" >= 20 or d1."referralVolume" >= 500000 then 0.8
         when d1."referralCount" >= 10 or d1."referralVolume" >= 250000 then 0.7
@@ -62,7 +62,7 @@ export const getTotalReferralRewardsQuery = () => {
         t.decimals,
         d."depositorAddr",
         d."referralAddress",
-        (d."realizedLpFeePct" / power(10, 18)) * (d.amount / power(10, t.decimals)) * hmp.usd as "realizedLpFeeUsd",
+        (d."realizedLpFeePctCapped" / power(10, 18)) * (d.amount / power(10, t.decimals)) * hmp.usd as "realizedLpFeeUsd",
       case
         when d1."referralCount" >= 20 or d1."referralVolume" >= 500000 then 0.8
         when d1."referralCount" >= 10 or d1."referralVolume" >= 250000 then 0.7

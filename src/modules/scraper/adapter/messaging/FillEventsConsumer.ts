@@ -5,7 +5,7 @@ import { BlocksEventsQueueMessage, FillEventsQueueMessage, ScraperQueue } from "
 import { InjectRepository } from "@nestjs/typeorm";
 import { Deposit } from "../../model/deposit.entity";
 import { LessThan, MoreThan, Repository } from "typeorm";
-import { BigNumber } from "ethers";
+import { BigNumber } from "bignumber.js";
 import { ScraperQueuesService } from "../../service/ScraperQueuesService";
 
 @Processor(ScraperQueue.FillEvents)
@@ -47,14 +47,19 @@ export class FillEventsConsumer {
 
     if (deposit.fillTxs.includes({ hash: transactionHash, totalFilledAmount })) return;
 
-    deposit.realizedLpFeePct = BigNumber.from(deposit.realizedLpFeePct).add(realizedLpFeePct).toString();
+    deposit.realizedLpFeePct = new BigNumber(deposit.realizedLpFeePct).plus(realizedLpFeePct).toString();
+    // for referrals, the realized lp fee should be capped at 0.12% * amount
+    const maxRealizedLpFeePct = new BigNumber(deposit.amount)
+      .multipliedBy(0.0012)
+      .decimalPlaces(0, BigNumber.ROUND_DOWN);
+    deposit.realizedLpFeePctCapped = BigNumber.min(deposit.realizedLpFeePct, maxRealizedLpFeePct).toString();
 
-    if (BigNumber.from(deposit.filled).lt(totalFilledAmount)) {
+    if (new BigNumber(deposit.filled).lt(totalFilledAmount)) {
       deposit.filled = totalFilledAmount;
     }
 
     deposit.fillTxs = [...deposit.fillTxs, { hash: transactionHash, totalFilledAmount }];
-    deposit.status = BigNumber.from(deposit.amount).eq(deposit.filled) ? "filled" : "pending";
+    deposit.status = new BigNumber(deposit.amount).eq(deposit.filled) ? "filled" : "pending";
 
     await this.depositRepository.save(deposit);
   }
