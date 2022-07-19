@@ -65,7 +65,7 @@ export class DepositReferralConsumer {
       { id: deposit.id },
       {
         referralAddress: referralAddress || null,
-        stickyReferralAddress: stickyReferralAddress || referralAddress || null,
+        stickyReferralAddress: referralAddress || stickyReferralAddress || null,
       },
     );
   }
