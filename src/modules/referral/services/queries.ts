@@ -118,3 +118,19 @@ export const getReferralVolumeQuery = () => {
       and d."priceId" is not null
       and d.status = 'filled'`;
 };
+
+export const getActiveRefereesCountQuery = () => {
+  return `
+    select count(*)
+    from (
+        select d.id, d."depositorAddr", d."depositDate", d."referralAddress", row_number() over (partition by d."depositorAddr" order by d."depositDate" desc) r
+        from deposit d
+        where d."referralAddress" is not null and
+          d."depositDate" is not null and
+          d."tokenId" is not null and
+          d."priceId" is not null and
+          d.status = 'filled'
+    ) temp
+    where temp.r = 1 and temp."referralAddress" = $1;
+  `;
+};

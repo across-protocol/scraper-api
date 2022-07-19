@@ -4,6 +4,7 @@ import { Repository } from "typeorm";
 import { Deposit } from "../../scraper/model/deposit.entity";
 import BigNumber from "bignumber.js";
 import {
+  getActiveRefereesCountQuery,
   getReferralsQuery,
   getReferralTransfersQuery,
   getReferralVolumeQuery,
@@ -27,11 +28,19 @@ export class ReferralService {
     const referralTransfersQuery = getReferralTransfersQuery();
     const referralVolumeQuery = getReferralVolumeQuery();
     const totalReferralRewardsQuery = getTotalReferralRewardsQuery();
-    const [referreeWalletsResult, transfersResult, volumeResult, totalReferralRewardsResult] = await Promise.all([
+    const activeRefereesCountQuery = getActiveRefereesCountQuery();
+    const [
+      referreeWalletsResult,
+      transfersResult,
+      volumeResult,
+      totalReferralRewardsResult,
+      activeRefereesCountResult,
+    ] = await Promise.all([
       this.depositRepository.query(referreeWalletsQuery, [address]),
       this.depositRepository.query(referralTransfersQuery, [address]),
       this.depositRepository.query(referralVolumeQuery, [address]),
       this.depositRepository.query(totalReferralRewardsQuery, [address, this.appConfig.values.acxUsdPrice]),
+      this.depositRepository.query(activeRefereesCountQuery, [address]),
     ]);
 
     const rewardsAmount = totalReferralRewardsResult[0]?.acxRewards || "0";
@@ -39,6 +48,7 @@ export class ReferralService {
     const referreeWallets = parseInt(referreeWalletsResult[0].count);
     const volume = volumeResult[0].volume || 0;
     const { referralRate, tier } = this.getTierLevelAndBonus(referreeWallets, volume);
+    const activeRefereesCount = parseInt(activeRefereesCountResult[0].count);
 
     return {
       referreeWallets,
@@ -47,6 +57,7 @@ export class ReferralService {
       referralRate,
       rewardsAmount,
       tier,
+      activeRefereesCount,
     };
   }
 
