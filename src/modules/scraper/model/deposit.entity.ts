@@ -88,6 +88,9 @@ export class Deposit {
   @Column({ nullable: true })
   referralAddress?: string;
 
+  @Column({ nullable: true })
+  stickyReferralAddress?: string;
+
   @CreateDateColumn()
   createdAt: Date;
 

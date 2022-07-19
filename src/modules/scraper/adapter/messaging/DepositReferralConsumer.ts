@@ -1,7 +1,7 @@
 import { OnQueueFailed, Process, Processor } from "@nestjs/bull";
 import { Logger } from "@nestjs/common";
 import { Job } from "bull";
-import { Repository } from "typeorm";
+import { IsNull, LessThan, LessThanOrEqual, Not, Repository } from "typeorm";
 import { InjectRepository } from "@nestjs/typeorm";
 import { DepositReferralQueueMessage, ScraperQueue } from ".";
 import { Deposit } from "../../model/deposit.entity";
@@ -21,7 +21,7 @@ export class DepositReferralConsumer {
     private appConfig: AppConfig,
   ) {}
 
-  @Process({ concurrency: 10 })
+  @Process()
   private async process(job: Job<DepositReferralQueueMessage>) {
     const { depositId } = job.data;
     const deposit = await this.depositRepository.findOne({ where: { id: depositId } });
@@ -35,6 +35,7 @@ export class DepositReferralConsumer {
 
     const { referralDelimiterStartTimestamp } = this.appConfig.values.app;
     let referralAddress: string | undefined = undefined;
+    let stickyReferralAddress: string | undefined = undefined;
 
     if (referralDelimiterStartTimestamp && blockTimestamp >= referralDelimiterStartTimestamp) {
       referralAddress = this.referralService.extractReferralAddressUsingDelimiter(transaction.data);
@@ -46,7 +47,27 @@ export class DepositReferralConsumer {
         if (nonce === 0) referralAddress = undefined;
       }
     }
-    await this.depositRepository.update({ id: deposit.id }, { referralAddress: referralAddress || null });
+
+    if (!referralAddress) {
+      // if no referral address is found, then look for the previous referral address used by this account
+      const previousReferralDeposit = await this.depositRepository.findOne({
+        where: {
+          depositorAddr: deposit.depositorAddr,
+          depositDate: LessThanOrEqual(deposit.depositDate),
+          stickyReferralAddress: Not(IsNull()),
+        },
+        order: { depositDate: { direction: "DESC", nulls: "LAST" } },
+      });
+      stickyReferralAddress = previousReferralDeposit?.stickyReferralAddress;
+    }
+
+    await this.depositRepository.update(
+      { id: deposit.id },
+      {
+        referralAddress: referralAddress || null,
+        stickyReferralAddress: stickyReferralAddress || referralAddress || null,
+      },
+    );
   }
 
   @OnQueueFailed()
