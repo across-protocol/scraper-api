@@ -45,7 +45,14 @@ export class FillEventsConsumer {
       throw new Error("Deposit not found in db");
     }
 
-    if (deposit.fillTxs.includes({ hash: transactionHash, totalFilledAmount })) return;
+    const fillTxIndex = deposit.fillTxs.findIndex(
+      (fillTx) => fillTx.hash === transactionHash && fillTx.totalFilledAmount === totalFilledAmount,
+    );
+
+    if (fillTxIndex !== -1) {
+      this.logger.warn("Fill event already processed");
+      return;
+    }
 
     deposit.realizedLpFeePct = new BigNumber(deposit.realizedLpFeePct).plus(realizedLpFeePct).toString();
     // for referrals, the realized lp fee should be capped at 0.12%
