@@ -55,7 +55,7 @@ export class ReferralService {
       transfers,
       volume,
       referralRate,
-      rewardsAmount: new BigNumber(rewardsAmount).decimalPlaces(0, 1),
+      rewardsAmount,
       tier,
       activeRefereesCount,
     };
@@ -71,7 +71,7 @@ export class ReferralService {
     ]);
 
     return {
-      referrals: result.map((item) => ({ ...item, acxRewards: new BigNumber(item.acxRewards).decimalPlaces(0, 1) })),
+      referrals: result.map((item) => ({ ...item, acxRewards: item.acxRewards })),
       pagination: {
         limit,
         offset,
