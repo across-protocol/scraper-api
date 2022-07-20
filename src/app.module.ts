@@ -1,6 +1,7 @@
 import { BullModule } from "@nestjs/bull";
 import { MiddlewareConsumer, Module } from "@nestjs/common";
 import { ConfigModule } from "@nestjs/config";
+import { ScheduleModule } from "@nestjs/schedule";
 import { TypeOrmModule } from "@nestjs/typeorm";
 import { LogsMiddleware } from "./logging.interceptor";
 import configuration from "./modules/configuration";
@@ -36,6 +37,7 @@ import { Web3Module } from "./modules/web3/module";
     }),
     ReferralModule,
     MarketPriceModule,
+    ScheduleModule.forRoot(),
   ],
 })
 export class AppModule {
