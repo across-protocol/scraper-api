@@ -1,7 +1,8 @@
 import { BullModule } from "@nestjs/bull";
-import { Module } from "@nestjs/common";
+import { MiddlewareConsumer, Module } from "@nestjs/common";
 import { ConfigModule } from "@nestjs/config";
 import { TypeOrmModule } from "@nestjs/typeorm";
+import { LogsMiddleware } from "./logging.interceptor";
 import configuration from "./modules/configuration";
 import { DatabaseModule } from "./modules/database/database.module";
 import { TypeOrmDefaultConfigService } from "./modules/database/database.providers";
@@ -37,4 +38,8 @@ import { Web3Module } from "./modules/web3/module";
     MarketPriceModule,
   ],
 })
-export class AppModule {}
+export class AppModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer.apply(LogsMiddleware).forRoutes("*");
+  }
+}
