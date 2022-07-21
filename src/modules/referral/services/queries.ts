@@ -17,6 +17,15 @@ export const getReferralsQuery = () => {
   `;
 };
 
+export const getReferralsTotalQuery = () => {
+  return `
+    select count(*)
+    from deposits_mv as d
+    where d."referralAddress" = $1 or
+    (d."depositorAddr" = $1 and d."referralAddress" is not null)
+  `;
+};
+
 export const getTotalReferralRewardsQuery = () => {
   return `
     select

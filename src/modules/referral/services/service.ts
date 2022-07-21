@@ -2,10 +2,10 @@ import { Injectable } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
 import { Deposit } from "../../scraper/model/deposit.entity";
-import BigNumber from "bignumber.js";
 import {
   getActiveRefereesCountQuery,
   getReferralsQuery,
+  getReferralsTotalQuery,
   getReferralTransfersQuery,
   getReferralVolumeQuery,
   getReferreeWalletsQuery,
@@ -63,18 +63,19 @@ export class ReferralService {
 
   public async getReferrals(address: string, limit = 10, offset = 0) {
     const query = getReferralsQuery();
-    const result = await this.depositRepository.manager.query(query, [
-      address,
-      this.appConfig.values.acxUsdPrice,
-      limit,
-      offset,
+    const totalQuery = getReferralsTotalQuery();
+    const [result, totalResult] = await Promise.all([
+      this.depositRepository.manager.query(query, [address, this.appConfig.values.acxUsdPrice, limit, offset]),
+      this.depositRepository.query(totalQuery, [address]),
     ]);
+    const total = parseInt(totalResult[0].count);
 
     return {
       referrals: result.map((item) => ({ ...item, acxRewards: item.acxRewards })),
       pagination: {
         limit,
         offset,
+        total,
       },
     };
   }
