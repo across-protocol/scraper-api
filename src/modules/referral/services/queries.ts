@@ -47,49 +47,30 @@ export const getTotalReferralRewardsQuery = () => {
 export const getReferreeWalletsQuery = () => {
   return `select count(*) from (
     select distinct on (d."depositorAddr") d."depositorAddr"
-    from deposit d
-    where d."referralAddress" = $1 and
-          d."depositDate" is not null and
-          d."tokenId" is not null and
-          d."priceId" is not null and
-          d.status = 'filled'
+    from deposits_mv as d
+    where d."referralAddress" = $1
   ) t`;
 };
 
 export const getReferralTransfersQuery = () => {
   return `select count(*)
-    from deposit d
-    where d."referralAddress" = $1 and
-          d."depositDate" is not null and
-          d."tokenId" is not null and
-          d."priceId" is not null and
-          d.status = 'filled'`;
+    from deposits_mv as d
+    where d."referralAddress" = $1`;
 };
 
 export const getReferralVolumeQuery = () => {
   return `
-    select sum(d.amount / power(10, t.decimals) * hmp.usd) as volume
-    from deposit d
-    join token t on d."tokenId" = t.id
-    join historic_market_price hmp on d."priceId" = hmp.id
-    where d."referralAddress" = $1
-      and d."depositDate" is not null
-      and d."tokenId" is not null
-      and d."priceId" is not null
-      and d.status = 'filled'`;
+    select sum(d.amount / power(10, d.decimals) * d."tokenUsdPrice") as volume
+    from deposits_mv as d
+    where d."referralAddress" = $1`;
 };
 
 export const getActiveRefereesCountQuery = () => {
   return `
     select count(*)
     from (
-        select d.id, d."depositorAddr", d."depositDate", d."referralAddress", row_number() over (partition by d."depositorAddr" order by d."depositDate" desc) r
-        from deposit d
-        where d."referralAddress" is not null and
-          d."depositDate" is not null and
-          d."tokenId" is not null and
-          d."priceId" is not null and
-          d.status = 'filled'
+        select d."depositorAddr", d."depositDate", d."referralAddress", row_number() over (partition by d."depositorAddr" order by d."depositDate" desc) r
+        from deposits_mv as d
     ) temp
     where temp.r = 1 and temp."referralAddress" = $1;
   `;
