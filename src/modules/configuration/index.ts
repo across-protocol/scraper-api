@@ -58,6 +58,9 @@ export default registerAs("config", () => {
         },
       },
     },
+    crons: {
+      refreshReferralsMaterializedView: false,
+    },
     acxUsdPrice: 0.1,
     enableSpokePoolsEventsProcessing: process.env.ENABLE_SPOKE_POOLS_EVENTS_PROCESSING === "true",
   };
