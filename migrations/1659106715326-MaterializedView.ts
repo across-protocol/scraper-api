@@ -1,7 +1,7 @@
 import { MigrationInterface, QueryRunner } from "typeorm";
 
-export class MaterializedView1658221793207 implements MigrationInterface {
-  name = "MaterializedView1658221793207";
+export class MaterializedView1659106715326 implements MigrationInterface {
+  name = "MaterializedView1659106715326";
 
   public async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(`drop materialized view if exists deposits_mv`);
