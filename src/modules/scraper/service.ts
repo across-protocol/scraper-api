@@ -29,7 +29,9 @@ export class ScraperService {
   public async run() {
     while (true) {
       try {
-        await this.publishBlocks();
+        if (this.appConfig.values.enableSpokePoolsEventsProcessing) {
+          await this.publishBlocks();
+        }
       } catch (error) {
         this.logger.error(error);
       }

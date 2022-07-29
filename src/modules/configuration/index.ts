@@ -59,5 +59,6 @@ export default registerAs("config", () => {
       },
     },
     acxUsdPrice: 0.1,
+    enableSpokePoolsEventsProcessing: process.env.ENABLE_SPOKE_POOLS_EVENTS_PROCESSING === "true",
   };
 });
