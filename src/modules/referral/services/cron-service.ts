@@ -17,7 +17,7 @@ export class ReferralCronService {
   // run cron every 3 minutes
   @Cron("0 */3 * * * *")
   async handleCron() {
-    if (this.appConfig.values.crons.refreshReferralsMaterializedView) {
+    if (this.appConfig.values.enableReferralsMaterializedViewRefresh) {
       try {
         await this.depositRepository.query(`REFRESH MATERIALIZED VIEW CONCURRENTLY deposits_mv;`);
       } catch (error) {
