@@ -18,7 +18,9 @@ export type FillEventsQueueMessage = {
   originChainId: number;
   depositId: number;
   totalFilledAmount: string;
+  fillAmount: string;
   transactionHash: string;
+  isSlowRelay: boolean;
 };
 
 export type BlockNumberQueueMessage = {
