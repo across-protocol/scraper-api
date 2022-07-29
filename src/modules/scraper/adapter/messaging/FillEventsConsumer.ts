@@ -33,11 +33,11 @@ export class FillEventsConsumer {
       return;
     }
 
-    const bridgeFeePct = this.computeBridgeFee(deposit, job.data);
     deposit.fillTxs = [
       ...deposit.fillTxs,
       { fillAmount, hash: transactionHash, isSlowRelay, realizedLpFeePct, totalFilledAmount },
     ];
+    const bridgeFeePct = this.computeBridgeFee(deposit, job.data);
 
     if (new BigNumber(deposit.filled).lt(totalFilledAmount)) {
       deposit.filled = totalFilledAmount;
