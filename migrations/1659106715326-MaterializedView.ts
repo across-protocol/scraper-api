@@ -18,6 +18,8 @@ export class MaterializedView1659106715326 implements MigrationInterface {
           d."depositorAddr",
           d."referralAddress",
           d."depositDate",
+          hmp.usd as "tokenUsdPrice",
+          (d."realizedLpFeePctCapped" / power(10, 18)) * (d.amount / power(10, t.decimals)) * hmp.usd as "realizedLpFeeUsd",
           (d."bridgeFeePct" / power(10, 18)) * (d.amount / power(10, t.decimals)) * hmp.usd as "bridgeFeeUsd",
         case
           when d1."referralCount" >= 20 or d1."referralVolume" >= 500000 then 0.8
