@@ -57,6 +57,9 @@ export class FillEventsConsumer {
   }
 
   private computeBridgeFee(deposit: Deposit, fill: FillEventsQueueMessage) {
+    if (new BigNumber(deposit.amount).eq(0)) {
+      return new BigNumber(0);
+    }
     const maxBridgeFeePct = new BigNumber(10).pow(18).times(0.0012);
     const validFills = deposit.fillTxs.filter((fill) => fill.appliedRelayerFeePct !== "0"); // all fills associated with a deposit that are NOT slow fills
     const relayerFeeChargedToUser = validFills.reduce((cumulativeFee, fill) => {
