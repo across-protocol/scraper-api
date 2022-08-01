@@ -19,8 +19,15 @@ export class FillEventsConsumer {
 
   @Process()
   private async process(job: Job<FillEventsQueueMessage>) {
-    const { depositId, originChainId, realizedLpFeePct, totalFilledAmount, transactionHash, fillAmount, isSlowRelay } =
-      job.data;
+    const {
+      depositId,
+      originChainId,
+      realizedLpFeePct,
+      totalFilledAmount,
+      transactionHash,
+      fillAmount,
+      appliedRelayerFeePct,
+    } = job.data;
     const deposit = await this.depositRepository.findOne({ where: { sourceChainId: originChainId, depositId } });
 
     if (!deposit) {
@@ -35,7 +42,7 @@ export class FillEventsConsumer {
 
     deposit.fillTxs = [
       ...deposit.fillTxs,
-      { fillAmount, hash: transactionHash, isSlowRelay, realizedLpFeePct, totalFilledAmount },
+      { fillAmount, hash: transactionHash, realizedLpFeePct, totalFilledAmount, appliedRelayerFeePct },
     ];
     const bridgeFeePct = this.computeBridgeFee(deposit, job.data);
 
@@ -51,9 +58,9 @@ export class FillEventsConsumer {
 
   private computeBridgeFee(deposit: Deposit, fill: FillEventsQueueMessage) {
     const maxBridgeFeePct = new BigNumber(10).pow(18).times(0.0012);
-    const validFills = deposit.fillTxs.filter((fill) => !fill.isSlowRelay); // all fills associated with a deposit that are NOT slow fills
+    const validFills = deposit.fillTxs.filter((fill) => fill.appliedRelayerFeePct !== "0"); // all fills associated with a deposit that are NOT slow fills
     const relayerFeePctChargedToUser = validFills.reduce((cumulativeFee, fill) => {
-      const relayerFee = new BigNumber(fill.fillAmount).multipliedBy(deposit.depositRelayerFeePct);
+      const relayerFee = new BigNumber(fill.fillAmount).multipliedBy(fill.appliedRelayerFeePct);
       return relayerFee.plus(cumulativeFee);
     }, new BigNumber(0));
     const blendedRelayerFeePct = relayerFeePctChargedToUser.dividedBy(deposit.amount).decimalPlaces(0, 1);

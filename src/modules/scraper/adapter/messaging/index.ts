@@ -20,7 +20,7 @@ export type FillEventsQueueMessage = {
   totalFilledAmount: string;
   fillAmount: string;
   transactionHash: string;
-  isSlowRelay: boolean;
+  appliedRelayerFeePct: string;
 };
 
 export type BlockNumberQueueMessage = {

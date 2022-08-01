@@ -34,8 +34,7 @@ export class BlocksEventsConsumer {
 
     for (const event of depositEvents) {
       const { transactionHash, blockNumber } = event;
-      const { depositId, originChainId, destinationChainId, amount, originToken, depositor, relayerFeePct } =
-        event.args;
+      const { depositId, originChainId, destinationChainId, amount, originToken, depositor } = event.args;
 
       try {
         const result = await this.depositRepository.insert({
@@ -45,7 +44,6 @@ export class BlocksEventsConsumer {
           status: "pending",
           amount: amount.toString(),
           filled: "0",
-          depositRelayerFeePct: relayerFeePct.toString(),
           tokenAddr: originToken,
           depositTxHash: transactionHash,
           fillTxs: [],
@@ -72,7 +70,7 @@ export class BlocksEventsConsumer {
       totalFilledAmount: e.args.totalFilledAmount.toString(),
       fillAmount: e.args.fillAmount.toString(),
       transactionHash: e.transactionHash,
-      isSlowRelay: e.args.isSlowRelay,
+      appliedRelayerFeePct: e.args.appliedRelayerFeePct.toString(),
     }));
     await this.scraperQueuesService.publishMessagesBulk<FillEventsQueueMessage>(ScraperQueue.FillEvents, fillMessages);
   }

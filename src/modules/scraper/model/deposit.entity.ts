@@ -16,8 +16,8 @@ export type DepositFillTx = {
   hash: string;
   totalFilledAmount: string;
   fillAmount: string;
-  isSlowRelay: boolean;
   realizedLpFeePct: string;
+  appliedRelayerFeePct: string;
 };
 
 @Entity()
@@ -55,9 +55,6 @@ export class Deposit {
 
   @Column({ type: "decimal", default: 0 })
   realizedLpFeePctCapped: string;
-
-  @Column({ type: "decimal" })
-  depositRelayerFeePct: string;
 
   @Column({ type: "decimal", default: 0 })
   bridgeFeePct: string;
