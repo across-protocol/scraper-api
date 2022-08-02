@@ -4,9 +4,9 @@ export class MaterializedView1659106715326 implements MigrationInterface {
   name = "MaterializedView1659106715326";
 
   public async up(queryRunner: QueryRunner): Promise<void> {
-    await queryRunner.query(`drop materialized view if exists deposits_mv_v2`);
+    await queryRunner.query(`drop materialized view if exists deposits_mv`);
     await queryRunner.query(`
-      create materialized view deposits_mv_v2 as
+      create materialized view deposits_mv as
         select
           d."depositId",
           d."depositTxHash",
@@ -39,11 +39,11 @@ export class MaterializedView1659106715326 implements MigrationInterface {
         order by d."depositDate" desc;
     `);
     await queryRunner.query(
-      `CREATE UNIQUE INDEX "UK_deposits_mv_v2_depositId_sourceChainId" ON deposits_mv_v2 ("depositId", "sourceChainId");`,
+      `CREATE UNIQUE INDEX "UK_deposits_mv_depositId_sourceChainId" ON deposits_mv ("depositId", "sourceChainId");`,
     );
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
-    await queryRunner.query(`drop materialized view if exists deposits_mv_v2`);
+    await queryRunner.query(`drop materialized view if exists deposits_mv`);
   }
 }
