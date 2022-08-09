@@ -12,6 +12,7 @@ export const getReferralsQuery = () => {
     from deposits_mv as d
     where d."referralAddress" = $1 or
     (d."depositorAddr" = $1 and d."referralAddress" is not null)
+    order by d."depositDate" DESC
     limit $3
     offset $4;
   `;
