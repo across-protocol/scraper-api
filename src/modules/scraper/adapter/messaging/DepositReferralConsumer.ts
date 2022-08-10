@@ -1,7 +1,7 @@
 import { OnQueueFailed, Process, Processor } from "@nestjs/bull";
 import { Logger } from "@nestjs/common";
 import { Job } from "bull";
-import { IsNull, LessThan, LessThanOrEqual, Not, Repository } from "typeorm";
+import { Repository } from "typeorm";
 import { InjectRepository } from "@nestjs/typeorm";
 import { DepositReferralQueueMessage, ScraperQueue } from ".";
 import { Deposit } from "../../model/deposit.entity";
@@ -36,7 +36,6 @@ export class DepositReferralConsumer {
 
     const { referralDelimiterStartTimestamp } = this.appConfig.values.app;
     let referralAddress: string | undefined = undefined;
-    let stickyReferralAddress: string | undefined = undefined;
 
     if (referralDelimiterStartTimestamp && blockTimestamp >= referralDelimiterStartTimestamp) {
       referralAddress = this.referralService.extractReferralAddressUsingDelimiter(transaction.data);
