@@ -48,12 +48,7 @@ export class DepositReferralConsumer {
       }
     }
 
-    await this.depositRepository.update(
-      { id: deposit.id },
-      {
-        referralAddress: referralAddress || null,
-      },
-    );
+    await this.depositRepository.update({ id: deposit.id }, { referralAddress: referralAddress || null });
     await this.depositRepository.query(updateStickyReferralAddresses(), [deposit.depositorAddr]);
   }
 
