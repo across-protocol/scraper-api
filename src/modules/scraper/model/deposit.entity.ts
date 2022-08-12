@@ -15,6 +15,9 @@ export type TransferStatus = "pending" | "filled";
 export type DepositFillTx = {
   hash: string;
   totalFilledAmount: string;
+  fillAmount: string;
+  realizedLpFeePct: string;
+  appliedRelayerFeePct: string;
 };
 
 @Entity()
@@ -52,6 +55,9 @@ export class Deposit {
 
   @Column({ type: "decimal", default: 0 })
   realizedLpFeePctCapped: string;
+
+  @Column({ type: "decimal", default: 0 })
+  bridgeFeePct: string;
 
   @Column()
   tokenAddr: string;

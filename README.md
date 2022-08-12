@@ -18,3 +18,8 @@ docker-compose up
 ```shell script
 npm run lint
 ```
+
+## Deployment
+
+- `stage` branch is used to deploy it to the staging environment
+- for production deployment always merge `stage` branch into `master`
