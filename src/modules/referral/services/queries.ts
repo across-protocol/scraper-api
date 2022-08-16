@@ -94,7 +94,6 @@ export const updateStickyReferralAddresses = () => {
       inner join deposit d4
         on d3."depositorAddr" = d4."depositorAddr" and d3."depositDate" >= d4."depositDate" and 
           d4."referralAddress" is not null
-      where d3."depositorAddr" = $1
       order by d3."depositDate" desc, d4."depositDate" desc
     ) d1
     where deposit.id = d1.id and d1."rowNumber" = 1;  
