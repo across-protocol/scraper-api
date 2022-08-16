@@ -14,6 +14,7 @@ import { BullConfigService } from "./modules/messaging/service";
 import { ReferralModule } from "./modules/referral/module";
 import { ScraperModule } from "./modules/scraper/module";
 import { Web3Module } from "./modules/web3/module";
+import { DepositModule } from "./modules/deposit/module";
 
 @Module({
   imports: [
@@ -38,6 +39,7 @@ import { Web3Module } from "./modules/web3/module";
     ReferralModule,
     MarketPriceModule,
     ScheduleModule.forRoot(),
+    DepositModule,
   ],
 })
 export class AppModule {
