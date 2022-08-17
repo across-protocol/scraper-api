@@ -19,15 +19,7 @@ export class FillEventsConsumer {
 
   @Process()
   private async process(job: Job<FillEventsQueueMessage>) {
-    const {
-      depositId,
-      originChainId,
-      realizedLpFeePct,
-      totalFilledAmount,
-      transactionHash,
-      fillAmount,
-      appliedRelayerFeePct,
-    } = job.data;
+    const { depositId, originChainId } = job.data;
     const deposit = await this.depositRepository.findOne({ where: { sourceChainId: originChainId, depositId } });
 
     if (!deposit) {
@@ -40,11 +32,17 @@ export class FillEventsConsumer {
       return;
     }
 
+    await this.processFillEventQueueMessage(deposit, job.data);
+  }
+
+  public async processFillEventQueueMessage(deposit: Deposit, data: FillEventsQueueMessage) {
+    const { realizedLpFeePct, totalFilledAmount, transactionHash, fillAmount, appliedRelayerFeePct } = data;
+
     deposit.fillTxs = [
       ...deposit.fillTxs,
       { fillAmount, hash: transactionHash, realizedLpFeePct, totalFilledAmount, appliedRelayerFeePct },
     ];
-    const bridgeFeePct = this.computeBridgeFee(deposit, job.data);
+    const bridgeFeePct = this.computeBridgeFee(deposit, data);
 
     if (new BigNumber(deposit.filled).lt(totalFilledAmount)) {
       deposit.filled = totalFilledAmount;
@@ -53,7 +51,7 @@ export class FillEventsConsumer {
     deposit.status = new BigNumber(deposit.amount).eq(deposit.filled) ? "filled" : "pending";
     deposit.bridgeFeePct = bridgeFeePct.toString();
 
-    await this.depositRepository.save(deposit);
+    return this.depositRepository.save(deposit);
   }
 
   private computeBridgeFee(deposit: Deposit, fill: FillEventsQueueMessage) {
@@ -73,7 +71,7 @@ export class FillEventsConsumer {
     return bridgeFeePctCapped;
   }
 
-  private fillTxAlreadyProcessed(deposit: Deposit, fill: FillEventsQueueMessage) {
+  public fillTxAlreadyProcessed(deposit: Deposit, fill: FillEventsQueueMessage) {
     const { totalFilledAmount, transactionHash } = fill;
     const fillTxIndex = deposit.fillTxs.findIndex(
       (fillTx) => fillTx.hash === transactionHash && fillTx.totalFilledAmount === totalFilledAmount,
