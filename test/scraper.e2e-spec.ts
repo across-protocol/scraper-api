@@ -18,12 +18,9 @@ describe("Scraper module", () => {
 
   it("should not store the same deposit twice times", async () => {
     await app.get(DepositFixture).insertDeposit({ depositId: 1, sourceChainId: 1, destinationChainId: 10 });
-    try {
-      await app.get(DepositFixture).insertDeposit({ depositId: 1, sourceChainId: 1, destinationChainId: 10 });
-      expect(true).toEqual(false);
-    } catch (error) {
-      expect(error instanceof QueryFailedError).toEqual(true);
-    }
+    await expect(
+      app.get(DepositFixture).insertDeposit({ depositId: 1, sourceChainId: 1, destinationChainId: 10 }),
+    ).rejects.toThrow(QueryFailedError);
   });
 
   afterAll(async () => {

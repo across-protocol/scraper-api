@@ -7,8 +7,8 @@ import { DepositReferralQueueMessage, ScraperQueue } from ".";
 import { Deposit } from "../../model/deposit.entity";
 import { EthProvidersService } from "../../../web3/services/EthProvidersService";
 import { AppConfig } from "../../../configuration/configuration.service";
-import { ReferralService } from "src/modules/referral/services/service";
-import { ChainIds } from "src/modules/web3/model/ChainId";
+import { ReferralService } from "../../../referral/services/service";
+import { ChainIds } from "../../../web3/model/ChainId";
 
 @Processor(ScraperQueue.DepositReferral)
 export class DepositReferralConsumer {
