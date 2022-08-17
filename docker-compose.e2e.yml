@@ -14,7 +14,7 @@ services:
       - 9229:9229
     command: ./docker/e2e.command.sh
     env_file:
-      - .env
+      - .env.test
     networks:
       - webnet
     tty: true

@@ -1,4 +1,5 @@
 .env
+.env.test
 
 # compiled output
 /dist

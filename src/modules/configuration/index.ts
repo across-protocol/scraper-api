@@ -20,6 +20,7 @@ export default registerAs("config", () => {
       referralDelimiterStartTimestamp: process.env.REFERRAL_DELIMITER_START_TIMESTAMP
         ? parseInt(process.env.REFERRAL_DELIMITER_START_TIMESTAMP)
         : undefined,
+      disableCrons: process.env.DISABLE_CRONS === "true" || false,
     },
     web3: {
       providers: {
