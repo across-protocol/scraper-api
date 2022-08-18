@@ -1,10 +1,10 @@
 import { Injectable, Logger } from "@nestjs/common";
-import { Cron } from "@nestjs/schedule";
 import { Repository } from "typeorm";
 import { InjectRepository } from "@nestjs/typeorm";
-import { AppConfig } from "src/modules/configuration/configuration.service";
-import { Deposit } from "src/modules/scraper/model/deposit.entity";
-import { updateStickyReferralAddresses } from "./queries";
+import { AppConfig } from "../../configuration/configuration.service";
+import { Deposit } from "../../scraper/model/deposit.entity";
+import { EnhancedCron } from "../../../utils";
+import { updateStickyReferralAddresses } from "../services/queries";
 
 @Injectable()
 export class ReferralCronService {
@@ -16,7 +16,7 @@ export class ReferralCronService {
   ) { }
 
   // run cron every 5 minutes
-  @Cron("0 1-59/5 * * * *")
+  @EnhancedCron("0 1-59/5 * * * *")
   async refreshMaterializedViewCron() {
     if (this.appConfig.values.enableReferralsMaterializedViewRefresh) {
       try {
@@ -30,7 +30,7 @@ export class ReferralCronService {
   }
 
   // run cron every 5 minutes, starting with minute 0 to make sure it runs before `refreshMaterializedViewCron`
-  @Cron("0 0-59/5 * * * *")
+  @EnhancedCron("0 0-59/5 * * * *")
   async updateStickyReferralAddressesCron() {
     try {
       await this.depositRepository.query(updateStickyReferralAddresses());

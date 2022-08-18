@@ -12,7 +12,7 @@ import {
   getTotalReferralRewardsQuery,
 } from "./queries";
 import { ethers } from "ethers";
-import { AppConfig } from "src/modules/configuration/configuration.service";
+import { AppConfig } from "../../configuration/configuration.service";
 
 const REFERRAL_ADDRESS_DELIMITER = "d00dfeeddeadbeef";
 

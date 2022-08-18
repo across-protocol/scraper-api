@@ -33,23 +33,9 @@ export class BlocksEventsConsumer {
     this.logger.log(`(${from}, ${to}) - chainId ${chainId} - found ${fillEvents.length} FilledRelayEvent`);
 
     for (const event of depositEvents) {
-      const { transactionHash, blockNumber } = event;
-      const { depositId, originChainId, destinationChainId, amount, originToken, depositor } = event.args;
-
       try {
-        const result = await this.depositRepository.insert({
-          depositId,
-          sourceChainId: originChainId.toNumber(),
-          destinationChainId: destinationChainId.toNumber(),
-          status: "pending",
-          amount: amount.toString(),
-          filled: "0",
-          tokenAddr: originToken,
-          depositTxHash: transactionHash,
-          fillTxs: [],
-          blockNumber,
-          depositorAddr: depositor,
-        });
+        const deposit = await this.fromFundsDepositedEventToDeposit(event);
+        const result = await this.depositRepository.insert(deposit);
         await this.scraperQueuesService.publishMessage<BlockNumberQueueMessage>(ScraperQueue.BlockNumber, {
           depositId: result.identifiers[0].id,
         });
@@ -73,6 +59,25 @@ export class BlocksEventsConsumer {
       appliedRelayerFeePct: e.args.appliedRelayerFeePct.toString(),
     }));
     await this.scraperQueuesService.publishMessagesBulk<FillEventsQueueMessage>(ScraperQueue.FillEvents, fillMessages);
+  }
+
+  private async fromFundsDepositedEventToDeposit(event: FundsDepositedEvent) {
+    const { transactionHash, blockNumber } = event;
+    const { depositId, originChainId, destinationChainId, amount, originToken, depositor } = event.args;
+
+    return this.depositRepository.create({
+      depositId,
+      sourceChainId: originChainId.toNumber(),
+      destinationChainId: destinationChainId.toNumber(),
+      status: "pending",
+      amount: amount.toString(),
+      filled: "0",
+      tokenAddr: originToken,
+      depositTxHash: transactionHash,
+      fillTxs: [],
+      blockNumber,
+      depositorAddr: depositor,
+    });
   }
 
   @OnQueueFailed()

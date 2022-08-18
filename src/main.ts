@@ -3,7 +3,7 @@ import helmet from "helmet";
 import { NestExpressApplication } from "@nestjs/platform-express";
 
 import { AppModule } from "./app.module";
-import { AppConfig } from "src/modules/configuration/configuration.service";
+import { AppConfig } from "./modules/configuration/configuration.service";
 import { DocumentBuilder, SwaggerModule } from "@nestjs/swagger";
 import { ValidationPipe } from "./validation.pipe";
 
