@@ -21,5 +21,18 @@ npm run lint
 
 ## Deployment
 
-- `stage` branch is used to deploy it to the staging environment
-- for production deployment always merge `stage` branch into `master`
+We are using feature branches to ensure a smooth CI process
+
+1. Always start new feature branches from the latest `master`. When opening PRs, make sure your branch is up-to-date with the latest master, otherwise rebase the feature branch
+
+```bash
+git checkout master && git pull && git checkout -b my-feature-branch
+// if new commits were pushed to master
+git rebase master
+```
+
+2. Feature branches have to be merged twice:
+  - `feature-branch` -> `stage`: The branch will be deployed on the staging environment for testing purposes
+  - `feature-branch` -> `master`: The branch will be deployed on the production environment for testing purposes. Most of the time, all feature branches will be merged into `stage` branch before the `master` branch.
+
+3. Update the `stage` branch with the latest master whenever is needed 
