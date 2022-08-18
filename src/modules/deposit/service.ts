@@ -1,6 +1,6 @@
 import { Injectable } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
-import { Repository } from "typeorm";
+import { Repository, IsNull, Not } from "typeorm";
 import { Deposit } from "../scraper/model/deposit.entity";
 
 @Injectable()
@@ -8,7 +8,10 @@ export class DepositService {
   constructor(@InjectRepository(Deposit) private depositRepository: Repository<Deposit>) {}
 
   public async getDeposits(status = null, limit = 10, offset = 0) {
-    const where = status ? { status } : undefined;
+    const where = {
+      depositDate: Not(IsNull()),
+      status: status || Not(IsNull()),
+    };
 
     const [deposits, total] = await Promise.all([
       this.depositRepository.find({
