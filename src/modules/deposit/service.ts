@@ -8,22 +8,17 @@ export class DepositService {
   constructor(@InjectRepository(Deposit) private depositRepository: Repository<Deposit>) {}
 
   public async getDeposits(status = null, limit = 10, offset = 0) {
-    const where = {
-      depositDate: Not(IsNull()),
-      status: status || Not(IsNull()),
-    };
-
-    const [deposits, total] = await Promise.all([
-      this.depositRepository.find({
-        where,
-        take: limit,
-        skip: offset,
-        order: {
-          depositDate: "desc",
-        },
-      }),
-      this.depositRepository.count({ where }),
-    ]);
+    const [deposits, total] = await this.depositRepository.findAndCount({
+      where: {
+        depositDate: Not(IsNull()),
+        status: status || Not(IsNull()),
+      },
+      skip: offset,
+      take: limit,
+      order: {
+        depositDate: "desc",
+      },
+    });
 
     return {
       deposits: deposits.map(formatDeposit),
@@ -44,7 +39,7 @@ export class DepositService {
 export function formatDeposit(deposit: Deposit) {
   return {
     depositId: deposit.depositId,
-    depositTime: DateTime.fromISO(deposit.createdAt.toISOString()).toSeconds(),
+    depositTime: Math.round(DateTime.fromISO(deposit.createdAt.toISOString()).toSeconds()),
     status: deposit.status,
     filled: deposit.filled,
     sourceChainId: deposit.sourceChainId,
