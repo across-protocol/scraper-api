@@ -46,6 +46,7 @@ export class DepositReferralConsumer {
         if (nonce === 0) referralAddress = undefined;
       }
     }
+
     await this.depositRepository.update({ id: deposit.id }, { referralAddress: referralAddress || null });
   }
 

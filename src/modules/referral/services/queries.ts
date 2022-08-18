@@ -76,3 +76,26 @@ export const getActiveRefereesCountQuery = () => {
     where temp.r = 1 and temp."referralAddress" = $1;
   `;
 };
+
+export const updateStickyReferralAddresses = () => {
+  return `
+    update deposit
+    set "stickyReferralAddress" = d1."referralAddress"
+    from (
+      -- for each deposit get the previous not null referral addresses from which only the first one will be chosen
+      select 
+        d3.id,
+        d4."referralAddress",
+        ROW_NUMBER() OVER (
+          PARTITION BY d3."id"
+          order by d4."depositDate" desc
+        ) as "rowNumber"
+      from deposit d3
+      inner join deposit d4
+        on d3."depositorAddr" = d4."depositorAddr" and d3."depositDate" >= d4."depositDate" and 
+          d4."referralAddress" is not null
+      order by d3."depositDate" desc, d4."depositDate" desc
+    ) d1
+    where deposit.id = d1.id and d1."rowNumber" = 1;  
+  `;
+};
