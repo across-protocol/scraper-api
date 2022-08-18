@@ -7,11 +7,11 @@ import { Deposit } from "../scraper/model/deposit.entity";
 export class DepositService {
   constructor(@InjectRepository(Deposit) private depositRepository: Repository<Deposit>) {}
 
-  public async getDeposits(status = null, limit = 10, offset = 0) {
+  public async getDeposits(status, limit = 10, offset = 0) {
     const [deposits, total] = await this.depositRepository.findAndCount({
       where: {
         depositDate: Not(IsNull()),
-        status: status || Not(IsNull()),
+        status,
       },
       skip: offset,
       take: limit,
