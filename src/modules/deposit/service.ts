@@ -1,8 +1,8 @@
+import { DateTime } from "luxon";
 import { Injectable } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository, IsNull, Not } from "typeorm";
 import { Deposit } from "../scraper/model/deposit.entity";
-
 @Injectable()
 export class DepositService {
   constructor(@InjectRepository(Deposit) private depositRepository: Repository<Deposit>) {}
@@ -26,7 +26,7 @@ export class DepositService {
     ]);
 
     return {
-      deposits,
+      deposits: deposits.map(formatDeposit),
       pagination: {
         limit,
         offset,
@@ -34,4 +34,24 @@ export class DepositService {
       },
     };
   }
+}
+
+/**
+ * Format deposit to entity to match `Transfer` structure from sdk.
+ * @param deposit - Deposit entity from db.
+ * @returns Formatted deposit entity that matches `Transfer` struct.
+ */
+export function formatDeposit(deposit: Deposit) {
+  return {
+    depositId: deposit.depositId,
+    depositTime: DateTime.fromISO(deposit.createdAt.toISOString()).toSeconds(),
+    status: deposit.status,
+    filled: deposit.filled,
+    sourceChainId: deposit.sourceChainId,
+    destinationChainId: deposit.destinationChainId,
+    assetAddr: deposit.tokenAddr,
+    amount: deposit.amount,
+    depositTxHash: deposit.depositTxHash,
+    fillTxs: deposit.fillTxs.map(({ hash }) => hash),
+  };
 }
