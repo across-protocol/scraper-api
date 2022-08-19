@@ -1,7 +1,8 @@
 import request from "supertest";
-import { INestApplication, ValidationPipe } from "@nestjs/common";
+import { INestApplication } from "@nestjs/common";
 import { Test } from "@nestjs/testing";
 import { DepositFixture, mockManyDepositEntities } from "../src/modules/scraper/adapter/db/deposit-fixture";
+import { ValidationPipe } from "../src/validation.pipe";
 import { AppModule } from "../src/app.module";
 
 describe("Deposit module", () => {
