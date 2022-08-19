@@ -10,8 +10,8 @@ export class DepositController {
   @Get("deposits")
   @ApiTags("deposits")
   getDeposits(@Query() query: GetDepositsQuery) {
-    const limit = isNaN(parseInt(query.limit)) ? 10 : parseInt(query.limit);
-    const offset = isNaN(parseInt(query.offset)) ? 0 : parseInt(query.offset);
+    const limit = parseInt(query.limit ?? "10");
+    const offset = parseInt(query.offset ?? "0");
     return this.depositService.getDeposits(query.status, limit, offset);
   }
 }
