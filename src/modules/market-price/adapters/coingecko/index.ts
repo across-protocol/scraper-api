@@ -10,6 +10,7 @@ const symbolIdMap = {
   weth: "weth",
   boba: "boba-network",
   dai: "dai",
+  bal: "balancer",
 };
 
 @Injectable()
