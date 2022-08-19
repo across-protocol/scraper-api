@@ -16,12 +16,12 @@ export class GetDepositsQuery {
   status: string;
 
   @IsOptional()
-  @IsNumberString()
+  @IsNumberString({ no_symbols: true })
   @ApiProperty({ example: "10", required: false })
   limit: string;
 
   @IsOptional()
-  @IsNumberString()
+  @IsNumberString({ no_symbols: true })
   @ApiProperty({ example: "0", required: false })
   offset: string;
 }
