@@ -60,8 +60,18 @@ describe("Deposit module", () => {
       expect(response.status).toBe(400);
     });
 
+    it("400 for negative offset", async () => {
+      const response = await request(app.getHttpServer()).get("/deposits?offset=-10");
+      expect(response.status).toBe(400);
+    });
+
     it("400 for invalid limit", async () => {
       const response = await request(app.getHttpServer()).get("/deposits?limit=invalid");
+      expect(response.status).toBe(400);
+    });
+
+    it("400 for negative offset", async () => {
+      const response = await request(app.getHttpServer()).get("/deposits?limit=-10");
       expect(response.status).toBe(400);
     });
 
