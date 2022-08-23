@@ -90,7 +90,7 @@ export class ScraperService {
         from = configStartBlockNumber;
       }
 
-      const to = Math.min(latestBlocks[chainId] - 1, from + this.getMinBlockRange(parseInt(chainId)));
+      const to = Math.min(latestBlocks[chainId] - 2, from + this.getMinBlockRange(parseInt(chainId)));
       if (from < to) {
         blockRanges[chainId] = { from, to };
 
