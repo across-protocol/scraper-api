@@ -13,11 +13,12 @@ export class ReferralCronService {
   constructor(
     @InjectRepository(Deposit) private depositRepository: Repository<Deposit>,
     private appConfig: AppConfig,
-  ) { }
+  ) {}
 
   // run cron every 5 minutes
-  @EnhancedCron("0 1-59/5 * * * *")
+  @EnhancedCron("0 2-59/5 * * * *")
   async refreshMaterializedViewCron() {
+    this.logger.log("start refreshMaterializedViewCron()");
     if (this.appConfig.values.enableReferralsMaterializedViewRefresh) {
       try {
         await this.depositRepository.query(`REFRESH MATERIALIZED VIEW CONCURRENTLY deposits_mv;`);
@@ -27,15 +28,18 @@ export class ReferralCronService {
     } else {
       this.logger.log(`cron disabled`);
     }
+    this.logger.log("end refreshMaterializedViewCron()");
   }
 
   // run cron every 5 minutes, starting with minute 0 to make sure it runs before `refreshMaterializedViewCron`
   @EnhancedCron("0 0-59/5 * * * *")
   async updateStickyReferralAddressesCron() {
+    this.logger.log("start updateStickyReferralAddressesCron()");
     try {
       await this.depositRepository.query(updateStickyReferralAddresses());
     } catch (error) {
       this.logger.error(error);
     }
+    this.logger.log("end updateStickyReferralAddressesCron()");
   }
 }
