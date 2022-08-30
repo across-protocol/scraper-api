@@ -15,8 +15,8 @@ export class ReferralCronService {
     private appConfig: AppConfig,
   ) {}
 
-  // run cron every 5 minutes
-  @EnhancedCron("0 2-59/5 * * * *")
+  // run cron every 8 minutes
+  @EnhancedCron("0 4-59/8 * * * *")
   async refreshMaterializedViewCron() {
     this.logger.log("start refreshMaterializedViewCron()");
     if (this.appConfig.values.enableReferralsMaterializedViewRefresh) {
@@ -31,8 +31,8 @@ export class ReferralCronService {
     this.logger.log("end refreshMaterializedViewCron()");
   }
 
-  // run cron every 5 minutes, starting with minute 0 to make sure it runs before `refreshMaterializedViewCron`
-  @EnhancedCron("0 0-59/5 * * * *")
+  // run cron every 8 minutes, starting with minute 0 to make sure it runs before `refreshMaterializedViewCron`
+  @EnhancedCron("0 0-59/8 * * * *")
   async updateStickyReferralAddressesCron() {
     this.logger.log("start updateStickyReferralAddressesCron()");
     try {
