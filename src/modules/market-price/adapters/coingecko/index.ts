@@ -11,6 +11,7 @@ const symbolIdMap = {
   boba: "boba-network",
   dai: "dai",
   bal: "balancer",
+  usdt: "tether",
 };
 
 @Injectable()
