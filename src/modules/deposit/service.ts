@@ -39,7 +39,7 @@ export class DepositService {
 export function formatDeposit(deposit: Deposit) {
   return {
     depositId: deposit.depositId,
-    depositTime: Math.round(DateTime.fromISO(deposit.createdAt.toISOString()).toSeconds()),
+    depositTime: Math.round(DateTime.fromISO(deposit.depositDate.toISOString()).toSeconds()),
     status: deposit.status,
     filled: deposit.filled,
     sourceChainId: deposit.sourceChainId,
