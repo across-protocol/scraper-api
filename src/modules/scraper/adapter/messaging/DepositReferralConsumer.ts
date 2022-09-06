@@ -1,7 +1,7 @@
 import { OnQueueFailed, Process, Processor } from "@nestjs/bull";
 import { Logger } from "@nestjs/common";
 import { Job } from "bull";
-import { Repository } from "typeorm";
+import { IsNull, Not, Repository } from "typeorm";
 import { InjectRepository } from "@nestjs/typeorm";
 import { DepositReferralQueueMessage, ScraperQueue } from ".";
 import { Deposit } from "../../model/deposit.entity";
@@ -9,6 +9,8 @@ import { EthProvidersService } from "../../../web3/services/EthProvidersService"
 import { AppConfig } from "../../../configuration/configuration.service";
 import { ReferralService } from "../../../referral/services/service";
 import { ChainIds } from "../../../web3/model/ChainId";
+import { StickyReferralAddressesMechanism } from "src/modules/configuration";
+import { updateStickyReferralAddressesForDepositor } from "src/modules/referral/services/queries";
 
 @Processor(ScraperQueue.DepositReferral)
 export class DepositReferralConsumer {
@@ -21,7 +23,7 @@ export class DepositReferralConsumer {
     private appConfig: AppConfig,
   ) {}
 
-  @Process({ concurrency: 10 })
+  @Process({ concurrency: 1 })
   private async process(job: Job<DepositReferralQueueMessage>) {
     const { depositId } = job.data;
     const deposit = await this.depositRepository.findOne({ where: { id: depositId } });
@@ -48,6 +50,16 @@ export class DepositReferralConsumer {
     }
 
     await this.depositRepository.update({ id: deposit.id }, { referralAddress: referralAddress || null });
+
+    if (this.appConfig.values.stickyReferralAddressesMechanism === StickyReferralAddressesMechanism.Queue) {
+      const hasDepositsWithReferrals = await this.depositRepository.findOne({
+        where: { depositorAddr: deposit.depositorAddr, referralAddress: Not(IsNull()) },
+      });
+
+      if (hasDepositsWithReferrals) {
+        await this.depositRepository.query(updateStickyReferralAddressesForDepositor(), [deposit.depositorAddr]);
+      }
+    }
   }
 
   @OnQueueFailed()

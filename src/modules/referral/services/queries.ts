@@ -77,7 +77,7 @@ export const getActiveRefereesCountQuery = () => {
   `;
 };
 
-export const updateStickyReferralAddresses = () => {
+export const updateStickyReferralAddressesQuery = () => {
   return `
     update deposit
     set "stickyReferralAddress" = d1."referralAddress"
@@ -97,5 +97,28 @@ export const updateStickyReferralAddresses = () => {
       order by d3."depositDate" desc, d4."depositDate" desc
     ) d1
     where deposit.id = d1.id and d1."rowNumber" = 1;  
+  `;
+};
+
+export const updateStickyReferralAddressesForDepositor = () => {
+  return `
+    update deposit
+    set "stickyReferralAddress" = d4."referralAddress"
+    from (
+        -- for each deposit get the latest referral address
+        select d1.id, d3."referralAddress"
+        from deposit d1
+        left join lateral (
+            select d2."depositorAddr", d2."referralAddress"
+            from deposit d2
+            where d2."depositorAddr" = d1."depositorAddr" and
+                  d2."depositDate" <= d1."depositDate" and
+                  d2."referralAddress" is not null
+            order by d2."depositDate" desc
+            limit 1
+            ) d3 on d1."depositorAddr" = d3."depositorAddr"
+        where d1."depositorAddr" = $1
+    ) d4
+    where deposit.id = d4.id;
   `;
 };

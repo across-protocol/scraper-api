@@ -1,6 +1,12 @@
 import { registerAs } from "@nestjs/config";
 import { ChainIds } from "../web3/model/ChainId";
 
+export enum StickyReferralAddressesMechanism {
+  Queue = "queue",
+  Cron = "cron",
+  Disabled = "disabled",
+}
+
 export default registerAs("config", () => {
   return {
     database: {
@@ -62,5 +68,8 @@ export default registerAs("config", () => {
     acxUsdPrice: 0.1,
     enableSpokePoolsEventsProcessing: process.env.ENABLE_SPOKE_POOLS_EVENTS_PROCESSING === "true",
     enableReferralsMaterializedViewRefresh: process.env.ENABLE_REFERRALS_MATERIALIZED_VIEW_REFRESH === "true",
+    stickyReferralAddressesMechanism: process.env.STICKY_REFERRAL_ADDRESSES_MECHANISM
+      ? process.env.STICKY_REFERRAL_ADDRESSES_MECHANISM
+      : StickyReferralAddressesMechanism.Disabled,
   };
 });
