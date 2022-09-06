@@ -3,43 +3,64 @@ import { Repository } from "typeorm";
 import { InjectRepository } from "@nestjs/typeorm";
 import { AppConfig } from "../../configuration/configuration.service";
 import { Deposit } from "../../scraper/model/deposit.entity";
-import { EnhancedCron } from "../../../utils";
-import { updateStickyReferralAddresses } from "../services/queries";
+import { EnhancedCron, wait } from "../../../utils";
+import { updateStickyReferralAddressesQuery } from "../services/queries";
+import { StickyReferralAddressesMechanism } from "src/modules/configuration";
 
 @Injectable()
 export class ReferralCronService {
   private logger = new Logger(ReferralCronService.name);
+  private semaphore = false;
 
   constructor(
     @InjectRepository(Deposit) private depositRepository: Repository<Deposit>,
     private appConfig: AppConfig,
   ) {}
 
-  // run cron every 8 minutes
-  @EnhancedCron("0 4-59/8 * * * *")
-  async refreshMaterializedViewCron() {
-    this.logger.log("start refreshMaterializedViewCron()");
-    if (this.appConfig.values.enableReferralsMaterializedViewRefresh) {
+  @EnhancedCron("0 */10 * * * *")
+  async startCrons() {
+    if (this.semaphore === true) {
+      return;
+    }
+    this.semaphore = true;
+
+    await this.updateStickyReferralAddresses();
+    // cooldown period
+    await wait(30);
+    await this.refreshMaterializedView();
+
+    this.semaphore = false;
+  }
+
+  private async refreshMaterializedView() {
+    this.logger.log("start refreshMaterializedView()");
+    if (!this.appConfig.values.enableReferralsMaterializedViewRefresh) {
+      this.logger.log(`disabled refreshMaterializedView()`);
+    } else {
       try {
         await this.depositRepository.query(`REFRESH MATERIALIZED VIEW CONCURRENTLY deposits_mv;`);
       } catch (error) {
         this.logger.error(error);
       }
-    } else {
-      this.logger.log(`cron disabled`);
     }
-    this.logger.log("end refreshMaterializedViewCron()");
+
+    this.logger.log("end refreshMaterializedView()");
   }
 
-  // run cron every 8 minutes, starting with minute 0 to make sure it runs before `refreshMaterializedViewCron`
-  @EnhancedCron("0 0-59/8 * * * *")
-  async updateStickyReferralAddressesCron() {
-    this.logger.log("start updateStickyReferralAddressesCron()");
-    try {
-      await this.depositRepository.query(updateStickyReferralAddresses());
-    } catch (error) {
-      this.logger.error(error);
+  private async updateStickyReferralAddresses() {
+    this.logger.log("start updateStickyReferralAddresses()");
+
+    // sticky referral addresses are updated either by this cron or by the DepositReferralConsumer
+    if (this.appConfig.values.stickyReferralAddressesMechanism !== StickyReferralAddressesMechanism.Cron) {
+      this.logger.log(`disabled updateStickyReferralAddresses()`);
+    } else {
+      try {
+        await this.depositRepository.query(updateStickyReferralAddressesQuery());
+      } catch (error) {
+        this.logger.error(error);
+      }
     }
-    this.logger.log("end updateStickyReferralAddressesCron()");
+
+    this.logger.log("end updateStickyReferralAddresses()");
   }
 }
