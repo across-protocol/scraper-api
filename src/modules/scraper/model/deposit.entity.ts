@@ -3,6 +3,7 @@ import {
   Column,
   CreateDateColumn,
   Entity,
+  Index,
   JoinColumn,
   ManyToOne,
   PrimaryGeneratedColumn,
@@ -22,6 +23,7 @@ export type DepositFillTx = {
 
 @Entity()
 @Unique("UK_deposit_depositId_sourceChainId", ["depositId", "sourceChainId"])
+@Index("IX_deposit_depositorAddr", ["depositorAddr"])
 export class Deposit {
   @PrimaryGeneratedColumn()
   id: number;
