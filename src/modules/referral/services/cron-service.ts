@@ -19,9 +19,7 @@ export class ReferralCronService {
 
   @EnhancedCron("0 */10 * * * *")
   async startCrons() {
-    if (this.semaphore === true) {
-      return;
-    }
+    if (this.semaphore) return;
     this.semaphore = true;
 
     await this.updateStickyReferralAddresses();
