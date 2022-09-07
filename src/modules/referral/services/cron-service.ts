@@ -19,15 +19,19 @@ export class ReferralCronService {
 
   @EnhancedCron("0 */10 * * * *")
   async startCrons() {
-    if (this.semaphore) return;
-    this.semaphore = true;
+    try {
+      if (this.semaphore) return;
+      this.semaphore = true;
 
-    await this.updateStickyReferralAddresses();
-    // cooldown period
-    await wait(30);
-    await this.refreshMaterializedView();
-
-    this.semaphore = false;
+      await this.updateStickyReferralAddresses();
+      // cooldown period
+      await wait(30);
+      await this.refreshMaterializedView();
+    } catch (error) {
+      this.logger.error(error);
+    } finally {
+      this.semaphore = false;
+    }
   }
 
   private async refreshMaterializedView() {
