@@ -54,7 +54,7 @@ export class ReferralCronService {
 
     // sticky referral addresses are updated either by this cron or by the DepositReferralConsumer
     if (this.appConfig.values.stickyReferralAddressesMechanism !== StickyReferralAddressesMechanism.Cron) {
-      this.logger.log(`disabled updateStickyReferralAddresses()`);
+      this.logger.log(`skip updateStickyReferralAddresses() cron`);
     } else {
       try {
         await this.depositRepository.query(updateStickyReferralAddressesQuery());
