@@ -90,7 +90,10 @@ export class ScraperService {
         from = configStartBlockNumber;
       }
 
-      const to = Math.min(latestBlocks[chainId] - 2, from + this.getMinBlockRange(parseInt(chainId)));
+      const to = Math.min(
+        latestBlocks[chainId] - this.getFollowingDistance(parseInt(chainId)),
+        from + this.getMinBlockRange(parseInt(chainId)),
+      );
       if (from < to) {
         blockRanges[chainId] = { from, to };
 
@@ -115,5 +118,18 @@ export class ScraperService {
     }
 
     return 100_000;
+  }
+
+  public getFollowingDistance(chainId: number) {
+    const distanceFromConfig = this.appConfig.values.followingDistances[chainId];
+    if (distanceFromConfig) {
+      return Number(distanceFromConfig);
+    }
+
+    if ([ChainIds.polygon, ChainIds.polygonMumbai].includes(chainId)) {
+      return 100;
+    }
+
+    return 10;
   }
 }
