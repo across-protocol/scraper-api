@@ -130,6 +130,6 @@ export class ScraperService {
       return 100;
     }
 
-    return 10;
+    return 3;
   }
 }
