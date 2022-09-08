@@ -22,15 +22,14 @@ export class ReferralCronService {
     try {
       if (this.semaphore) return;
       this.semaphore = true;
-
       await this.updateStickyReferralAddresses();
       // cooldown period
       await wait(30);
       await this.refreshMaterializedView();
-    } catch (error) {
-      this.logger.error(error);
-    } finally {
       this.semaphore = false;
+    } catch (error) {
+      this.semaphore = false;
+      this.logger.error(error);
     }
   }
 
