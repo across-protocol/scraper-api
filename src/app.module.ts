@@ -15,6 +15,8 @@ import { ReferralModule } from "./modules/referral/module";
 import { ScraperModule } from "./modules/scraper/module";
 import { Web3Module } from "./modules/web3/module";
 import { DepositModule } from "./modules/deposit/module";
+import { AuthModule } from "./modules/auth/auth.module";
+import { UserModule } from "./modules/user/module";
 
 @Module({
   imports: [
@@ -40,6 +42,8 @@ import { DepositModule } from "./modules/deposit/module";
     MarketPriceModule,
     ScheduleModule.forRoot(),
     DepositModule,
+    AuthModule,
+    UserModule,
   ],
 })
 export class AppModule {
