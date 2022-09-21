@@ -8,9 +8,10 @@ import { DiscordStrategy } from "./entry-points/http/discord.strategy";
 import { AuthService } from "./services/auth.service";
 import { configValues } from "../configuration";
 import { AppConfigModule } from "../configuration/configuration.module";
+import { JwtStrategy } from "./entry-points/http/jwt.strategy";
 
 @Module({
-  providers: [DiscordStrategy, AuthService],
+  providers: [JwtStrategy, DiscordStrategy, AuthService],
   controllers: [AuthController],
   imports: [
     PassportModule.register({}),
