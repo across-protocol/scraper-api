@@ -52,4 +52,10 @@ export class UserService {
   public createUUID() {
     return uuidv4();
   }
+
+  public async deleteUserById(userId: number) {
+    return this.userRepository.delete({
+      id: userId,
+    });
+  }
 }
