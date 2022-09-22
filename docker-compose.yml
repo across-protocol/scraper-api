@@ -1,4 +1,4 @@
-version: '3.7'
+version: "3.7"
 
 services:
   backend:
@@ -12,11 +12,9 @@ services:
     ports:
       - ${PORT}:${PORT}
       - 9229:9229
-    command: ./docker/dev.command.sh
+    command: ["/bin/sh", "./docker/dev.command.sh"]
     env_file:
       - .env
-    networks:
-      - webnet
     depends_on:
       - postgres
       - redis
@@ -33,23 +31,17 @@ services:
       - 5432:5432
     volumes:
       - scraper-api-pgdata:/var/lib/postgresql/data
-    networks:
-      - webnet
   redis:
     container_name: scraper-api-redis
     image: redis:6.2-alpine
     restart: always
     ports:
       - 6379:6379
-    command: ["redis-server", "--appendonly", "yes"]   
+    command: ["redis-server", "--appendonly", "yes"]
     environment:
       REDIS_PASSWORD: ${REDIS_PASSWORD}
-    networks:
-      - webnet
-    volumes: 
+    volumes:
       - scraper-api-redis-volume:/data
-networks:
-  webnet:
 volumes:
   backend-node-modules:
   scraper-api-pgdata:

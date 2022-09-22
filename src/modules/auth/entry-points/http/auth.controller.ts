@@ -1,5 +1,5 @@
 import { Controller, Get, Req, UseGuards } from "@nestjs/common";
-import { UserService } from "src/modules/user/services/user.service";
+import { UserService } from "../../../user/services/user.service";
 import { AuthService } from "../../services/auth.service";
 import { DiscordAuthGuard } from "./discord.guard";
 
