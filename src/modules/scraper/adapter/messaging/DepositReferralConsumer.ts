@@ -9,8 +9,8 @@ import { EthProvidersService } from "../../../web3/services/EthProvidersService"
 import { AppConfig } from "../../../configuration/configuration.service";
 import { ReferralService } from "../../../referral/services/service";
 import { ChainIds } from "../../../web3/model/ChainId";
-import { StickyReferralAddressesMechanism } from "src/modules/configuration";
-import { updateStickyReferralAddressesForDepositor } from "src/modules/referral/services/queries";
+import { StickyReferralAddressesMechanism } from "../../../configuration";
+import { updateStickyReferralAddressesForDepositor } from "../../../referral/services/queries";
 
 @Processor(ScraperQueue.DepositReferral)
 export class DepositReferralConsumer {
