@@ -5,7 +5,7 @@ import { AppConfig } from "../../configuration/configuration.service";
 import { Deposit } from "../../scraper/model/deposit.entity";
 import { EnhancedCron, wait } from "../../../utils";
 import { updateStickyReferralAddressesQuery } from "../services/queries";
-import { StickyReferralAddressesMechanism } from "src/modules/configuration";
+import { StickyReferralAddressesMechanism } from "../../configuration";
 
 @Injectable()
 export class ReferralCronService {

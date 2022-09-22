@@ -1,4 +1,6 @@
-FROM node:16-stretch AS development
+FROM node:16-alpine AS development
+
+RUN apk --no-cache add --virtual .builds-deps build-base python3 git
 
 WORKDIR /usr/src/app
 COPY package*.json ./

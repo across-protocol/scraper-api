@@ -1,4 +1,4 @@
-version: '3.7'
+version: "3.7"
 
 services:
   backend:
@@ -12,11 +12,9 @@ services:
     ports:
       - ${PORT}:${PORT}
       - 9229:9229
-    command: ./docker/e2e.command.sh
+    command: ["/bin/sh", "./docker/e2e.command.sh"]
     env_file:
       - .env.test
-    networks:
-      - webnet
     tty: true
     depends_on:
       - postgres
@@ -34,23 +32,17 @@ services:
       - 5432:5432
     volumes:
       - scraper-api-pgdata-e2e:/var/lib/postgresql/data
-    networks:
-      - webnet
   redis:
     container_name: scraper-api-redis-e2e
     image: redis:6.2-alpine
     restart: always
     ports:
       - 6379:6379
-    command: ["redis-server", "--appendonly", "yes"]   
+    command: ["redis-server", "--appendonly", "yes"]
     environment:
       REDIS_PASSWORD: ${REDIS_PASSWORD}
-    networks:
-      - webnet
-    volumes: 
+    volumes:
       - scraper-api-redis-volume-e2e:/data
-networks:
-  webnet:
 volumes:
   backend-e2e-node-modules:
   scraper-api-pgdata-e2e:

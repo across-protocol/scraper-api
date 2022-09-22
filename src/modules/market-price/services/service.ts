@@ -10,7 +10,7 @@ export class MarketPriceService {
   constructor(
     @InjectRepository(HistoricMarketPrice) private historicMarketPriceRepository: Repository<HistoricMarketPrice>,
     private coinGeckoService: CoinGeckoService,
-  ) { }
+  ) {}
 
   public async getCachedHistoricMarketPrice(date: Date, symbol: string) {
     const formattedDate = DateTime.fromJSDate(date).toFormat("dd-LL-yyyy");

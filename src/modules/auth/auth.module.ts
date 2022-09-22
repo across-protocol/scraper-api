@@ -19,7 +19,7 @@ import { DiscordApiService } from "./adapters/discord";
     HttpModule,
     UserModule,
     JwtModule.register({
-      secret: configValues.auth.jwtSecret,
+      secret: configValues().auth.jwtSecret,
       signOptions: { expiresIn: "7d" },
     }),
     AppConfigModule,

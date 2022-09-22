@@ -7,7 +7,7 @@ export enum StickyReferralAddressesMechanism {
   Disabled = "disabled",
 }
 
-export const configValues = {
+export const configValues = () => ({
   database: {
     host: process.env.DB_HOST,
     port: parseInt(process.env.DB_PORT, 10),
@@ -83,6 +83,6 @@ export const configValues = {
     clientSecret: process.env.DISCORD_CLIENT_SECRET,
     redirectUri: process.env.DISCORD_REDIRECT_URI,
   },
-};
+});
 
-export default registerAs("config", () => configValues);
+export default registerAs("config", () => configValues());
