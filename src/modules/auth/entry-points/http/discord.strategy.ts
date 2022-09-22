@@ -3,7 +3,7 @@ import { Injectable } from "@nestjs/common";
 import { Strategy } from "passport-oauth2";
 import { HttpService } from "@nestjs/axios";
 import { stringify } from "querystring";
-import { AppConfig } from "src/modules/configuration/configuration.service";
+import { AppConfig } from "../../../configuration/configuration.service";
 
 @Injectable()
 export class DiscordStrategy extends PassportStrategy(Strategy, "discord") {

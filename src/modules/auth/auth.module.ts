@@ -18,7 +18,7 @@ import { JwtStrategy } from "./entry-points/http/jwt.strategy";
     HttpModule,
     UserModule,
     JwtModule.register({
-      secret: configValues.auth.jwtSecret,
+      secret: configValues().auth.jwtSecret,
       signOptions: { expiresIn: "7d" },
     }),
     AppConfigModule,
