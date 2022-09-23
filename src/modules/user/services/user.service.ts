@@ -10,15 +10,26 @@ import { UserNotFoundException } from "./exceptions";
 export class UserService {
   constructor(@InjectRepository(User) private userRepository: Repository<User>) {}
 
-  public async createUserFromDiscordId({ discordId }: { discordId: string }) {
+  public async createOrUpdateUserFromDiscord({
+    discordId,
+    discordAvatar,
+    discordName,
+  }: {
+    discordId: string;
+    discordName: string;
+    discordAvatar: string;
+  }) {
     let user = await this.userRepository.findOne({ where: { discordId } });
 
     if (!user) {
       const shortId = await this.createShortId();
       const uuid = this.createUUID();
       user = this.userRepository.create({ discordId, shortId, uuid });
-      user = await this.userRepository.save(user);
     }
+
+    user.discordName = discordName;
+    user.discordAvatar = discordAvatar;
+    user = await this.userRepository.save(user);
 
     return user;
   }

@@ -10,7 +10,11 @@ export class AuthController {
   @Get("discord")
   @UseGuards(DiscordAuthGuard)
   async getUserFromDiscordLogin(@Req() req: any): Promise<any> {
-    const user = await this.userService.createUserFromDiscordId({ discordId: req.user.id });
+    const user = await this.userService.createOrUpdateUserFromDiscord({
+      discordId: req.user.id,
+      discordAvatar: req.user.avatar,
+      discordName: req.user.name,
+    });
     const jwt = this.authService.generateJwtForUser(user);
 
     return { user, jwt };
