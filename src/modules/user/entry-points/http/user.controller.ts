@@ -2,12 +2,12 @@ import { Controller, Get, Post, Patch, Body, Req, UseGuards } from "@nestjs/comm
 import { ApiTags } from "@nestjs/swagger";
 import { JwtAuthGuard } from "../../../auth/entry-points/http/jwt.guard";
 import { UserService } from "../../services/user.service";
-import { WalletService } from "../../services/wallet.service";
+import { UserWalletService } from "../../services/user-wallet.service";
 import { UsersWalletsBody } from "./dto";
 
 @Controller("users")
 export class UserController {
-  constructor(private userService: UserService, private walletService: WalletService) {}
+  constructor(private userService: UserService, private userWalletService: UserWalletService) {}
 
   @Get("me")
   @UseGuards(JwtAuthGuard)
@@ -20,53 +20,37 @@ export class UserController {
     };
   }
 
-  @Post("wallets")
+  @Post("me/wallets")
   @UseGuards(JwtAuthGuard)
   @ApiTags("users")
   public async postWallet(@Req() req: any, @Body() body: UsersWalletsBody) {
     const userId = req.user.id;
     const { walletAddress, signature, discordId } = body;
 
-    this.walletService.verifySignedDiscordId({
-      signature,
-      discordIdMessage: discordId,
-      walletAddress,
-    });
-
-    await this.walletService.assertUserExists(userId);
-
-    const wallet = await this.walletService.upsertWallet({
+    const userWallet = await this.userWalletService.linkWallet({
       userId,
       walletAddress,
+      signature,
+      discordId,
     });
 
-    return {
-      wallet,
-    };
+    return { userWallet };
   }
 
-  @Patch("wallets")
+  @Patch("me/wallets")
   @UseGuards(JwtAuthGuard)
   @ApiTags("users")
   public async patchWallet(@Req() req: any, @Body() body: UsersWalletsBody) {
     const userId = req.user.id;
     const { walletAddress, signature, discordId } = body;
 
-    this.walletService.verifySignedDiscordId({
-      signature,
-      discordIdMessage: discordId,
-      walletAddress,
-    });
-
-    await this.walletService.assertWalletForUserExists(userId);
-
-    const wallet = await this.walletService.upsertWallet({
+    const userWallet = await this.userWalletService.updateLinkedWallet({
       userId,
       walletAddress,
+      signature,
+      discordId,
     });
 
-    return {
-      wallet,
-    };
+    return { userWallet };
   }
 }
