@@ -5,9 +5,11 @@
 ### Instructions
 
 1. Initiate the login process by accessing the following URL from the frontend application: 
-`https://discord.com/api/oauth2/authorize?client_id=<CLIENT_ID>&redirect_uri=<REDIRECT_URI>&response_type=code&scope=identify`
+`https://discord.com/api/oauth2/authorize?client_id=<CLIENT_ID>&redirect_uri=<REDIRECT_URI>&response_type=code&scope=guilds.members.read%20identify`
 
     The `client_id` and `redirect_uri` parameters are recommended to be provided by env variables.
+
+    ⚠️ The URL's query parameters must be encoded with `encodeURIComponent()`
 
 2. User is prompted to allow accessing the Discord account 
 
