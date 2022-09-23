@@ -11,12 +11,13 @@ import {
 import { User } from "./user.entity";
 
 @Entity()
-@Unique("UK_wallet_id_walletAddress", ["id", "walletAddress"])
-export class Wallet {
+@Unique("UK_userWallet_id_walletAddress", ["id", "walletAddress"])
+@Unique("UK_userWallet_userId", ["userId"])
+export class UserWallet {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column({ unique: true })
+  @Column()
   userId: number;
 
   @OneToOne(() => User)
