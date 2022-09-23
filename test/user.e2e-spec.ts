@@ -9,7 +9,7 @@ import { mockUserEntity } from "./fixtures/user";
 import { generateJwtForUser } from "./utils";
 import { UserService } from "../src/modules/user/services/user.service";
 import { User } from "../src/modules/user/model/user.entity";
-import { WalletService } from "../src/modules/user/services/wallet.service";
+import { UserWalletService } from "../src/modules/user/services/user-wallet.service";
 
 const signer = Wallet.createRandom();
 const nonExistingUser = mockUserEntity();
@@ -17,6 +17,7 @@ const nonExistingUser = mockUserEntity();
 let app: INestApplication;
 let existingUser: User;
 let validJwtForExistingUser: string;
+let validJwtForNonExistingUser: string;
 let validSignatureForExistingUser: string;
 let validSignatureForNonExistingUser: string;
 
@@ -36,6 +37,7 @@ beforeAll(async () => {
   );
   validJwtForExistingUser = generateJwtForUser(existingUser);
   validSignatureForExistingUser = await signer.signMessage(existingUser.discordId);
+  validJwtForNonExistingUser = generateJwtForUser(nonExistingUser);
   validSignatureForNonExistingUser = await signer.signMessage(nonExistingUser.discordId);
 });
 
@@ -59,15 +61,19 @@ describe("GET /users/me", () => {
   });
 });
 
-describe("POST /users/wallets", () => {
+describe("POST /users/me/wallets", () => {
+  afterAll(async () => {
+    await app.get(UserWalletService).deleteWalletByUserId(existingUser.id);
+  });
+
   it("401 for unauthorized user", async () => {
-    const response = await request(app.getHttpServer()).post("/users/wallets");
+    const response = await request(app.getHttpServer()).post("/users/me/wallets");
     expect(response.status).toBe(401);
   });
 
   it("400 for invalid body", async () => {
     const response = await request(app.getHttpServer())
-      .post("/users/wallets")
+      .post("/users/me/wallets")
       .set("Authorization", `Bearer ${validJwtForExistingUser}`);
     expect(response.status).toBe(400);
   });
@@ -75,7 +81,7 @@ describe("POST /users/wallets", () => {
   it("403 for invalid signature", async () => {
     const invalidSignature = await signer.signMessage("wrong message");
     const response = await request(app.getHttpServer())
-      .post("/users/wallets")
+      .post("/users/me/wallets")
       .send({
         walletAddress: signer.address,
         signature: invalidSignature,
@@ -87,53 +93,55 @@ describe("POST /users/wallets", () => {
   });
 
   it("404 for non-existent user", async () => {
-    const jwtForNonExistentUser = generateJwtForUser(nonExistingUser);
     const response = await request(app.getHttpServer())
-      .post("/users/wallets")
+      .post("/users/me/wallets")
       .send({
         walletAddress: signer.address,
         signature: validSignatureForNonExistingUser,
         discordId: nonExistingUser.discordId,
       })
-      .set("Authorization", `Bearer ${jwtForNonExistentUser}`);
+      .set("Authorization", `Bearer ${validJwtForNonExistingUser}`);
 
     expect(response.status).toBe(404);
   });
 
   it("201 for valid body", async () => {
     const response = await request(app.getHttpServer())
-      .post("/users/wallets")
+      .post("/users/me/wallets")
       .send({
         walletAddress: signer.address,
         signature: validSignatureForExistingUser,
         discordId: existingUser.discordId,
       })
       .set("Authorization", `Bearer ${validJwtForExistingUser}`);
-
     expect(response.status).toBe(201);
-    expect(response.body.wallet.userId).toBe(existingUser.id);
-
-    await app.get(WalletService).deleteWalletByUserId(existingUser.id);
+    expect(response.body.userWallet.userId).toBe(existingUser.id);
   });
 });
 
-describe("PATCH /users/wallets", () => {
+describe("PATCH /users/me/wallets", () => {
+  afterEach(async () => {
+    await app.get(UserWalletService).deleteWalletByUserId(existingUser.id);
+  });
+
   it("401 for unauthorized user", async () => {
-    const response = await request(app.getHttpServer()).patch("/users/wallets");
+    const response = await request(app.getHttpServer()).patch("/users/me/wallets");
     expect(response.status).toBe(401);
   });
 
   it("400 for invalid body", async () => {
     const response = await request(app.getHttpServer())
-      .patch("/users/wallets")
+      .patch("/users/me/wallets")
       .set("Authorization", `Bearer ${validJwtForExistingUser}`);
     expect(response.status).toBe(400);
   });
 
   it("403 for invalid signature", async () => {
+    await createWalletForExistingUser();
+
     const invalidSignature = await signer.signMessage("wrong message");
     const response = await request(app.getHttpServer())
-      .patch("/users/wallets")
+      .patch("/users/me/wallets")
       .send({
         walletAddress: signer.address,
         signature: invalidSignature,
@@ -145,8 +153,10 @@ describe("PATCH /users/wallets", () => {
   });
 
   it("403 for invalid wallet address", async () => {
+    await createWalletForExistingUser();
+
     const response = await request(app.getHttpServer())
-      .patch("/users/wallets")
+      .patch("/users/me/wallets")
       .send({
         walletAddress: constants.AddressZero,
         signature: validSignatureForExistingUser,
@@ -157,9 +167,22 @@ describe("PATCH /users/wallets", () => {
     expect(response.status).toBe(403);
   });
 
+  it("404 for non-existent user", async () => {
+    const response = await request(app.getHttpServer())
+      .patch("/users/me/wallets")
+      .send({
+        walletAddress: signer.address,
+        signature: validSignatureForNonExistingUser,
+        discordId: nonExistingUser.discordId,
+      })
+      .set("Authorization", `Bearer ${validJwtForNonExistingUser}`);
+
+    expect(response.status).toBe(404);
+  });
+
   it("404 for non-existent wallet", async () => {
     const response = await request(app.getHttpServer())
-      .patch("/users/wallets")
+      .patch("/users/me/wallets")
       .send({
         walletAddress: signer.address,
         signature: validSignatureForNonExistingUser,
@@ -171,18 +194,11 @@ describe("PATCH /users/wallets", () => {
   });
 
   it("200 for valid body", async () => {
-    await request(app.getHttpServer())
-      .post("/users/wallets")
-      .send({
-        walletAddress: signer.address,
-        signature: validSignatureForExistingUser,
-        discordId: existingUser.discordId,
-      })
-      .set("Authorization", `Bearer ${validJwtForExistingUser}`);
+    await createWalletForExistingUser();
 
     const newSigner = Wallet.createRandom();
     const patchResponse = await request(app.getHttpServer())
-      .patch("/users/wallets")
+      .patch("/users/me/wallets")
       .send({
         walletAddress: newSigner.address,
         signature: await newSigner.signMessage(existingUser.discordId),
@@ -191,9 +207,20 @@ describe("PATCH /users/wallets", () => {
       .set("Authorization", `Bearer ${validJwtForExistingUser}`);
 
     expect(patchResponse.status).toBe(200);
-    expect(patchResponse.body.wallet.userId).toBe(existingUser.id);
-    expect(patchResponse.body.wallet.walletAddress).toBe(newSigner.address);
+    expect(patchResponse.body.userWallet.userId).toBe(existingUser.id);
+    expect(patchResponse.body.userWallet.walletAddress).toBe(newSigner.address);
 
-    await app.get(WalletService).deleteWalletByUserId(existingUser.id);
+    await app.get(UserWalletService).deleteWalletByUserId(existingUser.id);
   });
 });
+
+async function createWalletForExistingUser() {
+  await request(app.getHttpServer())
+    .post("/users/me/wallets")
+    .send({
+      walletAddress: signer.address,
+      signature: validSignatureForExistingUser,
+      discordId: existingUser.discordId,
+    })
+    .set("Authorization", `Bearer ${validJwtForExistingUser}`);
+}
