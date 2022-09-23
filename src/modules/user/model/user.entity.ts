@@ -11,8 +11,14 @@ export class User {
   @Column()
   uuid: string;
 
-  @Column()
-  discordId: string;
+  @Column({ nullable: true })
+  discordId?: string;
+
+  @Column({ nullable: true })
+  discordName?: string;
+
+  @Column({ nullable: true })
+  discordAvatar?: string;
 
   @CreateDateColumn()
   createdAt: Date;

@@ -8,7 +8,7 @@ export class User1663529363075 implements MigrationInterface {
       "id" SERIAL NOT NULL, 
       "shortId" character varying NOT NULL, 
       "uuid" character varying NOT NULL, 
-      "discordId" character varying NOT NULL, 
+      "discordId" character varying, 
       "createdAt" TIMESTAMP NOT NULL DEFAULT now(), 
       "updatedAt" TIMESTAMP NOT NULL DEFAULT now(), 
       CONSTRAINT "PK_cace4a159ff9f2512dd42373760" PRIMARY KEY ("id")
