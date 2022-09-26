@@ -24,6 +24,18 @@ export class WalletNotFoundException extends HttpException {
   }
 }
 
+export class UserWalletNotFoundException extends HttpException {
+  constructor() {
+    super(
+      {
+        error: UserWalletNotFoundException.name,
+        message: `User wallet not found`,
+      },
+      HttpStatus.NOT_FOUND,
+    );
+  }
+}
+
 export class InvalidSignatureException extends HttpException {
   constructor() {
     super(
