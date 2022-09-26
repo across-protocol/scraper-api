@@ -17,6 +17,7 @@ import { Web3Module } from "./modules/web3/module";
 import { DepositModule } from "./modules/deposit/module";
 import { AuthModule } from "./modules/auth/auth.module";
 import { UserModule } from "./modules/user/module";
+import { AirdropModule } from "./modules/airdrop/module";
 
 @Module({
   imports: [
@@ -44,6 +45,7 @@ import { UserModule } from "./modules/user/module";
     DepositModule,
     AuthModule,
     UserModule,
+    AirdropModule,
   ],
 })
 export class AppModule {
