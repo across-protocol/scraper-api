@@ -10,8 +10,6 @@ import { ScraperQueuesService } from "./service/ScraperQueuesService";
 import { BlocksEventsQueueMessage, ScraperQueue } from "./adapter/messaging";
 import { wait } from "../../utils";
 
-type Task = Record<string, { from: number; to: number }>;
-
 @Injectable()
 export class ScraperService {
   private logger = new Logger(ScraperService.name);
