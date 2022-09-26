@@ -5,23 +5,27 @@ import { Wallet, constants } from "ethers";
 
 import { ValidationPipe } from "../src/validation.pipe";
 import { AppModule } from "../src/app.module";
-import { mockUserEntity } from "./fixtures/user";
 import { generateJwtForUser } from "./utils";
 import { UserService } from "../src/modules/user/services/user.service";
 import { User } from "../src/modules/user/model/user.entity";
-import { UserWalletService } from "../src/modules/user/services/user-wallet.service";
+import { UserFixture } from "../src/modules/user/adapter/db/user-fixture";
+import { getRandomInt } from "../src/utils";
+import { UserWalletFixture } from "../src/modules/user/adapter/db/user-wallet-fixture";
 
 const signer = Wallet.createRandom();
-const nonExistingUser = mockUserEntity();
 
 let app: INestApplication;
 let existingUser: User;
 let existingUser2: User;
+let nonExistingUser: User;
 let validJwtForExistingUser: string;
 let validJwtForExistingUser2: string;
 let validJwtForNonExistingUser: string;
 let validSignatureForExistingUser: string;
 let validSignatureForNonExistingUser: string;
+
+let userFixture: UserFixture;
+let userWalletFixture: UserWalletFixture;
 
 beforeAll(async () => {
   const testingModule = await Test.createTestingModule({
@@ -32,13 +36,24 @@ beforeAll(async () => {
   app.useGlobalPipes(new ValidationPipe());
   await app.init();
 
+  userFixture = app.get(UserFixture);
+  userWalletFixture = app.get(UserWalletFixture);
+
+  nonExistingUser = userFixture.mockUserEntity({
+    id: getRandomInt(),
+    discordId: getRandomInt().toString(),
+  });
   [existingUser, existingUser2] = await Promise.all([
-    app
-      .get(UserService)
-      .createOrUpdateUserFromDiscord({ discordAvatar: "avatar", discordId: "1", discordName: "name1" }),
-    app
-      .get(UserService)
-      .createOrUpdateUserFromDiscord({ discordAvatar: "avatar", discordId: "2", discordName: "name2" }),
+    app.get(UserService).createOrUpdateUserFromDiscord({
+      discordAvatar: "avatar",
+      discordId: getRandomInt().toString(),
+      discordName: "name1",
+    }),
+    app.get(UserService).createOrUpdateUserFromDiscord({
+      discordAvatar: "avatar",
+      discordId: getRandomInt().toString(),
+      discordName: "name1",
+    }),
   ]);
   validJwtForExistingUser = generateJwtForUser(existingUser);
   validJwtForExistingUser2 = generateJwtForUser(existingUser2);
@@ -50,8 +65,7 @@ beforeAll(async () => {
 });
 
 afterAll(async () => {
-  await app.get(UserService).deleteUserById(existingUser.id);
-  await app.get(UserService).deleteUserById(existingUser2.id);
+  await userFixture.deleteAllUsers();
   await app.close();
 });
 
@@ -72,7 +86,7 @@ describe("GET /users/me", () => {
 
 describe("GET /users/me/wallets", () => {
   afterEach(async () => {
-    await app.get(UserWalletService).deleteWalletByUserId(existingUser.id);
+    await userWalletFixture.deleteAllUserWallets();
   });
 
   it("401 for unauthorized user", async () => {
@@ -100,7 +114,7 @@ describe("GET /users/me/wallets", () => {
 
 describe("POST /users/me/wallets", () => {
   afterEach(async () => {
-    await app.get(UserWalletService).deleteWalletByUserId(existingUser.id);
+    await userWalletFixture.deleteAllUserWallets();
   });
 
   it("401 for unauthorized user", async () => {
@@ -173,7 +187,7 @@ describe("POST /users/me/wallets", () => {
 
 describe("PATCH /users/me/wallets", () => {
   afterEach(async () => {
-    await app.get(UserWalletService).deleteWalletByUserId(existingUser.id);
+    await userWalletFixture.deleteAllUserWallets();
   });
 
   it("401 for unauthorized user", async () => {

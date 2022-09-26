@@ -28,7 +28,7 @@ export class AirdropController {
       ],
       {
         limits: { fileSize: 50 * 1024 * 1024 },
-        dest: "/uploads",
+        dest: "./uploads",
       },
     ),
   )

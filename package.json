@@ -18,8 +18,9 @@
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
-    "test:e2e": "jest --maxConcurrency=1 --config ./test/jest-e2e.json",
+    "test:e2e": "jest --runInBand --config ./test/jest-e2e.json",
     "test:e2e:docker": "docker-compose -f docker-compose.e2e.yml up --abort-on-container-exit --exit-code-from backend",
+    "test:e2e:docker:prune": "docker-compose -f docker-compose.e2e.yml down -v",
     "typeorm": "node --require ts-node/register ./node_modules/typeorm/cli.js",
     "db:migration:generate": "yarn typeorm -- migration:generate -d ormconfig.ts",
     "db:migration:run": "yarn typeorm -- migration:run  -d ormconfig.ts"
