@@ -3,6 +3,7 @@ import { Injectable } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
 import { Deposit, DepositFillTx, TransferStatus } from "../../model/deposit.entity";
+import { getRandomInt } from "../../../../utils";
 
 @Injectable()
 export class DepositFixture {
@@ -25,7 +26,7 @@ export class DepositFixture {
 
 export function mockDepositEntity(overrides: Partial<Deposit>) {
   return {
-    depositId: 1,
+    depositId: getRandomInt(),
     sourceChainId: 1,
     destinationChainId: 1,
     depositDate: new Date(),

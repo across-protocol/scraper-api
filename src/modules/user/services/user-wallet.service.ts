@@ -1,10 +1,10 @@
 import { Injectable, Inject } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
-import { Repository } from "typeorm";
+import { FindOptionsWhere, Repository } from "typeorm";
 import { utils } from "ethers";
 
 import { UserWallet } from "../model/user-wallet.entity";
-import { InvalidSignatureException, WalletNotFoundException, WalletAlreadyLinkedException } from "./exceptions";
+import { InvalidSignatureException, WalletNotFoundException, WalletAlreadyLinkedException, UserWalletNotFoundException } from "./exceptions";
 import { UserService } from "./user.service";
 
 @Injectable()
@@ -112,5 +112,19 @@ export class UserWalletService {
 
   public async assertUserExists(userId: number) {
     await this.userService.getUserByAttributes({ id: userId }, true);
+  }
+
+  public async getUserWalletByAttributes(
+    where: FindOptionsWhere<UserWallet>,
+    validate = false,
+    select?: (keyof UserWallet)[],
+  ) {
+    const user = await this.userWalletRepository.findOne({ where, select });
+
+    if (!user && validate) {
+      throw new UserWalletNotFoundException();
+    }
+
+    return user;
   }
 }
