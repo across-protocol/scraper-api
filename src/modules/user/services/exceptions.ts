@@ -35,3 +35,15 @@ export class InvalidSignatureException extends HttpException {
     );
   }
 }
+
+export class WalletAlreadyLinkedException extends HttpException {
+  constructor() {
+    super(
+      {
+        error: WalletAlreadyLinkedException.name,
+        message: "Wallet is already linked",
+      },
+      HttpStatus.BAD_REQUEST,
+    );
+  }
+}

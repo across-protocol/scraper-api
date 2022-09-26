@@ -1,5 +1,7 @@
 import { Controller, Get, Post, Patch, Body, Req, UseGuards } from "@nestjs/common";
 import { ApiTags } from "@nestjs/swagger";
+import { utils } from "ethers";
+
 import { JwtAuthGuard } from "../../../auth/entry-points/http/jwt.guard";
 import { UserService } from "../../services/user.service";
 import { UserWalletService } from "../../services/user-wallet.service";
@@ -38,14 +40,14 @@ export class UserController {
     const userId = req.user.id;
     const { walletAddress, signature, discordId } = body;
 
-    const userWallet = await this.userWalletService.linkWallet({
+    const linkedUserWallet = await this.userWalletService.linkWallet({
       userId,
-      walletAddress,
+      walletAddress: utils.getAddress(walletAddress),
       signature,
       discordId,
     });
 
-    return { userWallet };
+    return { walletAddress: linkedUserWallet.walletAddress };
   }
 
   @Patch("me/wallets")
@@ -55,13 +57,13 @@ export class UserController {
     const userId = req.user.id;
     const { walletAddress, signature, discordId } = body;
 
-    const userWallet = await this.userWalletService.updateLinkedWallet({
+    const updatedUserWallet = await this.userWalletService.updateLinkedWallet({
       userId,
-      walletAddress,
+      walletAddress: utils.getAddress(walletAddress),
       signature,
       discordId,
     });
 
-    return { userWallet };
+    return { walletAddress: updatedUserWallet.walletAddress };
   }
 }
