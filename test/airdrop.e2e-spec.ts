@@ -120,8 +120,6 @@ describe("GET /airdrop/rewards", () => {
 });
 
 describe("POST /airdrop/upload/rewards", () => {
-  beforeAll(async () => {});
-
   it("should not be authorized if token is not attached", async () => {
     const response = await request(app.getHttpServer()).post("/airdrop/upload/rewards");
     expect(response.statusCode).toStrictEqual(401);
@@ -135,8 +133,6 @@ describe("POST /airdrop/upload/rewards", () => {
       .set({ Authorization: `Bearer ${userJwt}` });
     expect(response.statusCode).toStrictEqual(403);
   });
-
-  afterAll(async () => {});
 });
 
 afterAll(async () => {
