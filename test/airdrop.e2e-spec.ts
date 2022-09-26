@@ -12,6 +12,7 @@ import { WalletRewardsFixture } from "../src/modules/airdrop/adapter/db/wallet-r
 import { CommunityRewardsFixture } from "../src/modules/airdrop/adapter/db/community-rewards-fixture";
 import { UserFixture } from "../src/modules/user/adapter/db/user-fixture";
 import { UserWalletFixture } from "../src/modules/user/adapter/db/user-wallet-fixture";
+import { configValues } from "../src/modules/configuration";
 
 let app: INestApplication;
 
@@ -126,8 +127,7 @@ describe("POST /airdrop/upload/rewards", () => {
   });
 
   it("should not be authorized if not admin", async () => {
-    const userJwt = app.get(JwtService).sign({ roles: [Role.User] });
-    console.log({ userJwt });
+    const userJwt = app.get(JwtService).sign({ roles: [Role.User] }, { secret: configValues().auth.jwtSecret });
     const response = await request(app.getHttpServer())
       .post("/airdrop/upload/rewards")
       .set({ Authorization: `Bearer ${userJwt}` });
