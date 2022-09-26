@@ -20,6 +20,17 @@ export class UserController {
     };
   }
 
+  @Get("me/wallets")
+  @UseGuards(JwtAuthGuard)
+  @ApiTags("users")
+  public async getWallet(@Req() req: any) {
+    const userId = req.user.id;
+
+    const { walletAddress } = await this.userWalletService.getWalletByUserId(userId);
+
+    return { walletAddress };
+  }
+
   @Post("me/wallets")
   @UseGuards(JwtAuthGuard)
   @ApiTags("users")
