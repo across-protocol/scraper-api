@@ -11,7 +11,7 @@ import {
 import { User } from "./user.entity";
 
 @Entity()
-@Unique("UK_userWallet_id_walletAddress", ["id", "walletAddress"])
+@Unique("UK_userWallet_walletAddress", ["walletAddress"])
 @Unique("UK_userWallet_userId", ["userId"])
 export class UserWallet {
   @PrimaryGeneratedColumn()
