@@ -33,16 +33,12 @@ beforeAll(async () => {
   await app.init();
 
   [existingUser, existingUser2] = await Promise.all([
-    app.get(UserService).createUserFromDiscordId(
-      mockUserEntity({
-        discordId: Date.now().toString(),
-      }),
-    ),
-    app.get(UserService).createUserFromDiscordId(
-      mockUserEntity({
-        discordId: (Date.now() - 1000).toString(),
-      }),
-    ),
+    app
+      .get(UserService)
+      .createOrUpdateUserFromDiscord({ discordAvatar: "avatar", discordId: "1", discordName: "name1" }),
+    app
+      .get(UserService)
+      .createOrUpdateUserFromDiscord({ discordAvatar: "avatar", discordId: "2", discordName: "name2" }),
   ]);
   validJwtForExistingUser = generateJwtForUser(existingUser);
   validJwtForExistingUser2 = generateJwtForUser(existingUser2);
