@@ -23,7 +23,7 @@ const entities = [
   User,
   WalletRewards,
   CommunityRewards,
-  UserWallet
+  UserWallet,
 ];
 
 @Injectable()

@@ -4,7 +4,12 @@ import { FindOptionsWhere, Repository } from "typeorm";
 import { utils } from "ethers";
 
 import { UserWallet } from "../model/user-wallet.entity";
-import { InvalidSignatureException, WalletNotFoundException, WalletAlreadyLinkedException, UserWalletNotFoundException } from "./exceptions";
+import {
+  InvalidSignatureException,
+  WalletNotFoundException,
+  WalletAlreadyLinkedException,
+  UserWalletNotFoundException,
+} from "./exceptions";
 import { UserService } from "./user.service";
 
 @Injectable()

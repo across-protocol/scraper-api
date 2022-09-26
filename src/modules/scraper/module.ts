@@ -1,6 +1,6 @@
 import { HttpModule } from "@nestjs/axios";
 import { BullModule } from "@nestjs/bull";
-import { forwardRef, Module } from "@nestjs/common";
+import { Module } from "@nestjs/common";
 import { TypeOrmModule } from "@nestjs/typeorm";
 
 import { AppConfigModule } from "../configuration/configuration.module";
