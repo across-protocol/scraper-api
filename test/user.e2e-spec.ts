@@ -61,6 +61,34 @@ describe("GET /users/me", () => {
   });
 });
 
+describe("GET /users/me/wallets", () => {
+  afterEach(async () => {
+    await app.get(UserWalletService).deleteWalletByUserId(existingUser.id);
+  });
+
+  it("401 for unauthorized user", async () => {
+    const response = await request(app.getHttpServer()).get("/users/me/wallets");
+    expect(response.status).toBe(401);
+  });
+
+  it("404 for non-existent user wallet", async () => {
+    const response = await request(app.getHttpServer())
+      .get("/users/me/wallets")
+      .set("Authorization", `Bearer ${validJwtForExistingUser}`);
+    expect(response.status).toBe(404);
+  });
+
+  it("200 with walletAddress for valid token", async () => {
+    await createWalletForExistingUser();
+
+    const response = await request(app.getHttpServer())
+      .get("/users/me/wallets")
+      .set("Authorization", `Bearer ${validJwtForExistingUser}`);
+    expect(response.status).toBe(200);
+    expect(response.body.walletAddress).toBe(signer.address);
+  });
+});
+
 describe("POST /users/me/wallets", () => {
   afterAll(async () => {
     await app.get(UserWalletService).deleteWalletByUserId(existingUser.id);
