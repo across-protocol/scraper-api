@@ -14,16 +14,13 @@ export class UserFixture {
     return this.userRepository.save(user);
   }
 
-  public mockUserEntity(overrides: Partial<User> = {}): User {
+  public mockUserEntity(overrides: Partial<User> = {}) {
     return {
-      id: 0,
       discordAvatar: "https://picsum.photos/200",
       discordId: "1",
       discordName: "name",
       shortId: this.createShortId(),
       uuid: this.createUUID(),
-      createdAt: new Date(),
-      updatedAt: new Date(),
       ...overrides,
     };
   }

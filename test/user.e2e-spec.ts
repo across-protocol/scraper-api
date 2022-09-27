@@ -13,11 +13,16 @@ import { getRandomInt } from "../src/utils";
 import { UserWalletFixture } from "../src/modules/user/adapter/db/user-wallet-fixture";
 
 const signer = Wallet.createRandom();
+const nonExistingUser = {
+  id: getRandomInt(),
+  discordId: getRandomInt().toString(),
+  shortId: "shortId",
+  uuid: "uuid",
+};
 
 let app: INestApplication;
 let existingUser: User;
 let existingUser2: User;
-let nonExistingUser: User;
 let validJwtForExistingUser: string;
 let validJwtForExistingUser2: string;
 let validJwtForNonExistingUser: string;
@@ -39,10 +44,6 @@ beforeAll(async () => {
   userFixture = app.get(UserFixture);
   userWalletFixture = app.get(UserWalletFixture);
 
-  nonExistingUser = userFixture.mockUserEntity({
-    id: getRandomInt(),
-    discordId: getRandomInt().toString(),
-  });
   [existingUser, existingUser2] = await Promise.all([
     app.get(UserService).createOrUpdateUserFromDiscord({
       discordAvatar: "avatar",
