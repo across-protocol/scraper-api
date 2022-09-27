@@ -9,11 +9,14 @@ export class BullConfigService implements SharedBullConfigurationFactory {
   createSharedConfiguration(): BullModuleOptions {
     const { host, password, port } = this.config.values.redis;
 
+    const isDefaultHost = ["localhost", "127.0.0.1", "redis"].includes(host);
+
     return {
       redis: {
         host,
         port,
-        password,
+        // Suppresses noisy warn log message. Related https://github.com/luin/ioredis/issues/1249
+        password: isDefaultHost ? undefined : password,
       },
       defaultJobOptions: {
         backoff: { type: "capped" },
