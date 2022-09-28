@@ -1,4 +1,4 @@
-import { Module } from "@nestjs/common";
+import { Module, Provider, DynamicModule } from "@nestjs/common";
 import { TypeOrmModule } from "@nestjs/typeorm";
 import { UserController } from "./entry-points/http/user.controller";
 import { User } from "./model/user.entity";
@@ -7,11 +7,23 @@ import { UserService } from "./services/user.service";
 import { UserWalletService } from "./services/user-wallet.service";
 import { UserFixture } from "./adapter/db/user-fixture";
 import { UserWalletFixture } from "./adapter/db/user-wallet-fixture";
+import { ModuleOptions, RunMode } from "../../dynamic-module";
 
-@Module({
-  providers: [UserService, UserWalletService, UserFixture, UserWalletFixture],
-  controllers: [UserController],
-  imports: [TypeOrmModule.forFeature([User, UserWallet])],
-  exports: [UserService, UserWalletService],
-})
-export class UserModule {}
+@Module({})
+export class UserModule {
+  static forRoot(moduleOptions: ModuleOptions): DynamicModule {
+    const providers: Provider<any>[] = [UserService, UserWalletService];
+
+    if (moduleOptions.runMode === RunMode.Test) {
+      providers.push(UserFixture, UserWalletFixture);
+    }
+
+    return {
+      module: UserModule,
+      providers,
+      controllers: [UserController],
+      imports: [TypeOrmModule.forFeature([User, UserWallet])],
+      exports: [UserService, UserWalletService],
+    };
+  }
+}

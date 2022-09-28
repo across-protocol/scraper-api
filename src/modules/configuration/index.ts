@@ -1,5 +1,6 @@
 import { registerAs } from "@nestjs/config";
 import { ChainIds } from "../web3/model/ChainId";
+import { RunMode } from "../../dynamic-module";
 
 export enum StickyReferralAddressesMechanism {
   Queue = "queue",
@@ -8,6 +9,9 @@ export enum StickyReferralAddressesMechanism {
 }
 
 export const configValues = () => ({
+  runMode: Object.values(RunMode).includes(process.env.RUN_MODE as RunMode)
+    ? (process.env.RUN_MODE as RunMode)
+    : RunMode.Normal,
   database: {
     host: process.env.DB_HOST,
     port: parseInt(process.env.DB_PORT, 10),

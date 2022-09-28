@@ -1,14 +1,21 @@
 import { NestFactory } from "@nestjs/core";
 import helmet from "helmet";
 import { NestExpressApplication } from "@nestjs/platform-express";
+import dotenv from "dotenv";
+dotenv.config();
 
 import { AppModule } from "./app.module";
 import { AppConfig } from "./modules/configuration/configuration.service";
+import { configValues } from "./modules/configuration";
 import { DocumentBuilder, SwaggerModule } from "@nestjs/swagger";
 import { ValidationPipe } from "./validation.pipe";
 
 async function bootstrap() {
-  const app = await NestFactory.create<NestExpressApplication>(AppModule);
+  const app = await NestFactory.create<NestExpressApplication>(
+    AppModule.forRoot({
+      runMode: configValues().runMode,
+    }),
+  );
   const config = app.get(AppConfig);
   const port = config.values.app.port;
 

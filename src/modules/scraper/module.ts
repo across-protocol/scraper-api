@@ -1,6 +1,6 @@
 import { HttpModule } from "@nestjs/axios";
 import { BullModule } from "@nestjs/bull";
-import { Module } from "@nestjs/common";
+import { DynamicModule, Module, Provider } from "@nestjs/common";
 import { TypeOrmModule } from "@nestjs/typeorm";
 
 import { AppConfigModule } from "../configuration/configuration.module";
@@ -32,85 +32,95 @@ import { SuggestedFeesConsumer } from "./adapter/messaging/SuggestedFeesConsumer
 import { SuggestedFeesService } from "./adapter/across-serverless-api/suggested-fees-service";
 import { TrackFillEventConsumer } from "./adapter/messaging/TrackFillEventConsumer";
 import { TrackService } from "./adapter/amplitude/track-service";
+import { ModuleOptions, RunMode } from "../../dynamic-module";
 
-@Module({
-  providers: [
-    ScraperService,
-    ScraperQueuesService,
-    SuggestedFeesService,
-    TrackService,
-    BlocksEventsConsumer,
-    MerkleDistributorBlocksEventsConsumer,
-    FillEventsConsumer,
-    SpeedUpEventsConsumer,
-    BlockNumberConsumer,
-    TokenDetailsConsumer,
-    DepositReferralConsumer,
-    TokenPriceConsumer,
-    DepositFilledDateConsumer,
-    DepositAcxPriceConsumer,
-    SuggestedFeesConsumer,
-    TrackFillEventConsumer,
-    DepositFixture,
-    ClaimFixture,
-  ],
-  imports: [
-    Web3Module,
-    AppConfigModule,
-    TypeOrmModule.forFeature([ProcessedBlock, MerkleDistributorProcessedBlock, Claim, Deposit]),
-    MarketPriceModule,
-    HttpModule,
-    ReferralModule,
-    BullModule.registerQueue({
-      name: ScraperQueue.BlockNumber,
-    }),
-    BullModule.registerQueue({
-      name: ScraperQueue.BlocksEvents,
-    }),
-    BullModule.registerQueue({
-      name: ScraperQueue.MerkleDistributorBlocksEvents,
-    }),
-    BullModule.registerQueue({
-      name: ScraperQueue.TokenDetails,
-    }),
-    BullModule.registerQueue({
-      name: ScraperQueue.TokenPrice,
-    }),
-    BullModule.registerQueue({
-      name: ScraperQueue.DepositReferral,
-    }),
-    BullModule.registerQueue({
-      name: ScraperQueue.DepositAcxPrice,
-    }),
-    BullModule.registerQueue({
-      name: ScraperQueue.FillEvents,
-      defaultJobOptions: {
-        backoff: 120 * 1000,
-        attempts: Number.MAX_SAFE_INTEGER,
-        removeOnComplete: true,
-        removeOnFail: true,
-      },
-    }),
-    BullModule.registerQueue({
-      name: ScraperQueue.SpeedUpEvents,
-      defaultJobOptions: {
-        backoff: 120 * 1000,
-        attempts: Number.MAX_SAFE_INTEGER,
-        removeOnComplete: true,
-        removeOnFail: true,
-      },
-    }),
-    BullModule.registerQueue({
-      name: ScraperQueue.DepositFilledDate,
-    }),
-    BullModule.registerQueue({
-      name: ScraperQueue.SuggestedFees,
-    }),
-    BullModule.registerQueue({
-      name: ScraperQueue.TrackFillEvent,
-    }),
-  ],
-  exports: [ScraperQueuesService],
-  controllers: [ScraperController],
-})
-export class ScraperModule {}
+@Module({})
+export class ScraperModule {
+  static forRoot(moduleOptions: ModuleOptions): DynamicModule {
+    const providers: Provider<any>[] = [
+      ScraperService,
+      ScraperQueuesService,
+      SuggestedFeesService,
+      TrackService,
+      BlocksEventsConsumer,
+      MerkleDistributorBlocksEventsConsumer,
+      FillEventsConsumer,
+      SpeedUpEventsConsumer,
+      BlockNumberConsumer,
+      TokenDetailsConsumer,
+      DepositReferralConsumer,
+      TokenPriceConsumer,
+      DepositFilledDateConsumer,
+      DepositAcxPriceConsumer,
+      SuggestedFeesConsumer,
+      TrackFillEventConsumer,
+    ];
+
+    if (moduleOptions.runMode === RunMode.Test) {
+      providers.push(DepositFixture, ClaimFixture);
+    }
+
+    return {
+      module: ScraperModule,
+      providers,
+      imports: [
+        Web3Module,
+        AppConfigModule,
+        TypeOrmModule.forFeature([ProcessedBlock, MerkleDistributorProcessedBlock, Claim, Deposit]),
+        MarketPriceModule,
+        HttpModule,
+        ReferralModule.forRoot(moduleOptions),
+        BullModule.registerQueue({
+          name: ScraperQueue.BlockNumber,
+        }),
+        BullModule.registerQueue({
+          name: ScraperQueue.BlocksEvents,
+        }),
+        BullModule.registerQueue({
+          name: ScraperQueue.MerkleDistributorBlocksEvents,
+        }),
+        BullModule.registerQueue({
+          name: ScraperQueue.TokenDetails,
+        }),
+        BullModule.registerQueue({
+          name: ScraperQueue.TokenPrice,
+        }),
+        BullModule.registerQueue({
+          name: ScraperQueue.DepositReferral,
+        }),
+        BullModule.registerQueue({
+          name: ScraperQueue.DepositAcxPrice,
+        }),
+        BullModule.registerQueue({
+          name: ScraperQueue.FillEvents,
+          defaultJobOptions: {
+            backoff: 120 * 1000,
+            attempts: Number.MAX_SAFE_INTEGER,
+            removeOnComplete: true,
+            removeOnFail: true,
+          },
+        }),
+        BullModule.registerQueue({
+          name: ScraperQueue.SpeedUpEvents,
+          defaultJobOptions: {
+            backoff: 120 * 1000,
+            attempts: Number.MAX_SAFE_INTEGER,
+            removeOnComplete: true,
+            removeOnFail: true,
+          },
+        }),
+        BullModule.registerQueue({
+          name: ScraperQueue.DepositFilledDate,
+        }),
+        BullModule.registerQueue({
+          name: ScraperQueue.SuggestedFees,
+        }),
+        BullModule.registerQueue({
+          name: ScraperQueue.TrackFillEvent,
+        }),
+      ],
+      exports: [ScraperQueuesService],
+      controllers: [ScraperController],
+    };
+  }
+}

@@ -1,4 +1,4 @@
-import { Module } from "@nestjs/common";
+import { Module, Provider, DynamicModule } from "@nestjs/common";
 import { TypeOrmModule } from "@nestjs/typeorm";
 
 import { UserModule } from "../user/module";
@@ -16,27 +16,38 @@ import { MerkleDistributorWindowFixture } from "./adapter/db/merkle-distributor-
 import { MerkleDistributorWindow } from "./model/merkle-distributor-window.entity";
 import { MerkleDistributorRecipient } from "./model/merkle-distributor-recipient.entity";
 import { MerkleDistributorRecipientFixture } from "./adapter/db/merkle-distributor-recipient";
+import { ModuleOptions, RunMode } from "../../dynamic-module";
 
-@Module({
-  providers: [
-    AirdropService,
-    WalletRewardsFixture,
-    CommunityRewardsFixture,
-    MerkleDistributorWindowFixture,
-    MerkleDistributorRecipientFixture,
-  ],
-  controllers: [AirdropController],
-  imports: [
-    TypeOrmModule.forFeature([
-      CommunityRewards,
-      WalletRewards,
-      Deposit,
-      MerkleDistributorWindow,
-      MerkleDistributorRecipient,
-    ]),
-    UserModule,
-    AppConfigModule,
-  ],
-  exports: [],
-})
-export class AirdropModule {}
+@Module({})
+export class AirdropModule {
+  static forRoot(moduleOptions: ModuleOptions): DynamicModule {
+    const providers: Provider<any>[] = [AirdropService];
+
+    if (moduleOptions.runMode === RunMode.Test) {
+      providers.push(
+        WalletRewardsFixture,
+        CommunityRewardsFixture,
+        MerkleDistributorWindowFixture,
+        MerkleDistributorRecipientFixture,
+      );
+    }
+
+    return {
+      module: AirdropModule,
+      providers,
+      controllers: [AirdropController],
+      imports: [
+        TypeOrmModule.forFeature([
+          CommunityRewards,
+          WalletRewards,
+          Deposit,
+          MerkleDistributorWindow,
+          MerkleDistributorRecipient,
+        ]),
+        UserModule.forRoot(moduleOptions),
+        AppConfigModule,
+      ],
+      exports: [],
+    };
+  }
+}
