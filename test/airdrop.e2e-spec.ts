@@ -15,12 +15,13 @@ import { UserWalletFixture } from "../src/modules/user/adapter/db/user-wallet-fi
 import { configValues } from "../src/modules/configuration";
 import { TokenFixture } from "../src/modules/web3/adapters/db/token-fixture";
 import { BigNumber } from "ethers";
+import { RunMode } from "../src/dynamic-module";
 
 let app: INestApplication;
 
 beforeAll(async () => {
   const moduleFixture = await Test.createTestingModule({
-    imports: [AppModule],
+    imports: [AppModule.forRoot({ runMode: RunMode.Test })],
   }).compile();
 
   app = moduleFixture.createNestApplication();
@@ -199,7 +200,7 @@ describe("POST /airdrop/upload/rewards", () => {
   });
 
   it("should not be authorized if not admin", async () => {
-    const userJwt = app.get(JwtService).sign({ roles: [Role.User] }, { secret: configValues().auth.jwtSecret });
+    const userJwt = app.get(JwtService).sign({ roles: [Role.User] });
     const response = await request(app.getHttpServer())
       .post("/airdrop/upload/rewards")
       .set({ Authorization: `Bearer ${userJwt}` });
