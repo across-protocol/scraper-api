@@ -2,6 +2,7 @@ import { Module } from "@nestjs/common";
 import { TypeOrmModule } from "@nestjs/typeorm";
 
 import { UserModule } from "../user/module";
+import { AppConfigModule } from "../configuration/configuration.module";
 
 import { WalletRewardsFixture } from "./adapter/db/wallet-rewards-fixture";
 import { CommunityRewardsFixture } from "./adapter/db/community-rewards-fixture";
@@ -15,7 +16,7 @@ import { Deposit } from "../scraper/model/deposit.entity";
 @Module({
   providers: [AirdropService, WalletRewardsFixture, CommunityRewardsFixture],
   controllers: [AirdropController],
-  imports: [TypeOrmModule.forFeature([CommunityRewards, WalletRewards, Deposit]), UserModule],
+  imports: [TypeOrmModule.forFeature([CommunityRewards, WalletRewards, Deposit]), UserModule, AppConfigModule],
   exports: [],
 })
 export class AirdropModule {}

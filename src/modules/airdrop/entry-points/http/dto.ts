@@ -1,5 +1,5 @@
 import { ApiProperty } from "@nestjs/swagger";
-import { IsString, Length } from "class-validator";
+import { IsEthereumAddress, IsNumberString, IsString, Length } from "class-validator";
 
 export class GetAirdropRewardsQuery {
   @IsString()
@@ -39,4 +39,22 @@ export class GetAirdropRewardsResponse {
 
   @ApiProperty()
   communityRewards: GetAirdropRewardsCategoryResponse;
+}
+
+export class EditWalletRewardsBody {
+  @ApiProperty({ example: "0x0000000000000000000000000000000000000000" })
+  @IsEthereumAddress()
+  walletAddress: string;
+
+  @ApiProperty({ example: "0" })
+  @IsNumberString({ no_symbols: true })
+  earlyUserRewards: string;
+
+  @ApiProperty({ example: "0" })
+  @IsNumberString({ no_symbols: true })
+  liquidityProviderRewards: string;
+
+  @ApiProperty({ example: "0" })
+  @IsNumberString({ no_symbols: true })
+  welcomeTravellerRewards: string;
 }

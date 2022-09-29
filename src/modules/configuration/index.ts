@@ -67,6 +67,7 @@ export const configValues = () => ({
   acxUsdPrice: 0.1,
   enableSpokePoolsEventsProcessing: process.env.ENABLE_SPOKE_POOLS_EVENTS_PROCESSING === "true",
   enableReferralsMaterializedViewRefresh: process.env.ENABLE_REFERRALS_MATERIALIZED_VIEW_REFRESH === "true",
+  allowWalletRewardsEdit: process.env.ALLOW_WALLET_REWARDS_EDIT === "true",
   stickyReferralAddressesMechanism: process.env.STICKY_REFERRAL_ADDRESSES_MECHANISM
     ? process.env.STICKY_REFERRAL_ADDRESSES_MECHANISM
     : StickyReferralAddressesMechanism.Disabled,

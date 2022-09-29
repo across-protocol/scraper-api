@@ -1,11 +1,22 @@
-import { Controller, Get, Post, Query, Req, UploadedFiles, UseGuards, UseInterceptors } from "@nestjs/common";
+import {
+  Body,
+  Controller,
+  Get,
+  Patch,
+  Post,
+  Query,
+  Req,
+  UploadedFiles,
+  UseGuards,
+  UseInterceptors,
+} from "@nestjs/common";
 import { FileFieldsInterceptor } from "@nestjs/platform-express";
 import { ApiResponse, ApiTags } from "@nestjs/swagger";
 import { OptionalJwtAuthGuard } from "../../../auth/entry-points/http/optional-jwt.";
 import { JwtAuthGuard } from "../../../auth/entry-points/http/jwt.guard";
 import { Role, Roles, RolesGuard } from "../../../auth/entry-points/http/roles";
 import { AirdropService } from "../../services/airdrop-service";
-import { GetAirdropRewardsQuery, GetAirdropRewardsResponse } from "./dto";
+import { EditWalletRewardsBody, GetAirdropRewardsQuery, GetAirdropRewardsResponse } from "./dto";
 
 @Controller("airdrop")
 export class AirdropController {
@@ -17,6 +28,12 @@ export class AirdropController {
   @UseGuards(OptionalJwtAuthGuard)
   getAirdropRewards(@Req() req: any, @Query() query: GetAirdropRewardsQuery) {
     return this.airdropService.getRewards(query.address, req.user.id);
+  }
+
+  @Patch("rewards/wallet-rewards")
+  @ApiTags("airdrop")
+  editWalletRewards(@Body() body: EditWalletRewardsBody) {
+    return this.airdropService.editWalletRewards(body);
   }
 
   @Post("upload/rewards")
