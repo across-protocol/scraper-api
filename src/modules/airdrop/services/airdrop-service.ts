@@ -12,7 +12,7 @@ import { WalletRewards } from "../model/wallet-rewards.entity";
 import { UserService } from "../../user/services/user.service";
 import { ProcessCommunityRewardsFileException, ProcessWalletRewardsFileException } from "./exceptions";
 import { EditWalletRewardsBody } from "../entry-points/http/dto";
-import { AppConfig } from "src/modules/configuration/configuration.service";
+import { AppConfig } from "../../configuration/configuration.service";
 
 @Injectable()
 export class AirdropService {
