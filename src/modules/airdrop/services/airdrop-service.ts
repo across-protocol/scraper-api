@@ -1,18 +1,18 @@
-import { Injectable, Logger } from "@nestjs/common";
+import { BadRequestException, HttpException, Injectable, Logger } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { ethers } from "ethers";
 import { readFile } from "fs/promises";
 import BigNumber from "bignumber.js";
 import { IsNull, Not, Repository } from "typeorm";
 
-import { UserService } from "../../user/services/user.service";
-import { UserWalletService } from "../../user/services/user-wallet.service";
-
 import { Deposit } from "../../scraper/model/deposit.entity";
 import { CommunityRewards } from "../model/community-rewards.entity";
 import { WalletRewards } from "../model/wallet-rewards.entity";
 
+import { UserService } from "../../user/services/user.service";
 import { ProcessCommunityRewardsFileException, ProcessWalletRewardsFileException } from "./exceptions";
+import { EditWalletRewardsBody } from "../entry-points/http/dto";
+import { AppConfig } from "src/modules/configuration/configuration.service";
 
 @Injectable()
 export class AirdropService {
@@ -22,9 +22,30 @@ export class AirdropService {
     @InjectRepository(CommunityRewards) private communityRewardsRepository: Repository<CommunityRewards>,
     @InjectRepository(WalletRewards) private walletRewardsRepository: Repository<WalletRewards>,
     @InjectRepository(Deposit) private depositRepository: Repository<Deposit>,
-    private userWalletService: UserWalletService,
     private userService: UserService,
+    private appConfig: AppConfig,
   ) {}
+
+  public async editWalletRewards(params: EditWalletRewardsBody) {
+    if (!this.appConfig.values.allowWalletRewardsEdit) throw new BadRequestException();
+
+    const { earlyUserRewards, liquidityProviderRewards, walletAddress, welcomeTravellerRewards } = params;
+    const address = ethers.utils.getAddress(walletAddress);
+    await this.walletRewardsRepository.upsert(
+      {
+        walletAddress: address,
+        earlyUserRewards,
+        liquidityProviderRewards,
+        welcomeTravellerRewards,
+      },
+      {
+        conflictPaths: ["walletAddress"],
+        skipUpdateIfNoValuesChanged: true, // supported by postgres, skips update if it would not change row values
+      },
+    );
+
+    return { status: "ok" };
+  }
 
   public async getRewards(walletAddress: string, userId?: number) {
     const checksumAddress = ethers.utils.getAddress(walletAddress);
