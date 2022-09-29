@@ -1,6 +1,7 @@
-import { Controller, Get, Post, Query, UploadedFiles, UseGuards, UseInterceptors } from "@nestjs/common";
+import { Controller, Get, Post, Query, Req, UploadedFiles, UseGuards, UseInterceptors } from "@nestjs/common";
 import { FileFieldsInterceptor } from "@nestjs/platform-express";
 import { ApiResponse, ApiTags } from "@nestjs/swagger";
+import { OptionalJwtAuthGuard } from "../../../auth/entry-points/http/optional-jwt.";
 import { JwtAuthGuard } from "../../../auth/entry-points/http/jwt.guard";
 import { Role, Roles, RolesGuard } from "../../../auth/entry-points/http/roles";
 import { AirdropService } from "../../services/airdrop-service";
@@ -13,8 +14,9 @@ export class AirdropController {
   @Get("rewards")
   @ApiResponse({ type: GetAirdropRewardsResponse })
   @ApiTags("airdrop")
-  getAirdropRewards(@Query() query: GetAirdropRewardsQuery) {
-    return this.airdropService.getRewards(query.address);
+  @UseGuards(OptionalJwtAuthGuard)
+  getAirdropRewards(@Req() req: any, @Query() query: GetAirdropRewardsQuery) {
+    return this.airdropService.getRewards(query.address, req.user.id);
   }
 
   @Post("upload/rewards")

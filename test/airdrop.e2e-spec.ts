@@ -39,7 +39,9 @@ describe("GET /airdrop/rewards", () => {
     depositFixture = app.get(DepositFixture);
     userFixture = app.get(UserFixture);
     userWalletFixture = app.get(UserWalletFixture);
+  });
 
+  beforeEach(async () => {
     await communityRewardsFixture.insertManyCommunityRewards([{ discordId: "1", amount: "100" }]);
     await walletRewardsFixture.insertManyWalletRewards([
       {
@@ -81,12 +83,14 @@ describe("GET /airdrop/rewards", () => {
 
   it("should be elligible for all rewards, but welcome traveller not completed", async () => {
     const user = await userFixture.insertUser({ discordId: "1" });
+    const userJwt = app.get(JwtService).sign({ id: user.id }, { secret: configValues().auth.jwtSecret });
     await userWalletFixture.insertUserWallet({
       userId: user.id,
       walletAddress: "0x0000000000000000000000000000000000000002",
     });
     const response = await request(app.getHttpServer())
       .get("/airdrop/rewards")
+      .set({ Authorization: `Bearer ${userJwt}` })
       .query({ address: "0x0000000000000000000000000000000000000002" });
     const responseBody = response.body as GetAirdropRewardsResponse;
     expect(response.status).toBe(200);
@@ -97,11 +101,14 @@ describe("GET /airdrop/rewards", () => {
   });
 
   it("should see traveller rewards as completed", async () => {
+    const user = await userFixture.insertUser({ discordId: "1" });
+    const userJwt = app.get(JwtService).sign({ id: user.id }, { secret: configValues().auth.jwtSecret });
     await depositFixture.insertDeposit(
       mockDepositEntity({ depositorAddr: "0x0000000000000000000000000000000000000002", status: "filled" }),
     );
     const response = await request(app.getHttpServer())
       .get("/airdrop/rewards")
+      .set({ Authorization: `Bearer ${userJwt}` })
       .query({ address: "0x0000000000000000000000000000000000000002" });
     const responseBody = response.body as GetAirdropRewardsResponse;
     expect(response.status).toBe(200);
@@ -111,7 +118,7 @@ describe("GET /airdrop/rewards", () => {
     expect(responseBody.welcomeTravellerRewards.completed).toEqual(true);
   });
 
-  afterAll(async () => {
+  afterEach(async () => {
     await walletRewardsFixture.deleteAllWalletRewards();
     await communityRewardsFixture.deleteAllCommunityRewards();
     await depositFixture.deleteAllDeposits();
