@@ -29,7 +29,12 @@ export class AirdropService {
   public async getRewards(walletAddress: string, userId?: number) {
     const checksumAddress = ethers.utils.getAddress(walletAddress);
     const walletRewards = await this.getWalletRewards(checksumAddress);
-    const communityRewards: string = await this.getCommunityRewards(userId);
+    let communityRewards = undefined;
+
+    if (userId) {
+      communityRewards = await this.getCommunityRewards(userId);
+    }
+
     const welcomeTravellerEligible = !!walletRewards && new BigNumber(walletRewards.welcomeTravellerRewards).gt(0);
     let welcomeTravellerCompleted = false;
 
@@ -177,13 +182,13 @@ export class AirdropService {
     return this.walletRewardsRepository.findOne({ where: { walletAddress } });
   }
 
-  private async getCommunityRewards(userId?: number): Promise<string | undefined> {
-    if (!userId) return undefined;
+  private async getCommunityRewards(userId: number): Promise<string | undefined> {
     const user = await this.userService.getUserByAttributes({ id: userId });
 
     if (!user) {
       return undefined;
     }
+
     const communityRewards = await this.communityRewardsRepository.findOne({ where: { discordId: user.discordId } });
 
     if (!communityRewards) {
