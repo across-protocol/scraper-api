@@ -13,6 +13,8 @@ import { CommunityRewardsFixture } from "../src/modules/airdrop/adapter/db/commu
 import { UserFixture } from "../src/modules/user/adapter/db/user-fixture";
 import { UserWalletFixture } from "../src/modules/user/adapter/db/user-wallet-fixture";
 import { configValues } from "../src/modules/configuration";
+import { TokenFixture } from "../src/modules/web3/adapters/db/token-fixture";
+import { BigNumber } from "ethers";
 
 let app: INestApplication;
 
@@ -32,6 +34,7 @@ describe("GET /airdrop/rewards", () => {
   let depositFixture: DepositFixture;
   let userFixture: UserFixture;
   let userWalletFixture: UserWalletFixture;
+  let tokenFixture: TokenFixture;
 
   beforeAll(async () => {
     walletRewardsFixture = app.get(WalletRewardsFixture);
@@ -39,6 +42,7 @@ describe("GET /airdrop/rewards", () => {
     depositFixture = app.get(DepositFixture);
     userFixture = app.get(UserFixture);
     userWalletFixture = app.get(UserWalletFixture);
+    tokenFixture = app.get(TokenFixture);
   });
 
   beforeEach(async () => {
@@ -100,11 +104,43 @@ describe("GET /airdrop/rewards", () => {
     expect(responseBody.welcomeTravellerRewards.completed).toEqual(false);
   });
 
+  it("should be elligible for all rewards, but welcome traveller not completed due to lower amount", async () => {
+    const user = await userFixture.insertUser({ discordId: "1" });
+    const userJwt = app.get(JwtService).sign({ id: user.id }, { secret: configValues().auth.jwtSecret });
+    const token = await tokenFixture.insertToken({ address: "0x1", symbol: "USDC" });
+    await depositFixture.insertDeposit(
+      mockDepositEntity({
+        depositorAddr: "0x0000000000000000000000000000000000000002",
+        status: "filled",
+        tokenAddr: token.address,
+        tokenId: token.id,
+        amount: BigNumber.from(149).mul(token.decimals).toString(),
+      }),
+    );
+    const response = await request(app.getHttpServer())
+      .get("/airdrop/rewards")
+      .set({ Authorization: `Bearer ${userJwt}` })
+      .query({ address: "0x0000000000000000000000000000000000000002" });
+    const responseBody = response.body as GetAirdropRewardsResponse;
+    expect(response.status).toBe(200);
+    expect(responseBody.communityRewards.eligible).toEqual(true);
+    expect(responseBody.earlyUserRewards.eligible).toEqual(true);
+    expect(responseBody.liquidityProviderRewards.eligible).toEqual(true);
+    expect(responseBody.welcomeTravellerRewards.completed).toEqual(false);
+  });
+
   it("should see traveller rewards as completed", async () => {
     const user = await userFixture.insertUser({ discordId: "1" });
     const userJwt = app.get(JwtService).sign({ id: user.id }, { secret: configValues().auth.jwtSecret });
+    const token = await tokenFixture.insertToken({ address: "0x1", symbol: "USDC" });
     await depositFixture.insertDeposit(
-      mockDepositEntity({ depositorAddr: "0x0000000000000000000000000000000000000002", status: "filled" }),
+      mockDepositEntity({
+        depositorAddr: "0x0000000000000000000000000000000000000002",
+        status: "filled",
+        tokenAddr: token.address,
+        tokenId: token.id,
+        amount: BigNumber.from(150).mul(token.decimals).toString(),
+      }),
     );
     const response = await request(app.getHttpServer())
       .get("/airdrop/rewards")
@@ -124,6 +160,7 @@ describe("GET /airdrop/rewards", () => {
     await depositFixture.deleteAllDeposits();
     await userFixture.deleteAllUsers();
     await userWalletFixture.deleteAllUserWallets();
+    await tokenFixture.deleteAllTokens();
   });
 });
 

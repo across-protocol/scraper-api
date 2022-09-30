@@ -1,4 +1,4 @@
-import { BadRequestException, HttpException, Injectable, Logger } from "@nestjs/common";
+import { BadRequestException, Injectable, Logger } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { ethers } from "ethers";
 import { readFile } from "fs/promises";
@@ -8,6 +8,7 @@ import { IsNull, Not, Repository } from "typeorm";
 import { Deposit } from "../../scraper/model/deposit.entity";
 import { CommunityRewards } from "../model/community-rewards.entity";
 import { WalletRewards } from "../model/wallet-rewards.entity";
+import { Token } from "../../web3/model/token.entity";
 
 import { UserService } from "../../user/services/user.service";
 import { ProcessCommunityRewardsFileException, ProcessWalletRewardsFileException } from "./exceptions";
@@ -60,9 +61,15 @@ export class AirdropService {
     let welcomeTravellerCompleted = false;
 
     if (welcomeTravellerEligible) {
-      const depositCount = await this.depositRepository.count({
-        where: { depositorAddr: checksumAddress, status: "filled" },
-      });
+      const depositCountQuery = await this.depositRepository
+        .createQueryBuilder("deposit")
+        .innerJoin(Token, "token", "deposit.tokenId = token.id")
+        .where("deposit.depositorAddr = :depositorAddr", { depositorAddr: checksumAddress })
+        .andWhere(
+          "(token.symbol = 'USDC' and deposit.amount / token.decimals >= :usdAmount) or (token.symbol = 'WETH' and deposit.amount / token.decimals >= :wethAmount)",
+          { usdAmount: 150, wethAmount: 0.1 },
+        );
+      const depositCount = await depositCountQuery.getCount();
 
       if (depositCount > 0) {
         welcomeTravellerCompleted = true;
