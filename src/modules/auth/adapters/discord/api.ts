@@ -15,9 +15,14 @@ export class DiscordApiService {
   }
 
   public async getGuildUser(accessToken: string, guildId: string): Promise<DiscordGuildUser> {
-    const response = await this.http.axiosRef.get(`https://discordapp.com/api/users/@me/guilds/${guildId}/member`, {
-      headers: { Authorization: `Bearer ${accessToken}` },
-    });
-    return response.data;
+    try {
+      const response = await this.http.axiosRef.get(`https://discordapp.com/api/users/@me/guilds/${guildId}/member`, {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      return response.data;
+    } catch (error) {
+      if (error?.response?.status === 404) return undefined;
+      throw error;
+    }
   }
 }
