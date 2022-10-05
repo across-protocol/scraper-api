@@ -15,6 +15,11 @@ services:
     command: ["/bin/sh", "./docker/e2e.command.sh"]
     env_file:
       - .env.test
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - DB_HOST=postgres
+      - DB_PORT=5432
     tty: true
     depends_on:
       - postgres
