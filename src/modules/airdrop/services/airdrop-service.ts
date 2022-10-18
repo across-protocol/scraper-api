@@ -3,7 +3,7 @@ import { InjectRepository } from "@nestjs/typeorm";
 import { ethers } from "ethers";
 import { readFile } from "fs/promises";
 import BigNumber from "bignumber.js";
-import { IsNull, Not, Repository } from "typeorm";
+import { DataSource, IsNull, Not, QueryFailedError, Repository } from "typeorm";
 
 import { Deposit } from "../../scraper/model/deposit.entity";
 import { CommunityRewards } from "../model/community-rewards.entity";
@@ -11,9 +11,15 @@ import { WalletRewards } from "../model/wallet-rewards.entity";
 import { Token } from "../../web3/model/token.entity";
 
 import { UserService } from "../../user/services/user.service";
-import { ProcessCommunityRewardsFileException, ProcessWalletRewardsFileException } from "./exceptions";
+import {
+  DuplicatedMerkleDistributorWindowException,
+  ProcessCommunityRewardsFileException,
+  ProcessWalletRewardsFileException,
+} from "./exceptions";
 import { EditWalletRewardsBody } from "../entry-points/http/dto";
 import { AppConfig } from "../../configuration/configuration.service";
+import { MerkleDistributorWindow } from "../model/merkle-distributor-window.entity";
+import { MerkleDistributorRecipient } from "../model/merkle-distributor-recipient.entity";
 
 @Injectable()
 export class AirdropService {
@@ -23,8 +29,11 @@ export class AirdropService {
     @InjectRepository(CommunityRewards) private communityRewardsRepository: Repository<CommunityRewards>,
     @InjectRepository(WalletRewards) private walletRewardsRepository: Repository<WalletRewards>,
     @InjectRepository(Deposit) private depositRepository: Repository<Deposit>,
+    @InjectRepository(Deposit) private merkleDistributorWindowRepository: Repository<MerkleDistributorWindow>,
+    @InjectRepository(Deposit) private merkleDistributorRecipientRepository: Repository<MerkleDistributorRecipient>,
     private userService: UserService,
     private appConfig: AppConfig,
+    private dataSource: DataSource,
   ) {}
 
   public async editWalletRewards(params: EditWalletRewardsBody) {
@@ -120,6 +129,89 @@ export class AirdropService {
     return {
       communityRewardsCount,
       walletRewardsCount,
+    };
+  }
+
+  async processMerkleDistributorRecipientsFile(file?: Express.Multer.File) {
+    if (!file) return;
+
+    const recipientsFile = await readFile(file.path, { encoding: "utf8" });
+    const recipientsJson = JSON.parse(recipientsFile);
+
+    try {
+      return await this.dataSource.transaction(async (entityManager) => {
+        const window = await entityManager
+          .createQueryBuilder()
+          .insert()
+          .into(MerkleDistributorWindow)
+          .values({
+            chainId: recipientsJson["chainId"],
+            rewardToken: recipientsJson["rewardToken"],
+            windowIndex: recipientsJson["windowIndex"],
+            rewardsToDeposit: recipientsJson["rewardsToDeposit"],
+            merkleRoot: recipientsJson["merkleRoot"],
+          })
+          .execute();
+        const windowId = window.identifiers[0].id;
+
+        for (const recipient of Object.values(recipientsJson["recipientsWithProofs"])) {
+          await entityManager
+            .createQueryBuilder()
+            .insert()
+            .into(MerkleDistributorRecipient)
+            .values({
+              merkleDistributorWindowId: windowId,
+              address: recipient["account"],
+              amount: recipient["amount"],
+              accountIndex: recipient["accountIndex"],
+              proof: recipient["proof"],
+              payload: recipient["metadata"],
+            })
+            .execute();
+        }
+
+        const query = entityManager
+          .createQueryBuilder(MerkleDistributorRecipient, "recipient")
+          .select("COUNT(*) as count")
+          .where("recipient.merkleDistributorWindowId = :windowId", { windowId });
+        const recipientsCount = await query.getRawOne();
+
+        return {
+          recipients: isNaN(parseInt(recipientsCount.count)) ? null : parseInt(recipientsCount.count),
+        };
+      });
+    } catch (error) {
+      if (
+        error instanceof QueryFailedError &&
+        (error as QueryFailedError).driverError.constraint === "UK_merkle_distributor_window_windowIndex"
+      ) {
+        throw new DuplicatedMerkleDistributorWindowException();
+      }
+
+      throw error;
+    }
+  }
+
+  public async getMerkleDistributorProof(address: string, windowIndex: number) {
+    const checksumAddress = ethers.utils.getAddress(address);
+
+    const query = this.dataSource
+      .createQueryBuilder(MerkleDistributorRecipient, "recipient")
+      .innerJoinAndSelect("recipient.merkleDistributorWindow", "window")
+      .where("recipient.address = :address", { address: checksumAddress })
+      .andWhere("window.windowIndex = :windowIndex", { windowIndex });
+    const recipient = await query.getOne();
+
+    if (!recipient) return {};
+
+    return {
+      accountIndex: recipient.accountIndex,
+      address: recipient.address,
+      amount: recipient.amount,
+      payload: recipient.payload,
+      proof: recipient.proof,
+      merkleRoot: recipient.merkleDistributorWindow.merkleRoot,
+      windowIndex: recipient.merkleDistributorWindow.windowIndex,
     };
   }
 

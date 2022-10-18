@@ -23,3 +23,15 @@ export class ProcessWalletRewardsFileException extends HttpException {
     );
   }
 }
+
+export class DuplicatedMerkleDistributorWindowException extends HttpException {
+  constructor() {
+    super(
+      {
+        error: DuplicatedMerkleDistributorWindowException.name,
+        message: "The window index already exists in the database",
+      },
+      HttpStatus.BAD_REQUEST,
+    );
+  }
+}

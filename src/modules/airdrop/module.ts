@@ -12,11 +12,31 @@ import { AirdropController } from "./entry-points/http/controller";
 import { CommunityRewards } from "./model/community-rewards.entity";
 import { WalletRewards } from "./model/wallet-rewards.entity";
 import { Deposit } from "../scraper/model/deposit.entity";
+import { MerkleDistributorWindowFixture } from "./adapter/db/merkle-distributor-window-fixture";
+import { MerkleDistributorWindow } from "./model/merkle-distributor-window.entity";
+import { MerkleDistributorRecipient } from "./model/merkle-distributor-recipient.entity";
+import { MerkleDistributorRecipientFixture } from "./adapter/db/merkle-distributor-recipient";
 
 @Module({
-  providers: [AirdropService, WalletRewardsFixture, CommunityRewardsFixture],
+  providers: [
+    AirdropService,
+    WalletRewardsFixture,
+    CommunityRewardsFixture,
+    MerkleDistributorWindowFixture,
+    MerkleDistributorRecipientFixture,
+  ],
   controllers: [AirdropController],
-  imports: [TypeOrmModule.forFeature([CommunityRewards, WalletRewards, Deposit]), UserModule, AppConfigModule],
+  imports: [
+    TypeOrmModule.forFeature([
+      CommunityRewards,
+      WalletRewards,
+      Deposit,
+      MerkleDistributorWindow,
+      MerkleDistributorRecipient,
+    ]),
+    UserModule,
+    AppConfigModule,
+  ],
   exports: [],
 })
 export class AirdropModule {}
