@@ -58,3 +58,11 @@ export class EditWalletRewardsBody {
   @IsNumberString({ no_symbols: true })
   welcomeTravellerRewards: string;
 }
+
+export class GetMerkleDistributorProofQuery {
+  @IsNumberString()
+  windowIndex: number;
+
+  @IsEthereumAddress()
+  address: string;
+}

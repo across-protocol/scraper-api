@@ -11,6 +11,8 @@ import { User } from "../user/model/user.entity";
 import { WalletRewards } from "../airdrop/model/wallet-rewards.entity";
 import { CommunityRewards } from "../airdrop/model/community-rewards.entity";
 import { UserWallet } from "../user/model/user-wallet.entity";
+import { MerkleDistributorRecipient } from "../airdrop/model/merkle-distributor-recipient.entity";
+import { MerkleDistributorWindow } from "../airdrop/model/merkle-distributor-window.entity";
 
 // TODO: Add db entities here
 const entities = [
@@ -24,6 +26,8 @@ const entities = [
   WalletRewards,
   CommunityRewards,
   UserWallet,
+  MerkleDistributorWindow,
+  MerkleDistributorRecipient,
 ];
 
 @Injectable()
