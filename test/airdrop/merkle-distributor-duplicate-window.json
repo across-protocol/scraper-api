@@ -1,0 +1,8 @@
+{
+  "chainId": 1,
+  "rewardToken": "0x40153DdFAd90C49dbE3F5c9F96f2a5B25ec67461",
+  "windowIndex": 0,
+  "rewardsToDeposit": "40",
+  "merkleRoot": "0x22d3a95c82f748d96d4bd698bf1177d0ce98aab22f9a8410a870544f465cb8c8",
+  "recipientsWithProofs": {}
+}

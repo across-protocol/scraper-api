@@ -6,17 +6,18 @@ import {
   Post,
   Query,
   Req,
+  UploadedFile,
   UploadedFiles,
   UseGuards,
   UseInterceptors,
 } from "@nestjs/common";
-import { FileFieldsInterceptor } from "@nestjs/platform-express";
+import { FileFieldsInterceptor, FileInterceptor } from "@nestjs/platform-express";
 import { ApiResponse, ApiTags } from "@nestjs/swagger";
 import { OptionalJwtAuthGuard } from "../../../auth/entry-points/http/optional-jwt.";
 import { JwtAuthGuard } from "../../../auth/entry-points/http/jwt.guard";
 import { Role, Roles, RolesGuard } from "../../../auth/entry-points/http/roles";
 import { AirdropService } from "../../services/airdrop-service";
-import { EditWalletRewardsBody, GetAirdropRewardsQuery, GetAirdropRewardsResponse } from "./dto";
+import { EditWalletRewardsBody, GetAirdropRewardsQuery, GetAirdropRewardsResponse, GetMerkleDistributorProofQuery } from "./dto";
 
 @Controller("airdrop")
 export class AirdropController {
@@ -51,6 +52,7 @@ export class AirdropController {
       },
     ),
   )
+  @ApiTags("airdrop")
   async feedWalletRewards(
     @UploadedFiles() files: { walletRewards?: Express.Multer.File[]; communityRewards?: Express.Multer.File[] },
   ) {
@@ -58,5 +60,25 @@ export class AirdropController {
       communityRewardsFile: files.communityRewards[0],
       walletRewardsFile: files.walletRewards[0],
     });
+  }
+
+  @Post("upload/merkle-distributor-recipients")
+  @Roles(Role.Admin)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseInterceptors(
+    FileInterceptor("file", {
+      limits: { fileSize: 50 * 1024 * 1024 },
+      dest: "./uploads",
+    }),
+  )
+  @ApiTags("airdrop")
+  uploadMerkleDistributorRecipients(@UploadedFile() file: Express.Multer.File) {
+    return this.airdropService.processMerkleDistributorRecipientsFile(file);
+  }
+
+  @Get("merkle-distributor-proof")
+  @ApiTags("airdrop")
+  getMerkleDistributorProof(@Query() query: GetMerkleDistributorProofQuery) {
+    return this.airdropService.getMerkleDistributorProof(query.address, query.windowIndex);
   }
 }
