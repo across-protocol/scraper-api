@@ -17,7 +17,12 @@ import { OptionalJwtAuthGuard } from "../../../auth/entry-points/http/optional-j
 import { JwtAuthGuard } from "../../../auth/entry-points/http/jwt.guard";
 import { Role, Roles, RolesGuard } from "../../../auth/entry-points/http/roles";
 import { AirdropService } from "../../services/airdrop-service";
-import { EditWalletRewardsBody, GetAirdropRewardsQuery, GetAirdropRewardsResponse, GetMerkleDistributorProofQuery } from "./dto";
+import {
+  EditWalletRewardsBody,
+  GetAirdropRewardsQuery,
+  GetAirdropRewardsResponse,
+  GetMerkleDistributorProofQuery,
+} from "./dto";
 
 @Controller("airdrop")
 export class AirdropController {
