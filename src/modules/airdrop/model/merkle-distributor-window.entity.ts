@@ -23,6 +23,9 @@ export class MerkleDistributorWindow {
   @Column()
   merkleRoot: string;
 
+  @Column({ nullable: true })
+  ipfsHash?: string;
+
   @OneToMany(() => MerkleDistributorRecipient, (recipient) => recipient.merkleDistributorWindow)
   recipients: MerkleDistributorRecipient;
 
