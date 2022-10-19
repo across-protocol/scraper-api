@@ -150,6 +150,7 @@ export class AirdropService {
             windowIndex: recipientsJson["windowIndex"],
             rewardsToDeposit: recipientsJson["rewardsToDeposit"],
             merkleRoot: recipientsJson["merkleRoot"],
+            ipfsHash: recipientsJson["ipfsHash"],
           })
           .execute();
         const windowId = window.identifiers[0].id;
@@ -212,6 +213,7 @@ export class AirdropService {
       proof: recipient.proof,
       merkleRoot: recipient.merkleDistributorWindow.merkleRoot,
       windowIndex: recipient.merkleDistributorWindow.windowIndex,
+      ipfsHash: recipient.merkleDistributorWindow.ipfsHash || null,
     };
   }
 

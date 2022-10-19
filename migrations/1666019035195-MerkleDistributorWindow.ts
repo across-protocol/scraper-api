@@ -12,6 +12,7 @@ export class MerkleDistributorWindow1666019035195 implements MigrationInterface 
         "windowIndex" integer NOT NULL, 
         "rewardsToDeposit" numeric NOT NULL, 
         "merkleRoot" character varying NOT NULL, 
+        "ipfsHash" character varying,
         "createdAt" TIMESTAMP NOT NULL DEFAULT now(), 
         CONSTRAINT "UK_merkle_distributor_window_windowIndex" UNIQUE ("windowIndex"), 
         CONSTRAINT "PK_243dd06d9b7183bd8700e92129d" PRIMARY KEY ("id")
