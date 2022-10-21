@@ -1,5 +1,5 @@
 import { ApiProperty } from "@nestjs/swagger";
-import { IsEthereumAddress, IsNumberString, IsString, Length } from "class-validator";
+import { IsEnum, IsEthereumAddress, IsNumberString, IsOptional, IsString, Length } from "class-validator";
 
 export class GetAirdropRewardsQuery {
   @IsString()
@@ -59,10 +59,15 @@ export class EditWalletRewardsBody {
   welcomeTravellerRewards: string;
 }
 
+export const IncludeDiscordQueryValues = ["true", "false"] as const;
 export class GetMerkleDistributorProofQuery {
   @IsNumberString()
   windowIndex: number;
 
   @IsEthereumAddress()
   address: string;
+
+  @IsEnum(IncludeDiscordQueryValues)
+  @IsOptional()
+  includeDiscord: typeof IncludeDiscordQueryValues[number];
 }
