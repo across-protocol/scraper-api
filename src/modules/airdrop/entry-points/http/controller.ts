@@ -84,6 +84,7 @@ export class AirdropController {
   @Get("merkle-distributor-proof")
   @ApiTags("airdrop")
   getMerkleDistributorProof(@Query() query: GetMerkleDistributorProofQuery) {
-    return this.airdropService.getMerkleDistributorProof(query.address, query.windowIndex);
+    const includeDiscord = query.includeDiscord === "true";
+    return this.airdropService.getMerkleDistributorProof(query.address, query.windowIndex, includeDiscord);
   }
 }

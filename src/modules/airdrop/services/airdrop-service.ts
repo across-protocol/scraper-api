@@ -20,6 +20,7 @@ import { EditWalletRewardsBody } from "../entry-points/http/dto";
 import { AppConfig } from "../../configuration/configuration.service";
 import { MerkleDistributorWindow } from "../model/merkle-distributor-window.entity";
 import { MerkleDistributorRecipient } from "../model/merkle-distributor-recipient.entity";
+import { UserWallet } from "../../user/model/user-wallet.entity";
 
 @Injectable()
 export class AirdropService {
@@ -193,7 +194,7 @@ export class AirdropService {
     }
   }
 
-  public async getMerkleDistributorProof(address: string, windowIndex: number) {
+  public async getMerkleDistributorProof(address: string, windowIndex: number, includeDiscord: boolean) {
     const checksumAddress = ethers.utils.getAddress(address);
 
     const query = this.dataSource
@@ -205,6 +206,16 @@ export class AirdropService {
 
     if (!recipient) return {};
 
+    let userWallet: UserWallet | undefined;
+
+    if (includeDiscord) {
+      userWallet = await this.dataSource
+        .createQueryBuilder(UserWallet, "userWallet")
+        .innerJoinAndSelect("userWallet.user", "user")
+        .where("userWallet.walletAddress = :address", { address })
+        .getOne();
+    }
+
     return {
       accountIndex: recipient.accountIndex,
       address: recipient.address,
@@ -214,6 +225,13 @@ export class AirdropService {
       merkleRoot: recipient.merkleDistributorWindow.merkleRoot,
       windowIndex: recipient.merkleDistributorWindow.windowIndex,
       ipfsHash: recipient.merkleDistributorWindow.ipfsHash || null,
+      discord: userWallet
+        ? {
+            discordId: userWallet.user.discordId,
+            discordName: userWallet.user.discordName,
+            discordAvatar: userWallet.user.discordAvatar,
+          }
+        : null,
     };
   }
 
