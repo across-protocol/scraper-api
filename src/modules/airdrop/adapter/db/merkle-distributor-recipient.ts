@@ -30,7 +30,7 @@ export class MerkleDistributorRecipientFixture {
       address: "0x",
       amount: "10",
       accountIndex: 0,
-      proof: ["ox"],
+      proof: ["0x"],
       payload: {},
       ...overrides,
     };
