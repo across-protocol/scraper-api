@@ -94,7 +94,8 @@ export class SpokePoolEventsQuerier {
         if (
           (error as Web3Error).error?.code === Web3ErrorCode.BLOCK_RANGE_TOO_LARGE ||
           (error as Web3Error).error?.code === Web3ErrorCode.EXCEEDED_MAXIMUM_BLOCK_RANGE ||
-          (error as Web3Error).error?.code === Web3ErrorCode.LOG_RESPONSE_SIZE_EXCEEDED
+          (error as Web3Error).error?.code === Web3ErrorCode.LOG_RESPONSE_SIZE_EXCEEDED ||
+          (error as Web3Error).error?.code === Web3ErrorCode.LOG_RESPONSE_SIZE_EXCEEDED_2
         ) {
           // make sure the block range size wasn't modified by a parallel function call
           if (this.blockRangeSize === blockRangeSizeAtStart) {
