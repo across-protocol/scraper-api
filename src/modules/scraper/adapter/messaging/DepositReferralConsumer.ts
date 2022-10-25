@@ -49,14 +49,20 @@ export class DepositReferralConsumer {
       }
     }
 
-    await this.depositRepository.update({ id: deposit.id }, { referralAddress: referralAddress || null });
+    await this.depositRepository.update(
+      { id: deposit.id },
+      { referralAddress: referralAddress || null, stickyReferralAddress: referralAddress || null },
+    );
 
-    if (this.appConfig.values.stickyReferralAddressesMechanism === StickyReferralAddressesMechanism.Queue) {
+    if (!referralAddress) {
       const hasDepositsWithReferrals = await this.depositRepository.findOne({
         where: { depositorAddr: deposit.depositorAddr, referralAddress: Not(IsNull()) },
       });
 
-      if (hasDepositsWithReferrals) {
+      if (
+        this.appConfig.values.stickyReferralAddressesMechanism === StickyReferralAddressesMechanism.Queue &&
+        hasDepositsWithReferrals
+      ) {
         await this.depositRepository.query(updateStickyReferralAddressesForDepositor(), [deposit.depositorAddr]);
       }
     }
