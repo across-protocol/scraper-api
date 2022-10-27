@@ -34,3 +34,13 @@ export class SubmitReferralAddressJobBody {
   @ApiProperty({ example: 2 })
   toDepositId: number;
 }
+
+export class SubmitDepositFilledDateBody {
+  @IsInt()
+  @ApiProperty({ example: 1 })
+  fromDepositId: number;
+
+  @IsInt()
+  @ApiProperty({ example: 2 })
+  toDepositId: number;
+}

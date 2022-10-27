@@ -19,6 +19,7 @@ export type DepositFillTx = {
   fillAmount: string;
   realizedLpFeePct: string;
   appliedRelayerFeePct: string;
+  date?: string;
 };
 
 @Entity()
@@ -39,6 +40,9 @@ export class Deposit {
 
   @Column({ nullable: true })
   depositDate?: Date;
+
+  @Column({ nullable: true })
+  filledDate?: Date;
 
   @Column()
   depositorAddr: string;
