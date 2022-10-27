@@ -1,14 +1,17 @@
-import { Body, Controller, Post, Req } from "@nestjs/common";
+import { Body, Controller, Post, Req, UseGuards } from "@nestjs/common";
 import { ApiTags } from "@nestjs/swagger";
 import { Request } from "express";
+import { JwtAuthGuard } from "../../../auth/entry-points/http/jwt.guard";
+import { Role, Roles, RolesGuard } from "../../../auth/entry-points/http/roles";
 import {
   BlocksEventsQueueMessage,
+  DepositFilledDateQueueMessage,
   DepositReferralQueueMessage,
   ScraperQueue,
   TokenPriceQueueMessage,
 } from "../../adapter/messaging";
 import { ScraperQueuesService } from "../../service/ScraperQueuesService";
-import { SubmitReferralAddressJobBody, ProcessBlocksBody, ProcessPricesBody } from "./dto";
+import { SubmitReferralAddressJobBody, ProcessBlocksBody, ProcessPricesBody, SubmitDepositFilledDateBody } from "./dto";
 
 @Controller()
 export class ScraperController {
@@ -43,6 +46,20 @@ export class ScraperController {
 
     for (let depositId = fromDepositId; depositId <= toDepositId; depositId++) {
       await this.scraperQueuesService.publishMessage<DepositReferralQueueMessage>(ScraperQueue.DepositReferral, {
+        depositId,
+      });
+    }
+  }
+
+  @Post("scraper/deposit-filled-date")
+  @ApiTags("scraper")
+  @Roles(Role.Admin)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  async submitDepositFilledDateJob(@Body() body: SubmitDepositFilledDateBody) {
+    const { fromDepositId, toDepositId } = body;
+
+    for (let depositId = fromDepositId; depositId <= toDepositId; depositId++) {
+      await this.scraperQueuesService.publishMessage<DepositFilledDateQueueMessage>(ScraperQueue.DepositFilledDate, {
         depositId,
       });
     }

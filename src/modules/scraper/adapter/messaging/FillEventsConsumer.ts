@@ -1,7 +1,7 @@
 import { OnQueueFailed, Process, Processor } from "@nestjs/bull";
 import { Logger } from "@nestjs/common";
 import { Job } from "bull";
-import { BlocksEventsQueueMessage, FillEventsQueueMessage, ScraperQueue } from ".";
+import { BlocksEventsQueueMessage, DepositFilledDateQueueMessage, FillEventsQueueMessage, ScraperQueue } from ".";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Deposit } from "../../model/deposit.entity";
 import { LessThan, MoreThan, Repository } from "typeorm";
@@ -33,6 +33,10 @@ export class FillEventsConsumer {
     }
 
     await this.processFillEventQueueMessage(deposit, job.data);
+
+    this.scraperQueuesService.publishMessage<DepositFilledDateQueueMessage>(ScraperQueue.DepositFilledDate, {
+      depositId: deposit.id,
+    });
   }
 
   public async processFillEventQueueMessage(deposit: Deposit, data: FillEventsQueueMessage) {

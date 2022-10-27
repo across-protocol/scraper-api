@@ -12,6 +12,7 @@ import { DepositFixture } from "./adapter/db/deposit-fixture";
 import { ScraperQueue } from "./adapter/messaging";
 import { BlockNumberConsumer } from "./adapter/messaging/BlockNumberConsumer";
 import { BlocksEventsConsumer } from "./adapter/messaging/BlocksEventsConsumer";
+import { DepositFilledDateConsumer } from "./adapter/messaging/DepositFilledDateConsumer";
 import { DepositReferralConsumer } from "./adapter/messaging/DepositReferralConsumer";
 import { FillEventsConsumer } from "./adapter/messaging/FillEventsConsumer";
 import { TokenDetailsConsumer } from "./adapter/messaging/TokenDetailsConsumer";
@@ -32,6 +33,7 @@ import { ScraperQueuesService } from "./service/ScraperQueuesService";
     TokenDetailsConsumer,
     DepositReferralConsumer,
     TokenPriceConsumer,
+    DepositFilledDateConsumer,
     DepositFixture,
   ],
   imports: [
@@ -63,6 +65,9 @@ import { ScraperQueuesService } from "./service/ScraperQueuesService";
         attempts: Number.MAX_SAFE_INTEGER,
         removeOnComplete: true,
       },
+    }),
+    BullModule.registerQueue({
+      name: ScraperQueue.DepositFilledDate,
     }),
   ],
   exports: [ScraperQueuesService],
