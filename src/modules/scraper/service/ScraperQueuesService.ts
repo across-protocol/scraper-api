@@ -14,6 +14,7 @@ export class ScraperQueuesService {
     @InjectQueue(ScraperQueue.TokenDetails) private tokenDetailsQueue: Queue,
     @InjectQueue(ScraperQueue.DepositReferral) private depositReferralQueue: Queue,
     @InjectQueue(ScraperQueue.TokenPrice) private tokenPriceQueue: Queue,
+    @InjectQueue(ScraperQueue.DepositFilledDate) private depositFilledDateQueue: Queue,
   ) {
     setInterval(() => {
       this.blocksEventsQueue
@@ -34,6 +35,9 @@ export class ScraperQueuesService {
       this.tokenPriceQueue
         .getJobCounts()
         .then((data) => this.logger.log(`${ScraperQueue.TokenPrice} ${JSON.stringify(data)}`));
+      this.depositFilledDateQueue
+        .getJobCounts()
+        .then((data) => this.logger.log(`${ScraperQueue.DepositFilledDate} ${JSON.stringify(data)}`));
     }, 1000 * 60);
   }
 
@@ -50,6 +54,8 @@ export class ScraperQueuesService {
       await this.depositReferralQueue.add(message);
     } else if (queue === ScraperQueue.TokenPrice) {
       await this.tokenPriceQueue.add(message);
+    } else if (queue === ScraperQueue.DepositFilledDate) {
+      await this.depositFilledDateQueue.add(message);
     }
   }
 
@@ -66,6 +72,8 @@ export class ScraperQueuesService {
       await this.depositReferralQueue.addBulk(messages.map((m) => ({ data: m })));
     } else if (queue === ScraperQueue.TokenPrice) {
       await this.tokenPriceQueue.addBulk(messages.map((m) => ({ data: m })));
+    } else if (queue === ScraperQueue.DepositFilledDate) {
+      await this.depositFilledDateQueue.addBulk(messages.map((m) => ({ data: m })));
     }
   }
 }
