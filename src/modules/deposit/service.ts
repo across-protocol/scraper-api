@@ -26,8 +26,8 @@ export class DepositService {
       ]);
       data = {
         totalDeposits: parseInt(totalDepositsResult[0]["totalDeposits"]),
-        avgFillTime: avgFillTime[0]["avgFillTime"],
-        totalVolumeUsd: totalVolumeResult[0]["totalVolumeUsd"],
+        avgFillTime: parseInt(avgFillTime[0]["avgFillTime"]),
+        totalVolumeUsd: parseInt(totalVolumeResult[0]["totalVolumeUsd"]),
       };
       await this.cacheManager.set(GENERAL_STATS_CACHE_KEY, data, 60);
     }
