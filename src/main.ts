@@ -21,6 +21,7 @@ async function bootstrap() {
     .setDescription("Scraper API spec")
     .setVersion("1.0")
     .addTag("health")
+    .addBearerAuth()
     .build();
   const document = SwaggerModule.createDocument(app, options);
   SwaggerModule.setup("swagger", app, document);

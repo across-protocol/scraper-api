@@ -25,3 +25,14 @@ export class GetDepositsQuery {
   @ApiProperty({ example: "0", required: false })
   offset: string;
 }
+
+export class GetDepositsStatsResponse {
+  @ApiProperty({ example: 100, description: "Total number of deposits" })
+  totalDeposits: number;
+
+  @ApiProperty({ description: "The average fill time of deposits in seconds", example: 200 })
+  avgFillTime: number;
+
+  @ApiProperty({ description: "The total bridged volume in USD", example: 1_000_000 })
+  totalVolumeUsd: number;
+}
