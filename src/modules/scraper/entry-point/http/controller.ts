@@ -1,5 +1,5 @@
 import { Body, Controller, Post, Req, UseGuards } from "@nestjs/common";
-import { ApiTags } from "@nestjs/swagger";
+import { ApiBearerAuth, ApiTags } from "@nestjs/swagger";
 import { Request } from "express";
 import { JwtAuthGuard } from "../../../auth/entry-points/http/jwt.guard";
 import { Role, Roles, RolesGuard } from "../../../auth/entry-points/http/roles";
@@ -55,6 +55,7 @@ export class ScraperController {
   @ApiTags("scraper")
   @Roles(Role.Admin)
   @UseGuards(JwtAuthGuard, RolesGuard)
+  @ApiBearerAuth()
   async submitDepositFilledDateJob(@Body() body: SubmitDepositFilledDateBody) {
     const { fromDepositId, toDepositId } = body;
 

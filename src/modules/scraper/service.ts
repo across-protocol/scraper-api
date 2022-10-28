@@ -1,4 +1,4 @@
-import { Injectable, Logger } from "@nestjs/common";
+import { CACHE_MANAGER, Inject, Injectable, Logger } from "@nestjs/common";
 import { EthProvidersService } from "../web3/services/EthProvidersService";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";

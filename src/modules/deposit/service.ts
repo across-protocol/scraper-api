@@ -1,11 +1,39 @@
 import { DateTime } from "luxon";
-import { Injectable } from "@nestjs/common";
+import { CACHE_MANAGER, Inject, Injectable } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository, IsNull, Not } from "typeorm";
+import { Cache } from "cache-manager";
 import { Deposit } from "../scraper/model/deposit.entity";
+import { getAvgFillTimeQuery, getTotalDepositsQuery, getTotalVolumeQuery } from "./adapter/db/queries";
+
+export const GENERAL_STATS_CACHE_KEY = "stats:general";
+
 @Injectable()
 export class DepositService {
-  constructor(@InjectRepository(Deposit) private depositRepository: Repository<Deposit>) {}
+  constructor(
+    @InjectRepository(Deposit) private depositRepository: Repository<Deposit>,
+    @Inject(CACHE_MANAGER) private cacheManager: Cache,
+  ) {}
+
+  public async getCachedGeneralStats() {
+    let data = await this.cacheManager.get(GENERAL_STATS_CACHE_KEY);
+
+    if (!data) {
+      const [totalVolumeResult, totalDepositsResult, avgFillTime] = await Promise.all([
+        this.depositRepository.query(getTotalVolumeQuery()),
+        this.depositRepository.query(getTotalDepositsQuery()),
+        this.depositRepository.query(getAvgFillTimeQuery()),
+      ]);
+      data = {
+        totalDeposits: parseInt(totalDepositsResult[0]["totalDeposits"]),
+        avgFillTime: avgFillTime[0]["avgFillTime"],
+        totalVolumeUsd: totalVolumeResult[0]["totalVolumeUsd"],
+      };
+      await this.cacheManager.set(GENERAL_STATS_CACHE_KEY, data, 60);
+    }
+
+    return data;
+  }
 
   public async getDeposits(status, limit = 10, offset = 0) {
     const [deposits, total] = await this.depositRepository.findAndCount({
