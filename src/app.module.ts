@@ -1,5 +1,5 @@
 import { BullModule } from "@nestjs/bull";
-import { MiddlewareConsumer, Module } from "@nestjs/common";
+import { CacheModule, MiddlewareConsumer, Module } from "@nestjs/common";
 import { ConfigModule } from "@nestjs/config";
 import { ScheduleModule } from "@nestjs/schedule";
 import { TypeOrmModule } from "@nestjs/typeorm";
@@ -46,6 +46,7 @@ import { AirdropModule } from "./modules/airdrop/module";
     AuthModule,
     UserModule,
     AirdropModule,
+    CacheModule.register({ isGlobal: true }),
   ],
 })
 export class AppModule {
