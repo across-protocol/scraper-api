@@ -64,6 +64,7 @@ import { ScraperQueuesService } from "./service/ScraperQueuesService";
         backoff: 120 * 1000,
         attempts: Number.MAX_SAFE_INTEGER,
         removeOnComplete: true,
+        removeOnFail: true,
       },
     }),
     BullModule.registerQueue({

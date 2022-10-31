@@ -22,6 +22,7 @@ export class BullConfigService implements SharedBullConfigurationFactory {
         backoff: { type: "capped" },
         attempts: Number.MAX_SAFE_INTEGER,
         removeOnComplete: true,
+        removeOnFail: true,
       },
       settings: {
         backoffStrategies: {
