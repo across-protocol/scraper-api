@@ -45,7 +45,7 @@ export class DepositFilledDateConsumer {
     const filledDate = new Date(sortedFillTx[0].date);
 
     if (DateTime.fromJSDate(deposit.depositDate) > DateTime.fromJSDate(filledDate)) {
-      throw new Error("Deposit date > filled date");
+      return;
     }
 
     deposit.filledDate = filledDate;
