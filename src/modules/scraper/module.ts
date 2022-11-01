@@ -12,6 +12,7 @@ import { DepositFixture } from "./adapter/db/deposit-fixture";
 import { ScraperQueue } from "./adapter/messaging";
 import { BlockNumberConsumer } from "./adapter/messaging/BlockNumberConsumer";
 import { BlocksEventsConsumer } from "./adapter/messaging/BlocksEventsConsumer";
+import { MerkleDistributorBlocksEventsConsumer } from "./adapter/messaging/MerkleDistributorBlockEventsConsumer";
 import { DepositFilledDateConsumer } from "./adapter/messaging/DepositFilledDateConsumer";
 import { DepositReferralConsumer } from "./adapter/messaging/DepositReferralConsumer";
 import { FillEventsConsumer } from "./adapter/messaging/FillEventsConsumer";
@@ -19,7 +20,9 @@ import { TokenDetailsConsumer } from "./adapter/messaging/TokenDetailsConsumer";
 import { TokenPriceConsumer } from "./adapter/messaging/TokenPriceConsumer";
 import { ScraperController } from "./entry-point/http/controller";
 import { Deposit } from "./model/deposit.entity";
+import { Claim } from "./model/claim.entity";
 import { ProcessedBlock } from "./model/ProcessedBlock.entity";
+import { MerkleDistributorProcessedBlock } from "./model/MerkleDistributorProcessedBlock.entity";
 import { ScraperService } from "./service";
 import { ScraperQueuesService } from "./service/ScraperQueuesService";
 
@@ -28,6 +31,7 @@ import { ScraperQueuesService } from "./service/ScraperQueuesService";
     ScraperService,
     ScraperQueuesService,
     BlocksEventsConsumer,
+    MerkleDistributorBlocksEventsConsumer,
     FillEventsConsumer,
     BlockNumberConsumer,
     TokenDetailsConsumer,
@@ -39,7 +43,7 @@ import { ScraperQueuesService } from "./service/ScraperQueuesService";
   imports: [
     Web3Module,
     AppConfigModule,
-    TypeOrmModule.forFeature([ProcessedBlock, Deposit]),
+    TypeOrmModule.forFeature([ProcessedBlock, MerkleDistributorProcessedBlock, Claim, Deposit]),
     MarketPriceModule,
     HttpModule,
     ReferralModule,
@@ -48,6 +52,9 @@ import { ScraperQueuesService } from "./service/ScraperQueuesService";
     }),
     BullModule.registerQueue({
       name: ScraperQueue.BlocksEvents,
+    }),
+    BullModule.registerQueue({
+      name: ScraperQueue.MerkleDistributorBlockEvents,
     }),
     BullModule.registerQueue({
       name: ScraperQueue.TokenDetails,

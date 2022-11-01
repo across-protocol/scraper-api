@@ -39,7 +39,7 @@ export const configValues = () => ({
       // 69: process.env.WEB3_NODE_URL_69,
       // 4: process.env.WEB3_NODE_URL_4,
       // 80001: process.env.WEB3_NODE_URL_80001,
-      // 5: process.env.WEB3_NODE_URL_5,
+      5: process.env.WEB3_NODE_URL_5,
     },
     spokePoolContracts: {
       [ChainIds.mainnet]: {
@@ -63,9 +63,16 @@ export const configValues = () => ({
         startBlockNumber: 28604263,
       },
     },
+    merkleDistributor: {
+      address: process.env.MERKLE_DISTRIBUTOR_ADDRESS || "0xc64226599444cA9b6d930603B507a04d8FA61AdD", // TODO: replace with mainnet
+      chainId: Number(process.env.MERKLE_DISTRIBUTOR_CHAIN_ID || "5"),
+      referralsStartWindowIndex: Number(process.env.REFERRALS_START_WINDOW_INDEX || "1"),
+      startBlockNumber: 7866869,
+    },
   },
   acxUsdPrice: 0.1,
   enableSpokePoolsEventsProcessing: process.env.ENABLE_SPOKE_POOLS_EVENTS_PROCESSING === "true",
+  enableMerkleDistributorEventsProcessing: process.env.ENABLE_MERKLE_DISTRIBUTOR_EVENTS_PROCESSING === "true",
   enableReferralsMaterializedViewRefresh: process.env.ENABLE_REFERRALS_MATERIALIZED_VIEW_REFRESH === "true",
   allowWalletRewardsEdit: process.env.ALLOW_WALLET_REWARDS_EDIT === "true",
   stickyReferralAddressesMechanism: process.env.STICKY_REFERRAL_ADDRESSES_MECHANISM

@@ -6,6 +6,7 @@ import { Repository } from "typeorm";
 import { ChainIds } from "../web3/model/ChainId";
 import { AppConfig } from "../configuration/configuration.service";
 import { ProcessedBlock } from "./model/ProcessedBlock.entity";
+import { MerkleDistributorProcessedBlock } from "./model/MerkleDistributorProcessedBlock.entity";
 import { ScraperQueuesService } from "./service/ScraperQueuesService";
 import { BlocksEventsQueueMessage, ScraperQueue } from "./adapter/messaging";
 import { wait } from "../../utils";
@@ -19,6 +20,8 @@ export class ScraperService {
     private appConfig: AppConfig,
     @InjectRepository(ProcessedBlock)
     private processedBlockRepository: Repository<ProcessedBlock>,
+    @InjectRepository(MerkleDistributorProcessedBlock)
+    private merkleDistributorProcessedBlockRepository: Repository<MerkleDistributorProcessedBlock>,
     private scraperQueuesService: ScraperQueuesService,
   ) {
     this.run();
@@ -29,6 +32,9 @@ export class ScraperService {
       try {
         if (this.appConfig.values.enableSpokePoolsEventsProcessing) {
           await this.publishBlocks();
+        }
+        if (this.appConfig.values.enableMerkleDistributorEventsProcessing) {
+          await this.publishMerkleDistributorBlocks();
         }
       } catch (error) {
         this.logger.error(error);
@@ -50,6 +56,37 @@ export class ScraperService {
         to,
       });
     }
+  }
+
+  public async publishMerkleDistributorBlocks() {
+    const chainId = this.appConfig.values.web3.merkleDistributor.chainId;
+    const configStartBlockNumber = this.appConfig.values.web3.merkleDistributor.startBlockNumber;
+    const provider = this.providers.getProvider(chainId);
+    const latestBlock = await provider.getBlock("latest");
+    let previousProcessedBlock = await this.merkleDistributorProcessedBlockRepository.findOne({
+      where: { chainId },
+    });
+
+    const blockRange = this.determineBlockRange(
+      chainId,
+      latestBlock.number,
+      configStartBlockNumber,
+      previousProcessedBlock?.latestBlock,
+    );
+
+    if (!blockRange) {
+      return;
+    }
+
+    if (!previousProcessedBlock) {
+      previousProcessedBlock = this.merkleDistributorProcessedBlockRepository.create({
+        chainId,
+        latestBlock: blockRange.to,
+      });
+    } else {
+      previousProcessedBlock.latestBlock = blockRange.to;
+    }
+    await this.merkleDistributorProcessedBlockRepository.save(previousProcessedBlock);
   }
 
   /**
@@ -75,39 +112,57 @@ export class ScraperService {
   public async determineBlockRanges(latestBlocks: Record<string, number>) {
     const blockRanges: Record<string, { from: number; to: number }> = {};
 
-    for (const chainId of Object.keys(latestBlocks)) {
+    for (const chainIdStr of Object.keys(latestBlocks)) {
+      const chainId = parseInt(chainIdStr);
       let previousProcessedBlock = await this.processedBlockRepository.findOne({
-        where: { chainId: parseInt(chainId) },
+        where: { chainId },
       });
       const configStartBlockNumber = this.appConfig.values.web3.spokePoolContracts[chainId].startBlockNumber;
-      let from = 1;
 
-      if (previousProcessedBlock) {
-        from = previousProcessedBlock.latestBlock + 1;
-      } else if (configStartBlockNumber) {
-        from = configStartBlockNumber;
-      }
-
-      const to = Math.min(
-        latestBlocks[chainId] - this.getFollowingDistance(parseInt(chainId)),
-        from + this.getMinBlockRange(parseInt(chainId)),
+      const blockRange = this.determineBlockRange(
+        chainId,
+        latestBlocks[chainId],
+        configStartBlockNumber,
+        previousProcessedBlock?.latestBlock,
       );
-      if (from < to) {
-        blockRanges[chainId] = { from, to };
 
-        if (!previousProcessedBlock) {
-          previousProcessedBlock = this.processedBlockRepository.create({
-            chainId: parseInt(chainId),
-            latestBlock: to,
-          });
-        } else {
-          previousProcessedBlock.latestBlock = to;
-        }
-        await this.processedBlockRepository.save(previousProcessedBlock);
+      if (!blockRange) {
+        continue;
       }
+
+      if (!previousProcessedBlock) {
+        previousProcessedBlock = this.processedBlockRepository.create({
+          chainId,
+          latestBlock: blockRange.to,
+        });
+      } else {
+        previousProcessedBlock.latestBlock = blockRange.to;
+      }
+      await this.processedBlockRepository.save(previousProcessedBlock);
     }
 
     return blockRanges;
+  }
+
+  public determineBlockRange(
+    chainId: number,
+    latestBlockNumber: number,
+    configStartBlockNumber: number,
+    previousProcessedBlockNumber?: number,
+  ) {
+    let from = 1;
+
+    if (previousProcessedBlockNumber) {
+      from = previousProcessedBlockNumber + 1;
+    } else if (configStartBlockNumber) {
+      from = configStartBlockNumber;
+    }
+
+    const to = Math.min(latestBlockNumber - this.getFollowingDistance(chainId), from + this.getMinBlockRange(chainId));
+
+    if (from < to) {
+      return { from, to };
+    }
   }
 
   public getMinBlockRange(chainId: number) {

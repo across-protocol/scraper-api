@@ -5,6 +5,7 @@ import { JwtAuthGuard } from "../../../auth/entry-points/http/jwt.guard";
 import { Role, Roles, RolesGuard } from "../../../auth/entry-points/http/roles";
 import {
   BlocksEventsQueueMessage,
+  MerkleDistributorBlockEventsQueueMessage,
   DepositFilledDateQueueMessage,
   DepositReferralQueueMessage,
   ScraperQueue,
@@ -26,6 +27,20 @@ export class ScraperController {
       from,
       to,
     });
+  }
+
+  @Post("scraper/blocks/merkle-distributor")
+  @ApiTags("scraper")
+  async processMerkleDistributorBlocks(@Req() req: Request, @Body() body: ProcessBlocksBody) {
+    const { chainId, from, to } = body;
+    await this.scraperQueuesService.publishMessage<MerkleDistributorBlockEventsQueueMessage>(
+      ScraperQueue.MerkleDistributorBlockEvents,
+      {
+        chainId,
+        from,
+        to,
+      },
+    );
   }
 
   @Post("scraper/prices")
