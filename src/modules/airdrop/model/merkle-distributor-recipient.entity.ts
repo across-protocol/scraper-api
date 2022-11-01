@@ -7,6 +7,7 @@ export type MerkleDistributorRecipientPayload = {
     liquidityProviderRewards: string;
     earlyUserRewards: string;
     welcomeTravelerRewards: string;
+    referralRewards: string;
   };
 };
 

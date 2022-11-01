@@ -62,6 +62,7 @@ describe("GET /airdrop/merkle-distributor-proof", () => {
           earlyUserRewards: "2",
           liquidityProviderRewards: "2",
           welcomeTravelerRewards: "4",
+          referralRewards: "0",
         },
       },
     });
@@ -101,6 +102,7 @@ describe("GET /airdrop/merkle-distributor-proof", () => {
           earlyUserRewards: "2",
           liquidityProviderRewards: "2",
           welcomeTravelerRewards: "4",
+          referralRewards: "0",
         },
       },
     });
@@ -139,6 +141,7 @@ describe("GET /airdrop/merkle-distributor-proof", () => {
           earlyUserRewards: "2",
           liquidityProviderRewards: "2",
           welcomeTravelerRewards: "4",
+          referralRewards: "0",
         },
       },
     });
@@ -170,6 +173,7 @@ describe("GET /airdrop/merkle-distributor-proof", () => {
           earlyUserRewards: "2",
           liquidityProviderRewards: "2",
           welcomeTravelerRewards: "4",
+          referralRewards: "0",
         },
       },
     });
@@ -211,10 +215,11 @@ describe("GET /airdrop/merkle-distributor-proofs", () => {
         proof: ["0xproof"],
         payload: {
           amountBreakdown: {
-            communityRewards: "2",
-            earlyUserRewards: "2",
-            liquidityProviderRewards: "2",
-            welcomeTravelerRewards: "4",
+            communityRewards: "0",
+            earlyUserRewards: "0",
+            liquidityProviderRewards: "0",
+            welcomeTravelerRewards: "0",
+            referralRewards: "10",
           },
         },
       },
@@ -226,10 +231,11 @@ describe("GET /airdrop/merkle-distributor-proofs", () => {
         proof: ["0xproof"],
         payload: {
           amountBreakdown: {
-            communityRewards: "2",
-            earlyUserRewards: "2",
-            liquidityProviderRewards: "2",
-            welcomeTravelerRewards: "4",
+            communityRewards: "0",
+            earlyUserRewards: "0",
+            liquidityProviderRewards: "0",
+            welcomeTravelerRewards: "0",
+            referralRewards: "10",
           },
         },
       },
@@ -264,7 +270,7 @@ describe("GET /airdrop/merkle-distributor-proofs", () => {
       startWindowIndex: 1000,
     });
     expect(response.statusCode).toStrictEqual(200);
-    expect(response.body.length).toStrictEqual(1);
+    expect(response.body.length).toStrictEqual(0);
   });
 });
 
