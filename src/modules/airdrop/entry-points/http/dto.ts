@@ -71,3 +71,12 @@ export class GetMerkleDistributorProofQuery {
   @IsOptional()
   includeDiscord: typeof IncludeDiscordQueryValues[number];
 }
+
+export class GetMerkleDistributorProofsQuery {
+  @IsNumberString()
+  @IsOptional()
+  startWindowIndex: number;
+
+  @IsEthereumAddress()
+  address: string;
+}
