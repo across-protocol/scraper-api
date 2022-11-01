@@ -182,6 +182,92 @@ describe("GET /airdrop/merkle-distributor-proof", () => {
   });
 });
 
+describe("GET /airdrop/merkle-distributor-proofs", () => {
+  const url = "/airdrop/merkle-distributor-proofs";
+
+  const address = "0x00B591BC2b682a0B30dd72Bac9406BfA13e5d3cd";
+
+  beforeAll(async () => {
+    const windows = await merkleDistributorWindowFixture.insertManyMerkleDistributorWindows([
+      {
+        merkleRoot: "0xmerkleroot",
+        windowIndex: 0,
+        rewardToken: "0xrewardtoken",
+        rewardsToDeposit: "10",
+      },
+      {
+        merkleRoot: "0xmerkleroot",
+        windowIndex: 1,
+        rewardToken: "0xrewardtoken",
+        rewardsToDeposit: "10",
+      },
+    ]);
+    await merkleDistributorRecipientFixture.insertManyMerkleDistributorRecipients([
+      {
+        accountIndex: 0,
+        address,
+        amount: "10",
+        merkleDistributorWindowId: windows[0].id,
+        proof: ["0xproof"],
+        payload: {
+          amountBreakdown: {
+            communityRewards: "2",
+            earlyUserRewards: "2",
+            liquidityProviderRewards: "2",
+            welcomeTravelerRewards: "4",
+          },
+        },
+      },
+      {
+        accountIndex: 0,
+        address,
+        amount: "10",
+        merkleDistributorWindowId: windows[1].id,
+        proof: ["0xproof"],
+        payload: {
+          amountBreakdown: {
+            communityRewards: "2",
+            earlyUserRewards: "2",
+            liquidityProviderRewards: "2",
+            welcomeTravelerRewards: "4",
+          },
+        },
+      },
+    ]);
+  });
+
+  afterAll(async () => {
+    await merkleDistributorWindowFixture.deleteAllMerkleDistributorWindows();
+    await merkleDistributorRecipientFixture.deleteAllMerkleDistributorRecipients();
+  });
+
+  it("should return all merkle proofs", async () => {
+    const response = await request(app.getHttpServer()).get(url).query({
+      address,
+    });
+    expect(response.statusCode).toStrictEqual(200);
+    expect(response.body.length).toStrictEqual(2);
+  });
+
+  it("should return 1 merkle proof", async () => {
+    const response = await request(app.getHttpServer()).get(url).query({
+      address,
+      startWindowIndex: 1,
+    });
+    expect(response.statusCode).toStrictEqual(200);
+    expect(response.body.length).toStrictEqual(1);
+  });
+
+  it("should return no merkle proofs", async () => {
+    const response = await request(app.getHttpServer()).get(url).query({
+      address,
+      startWindowIndex: 1000,
+    });
+    expect(response.statusCode).toStrictEqual(200);
+    expect(response.body.length).toStrictEqual(1);
+  });
+});
+
 describe("POST /airdrop/upload/merkle-distributor-recipients", () => {
   const url = "/airdrop/upload/merkle-distributor-recipients";
 

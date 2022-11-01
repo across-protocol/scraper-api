@@ -22,6 +22,7 @@ import {
   GetAirdropRewardsQuery,
   GetAirdropRewardsResponse,
   GetMerkleDistributorProofQuery,
+  GetMerkleDistributorProofsQuery,
 } from "./dto";
 
 @Controller("airdrop")
@@ -86,5 +87,11 @@ export class AirdropController {
   getMerkleDistributorProof(@Query() query: GetMerkleDistributorProofQuery) {
     const includeDiscord = query.includeDiscord === "true";
     return this.airdropService.getMerkleDistributorProof(query.address, query.windowIndex, includeDiscord);
+  }
+
+  @Get("merkle-distributor-proofs")
+  @ApiTags("airdrop")
+  getMerkleDistributorProofs(@Query() query: GetMerkleDistributorProofsQuery) {
+    return this.airdropService.getMerkleDistributorProofs(query.address, query.startWindowIndex);
   }
 }
