@@ -11,15 +11,14 @@
           "communityRewards": "5",
           "liquidityProviderRewards": "0",
           "earlyUserRewards": "0",
-          "welcomeTravelerRewards": "5"
+          "welcomeTravelerRewards": "5",
+          "referralRewards": "0"
         }
       },
       "account": "0x00B591BC2b682a0B30dd72Bac9406BfA13e5d3ac",
       "amount": "10",
       "accountIndex": 0,
-      "proof": [
-        "0x939b447f774f79401f5551d9b457e92a05a9ea27505739b2aefc7490f026dcba"
-      ],
+      "proof": ["0x939b447f774f79401f5551d9b457e92a05a9ea27505739b2aefc7490f026dcba"],
       "windowIndex": 0
     },
     "0x00B591BC2b682a0B30dd72Bac9406BfA13e5d3cd": {
@@ -28,15 +27,14 @@
           "communityRewards": "5",
           "liquidityProviderRewards": "0",
           "earlyUserRewards": "0",
-          "welcomeTravelerRewards": "5"
+          "welcomeTravelerRewards": "5",
+          "referralRewards": "0"
         }
       },
       "account": "0x00B591BC2b682a0B30dd72Bac9406BfA13e5d3cd",
       "amount": "10",
       "accountIndex": 0,
-      "proof": [
-        "0x939b447f774f79401f5551d9b457e92a05a9ea27505739b2aefc7490f026dcba"
-      ],
+      "proof": ["0x939b447f774f79401f5551d9b457e92a05a9ea27505739b2aefc7490f026dcba"],
       "windowIndex": 0
     }
   }
