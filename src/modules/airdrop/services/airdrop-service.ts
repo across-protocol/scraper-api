@@ -235,6 +235,31 @@ export class AirdropService {
     };
   }
 
+  public async getMerkleDistributorProofs(address: string, startWindowIndex = 0) {
+    const checksumAddress = ethers.utils.getAddress(address);
+
+    const query = this.dataSource
+      .createQueryBuilder(MerkleDistributorRecipient, "recipient")
+      .innerJoinAndSelect("recipient.merkleDistributorWindow", "window")
+      .where("recipient.address = :address", { address: checksumAddress })
+      .andWhere("window.windowIndex >= :startWindowIndex", { startWindowIndex });
+    const recipients = await query.getMany();
+
+    if (!recipients) return [];
+
+    return recipients.map((recipient) => ({
+      accountIndex: recipient.accountIndex,
+      address: recipient.address,
+      amount: recipient.amount,
+      payload: recipient.payload,
+      proof: recipient.proof,
+      merkleRoot: recipient.merkleDistributorWindow.merkleRoot,
+      windowIndex: recipient.merkleDistributorWindow.windowIndex,
+      ipfsHash: recipient.merkleDistributorWindow.ipfsHash || null,
+      discord: null,
+    }));
+  }
+
   private async processWalletRewardsFile(walletRewardsFile: Express.Multer.File) {
     try {
       await this.walletRewardsRepository.update({ id: Not(IsNull()) }, { processed: false });
