@@ -10,6 +10,7 @@ import {
   getReferralVolumeQuery,
   getReferreeWalletsQuery,
   getTotalReferralRewardsQuery,
+  getRefreshMaterializedView,
 } from "./queries";
 import { ethers } from "ethers";
 import { AppConfig } from "../../configuration/configuration.service";
@@ -138,5 +139,9 @@ export class ReferralService {
       }
     }
     return undefined;
+  }
+
+  public refreshMaterializedView() {
+    return this.depositRepository.query(getRefreshMaterializedView());
   }
 }

@@ -122,3 +122,7 @@ export const updateStickyReferralAddressesForDepositor = () => {
     where deposit.id = d4.id;
   `;
 };
+
+export const getRefreshMaterializedView = () => {
+  return `REFRESH MATERIALIZED VIEW deposits_mv`;
+};
