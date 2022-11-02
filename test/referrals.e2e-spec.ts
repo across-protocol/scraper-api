@@ -19,6 +19,7 @@ const usdc = {
   decimals: 6,
 };
 const tier5DepositAmount = utils.parseUnits("500000", usdc.decimals).toString();
+const tier4DepositAmount = utils.parseUnits("250000", usdc.decimals).toString();
 const dayInMS = 24 * 60 * 60 * 1000;
 
 let app: INestApplication;
@@ -52,9 +53,6 @@ afterAll(async () => {
 
 describe("GET /referrals/summary", () => {
   beforeAll(async () => {
-    token = await tokenFixture.insertToken({ ...usdc });
-    price = await priceFixture.insertPrice({ symbol: usdc.symbol, usd: "1" });
-
     token = await tokenFixture.insertToken({ ...usdc });
     price = await priceFixture.insertPrice({ symbol: usdc.symbol, usd: "1" });
   });
@@ -131,7 +129,7 @@ describe("GET /referrals/summary", () => {
     expect(responseAfterClaim.body.tier).toBe(1);
   });
 
-  it("reset to tier 5 from 5 after claim", async () => {
+  it("reset to tier 4 from 5 after claim", async () => {
     const tier5DepositBase = {
       referralAddress: referrer,
       stickyReferralAddress: referrer,
@@ -149,6 +147,7 @@ describe("GET /referrals/summary", () => {
       }),
       mockDepositEntity({
         ...tier5DepositBase,
+        amount: tier4DepositAmount,
         status: "filled",
         depositId: 2,
         depositDate: new Date(Date.now()), // t = 0
@@ -169,6 +168,6 @@ describe("GET /referrals/summary", () => {
 
     const responseAfterClaim = await request(app.getHttpServer()).get(`/referrals/summary?address=${referrer}`);
     expect(responseAfterClaim.status).toBe(200);
-    expect(responseAfterClaim.body.tier).toBe(5);
+    expect(responseAfterClaim.body.tier).toBe(4);
   });
 });
