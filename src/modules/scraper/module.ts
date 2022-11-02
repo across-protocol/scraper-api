@@ -8,6 +8,7 @@ import { MarketPriceModule } from "../market-price/module";
 import { ReferralModule } from "../referral/module";
 import { Web3Module } from "../web3/module";
 import { DepositFixture } from "./adapter/db/deposit-fixture";
+import { ClaimFixture } from "./adapter/db/claim-fixture";
 
 import { ScraperQueue } from "./adapter/messaging";
 import { BlockNumberConsumer } from "./adapter/messaging/BlockNumberConsumer";
@@ -39,6 +40,7 @@ import { ScraperQueuesService } from "./service/ScraperQueuesService";
     TokenPriceConsumer,
     DepositFilledDateConsumer,
     DepositFixture,
+    ClaimFixture,
   ],
   imports: [
     Web3Module,
