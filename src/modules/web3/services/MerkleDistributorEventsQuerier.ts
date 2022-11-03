@@ -1,10 +1,10 @@
-import { MerkleDistributor } from "@across-protocol/contracts-v2";
+import { AcrossMerkleDistributor } from "@across-protocol/contracts-v2";
 import { TypedEvent } from "@across-protocol/contracts-v2/dist/typechain/common";
 import { Logger } from "@nestjs/common";
 import { EventsQuerier } from "./EventsQuerier";
 
 export class MerkleDistributorEventsQuerier extends EventsQuerier {
-  constructor(private merkleDistributor: MerkleDistributor, blockRangeSize?: number) {
+  constructor(private merkleDistributor: AcrossMerkleDistributor, blockRangeSize?: number) {
     super(merkleDistributor, new Logger(MerkleDistributorEventsQuerier.name), blockRangeSize);
   }
 

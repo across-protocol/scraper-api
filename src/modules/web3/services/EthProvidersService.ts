@@ -1,4 +1,4 @@
-import { ERC20__factory, MerkleDistributor__factory, SpokePool__factory } from "@across-protocol/contracts-v2";
+import { ERC20__factory, AcrossMerkleDistributor__factory, SpokePool__factory } from "@across-protocol/contracts-v2";
 import { Injectable } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { ethers } from "ethers";
@@ -133,7 +133,7 @@ export class EthProvidersService {
   private setMerkleDistributorEventQuerier() {
     const provider = this.getProvider(this.appConfig.values.web3.merkleDistributor.chainId);
     if (provider) {
-      const merkleDistributor = MerkleDistributor__factory.connect(
+      const merkleDistributor = AcrossMerkleDistributor__factory.connect(
         this.appConfig.values.web3.merkleDistributor.address,
         provider,
       );
