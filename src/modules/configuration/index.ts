@@ -67,7 +67,7 @@ export const configValues = () => ({
       address: process.env.MERKLE_DISTRIBUTOR_ADDRESS || "0xF633b72A4C2Fb73b77A379bf72864A825aD35b6D", // TODO: replace with mainnet
       chainId: Number(process.env.MERKLE_DISTRIBUTOR_CHAIN_ID || "5"),
       referralsStartWindowIndex: Number(process.env.REFERRALS_START_WINDOW_INDEX || "1"),
-      startBlockNumber: 7884371,
+      startBlockNumber: Number(process.env.MERKLE_DISTRIBUTOR_START_BLOCK || 7884371),
     },
   },
   acxUsdPrice: 0.1,
