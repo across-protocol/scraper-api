@@ -8,7 +8,7 @@ import { AppConfig } from "../configuration/configuration.service";
 import { ProcessedBlock } from "./model/ProcessedBlock.entity";
 import { MerkleDistributorProcessedBlock } from "./model/MerkleDistributorProcessedBlock.entity";
 import { ScraperQueuesService } from "./service/ScraperQueuesService";
-import { BlocksEventsQueueMessage, ScraperQueue } from "./adapter/messaging";
+import { BlocksEventsQueueMessage, MerkleDistributorBlockEventsQueueMessage, ScraperQueue } from "./adapter/messaging";
 import { wait } from "../../utils";
 
 @Injectable()
@@ -87,6 +87,14 @@ export class ScraperService {
       previousProcessedBlock.latestBlock = blockRange.to;
     }
     await this.merkleDistributorProcessedBlockRepository.save(previousProcessedBlock);
+
+    await this.scraperQueuesService.publishMessage<MerkleDistributorBlockEventsQueueMessage>(
+      ScraperQueue.MerkleDistributorBlockEvents,
+      {
+        chainId,
+        ...blockRange,
+      },
+    );
   }
 
   /**
