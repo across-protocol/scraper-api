@@ -12,7 +12,7 @@ import { DepositFixture } from "./adapter/db/deposit-fixture";
 import { ScraperQueue } from "./adapter/messaging";
 import { BlockNumberConsumer } from "./adapter/messaging/BlockNumberConsumer";
 import { BlocksEventsConsumer } from "./adapter/messaging/BlocksEventsConsumer";
-import { MerkleDistributorBlocksEventsConsumer } from "./adapter/messaging/MerkleDistributorBlockEventsConsumer";
+import { MerkleDistributorBlocksEventsConsumer } from "./adapter/messaging/MerkleDistributorBlocksEventsConsumer";
 import { DepositFilledDateConsumer } from "./adapter/messaging/DepositFilledDateConsumer";
 import { DepositReferralConsumer } from "./adapter/messaging/DepositReferralConsumer";
 import { FillEventsConsumer } from "./adapter/messaging/FillEventsConsumer";
@@ -54,7 +54,7 @@ import { ScraperQueuesService } from "./service/ScraperQueuesService";
       name: ScraperQueue.BlocksEvents,
     }),
     BullModule.registerQueue({
-      name: ScraperQueue.MerkleDistributorBlockEvents,
+      name: ScraperQueue.MerkleDistributorBlocksEvents,
     }),
     BullModule.registerQueue({
       name: ScraperQueue.TokenDetails,

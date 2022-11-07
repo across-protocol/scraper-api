@@ -5,12 +5,12 @@ import { InjectRepository } from "@nestjs/typeorm";
 import { Repository, QueryFailedError } from "typeorm";
 
 import { EthProvidersService } from "../../../web3/services/EthProvidersService";
-import { MerkleDistributorBlockEventsQueueMessage, ScraperQueue } from ".";
+import { MerkleDistributorBlocksEventsQueueMessage, ScraperQueue } from ".";
 import { ClaimedEvent } from "@across-protocol/contracts-v2/dist/typechain/MerkleDistributor";
 import { Claim } from "../../model/claim.entity";
 import { utils } from "ethers";
 
-@Processor(ScraperQueue.MerkleDistributorBlockEvents)
+@Processor(ScraperQueue.MerkleDistributorBlocksEvents)
 export class MerkleDistributorBlocksEventsConsumer {
   private logger = new Logger(MerkleDistributorBlocksEventsConsumer.name);
 
@@ -20,7 +20,7 @@ export class MerkleDistributorBlocksEventsConsumer {
   ) {}
 
   @Process({ concurrency: 1 })
-  private async process(job: Job<MerkleDistributorBlockEventsQueueMessage>) {
+  private async process(job: Job<MerkleDistributorBlocksEventsQueueMessage>) {
     const { chainId, from, to } = job.data;
     const claimedEvents: ClaimedEvent[] = await this.providers.getMerkleDistributorQuerier().getClaimedEvents(from, to);
     this.logger.log(`(${from}, ${to}) - chainId ${chainId} - found ${claimedEvents.length} ClaimedEvent`);
@@ -58,6 +58,6 @@ export class MerkleDistributorBlocksEventsConsumer {
 
   @OnQueueFailed()
   private onQueueFailed(job: Job, error: Error) {
-    this.logger.error(`${ScraperQueue.MerkleDistributorBlockEvents} ${JSON.stringify(job.data)} failed: ${error}`);
+    this.logger.error(`${ScraperQueue.MerkleDistributorBlocksEvents} ${JSON.stringify(job.data)} failed: ${error}`);
   }
 }
