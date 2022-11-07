@@ -5,7 +5,7 @@
   "rewardsToDeposit": "40",
   "merkleRoot": "0x22d3a95c82f748d96d4bd698bf1177d0ce98aab22f9a8410a870544f465cb8c8",
   "recipientsWithProofs": {
-    "0x00B591BC2b682a0B30dd72Bac9406BfA13e5d3ac": {
+    "0xF2f5C73fa04406b1995e397B55c24aB1f3eA726C": {
       "metadata": {
         "amountBreakdown": {
           "communityRewards": "5",
@@ -14,7 +14,7 @@
           "welcomeTravelerRewards": "5"
         }
       },
-      "account": "0x00B591BC2b682a0B30dd72Bac9406BfA13e5d3ac",
+      "account": "0xF2f5C73fa04406b1995e397B55c24aB1f3eA726C",
       "amount": "10",
       "accountIndex": 0,
       "proof": [
