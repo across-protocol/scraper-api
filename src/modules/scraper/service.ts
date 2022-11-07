@@ -30,11 +30,13 @@ export class ScraperService {
   public async run() {
     while (true) {
       try {
+        const latestBlocks = await this.getLatestBlocks();
+
         if (this.appConfig.values.enableSpokePoolsEventsProcessing) {
-          await this.publishBlocks();
+          await this.publishBlocks(latestBlocks);
         }
         if (this.appConfig.values.enableMerkleDistributorEventsProcessing) {
-          await this.publishMerkleDistributorBlocks();
+          await this.publishMerkleDistributorBlocks(latestBlocks);
         }
       } catch (error) {
         this.logger.error(error);
@@ -43,10 +45,13 @@ export class ScraperService {
     }
   }
 
-  public async publishBlocks() {
-    const latestBlocks = await this.getLatestBlocks();
+  public async publishBlocks(latestBlocks: Record<string, number>) {
     this.logger.log(JSON.stringify(latestBlocks));
-    const blockRanges = await this.determineBlockRanges(latestBlocks);
+    const blockRanges = await this.determineBlockRanges(
+      latestBlocks,
+      this.appConfig.values.web3.spokePoolContracts,
+      this.processedBlockRepository,
+    );
 
     for (const chainId of Object.keys(blockRanges)) {
       const { from, to } = blockRanges[chainId];
@@ -58,35 +63,21 @@ export class ScraperService {
     }
   }
 
-  public async publishMerkleDistributorBlocks() {
+  public async publishMerkleDistributorBlocks(latestBlocks: Record<string, number>) {
     const chainId = this.appConfig.values.web3.merkleDistributor.chainId;
     const configStartBlockNumber = this.appConfig.values.web3.merkleDistributor.startBlockNumber;
-    const provider = this.providers.getProvider(chainId);
-    const latestBlock = await provider.getBlock("latest");
-    let previousProcessedBlock = await this.merkleDistributorProcessedBlockRepository.findOne({
-      where: { chainId },
-    });
+    const latestBlockNumber = latestBlocks[chainId];
 
-    const blockRange = this.determineBlockRange(
+    const blockRange = await this.determineBlockRange(
       chainId,
-      latestBlock.number,
+      latestBlockNumber,
       configStartBlockNumber,
-      previousProcessedBlock?.latestBlock,
+      this.merkleDistributorProcessedBlockRepository,
     );
 
     if (!blockRange) {
       return;
     }
-
-    if (!previousProcessedBlock) {
-      previousProcessedBlock = this.merkleDistributorProcessedBlockRepository.create({
-        chainId,
-        latestBlock: blockRange.to,
-      });
-    } else {
-      previousProcessedBlock.latestBlock = blockRange.to;
-    }
-    await this.merkleDistributorProcessedBlockRepository.save(previousProcessedBlock);
 
     await this.scraperQueuesService.publishMessage<MerkleDistributorBlocksEventsQueueMessage>(
       ScraperQueue.MerkleDistributorBlocksEvents,
@@ -117,60 +108,67 @@ export class ScraperService {
    * `to` is a block number up to the latest block number from chain, but capped at a max value. This way we avoid
    *     huge block ranges to be processed.
    */
-  public async determineBlockRanges(latestBlocks: Record<string, number>) {
+  public async determineBlockRanges(
+    latestBlocks: Record<string, number>,
+    startBlockNumbers: Record<string, { startBlockNumber: number }>,
+    blockRepository: Repository<ProcessedBlock | MerkleDistributorProcessedBlock>,
+  ) {
     const blockRanges: Record<string, { from: number; to: number }> = {};
 
     for (const chainIdStr of Object.keys(latestBlocks)) {
       const chainId = parseInt(chainIdStr);
-      let previousProcessedBlock = await this.processedBlockRepository.findOne({
-        where: { chainId },
-      });
-      const configStartBlockNumber = this.appConfig.values.web3.spokePoolContracts[chainId].startBlockNumber;
+      const configStartBlockNumber = startBlockNumbers[chainId].startBlockNumber;
 
-      const blockRange = this.determineBlockRange(
+      const blockRange = await this.determineBlockRange(
         chainId,
         latestBlocks[chainId],
         configStartBlockNumber,
-        previousProcessedBlock?.latestBlock,
+        blockRepository,
       );
 
-      if (!blockRange) {
-        continue;
+      if (blockRange) {
+        blockRanges[chainId] = blockRange;
       }
-
-      if (!previousProcessedBlock) {
-        previousProcessedBlock = this.processedBlockRepository.create({
-          chainId,
-          latestBlock: blockRange.to,
-        });
-      } else {
-        previousProcessedBlock.latestBlock = blockRange.to;
-      }
-      await this.processedBlockRepository.save(previousProcessedBlock);
     }
 
     return blockRanges;
   }
 
-  public determineBlockRange(
+  public async determineBlockRange(
     chainId: number,
     latestBlockNumber: number,
     configStartBlockNumber: number,
-    previousProcessedBlockNumber?: number,
+    blockRepository: Repository<ProcessedBlock | MerkleDistributorProcessedBlock>,
   ) {
+    let previousProcessedBlock = await blockRepository.findOne({
+      where: { chainId },
+    });
+
     let from = 1;
 
-    if (previousProcessedBlockNumber) {
-      from = previousProcessedBlockNumber + 1;
+    if (previousProcessedBlock) {
+      from = previousProcessedBlock.latestBlock + 1;
     } else if (configStartBlockNumber) {
       from = configStartBlockNumber;
     }
 
     const to = Math.min(latestBlockNumber - this.getFollowingDistance(chainId), from + this.getMinBlockRange(chainId));
 
-    if (from < to) {
-      return { from, to };
+    if (from >= to) {
+      return;
     }
+
+    if (!previousProcessedBlock) {
+      previousProcessedBlock = blockRepository.create({
+        chainId,
+        latestBlock: to,
+      });
+    } else {
+      previousProcessedBlock.latestBlock = to;
+    }
+    await blockRepository.save(previousProcessedBlock);
+
+    return { from, to };
   }
 
   public getMinBlockRange(chainId: number) {
