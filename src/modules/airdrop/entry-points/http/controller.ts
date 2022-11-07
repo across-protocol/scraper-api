@@ -12,7 +12,7 @@ import {
   UseInterceptors,
 } from "@nestjs/common";
 import { FileFieldsInterceptor, FileInterceptor } from "@nestjs/platform-express";
-import { ApiResponse, ApiTags } from "@nestjs/swagger";
+import { ApiBearerAuth, ApiResponse, ApiTags } from "@nestjs/swagger";
 import { OptionalJwtAuthGuard } from "../../../auth/entry-points/http/optional-jwt.";
 import { JwtAuthGuard } from "../../../auth/entry-points/http/jwt.guard";
 import { Role, Roles, RolesGuard } from "../../../auth/entry-points/http/roles";
@@ -41,6 +41,24 @@ export class AirdropController {
   @ApiTags("airdrop")
   editWalletRewards(@Body() body: EditWalletRewardsBody) {
     return this.airdropService.editWalletRewards(body);
+  }
+
+  @Get("welcome-traveller-eligible")
+  @Roles(Role.Admin)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @ApiTags("airdrop")
+  @ApiBearerAuth()
+  async getWelcomeTravellerEligibleWallets() {
+    return this.airdropService.getWelcomeTravellerEligibleWallets();
+  }
+
+  @Get("community-rewards-eligible")
+  @Roles(Role.Admin)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @ApiTags("airdrop")
+  @ApiBearerAuth()
+  async getCommunityRewardsEligibleWallets() {
+    return this.airdropService.getCommunityRewardsEligibleWallets();
   }
 
   @Post("upload/rewards")
