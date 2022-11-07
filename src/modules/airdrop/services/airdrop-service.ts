@@ -21,6 +21,7 @@ import { AppConfig } from "../../configuration/configuration.service";
 import { MerkleDistributorWindow } from "../model/merkle-distributor-window.entity";
 import { MerkleDistributorRecipient } from "../model/merkle-distributor-recipient.entity";
 import { UserWallet } from "../../user/model/user-wallet.entity";
+import { User } from "../../user/model/user.entity";
 
 @Injectable()
 export class AirdropService {
@@ -36,6 +37,40 @@ export class AirdropService {
     private appConfig: AppConfig,
     private dataSource: DataSource,
   ) {}
+
+  public async getWelcomeTravellerEligibleWallets() {
+    const addresses = await this.dataSource
+      .createQueryBuilder(Deposit, "d")
+      .innerJoin(Token, "t", "t.id = d.tokenId")
+      .innerJoin(WalletRewards, "wr", "wr.walletAddress = d.depositorAddr")
+      .select("distinct d.depositorAddr")
+      .where(
+        "((t.symbol = 'USDC' and d.amount / t.decimals >= :usdAmount) or (t.symbol = 'WETH' and d.amount / t.decimals >= :wethAmount))",
+        { usdAmount: 150, wethAmount: 0.1 },
+      )
+      .andWhere("wr.welcomeTravellerRewards > 0")
+      .andWhere("d.depositDate <= '2022-11-08'")
+      .getRawMany();
+
+    return {
+      total: addresses.length,
+      addresses: addresses.map((a) => a.depositorAddr),
+    };
+  }
+
+  public async getCommunityRewardsEligibleWallets() {
+    const [userWallets, total] = await this.dataSource
+      .createQueryBuilder(UserWallet, "uw")
+      .innerJoin(User, "u", "u.id = uw.userId")
+      .innerJoin(CommunityRewards, "cr", "cr.discordId = u.discordId")
+      .select("uw.walletAddress")
+      .getManyAndCount();
+
+    return {
+      total,
+      addresses: userWallets.map((uw) => uw.walletAddress),
+    };
+  }
 
   public async editWalletRewards(params: EditWalletRewardsBody) {
     if (!this.appConfig.values.allowWalletRewardsEdit) throw new BadRequestException();
