@@ -163,7 +163,7 @@ export class AirdropService {
             .into(MerkleDistributorRecipient)
             .values({
               merkleDistributorWindowId: windowId,
-              address: recipient["account"],
+              address: ethers.utils.getAddress(recipient["account"]),
               amount: recipient["amount"],
               accountIndex: recipient["accountIndex"],
               proof: recipient["proof"],
