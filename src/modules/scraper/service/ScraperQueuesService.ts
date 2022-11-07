@@ -9,7 +9,7 @@ export class ScraperQueuesService {
 
   public constructor(
     @InjectQueue(ScraperQueue.BlocksEvents) private blocksEventsQueue: Queue,
-    @InjectQueue(ScraperQueue.MerkleDistributorBlockEvents) private merkleDistributorBlocksEventsQueue: Queue,
+    @InjectQueue(ScraperQueue.MerkleDistributorBlocksEvents) private merkleDistributorBlocksEventsQueue: Queue,
     @InjectQueue(ScraperQueue.FillEvents) private fillEventsQueue: Queue,
     @InjectQueue(ScraperQueue.BlockNumber) private blockNumberQueue: Queue,
     @InjectQueue(ScraperQueue.TokenDetails) private tokenDetailsQueue: Queue,
@@ -23,7 +23,7 @@ export class ScraperQueuesService {
         .then((data) => this.logger.log(`${ScraperQueue.BlocksEvents} ${JSON.stringify(data)}`));
       this.merkleDistributorBlocksEventsQueue
         .getJobCounts()
-        .then((data) => this.logger.log(`${ScraperQueue.MerkleDistributorBlockEvents} ${JSON.stringify(data)}`));
+        .then((data) => this.logger.log(`${ScraperQueue.MerkleDistributorBlocksEvents} ${JSON.stringify(data)}`));
       this.fillEventsQueue
         .getJobCounts()
         .then((data) => this.logger.log(`${ScraperQueue.FillEvents} ${JSON.stringify(data)}`));
@@ -60,7 +60,7 @@ export class ScraperQueuesService {
       await this.tokenPriceQueue.add(message);
     } else if (queue === ScraperQueue.DepositFilledDate) {
       await this.depositFilledDateQueue.add(message);
-    } else if (queue === ScraperQueue.MerkleDistributorBlockEvents) {
+    } else if (queue === ScraperQueue.MerkleDistributorBlocksEvents) {
       await this.merkleDistributorBlocksEventsQueue.add(message);
     }
   }
@@ -80,7 +80,7 @@ export class ScraperQueuesService {
       await this.tokenPriceQueue.addBulk(messages.map((m) => ({ data: m })));
     } else if (queue === ScraperQueue.DepositFilledDate) {
       await this.depositFilledDateQueue.addBulk(messages.map((m) => ({ data: m })));
-    } else if (queue === ScraperQueue.MerkleDistributorBlockEvents) {
+    } else if (queue === ScraperQueue.MerkleDistributorBlocksEvents) {
       await this.merkleDistributorBlocksEventsQueue.addBulk(messages.map((m) => ({ data: m })));
     }
   }
