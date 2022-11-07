@@ -27,7 +27,7 @@ export class MerkleDistributorBlocksEventsConsumer {
 
     for (const event of claimedEvents) {
       try {
-        const claim = await this.fromClaimedEventToClaim(event);
+        const claim = await this.fromClaimedEventToClaim(event, chainId);
         await this.claimRepository.insert(claim);
       } catch (error) {
         if (error instanceof QueryFailedError && error.driverError?.code === "23505") {
@@ -40,10 +40,10 @@ export class MerkleDistributorBlocksEventsConsumer {
     }
   }
 
-  private async fromClaimedEventToClaim(event: ClaimedEvent) {
-    const { blockNumber, getBlock } = event;
+  private async fromClaimedEventToClaim(event: ClaimedEvent, chainId: number) {
+    const { blockNumber } = event;
     const { caller, accountIndex, windowIndex, account, rewardToken } = event.args;
-    const blockTimestamp = (await getBlock()).timestamp;
+    const blockTimestamp = (await this.providers.getCachedBlock(chainId, blockNumber)).date;
 
     return this.claimRepository.create({
       caller,
@@ -52,7 +52,7 @@ export class MerkleDistributorBlocksEventsConsumer {
       account: utils.getAddress(account),
       rewardToken: utils.getAddress(rewardToken),
       blockNumber: blockNumber,
-      claimedAt: new Date(blockTimestamp * 1000).toISOString(),
+      claimedAt: blockTimestamp,
     });
   }
 
