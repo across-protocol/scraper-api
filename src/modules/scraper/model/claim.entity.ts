@@ -1,4 +1,14 @@
-import { Column, CreateDateColumn, Entity, Index, PrimaryGeneratedColumn, Unique, UpdateDateColumn } from "typeorm";
+import {
+  Column,
+  CreateDateColumn,
+  Entity,
+  Index,
+  PrimaryGeneratedColumn,
+  Unique,
+  UpdateDateColumn,
+  ManyToOne,
+} from "typeorm";
+import { MerkleDistributorWindow } from "../../airdrop/model/merkle-distributor-window.entity";
 
 @Entity()
 @Unique("UK_claim_windowIndex_accountIndex", ["windowIndex", "accountIndex"])
@@ -27,6 +37,9 @@ export class Claim {
 
   @Column()
   claimedAt: Date;
+
+  @ManyToOne(() => MerkleDistributorWindow, (window) => window.claims)
+  merkleDistributorWindow: MerkleDistributorWindow;
 
   @CreateDateColumn()
   createdAt: Date;
