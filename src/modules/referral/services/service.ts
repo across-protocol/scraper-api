@@ -15,6 +15,7 @@ import {
 import { BigNumber, ethers } from "ethers";
 import { AppConfig } from "../../configuration/configuration.service";
 import { DepositsMv } from "../../deposit/model/DepositsMv.entity";
+import { WindowAlreadySetException } from "./exceptions";
 
 const REFERRAL_ADDRESS_DELIMITER = "d00dfeeddeadbeef";
 
@@ -85,6 +86,16 @@ export class ReferralService {
   }
 
   public async createReferralsMerkleDistribution(windowIndex: number, maxDepositDate: Date) {
+    const depositWithSameWindowIndex = await this.depositRepository.findOne({
+      where: {
+        rewardsWindowIndex: windowIndex,
+      },
+    });
+
+    if (Boolean(depositWithSameWindowIndex)) {
+      throw new WindowAlreadySetException();
+    }
+
     const deposits = await this.depositsMvRepository
       .createQueryBuilder("deposit")
       .select("*")
