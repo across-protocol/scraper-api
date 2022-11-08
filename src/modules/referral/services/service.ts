@@ -193,7 +193,9 @@ export class ReferralService {
       account: string;
       amount: string;
       metadata: {
-        amountBreakdown: string;
+        amountBreakdown: {
+          referralRewards: string;
+        };
       };
     }[] = [];
 
@@ -202,7 +204,7 @@ export class ReferralService {
         const feePct =
           d.depositorAddr === address && d.referralAddress === address ? 1 : d.depositorAddr === address ? 0.25 : 0.75;
         const rewardsInUsd = ethers.utils
-          .parseEther(d.bridgeFeeUsd.toString())
+          .parseEther(parseFloat(d.bridgeFeeUsd).toFixed(18))
           .mul(feePct * 100)
           .mul(d.referralRate * 100)
           .div(100)
@@ -216,7 +218,9 @@ export class ReferralService {
         account: address,
         amount: acxRewards.toString(),
         metadata: {
-          amountBreakdown: acxRewards.toString(),
+          amountBreakdown: {
+            referralRewards: acxRewards.toString(),
+          },
         },
       });
     }
