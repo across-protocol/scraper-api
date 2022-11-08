@@ -1,6 +1,6 @@
 import { Injectable } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
-import { Repository } from "typeorm";
+import { DataSource, In, Repository } from "typeorm";
 import { Deposit } from "../../scraper/model/deposit.entity";
 import {
   getActiveRefereesCountQuery,
@@ -12,8 +12,9 @@ import {
   getTotalReferralRewardsQuery,
   getRefreshMaterializedView,
 } from "./queries";
-import { ethers } from "ethers";
+import { BigNumber, ethers } from "ethers";
 import { AppConfig } from "../../configuration/configuration.service";
+import { DepositsMv } from "../../deposit/model/DepositsMv.entity";
 
 const REFERRAL_ADDRESS_DELIMITER = "d00dfeeddeadbeef";
 
@@ -21,7 +22,9 @@ const REFERRAL_ADDRESS_DELIMITER = "d00dfeeddeadbeef";
 export class ReferralService {
   constructor(
     @InjectRepository(Deposit) private depositRepository: Repository<Deposit>,
+    @InjectRepository(DepositsMv) private depositsMvRepository: Repository<DepositsMv>,
     private appConfig: AppConfig,
+    private dataSource: DataSource,
   ) {}
 
   public async getReferralSummary(address: string) {
@@ -79,6 +82,34 @@ export class ReferralService {
         total,
       },
     };
+  }
+
+  public async createReferralsMerkleDistribution(windowIndex: number, maxDepositDate: Date) {
+    const deposits = await this.depositsMvRepository
+      .createQueryBuilder("deposit")
+      .select("*")
+      .where("deposit.rewardsWindowIndex IS NULL")
+      .andWhere("deposit.depositDate <= :maxDepositDate", { maxDepositDate })
+      .getRawMany();
+
+    const { recipients, rewardsToDeposit } = this.calculateReferralRewards(deposits);
+
+    await this.depositRepository.update(
+      { depositId: In(deposits.map((d) => d.depositId)) },
+      { rewardsWindowIndex: windowIndex },
+    );
+
+    return {
+      chainId: this.appConfig.values.web3.merkleDistributor.chainId,
+      rewardToken: this.appConfig.values.web3.acx.address,
+      windowIndex,
+      rewardsToDeposit,
+      recipients,
+    };
+  }
+
+  public async revertReferralsMerkleDistribution(windowIndex: number) {
+    await this.depositRepository.update({ rewardsWindowIndex: windowIndex }, { rewardsWindowIndex: null });
   }
 
   private getTierLevelAndBonus(transfersCount: number, transfersVolumeUsd: number) {
@@ -143,5 +174,53 @@ export class ReferralService {
 
   public refreshMaterializedView() {
     return this.depositRepository.query(getRefreshMaterializedView());
+  }
+
+  public calculateReferralRewards(deposits: DepositsMv[]) {
+    // Map an address to considered deposits for referral rewards
+    const addressToDepositsMap = deposits.reduce((acc: Record<string, DepositsMv[]>, d) => {
+      if (d.referralAddress) {
+        acc[d.referralAddress] = [...(acc[d.referralAddress] || []), d];
+        if (d.depositorAddr !== d.referralAddress) {
+          acc[d.depositorAddr] = [...(acc[d.depositorAddr] || []), d];
+        }
+      }
+      return acc;
+    }, {});
+
+    let rewardsToDeposit: BigNumber = BigNumber.from(0);
+    const recipients: {
+      account: string;
+      amount: string;
+      metadata: {
+        amountBreakdown: string;
+      };
+    }[] = [];
+
+    for (const [address, deposits] of Object.entries(addressToDepositsMap)) {
+      const acxRewards = deposits.reduce((sum, d) => {
+        const feePct =
+          d.depositorAddr === address && d.referralAddress === address ? 1 : d.depositorAddr === address ? 0.25 : 0.75;
+        const rewardsInUsd = ethers.utils
+          .parseEther(d.bridgeFeeUsd.toString())
+          .mul(feePct * 100)
+          .mul(d.referralRate * 100)
+          .div(100)
+          .mul(d.multiplier);
+        const rewardsInAcx = rewardsInUsd.div(ethers.utils.parseEther(this.appConfig.values.acxUsdPrice.toString()));
+        return sum.add(rewardsInAcx);
+      }, BigNumber.from(0));
+
+      rewardsToDeposit = rewardsToDeposit.add(acxRewards);
+      recipients.push({
+        account: address,
+        amount: acxRewards.toString(),
+        metadata: {
+          amountBreakdown: acxRewards.toString(),
+        },
+      });
+    }
+
+    return { rewardsToDeposit: rewardsToDeposit.toString(), recipients };
   }
 }
