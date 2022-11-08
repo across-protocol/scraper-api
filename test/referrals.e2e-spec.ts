@@ -79,7 +79,7 @@ describe("POST /referrals/merkle-distribution", () => {
     expect(response.status).toBe(401);
   });
 
-  it("return 201", async () => {
+  it("return 201 for success and 400 for duplicate window", async () => {
     await depositFixture.insertManyDeposits([
       mockDepositEntity({
         depositId: 1,
@@ -96,7 +96,7 @@ describe("POST /referrals/merkle-distribution", () => {
     ]);
     await referralService.refreshMaterializedView();
 
-    const response1 = await request(app.getHttpServer())
+    const successResponse = await request(app.getHttpServer())
       .post(`/referrals/merkle-distribution`)
       .set({ Authorization: `Bearer ${adminJwt}` })
       .send({
@@ -104,17 +104,16 @@ describe("POST /referrals/merkle-distribution", () => {
         maxDepositDate: new Date(Date.now() + dayInMS),
       });
     await referralService.refreshMaterializedView();
-    const response2 = await request(app.getHttpServer())
+    const duplicateWindowResponse = await request(app.getHttpServer())
       .post(`/referrals/merkle-distribution`)
       .set({ Authorization: `Bearer ${adminJwt}` })
       .send({
         windowIndex: 1,
         maxDepositDate: new Date(Date.now() + dayInMS),
       });
-    expect(response1.status).toBe(201);
-    expect(response1.body.recipients.length).toBe(2);
-    expect(response2.status).toBe(201);
-    expect(response2.body.recipients.length).toBe(0);
+    expect(successResponse.status).toBe(201);
+    expect(successResponse.body.recipients.length).toBe(2);
+    expect(duplicateWindowResponse.status).toBe(400);
   });
 });
 
