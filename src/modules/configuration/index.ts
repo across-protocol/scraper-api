@@ -69,6 +69,9 @@ export const configValues = () => ({
       referralsStartWindowIndex: Number(process.env.REFERRALS_START_WINDOW_INDEX || "1"),
       startBlockNumber: Number(process.env.MERKLE_DISTRIBUTOR_START_BLOCK || 7884371),
     },
+    acx: {
+      address: process.env.ACX_ADDRESS || "0x40153DdFAd90C49dbE3F5c9F96f2a5B25ec67461", // TODO: replace with mainnet,
+    },
   },
   acxUsdPrice: 0.1,
   enableSpokePoolsEventsProcessing: process.env.ENABLE_SPOKE_POOLS_EVENTS_PROCESSING === "true",
