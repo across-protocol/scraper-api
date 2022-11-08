@@ -117,7 +117,11 @@ export class ScraperService {
 
     for (const chainIdStr of Object.keys(latestBlocks)) {
       const chainId = parseInt(chainIdStr);
-      const configStartBlockNumber = startBlockNumbers[chainId].startBlockNumber;
+      const configStartBlockNumber = startBlockNumbers[chainId]?.startBlockNumber;
+
+      if (!configStartBlockNumber) {
+        continue;
+      }
 
       const blockRange = await this.determineBlockRange(
         chainId,
