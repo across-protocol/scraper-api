@@ -15,6 +15,7 @@ import { DepositReferralStats } from "../../referral/model/DepositReferralStats.
       t.symbol,
       t.decimals,
       d."depositorAddr",
+      d."rewardsWindowIndex",
       d."stickyReferralAddress" AS "referralAddress",
       d."depositDate",
       hmp.usd AS "tokenUsdPrice",
@@ -65,7 +66,16 @@ export class DepositsMv {
   depositorAddr: string;
 
   @ViewColumn()
-  stickyReferralAddress: string;
+  referralAddress: string;
+
+  @ViewColumn()
+  referralRate: number;
+
+  @ViewColumn()
+  multiplier: number;
+
+  @ViewColumn()
+  rewardsWindowIndex: number;
 
   @ViewColumn()
   depositDate: Date;

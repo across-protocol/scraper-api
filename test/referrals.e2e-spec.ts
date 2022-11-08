@@ -1,7 +1,8 @@
 import request from "supertest";
 import { INestApplication } from "@nestjs/common";
+import { JwtService } from "@nestjs/jwt";
 import { Test } from "@nestjs/testing";
-import { utils } from "ethers";
+import { ethers, utils } from "ethers";
 
 import { DepositFixture, mockDepositEntity } from "../src/modules/scraper/adapter/db/deposit-fixture";
 import { ClaimFixture } from "../src/modules/scraper/adapter/db/claim-fixture";
@@ -11,8 +12,11 @@ import { AppModule } from "../src/app.module";
 import { ReferralService } from "../src/modules/referral/services/service";
 import { Token } from "../src/modules/web3/model/token.entity";
 import { HistoricMarketPrice } from "../src/modules/market-price/model/historic-market-price.entity";
+import { Role } from "../src/modules/auth/entry-points/http/roles";
+import { configValues } from "../src/modules/configuration";
 
 const referrer = "0x9A8f92a830A5cB89a3816e3D267CB7791c16b04D";
+const depositor = "0xdf120Bf3AEE9892f213B1Ba95035a60682D637c3";
 const usdc = {
   address: "0x1",
   symbol: "USDC",
@@ -31,6 +35,7 @@ let referralService: ReferralService;
 
 let token: Token;
 let price: HistoricMarketPrice;
+let adminJwt: string;
 
 beforeAll(async () => {
   const moduleFixture = await Test.createTestingModule({
@@ -43,24 +48,135 @@ beforeAll(async () => {
   priceFixture = app.get(HistoricMarketPriceFixture);
   tokenFixture = app.get(TokenFixture);
   referralService = app.get(ReferralService);
+  adminJwt = app.get(JwtService).sign({ roles: [Role.Admin] }, { secret: configValues().auth.jwtSecret });
 
   await app.init();
+
+  [token, price] = await Promise.all([
+    tokenFixture.insertToken({ ...usdc }),
+    priceFixture.insertPrice({ symbol: usdc.symbol, usd: "1" }),
+  ]);
 });
 
 afterAll(async () => {
+  await Promise.all([tokenFixture.deleteAllTokens(), priceFixture.deleteAllPrices()]);
+
   await app.close();
 });
 
+describe("POST /referrals/merkle-distribution", () => {
+  afterEach(async () => {
+    await depositFixture.deleteAllDeposits();
+  });
+
+  it("return 401", async () => {
+    const response = await request(app.getHttpServer())
+      .post(`/referrals/merkle-distribution`)
+      .send({
+        windowIndex: 1,
+        maxDepositDate: new Date(Date.now() + dayInMS),
+      });
+    expect(response.status).toBe(401);
+  });
+
+  it("return 201", async () => {
+    await depositFixture.insertManyDeposits([
+      mockDepositEntity({
+        depositId: 1,
+        referralAddress: referrer,
+        stickyReferralAddress: referrer,
+        status: "filled",
+        tokenId: token.id,
+        priceId: price.id,
+        depositorAddr: depositor,
+        amount: tier5DepositAmount,
+        depositDate: new Date(),
+        bridgeFeePct: ethers.utils.parseEther("0.01").toString(), // 1%
+      }),
+    ]);
+    await referralService.refreshMaterializedView();
+
+    const response1 = await request(app.getHttpServer())
+      .post(`/referrals/merkle-distribution`)
+      .set({ Authorization: `Bearer ${adminJwt}` })
+      .send({
+        windowIndex: 1,
+        maxDepositDate: new Date(Date.now() + dayInMS),
+      });
+    await referralService.refreshMaterializedView();
+    const response2 = await request(app.getHttpServer())
+      .post(`/referrals/merkle-distribution`)
+      .set({ Authorization: `Bearer ${adminJwt}` })
+      .send({
+        windowIndex: 1,
+        maxDepositDate: new Date(Date.now() + dayInMS),
+      });
+    expect(response1.status).toBe(201);
+    expect(response1.body.recipients.length).toBe(2);
+    expect(response2.status).toBe(201);
+    expect(response2.body.recipients.length).toBe(0);
+  });
+});
+
+describe("DELETE /referrals/merkle-distribution", () => {
+  afterEach(async () => {
+    await depositFixture.deleteAllDeposits();
+  });
+
+  it("return 401", async () => {
+    const response = await request(app.getHttpServer()).delete(`/referrals/merkle-distribution`).send({
+      windowIndex: 1,
+    });
+    expect(response.status).toBe(401);
+  });
+
+  it("return 201", async () => {
+    await depositFixture.insertManyDeposits([
+      mockDepositEntity({
+        depositId: 1,
+        referralAddress: referrer,
+        stickyReferralAddress: referrer,
+        status: "filled",
+        tokenId: token.id,
+        priceId: price.id,
+        depositorAddr: depositor,
+        amount: tier5DepositAmount,
+        depositDate: new Date(),
+        bridgeFeePct: ethers.utils.parseEther("0.01").toString(), // 1%
+      }),
+    ]);
+    await referralService.refreshMaterializedView();
+
+    const firstPostResponse = await request(app.getHttpServer())
+      .post(`/referrals/merkle-distribution`)
+      .set({ Authorization: `Bearer ${adminJwt}` })
+      .send({
+        windowIndex: 1,
+        maxDepositDate: new Date(Date.now() + dayInMS),
+      });
+    await referralService.refreshMaterializedView();
+    const deleteResponse = await request(app.getHttpServer())
+      .delete(`/referrals/merkle-distribution`)
+      .set({ Authorization: `Bearer ${adminJwt}` })
+      .send({
+        windowIndex: 1,
+      });
+    await referralService.refreshMaterializedView();
+    const secondPostResponse = await request(app.getHttpServer())
+      .post(`/referrals/merkle-distribution`)
+      .set({ Authorization: `Bearer ${adminJwt}` })
+      .send({
+        windowIndex: 1,
+        maxDepositDate: new Date(Date.now() + dayInMS),
+      });
+    expect(firstPostResponse.status).toBe(201);
+    expect(firstPostResponse.body.recipients.length).toBe(2);
+    expect(deleteResponse.status).toBe(200);
+    expect(secondPostResponse.body.recipients.length).toBe(2);
+  });
+});
+
 describe("GET /referrals/summary", () => {
-  beforeAll(async () => {
-    token = await tokenFixture.insertToken({ ...usdc });
-    price = await priceFixture.insertPrice({ symbol: usdc.symbol, usd: "1" });
-  });
-
-  afterAll(async () => {
-    await Promise.all([tokenFixture.deleteAllTokens(), priceFixture.deleteAllPrices()]);
-  });
-
   beforeEach(async () => {
     await referralService.refreshMaterializedView();
   });
