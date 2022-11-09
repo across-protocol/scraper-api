@@ -12,7 +12,8 @@ import {
   getTotalReferralRewardsQuery,
   getRefreshMaterializedView,
 } from "./queries";
-import { BigNumber, ethers } from "ethers";
+import { ethers } from "ethers";
+import BigNumber from "bignumber.js";
 import { AppConfig } from "../../configuration/configuration.service";
 import { DepositsMv } from "../../deposit/model/DepositsMv.entity";
 import { WindowAlreadySetException } from "./exceptions";
@@ -199,7 +200,7 @@ export class ReferralService {
       return acc;
     }, {});
 
-    let rewardsToDeposit: BigNumber = BigNumber.from(0);
+    let rewardsToDeposit: BigNumber = new BigNumber(0);
     const recipients: {
       account: string;
       amount: string;
@@ -214,17 +215,18 @@ export class ReferralService {
       const acxRewards = deposits.reduce((sum, d) => {
         const feePct =
           d.depositorAddr === address && d.referralAddress === address ? 1 : d.depositorAddr === address ? 0.25 : 0.75;
-        const rewardsInUsd = ethers.utils
-          .parseEther(parseFloat(d.bridgeFeeUsd).toFixed(18))
-          .mul(feePct * 100)
-          .mul(d.referralRate * 100)
-          .div(100)
-          .mul(d.multiplier);
-        const rewardsInAcx = rewardsInUsd.div(ethers.utils.parseEther(this.appConfig.values.acxUsdPrice.toString()));
-        return sum.add(rewardsInAcx);
-      }, BigNumber.from(0));
+        // trunc(d."bridgeFeeUsd" * d."referralRate" / $2 * 0.75 * power(10, 18) * d.multiplier))
+        const rewards = new BigNumber(d.bridgeFeeUsd)
+          .multipliedBy(d.referralRate)
+          .multipliedBy(this.appConfig.values.acxUsdPrice)
+          .multipliedBy(feePct)
+          .multipliedBy(d.multiplier)
+          .multipliedBy(new BigNumber(10).pow(18))
+          .toFixed(0);
+        return sum.plus(rewards);
+      }, new BigNumber(0));
 
-      rewardsToDeposit = rewardsToDeposit.add(acxRewards);
+      rewardsToDeposit = rewardsToDeposit.plus(acxRewards);
       recipients.push({
         account: address,
         amount: acxRewards.toString(),
