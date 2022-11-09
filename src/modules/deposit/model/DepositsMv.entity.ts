@@ -16,6 +16,7 @@ import { DepositReferralStats } from "../../referral/model/DepositReferralStats.
       t.decimals,
       d."depositorAddr",
       d."rewardsWindowIndex",
+      case when d."rewardsWindowIndex" = c."windowIndex" then d."rewardsWindowIndex" else -1 end as "claimedWindowIndex"
       d."stickyReferralAddress" AS "referralAddress",
       d."depositDate",
       hmp.usd AS "tokenUsdPrice",
@@ -36,6 +37,7 @@ import { DepositReferralStats } from "../../referral/model/DepositReferralStats.
     JOIN "deposit_referral_stats" d1 ON d.id = d1.id
     JOIN token t ON d."tokenId" = t.id
     JOIN historic_market_price hmp ON d."priceId" = hmp.id
+    LEFT JOIN claim c on d."rewardsWindowIndex" = c."windowIndex" and d."referralAddress" = c."account"
     ORDER BY d."depositDate" desc;
   `,
 })
@@ -76,6 +78,9 @@ export class DepositsMv {
 
   @ViewColumn()
   rewardsWindowIndex: number;
+
+  @ViewColumn()
+  claimedWindowIndex: number;
 
   @ViewColumn()
   depositDate: Date;
