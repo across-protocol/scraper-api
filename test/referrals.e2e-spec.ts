@@ -224,6 +224,7 @@ describe("GET /referrals/summary", () => {
         amount: tier5DepositAmount,
         depositorAddr: `0x1`,
         depositDate: new Date(Date.now() - dayInMS),
+        rewardsWindowIndex: 1,
       }),
     ]);
     await referralService.refreshMaterializedView();
@@ -256,16 +257,16 @@ describe("GET /referrals/summary", () => {
     await depositFixture.insertManyDeposits([
       mockDepositEntity({
         ...tier5DepositBase,
-        status: "filled",
-        depositId: 1,
-        depositDate: new Date(Date.now() - 2 * dayInMS), // t = -2
-      }),
-      mockDepositEntity({
-        ...tier5DepositBase,
         amount: tier4DepositAmount,
         status: "filled",
         depositId: 2,
-        depositDate: new Date(Date.now()), // t = 0
+        rewardsWindowIndex: 1,
+      }),
+      mockDepositEntity({
+        ...tier5DepositBase,
+        status: "filled",
+        depositId: 2,
+        rewardsWindowIndex: 2,
       }),
     ]);
     await referralService.refreshMaterializedView();
@@ -277,7 +278,6 @@ describe("GET /referrals/summary", () => {
     await claimFixture.insertClaim({
       account: referrer,
       windowIndex: 1,
-      claimedAt: new Date(Date.now() - dayInMS), // t = -1
     });
     await referralService.refreshMaterializedView();
 
