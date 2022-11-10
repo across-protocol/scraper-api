@@ -61,9 +61,8 @@ export class AirdropService {
   public async getCommunityRewardsEligibleWallets() {
     const [userWallets, total] = await this.dataSource
       .createQueryBuilder(UserWallet, "uw")
-      .innerJoin(User, "u", "u.id = uw.userId")
+      .innerJoinAndSelect("uw.user", "u")
       .innerJoin(CommunityRewards, "cr", "cr.discordId = u.discordId")
-      .select("uw.walletAddress, u.discordId")
       .getManyAndCount();
 
     return {
