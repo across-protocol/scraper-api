@@ -63,12 +63,12 @@ export class AirdropService {
       .createQueryBuilder(UserWallet, "uw")
       .innerJoin(User, "u", "u.id = uw.userId")
       .innerJoin(CommunityRewards, "cr", "cr.discordId = u.discordId")
-      .select("uw.walletAddress")
+      .select("uw.walletAddress, u.discordId")
       .getManyAndCount();
 
     return {
       total,
-      addresses: userWallets.map((uw) => uw.walletAddress),
+      addresses: userWallets.map((uw) => ({ walletAddress: uw.walletAddress, discordId: uw.user.discordId })),
     };
   }
 
