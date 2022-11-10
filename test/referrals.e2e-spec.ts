@@ -257,13 +257,13 @@ describe("GET /referrals/summary", () => {
     await depositFixture.insertManyDeposits([
       mockDepositEntity({
         ...tier5DepositBase,
-        amount: tier4DepositAmount,
         status: "filled",
-        depositId: 2,
+        depositId: 1,
         rewardsWindowIndex: 1,
       }),
       mockDepositEntity({
         ...tier5DepositBase,
+        amount: tier4DepositAmount,
         status: "filled",
         depositId: 2,
         rewardsWindowIndex: 2,
