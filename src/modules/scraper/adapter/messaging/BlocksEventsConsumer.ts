@@ -20,7 +20,7 @@ export class BlocksEventsConsumer {
     private scraperQueuesService: ScraperQueuesService,
   ) {}
 
-  @Process({ concurrency: 5 })
+  @Process()
   private async process(job: Job<BlocksEventsQueueMessage>) {
     const { chainId, from, to } = job.data;
     const depositEvents: FundsDepositedEvent[] = await this.providers
