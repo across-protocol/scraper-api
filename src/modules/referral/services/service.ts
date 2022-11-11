@@ -11,6 +11,7 @@ import {
   getReferreeWalletsQuery,
   getTotalReferralRewardsQuery,
   getRefreshMaterializedView,
+  getClaimableReferralRewardsQuery,
 } from "./queries";
 import { ethers } from "ethers";
 import BigNumber from "bignumber.js";
@@ -34,6 +35,7 @@ export class ReferralService {
     const referralTransfersQuery = getReferralTransfersQuery();
     const referralVolumeQuery = getReferralVolumeQuery();
     const totalReferralRewardsQuery = getTotalReferralRewardsQuery();
+    const claimableReferralRewardsQuery = getClaimableReferralRewardsQuery();
     const activeRefereesCountQuery = getActiveRefereesCountQuery();
     const [
       referreeWalletsResult,
@@ -41,12 +43,14 @@ export class ReferralService {
       volumeResult,
       totalReferralRewardsResult,
       activeRefereesCountResult,
+      claimableReferralRewardsResult,
     ] = await Promise.all([
       this.depositRepository.query(referreeWalletsQuery, [address]),
       this.depositRepository.query(referralTransfersQuery, [address]),
       this.depositRepository.query(referralVolumeQuery, [address]),
       this.depositRepository.query(totalReferralRewardsQuery, [address, this.appConfig.values.acxUsdPrice]),
       this.depositRepository.query(activeRefereesCountQuery, [address]),
+      this.depositRepository.query(claimableReferralRewardsQuery, [address, this.appConfig.values.acxUsdPrice]),
     ]);
 
     const rewardsAmount = totalReferralRewardsResult[0]?.acxRewards || "0";
@@ -55,6 +59,7 @@ export class ReferralService {
     const volume = volumeResult[0].volume || 0;
     const { referralRate, tier } = this.getTierLevelAndBonus(referreeWallets, volume);
     const activeRefereesCount = parseInt(activeRefereesCountResult[0].count);
+    const claimableRewardsAmount = claimableReferralRewardsResult[0]?.acxRewards || "0";
 
     return {
       referreeWallets,
@@ -64,6 +69,7 @@ export class ReferralService {
       rewardsAmount,
       tier,
       activeRefereesCount,
+      claimableRewardsAmount,
     };
   }
 
