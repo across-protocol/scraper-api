@@ -1,6 +1,11 @@
-import { Injectable } from "@nestjs/common";
+import { Injectable, Logger } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
-import { DataSource, In, Repository } from "typeorm";
+import { DataSource, EntityManager, In, Repository } from "typeorm";
+import BigNumber from "bignumber.js";
+import { performance } from "perf_hooks";
+import Bluebird from "bluebird";
+import { ethers } from "ethers";
+
 import { Deposit } from "../../scraper/model/deposit.entity";
 import {
   getActiveRefereesCountQuery,
@@ -13,16 +18,18 @@ import {
   getRefreshMaterializedView,
   getClaimableReferralRewardsQuery,
 } from "./queries";
-import { ethers } from "ethers";
-import BigNumber from "bignumber.js";
 import { AppConfig } from "../../configuration/configuration.service";
 import { DepositsMv } from "../../deposit/model/DepositsMv.entity";
 import { WindowAlreadySetException } from "./exceptions";
+import { DepositsFilteredReferrals } from "../model/DepositsFilteredReferrals.entity";
+import { DepositReferralStat } from "../../deposit/model/deposit-referral-stat.entity";
 
 const REFERRAL_ADDRESS_DELIMITER = "d00dfeeddeadbeef";
 
 @Injectable()
 export class ReferralService {
+  private logger = new Logger(ReferralService.name);
+
   constructor(
     @InjectRepository(Deposit) private depositRepository: Repository<Deposit>,
     @InjectRepository(DepositsMv) private depositsMvRepository: Repository<DepositsMv>,
@@ -245,5 +252,88 @@ export class ReferralService {
     }
 
     return { rewardsToDeposit: rewardsToDeposit.toString(), recipients };
+  }
+
+  public cumputeReferralStats() {
+    return this.dataSource.transaction("REPEATABLE READ", async (entityManager) => {
+      this.logger.log(`start cumputeReferralStats()`);
+      const t1 = performance.now();
+
+      const windows = await entityManager
+        .createQueryBuilder(DepositsFilteredReferrals, "d")
+        .select("min(d.claimedWindowIndex), max(d.claimedWindowIndex)")
+        .execute();
+
+      const min = windows[0]?.["min"];
+      const max = windows[0]?.["max"];
+
+      if (typeof min !== "number" || typeof max !== "number") {
+        throw new Error("invalid min max");
+      }
+
+      for (let window = min; window <= max; window++) {
+        const deposits = await entityManager
+          .createQueryBuilder(DepositsFilteredReferrals, "d")
+          .select("d.stickyReferralAddress")
+          .where("d.claimedWindowIndex = :claimedWindowIndex", { claimedWindowIndex: window })
+          .groupBy("d.stickyReferralAddress")
+          .getMany();
+        const referralAddresses = deposits.map((deposit) => deposit.stickyReferralAddress);
+        this.logger.log(`${referralAddresses.length} referralAddresses`);
+        await Bluebird.Promise.map(
+          referralAddresses,
+          (address) => {
+            return this.computeStatsForReferralAddress(entityManager, window, address);
+          },
+          { concurrency: 10 },
+        );
+      }
+
+      const t2 = performance.now();
+      this.logger.log(`cumputeReferralStats() took ${(t2 - t1) / 1000} seconds`);
+    });
+  }
+
+  private async computeStatsForReferralAddress(entityManager: EntityManager, window: number, referralAddress: string) {
+    const depositsResult = await entityManager
+      .createQueryBuilder(DepositsFilteredReferrals, "d")
+      .where("d.claimedWindowIndex = :claimedWindowIndex", { claimedWindowIndex: window })
+      .andWhere("d.stickyReferralAddress = :referralAddress", { referralAddress })
+      .getMany();
+    const depositorAddrCounts = {};
+    const depositCounts = {};
+    const depositVolume = {};
+    let totalVolume = new BigNumber(0);
+
+    let currentCount = 0;
+    const sortedDeposits = depositsResult.sort((d1, d2) => (d1.depositDate < d2.depositDate ? -1 : 0));
+
+    for (const deposit of sortedDeposits) {
+      const prevCount = depositorAddrCounts[deposit.depositorAddr];
+
+      if (!prevCount) {
+        depositCounts[deposit.id] = ++currentCount;
+        depositorAddrCounts[deposit.depositorAddr] = currentCount;
+      } else {
+        depositCounts[deposit.id] = currentCount;
+      }
+
+      const volume = new BigNumber(deposit.amount)
+        .multipliedBy(deposit.usd)
+        .dividedBy(new BigNumber(10).pow(deposit.decimals));
+      totalVolume = totalVolume.plus(volume);
+      depositVolume[deposit.id] = totalVolume;
+
+      await entityManager
+        .createQueryBuilder(DepositReferralStat, "d")
+        .insert()
+        .values({
+          depositId: deposit.id,
+          referralCount: depositCounts[deposit.id],
+          referralVolume: depositVolume[deposit.id].toString(),
+        })
+        .orUpdate({ conflict_target: ["depositId"], overwrite: ["referralCount", "referralVolume"] })
+        .execute();
+    }
   }
 }

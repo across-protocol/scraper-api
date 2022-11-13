@@ -18,6 +18,7 @@ import { MerkleDistributorWindow } from "../airdrop/model/merkle-distributor-win
 import { DepositReferralStats } from "../referral/model/DepositReferralStats.entity";
 import { DepositsMv } from "../deposit/model/DepositsMv.entity";
 import { DepositsFilteredReferrals } from "../referral/model/DepositsFilteredReferrals.entity";
+import { DepositReferralStat } from "../deposit/model/deposit-referral-stat.entity";
 
 // TODO: Add db entities here
 const entities = [
@@ -38,6 +39,7 @@ const entities = [
   DepositReferralStats,
   DepositsMv,
   DepositsFilteredReferrals,
+  DepositReferralStat,
 ];
 
 @Injectable()

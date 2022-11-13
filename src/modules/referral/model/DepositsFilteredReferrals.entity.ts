@@ -1,4 +1,3 @@
-import { DepositFillTx, TransferStatus } from "src/modules/scraper/model/deposit.entity";
 import { ViewEntity, ViewColumn } from "typeorm";
 
 @ViewEntity({
@@ -40,5 +39,14 @@ export class DepositsFilteredReferrals {
   amount: string;
 
   @ViewColumn()
+  depositorAddr: string;
+
+  @ViewColumn()
   claimedWindowIndex?: number;
+
+  @ViewColumn()
+  usd: string;
+
+  @ViewColumn()
+  decimals: number;
 }
