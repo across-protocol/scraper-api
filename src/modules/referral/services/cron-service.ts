@@ -6,6 +6,7 @@ import { Deposit } from "../../scraper/model/deposit.entity";
 import { EnhancedCron, wait } from "../../../utils";
 import { updateStickyReferralAddressesQuery } from "../services/queries";
 import { StickyReferralAddressesMechanism } from "../../configuration";
+import { ReferralService } from "./service";
 
 @Injectable()
 export class ReferralCronService {
@@ -15,6 +16,7 @@ export class ReferralCronService {
   constructor(
     @InjectRepository(Deposit) private depositRepository: Repository<Deposit>,
     private appConfig: AppConfig,
+    private referralService: ReferralService,
   ) {}
 
   @EnhancedCron("0 */10 * * * *")
@@ -39,6 +41,7 @@ export class ReferralCronService {
       this.logger.log(`disabled refreshMaterializedView()`);
     } else {
       try {
+        await this.referralService.cumputeReferralStats();
         await this.depositRepository.query(`REFRESH MATERIALIZED VIEW CONCURRENTLY deposits_mv;`);
       } catch (error) {
         this.logger.error(error);
