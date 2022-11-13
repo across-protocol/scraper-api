@@ -268,7 +268,7 @@ export class ReferralService {
       const max = windows[0]?.["max"];
 
       if (typeof min !== "number" || typeof max !== "number") {
-        throw new Error("invalid min max");
+        return;
       }
 
       for (let window = min; window <= max; window++) {
