@@ -3,7 +3,7 @@ import { Repository } from "typeorm";
 import { InjectRepository } from "@nestjs/typeorm";
 import { AppConfig } from "../../configuration/configuration.service";
 import { Deposit } from "../../scraper/model/deposit.entity";
-import { EnhancedCron, wait } from "../../../utils";
+import { EnhancedCron } from "../../../utils";
 import { updateStickyReferralAddressesQuery } from "../services/queries";
 import { StickyReferralAddressesMechanism } from "../../configuration";
 import { ReferralService } from "./service";
@@ -25,8 +25,6 @@ export class ReferralCronService {
       if (this.semaphore) return;
       this.semaphore = true;
       await this.updateStickyReferralAddresses();
-      // cooldown period
-      await wait(30);
       await this.refreshMaterializedView();
       this.semaphore = false;
     } catch (error) {
