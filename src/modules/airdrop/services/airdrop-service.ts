@@ -344,7 +344,7 @@ export class AirdropService {
     }
 
     const wei = new BigNumber(10).pow(18);
-    communityRewards.amount = new BigNumber(amount).multipliedBy(wei).toString();
+    communityRewards.amount = new BigNumber(amount).multipliedBy(wei).toFixed();
     communityRewards.discordId = discordId;
     communityRewards.processed = true;
 
@@ -369,9 +369,9 @@ export class AirdropService {
     }
 
     const wei = new BigNumber(10).pow(18);
-    walletRewards.earlyUserRewards = new BigNumber(earlyUserRewards).multipliedBy(wei).toString();
-    walletRewards.liquidityProviderRewards = new BigNumber(liquidityProviderRewards).multipliedBy(wei).toString();
-    walletRewards.welcomeTravellerRewards = new BigNumber(welcomeTravellerRewards).multipliedBy(wei).toString();
+    walletRewards.earlyUserRewards = new BigNumber(earlyUserRewards).multipliedBy(wei).toFixed();
+    walletRewards.liquidityProviderRewards = new BigNumber(liquidityProviderRewards).multipliedBy(wei).toFixed();
+    walletRewards.welcomeTravellerRewards = new BigNumber(welcomeTravellerRewards).multipliedBy(wei).toFixed();
     walletRewards.walletAddress = walletAddress;
     walletRewards.processed = true;
 
