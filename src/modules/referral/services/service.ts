@@ -23,6 +23,7 @@ import { DepositsMv } from "../../deposit/model/DepositsMv.entity";
 import { WindowAlreadySetException } from "./exceptions";
 import { DepositsFilteredReferrals } from "../model/DepositsFilteredReferrals.entity";
 import { DepositReferralStat } from "../../deposit/model/deposit-referral-stat.entity";
+import { splitArrayInChunks } from "../../../utils";
 
 const REFERRAL_ADDRESS_DELIMITER = "d00dfeeddeadbeef";
 
@@ -112,17 +113,17 @@ export class ReferralService {
 
     const deposits = await this.depositsMvRepository
       .createQueryBuilder("deposit")
-      .select("*")
       .where("deposit.rewardsWindowIndex IS NULL")
       .andWhere("deposit.depositDate <= :maxDepositDate", { maxDepositDate })
-      .getRawMany();
-
+      .getMany();
     const { recipients, rewardsToDeposit } = this.calculateReferralRewards(deposits);
 
-    await this.depositRepository.update(
-      { depositId: In(deposits.map((d) => d.depositId)) },
-      { rewardsWindowIndex: windowIndex },
-    );
+    for (const depositsChunk of splitArrayInChunks(deposits, 100)) {
+      await this.depositRepository.update(
+        { id: In(depositsChunk.map((d) => d.id)) },
+        { rewardsWindowIndex: windowIndex },
+      );
+    }
 
     return {
       chainId: this.appConfig.values.web3.merkleDistributor.chainId,
@@ -228,7 +229,6 @@ export class ReferralService {
       const acxRewards = deposits.reduce((sum, d) => {
         const feePct =
           d.depositorAddr === address && d.referralAddress === address ? 1 : d.depositorAddr === address ? 0.25 : 0.75;
-        // trunc(d."bridgeFeeUsd" * d."referralRate" / $2 * 0.75 * power(10, 18) * d.multiplier))
         const rewards = new BigNumber(d.bridgeFeeUsd)
           .multipliedBy(d.referralRate)
           .multipliedBy(this.appConfig.values.acxUsdPrice)
@@ -251,43 +251,30 @@ export class ReferralService {
       });
     }
 
-    return { rewardsToDeposit: rewardsToDeposit.toString(), recipients };
+    return { rewardsToDeposit: rewardsToDeposit.toFixed(), recipients };
   }
 
   public cumputeReferralStats() {
     return this.dataSource.transaction("REPEATABLE READ", async (entityManager) => {
       this.logger.log(`start cumputeReferralStats()`);
       const t1 = performance.now();
+      const window = -1;
 
-      const windows = await entityManager
+      const deposits = await entityManager
         .createQueryBuilder(DepositsFilteredReferrals, "d")
-        .select("min(d.claimedWindowIndex), max(d.claimedWindowIndex)")
-        .execute();
-
-      const min = windows[0]?.["min"];
-      const max = windows[0]?.["max"];
-
-      if (typeof min !== "number" || typeof max !== "number") {
-        return;
-      }
-
-      for (let window = min; window <= max; window++) {
-        const deposits = await entityManager
-          .createQueryBuilder(DepositsFilteredReferrals, "d")
-          .select("d.stickyReferralAddress")
-          .where("d.claimedWindowIndex = :claimedWindowIndex", { claimedWindowIndex: window })
-          .groupBy("d.stickyReferralAddress")
-          .getMany();
-        const referralAddresses = deposits.map((deposit) => deposit.stickyReferralAddress);
-        this.logger.log(`${referralAddresses.length} referralAddresses`);
-        await Bluebird.Promise.map(
-          referralAddresses,
-          (address) => {
-            return this.computeStatsForReferralAddress(entityManager, window, address);
-          },
-          { concurrency: 10 },
-        );
-      }
+        .select("d.stickyReferralAddress")
+        .where("d.claimedWindowIndex = :claimedWindowIndex", { claimedWindowIndex: window })
+        .groupBy("d.stickyReferralAddress")
+        .getMany();
+      const referralAddresses = deposits.map((deposit) => deposit.stickyReferralAddress);
+      this.logger.log(`window ${window}: ${referralAddresses.length} referralAddresses`);
+      await Bluebird.Promise.map(
+        referralAddresses,
+        (address) => {
+          return this.computeStatsForReferralAddress(entityManager, window, address);
+        },
+        { concurrency: 10 },
+      );
 
       const t2 = performance.now();
       this.logger.log(`cumputeReferralStats() took ${(t2 - t1) / 1000} seconds`);
@@ -323,15 +310,18 @@ export class ReferralService {
         .dividedBy(new BigNumber(10).pow(deposit.decimals));
       totalVolume = totalVolume.plus(volume);
       depositVolume[deposit.id] = totalVolume;
+    }
 
+    for (const depositsChunk of splitArrayInChunks(sortedDeposits, 100)) {
+      const values = depositsChunk.map((d) => ({
+        depositId: d.id,
+        referralCount: depositCounts[d.id],
+        referralVolume: depositVolume[d.id].toFixed(),
+      }));
       await entityManager
         .createQueryBuilder(DepositReferralStat, "d")
         .insert()
-        .values({
-          depositId: deposit.id,
-          referralCount: depositCounts[deposit.id],
-          referralVolume: depositVolume[deposit.id].toString(),
-        })
+        .values(values)
         .orUpdate({ conflict_target: ["depositId"], overwrite: ["referralCount", "referralVolume"] })
         .execute();
     }

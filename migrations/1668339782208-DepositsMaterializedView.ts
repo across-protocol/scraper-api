@@ -7,6 +7,7 @@ export class DepositsMaterializedView1668339782208 implements MigrationInterface
     await queryRunner.query(`DROP MATERIALIZED VIEW IF EXISTS "deposits_mv"`);
     await queryRunner.query(`CREATE MATERIALIZED VIEW "deposits_mv" AS 
       SELECT
+        d.id,
         d."depositId",
         d."depositTxHash",
         d."sourceChainId",

@@ -7,6 +7,7 @@ import { DepositReferralStats } from "../../referral/model/DepositReferralStats.
   materialized: true,
   expression: `
     SELECT
+      d.id,
       d."depositId",
       d."depositTxHash",
       d."sourceChainId",
@@ -43,6 +44,9 @@ import { DepositReferralStats } from "../../referral/model/DepositReferralStats.
 })
 @Unique("UK_deposits_mv_depositId_sourceChainId", ["depositId", "sourceChainId"])
 export class DepositsMv {
+  @ViewColumn()
+  id: number;
+
   @ViewColumn()
   depositId: number;
 
