@@ -94,6 +94,7 @@ describe("POST /referrals/merkle-distribution", () => {
         bridgeFeePct: ethers.utils.parseEther("0.01").toString(), // 1%
       }),
     ]);
+    await referralService.cumputeReferralStats();
     await referralService.refreshMaterializedView();
 
     const successResponse = await request(app.getHttpServer())
@@ -103,6 +104,7 @@ describe("POST /referrals/merkle-distribution", () => {
         windowIndex: 1,
         maxDepositDate: new Date(Date.now() + dayInMS),
       });
+    await referralService.cumputeReferralStats();
     await referralService.refreshMaterializedView();
     const duplicateWindowResponse = await request(app.getHttpServer())
       .post(`/referrals/merkle-distribution`)
@@ -144,6 +146,7 @@ describe("DELETE /referrals/merkle-distribution", () => {
         bridgeFeePct: ethers.utils.parseEther("0.01").toString(), // 1%
       }),
     ]);
+    await referralService.cumputeReferralStats();
     await referralService.refreshMaterializedView();
 
     const firstPostResponse = await request(app.getHttpServer())
@@ -153,6 +156,7 @@ describe("DELETE /referrals/merkle-distribution", () => {
         windowIndex: 1,
         maxDepositDate: new Date(Date.now() + dayInMS),
       });
+    await referralService.cumputeReferralStats();
     await referralService.refreshMaterializedView();
     const deleteResponse = await request(app.getHttpServer())
       .delete(`/referrals/merkle-distribution`)
@@ -160,6 +164,7 @@ describe("DELETE /referrals/merkle-distribution", () => {
       .send({
         windowIndex: 1,
       });
+    await referralService.cumputeReferralStats();
     await referralService.refreshMaterializedView();
     const secondPostResponse = await request(app.getHttpServer())
       .post(`/referrals/merkle-distribution`)
@@ -177,6 +182,7 @@ describe("DELETE /referrals/merkle-distribution", () => {
 
 describe("GET /referrals/summary", () => {
   beforeEach(async () => {
+    await referralService.cumputeReferralStats();
     await referralService.refreshMaterializedView();
   });
 
@@ -205,6 +211,7 @@ describe("GET /referrals/summary", () => {
         }),
       ),
     );
+    await referralService.cumputeReferralStats();
     await referralService.refreshMaterializedView();
 
     const response = await request(app.getHttpServer()).get(`/referrals/summary?address=${referrer}`);
@@ -227,6 +234,7 @@ describe("GET /referrals/summary", () => {
         rewardsWindowIndex: 1,
       }),
     ]);
+    await referralService.cumputeReferralStats();
     await referralService.refreshMaterializedView();
 
     const responseBeforeClaim = await request(app.getHttpServer()).get(`/referrals/summary?address=${referrer}`);
@@ -238,6 +246,7 @@ describe("GET /referrals/summary", () => {
       claimedAt: new Date(Date.now()),
       windowIndex: 1,
     });
+    await referralService.cumputeReferralStats();
     await referralService.refreshMaterializedView();
 
     const responseAfterClaim = await request(app.getHttpServer()).get(`/referrals/summary?address=${referrer}`);
@@ -269,6 +278,7 @@ describe("GET /referrals/summary", () => {
         rewardsWindowIndex: 2,
       }),
     ]);
+    await referralService.cumputeReferralStats();
     await referralService.refreshMaterializedView();
 
     const responseBeforeClaim = await request(app.getHttpServer()).get(`/referrals/summary?address=${referrer}`);
@@ -279,6 +289,7 @@ describe("GET /referrals/summary", () => {
       account: referrer,
       windowIndex: 1,
     });
+    await referralService.cumputeReferralStats();
     await referralService.refreshMaterializedView();
 
     const responseAfterClaim = await request(app.getHttpServer()).get(`/referrals/summary?address=${referrer}`);
