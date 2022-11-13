@@ -242,10 +242,10 @@ export class ReferralService {
       rewardsToDeposit = rewardsToDeposit.plus(acxRewards);
       recipients.push({
         account: address,
-        amount: acxRewards.toString(),
+        amount: acxRewards.toFixed(),
         metadata: {
           amountBreakdown: {
-            referralRewards: acxRewards.toString(),
+            referralRewards: acxRewards.toFixed(),
           },
         },
       });
