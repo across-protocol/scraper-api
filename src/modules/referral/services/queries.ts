@@ -77,7 +77,7 @@ export const getReferralTransfersQuery = () => {
 
 export const getReferralVolumeQuery = () => {
   return `
-    select sum(d.amount / power(10, d.decimals) * d."tokenUsdPrice") as volume
+    select coalesce(sum(d.amount / power(10, d.decimals) * d."tokenUsdPrice"), 0) as volume
     from deposits_mv as d
     where d."referralAddress" = $1 and d."claimedWindowIndex" = -1`;
 };
