@@ -231,10 +231,10 @@ export class ReferralService {
           d.depositorAddr === address && d.referralAddress === address ? 1 : d.depositorAddr === address ? 0.25 : 0.75;
         const rewards = new BigNumber(d.bridgeFeeUsd)
           .multipliedBy(d.referralRate)
-          .multipliedBy(this.appConfig.values.acxUsdPrice)
           .multipliedBy(feePct)
           .multipliedBy(d.multiplier)
           .multipliedBy(new BigNumber(10).pow(18))
+          .dividedBy(this.appConfig.values.acxUsdPrice)
           .toFixed(0);
         return sum.plus(rewards);
       }, new BigNumber(0));
