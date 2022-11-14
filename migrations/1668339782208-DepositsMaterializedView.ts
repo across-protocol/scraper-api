@@ -38,7 +38,7 @@ export class DepositsMaterializedView1668339782208 implements MigrationInterface
       JOIN "deposit_referral_stat" d1 ON d."id" = d1."depositId"
       JOIN token t ON d."tokenId" = t.id
       JOIN historic_market_price hmp ON d."priceId" = hmp.id
-      LEFT JOIN claim c on d."rewardsWindowIndex" = c."windowIndex" and d."referralAddress" = c."account"
+      LEFT JOIN claim c on d."rewardsWindowIndex" = c."windowIndex" and d."stickyReferralAddress" = c."account"
       ORDER BY d."depositDate" desc;
     `);
 

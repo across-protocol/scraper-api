@@ -101,37 +101,41 @@ export class ReferralService {
   }
 
   public async createReferralsMerkleDistribution(windowIndex: number, maxDepositDate: Date) {
-    const depositWithSameWindowIndex = await this.depositRepository.findOne({
-      where: {
-        rewardsWindowIndex: windowIndex,
-      },
+    return this.dataSource.transaction("REPEATABLE READ", async (entityManager) => {
+      const depositWithSameWindowIndex = await entityManager
+        .createQueryBuilder(Deposit, "d")
+        .where("d.rewardsWindowIndex = :windowIndex", { windowIndex })
+        .getOne();
+
+      if (Boolean(depositWithSameWindowIndex)) {
+        throw new WindowAlreadySetException();
+      }
+
+      const deposits = await entityManager
+        .createQueryBuilder(DepositsMv, "deposit")
+        .where("deposit.rewardsWindowIndex IS NULL")
+        .andWhere("deposit.depositDate <= :maxDepositDate", { maxDepositDate })
+        .getMany();
+      console.log(`found ${deposits.length} deposits`);
+      const { recipients, rewardsToDeposit } = this.calculateReferralRewards(deposits);
+
+      for (const depositsChunk of splitArrayInChunks(deposits, 100)) {
+        await this.dataSource
+          .createQueryBuilder()
+          .update(Deposit)
+          .set({ rewardsWindowIndex: windowIndex })
+          .where({ id: In(depositsChunk.map((d) => d.id)) })
+          .execute();
+      }
+
+      return {
+        chainId: this.appConfig.values.web3.merkleDistributor.chainId,
+        rewardToken: this.appConfig.values.web3.acx.address,
+        windowIndex,
+        rewardsToDeposit,
+        recipients,
+      };
     });
-
-    if (Boolean(depositWithSameWindowIndex)) {
-      throw new WindowAlreadySetException();
-    }
-
-    const deposits = await this.depositsMvRepository
-      .createQueryBuilder("deposit")
-      .where("deposit.rewardsWindowIndex IS NULL")
-      .andWhere("deposit.depositDate <= :maxDepositDate", { maxDepositDate })
-      .getMany();
-    const { recipients, rewardsToDeposit } = this.calculateReferralRewards(deposits);
-
-    for (const depositsChunk of splitArrayInChunks(deposits, 100)) {
-      await this.depositRepository.update(
-        { id: In(depositsChunk.map((d) => d.id)) },
-        { rewardsWindowIndex: windowIndex },
-      );
-    }
-
-    return {
-      chainId: this.appConfig.values.web3.merkleDistributor.chainId,
-      rewardToken: this.appConfig.values.web3.acx.address,
-      windowIndex,
-      rewardsToDeposit,
-      recipients,
-    };
   }
 
   public async revertReferralsMerkleDistribution(windowIndex: number) {
