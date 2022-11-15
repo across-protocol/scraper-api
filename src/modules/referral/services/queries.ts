@@ -40,24 +40,7 @@ export const getTotalReferralRewardsQuery = () => {
         end
       ) as "acxRewards"
     from deposits_mv as d
-    where (d."referralAddress" = $1 or (d."depositorAddr" = $1 and d."referralAddress" is not null)) and d."claimedWindowIndex" = -1;  
-  `;
-};
-
-export const getClaimableReferralRewardsQuery = () => {
-  return `
-    select
-      sum(
-        case
-          when d."depositorAddr" = $1 and d."referralAddress" = $1
-            then trunc(cast(d."bridgeFeeUsd" * d."referralRate" / $2 * power(10, 18) * d.multiplier as decimal))
-          when d."depositorAddr" = $1
-          then trunc(cast(d."bridgeFeeUsd" * d."referralRate" / $2 * 0.25 * power(10, 18) * d.multiplier as decimal))
-          else trunc(cast(d."bridgeFeeUsd" * d."referralRate" / $2 * 0.75 * power(10, 18) * d.multiplier as decimal))
-        end
-      ) as "acxRewards"
-    from deposits_mv as d
-    where (d."referralAddress" = $1 or (d."depositorAddr" = $1 and d."referralAddress" is not null)) and d."claimedWindowIndex" = -1 and d."rewardsWindowIndex" is not null;  
+    where (d."referralAddress" = $1 and d."referralClaimedWindowIndex" = -1) or (d."depositorAddr" = $1 and d."depositorClaimedWindowIndex" = -1);  
   `;
 };
 
@@ -65,21 +48,21 @@ export const getReferreeWalletsQuery = () => {
   return `select count(*) from (
     select distinct on (d."depositorAddr") d."depositorAddr"
     from deposits_mv as d
-    where d."referralAddress" = $1 and d."claimedWindowIndex" = -1
+    where d."referralAddress" = $1 and d."referralClaimedWindowIndex" = -1
   ) t`;
 };
 
 export const getReferralTransfersQuery = () => {
   return `select count(*)
     from deposits_mv as d
-    where d."referralAddress" = $1 and d."claimedWindowIndex" = -1`;
+    where d."referralAddress" = $1 and d."referralClaimedWindowIndex" = -1`;
 };
 
 export const getReferralVolumeQuery = () => {
   return `
     select coalesce(sum(d.amount / power(10, d.decimals) * d."tokenUsdPrice"), 0) as volume
     from deposits_mv as d
-    where d."referralAddress" = $1 and d."claimedWindowIndex" = -1`;
+    where d."referralAddress" = $1 and d."referralClaimedWindowIndex" = -1`;
 };
 
 export const getActiveRefereesCountQuery = () => {
@@ -88,7 +71,7 @@ export const getActiveRefereesCountQuery = () => {
     from (
         select d."depositorAddr", d."depositDate", d."referralAddress", row_number() over (partition by d."depositorAddr" order by d."depositDate" desc) r
         from deposits_mv as d
-        where d."claimedWindowIndex" = -1
+        where d."referralClaimedWindowIndex" = -1
     ) temp
     where temp.r = 1 and temp."referralAddress" = $1;
   `;
