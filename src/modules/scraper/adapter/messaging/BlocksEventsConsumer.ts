@@ -63,7 +63,7 @@ export class BlocksEventsConsumer {
 
   private async fromFundsDepositedEventToDeposit(event: FundsDepositedEvent) {
     const { transactionHash, blockNumber } = event;
-    const { depositId, originChainId, destinationChainId, amount, originToken, depositor } = event.args;
+    const { depositId, originChainId, destinationChainId, amount, originToken, depositor, relayerFeePct } = event.args;
 
     return this.depositRepository.create({
       depositId,
@@ -77,6 +77,7 @@ export class BlocksEventsConsumer {
       fillTxs: [],
       blockNumber,
       depositorAddr: depositor,
+      depositRelayerFeePct: relayerFeePct.toString(),
     });
   }
 

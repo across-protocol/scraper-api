@@ -18,6 +18,9 @@ export const getAvgFillTimeQuery = () => {
   return `
     select trunc(avg(extract(epoch from "filledDate" - "depositDate"))) as "avgFillTime"
     from deposit
-    where status = 'filled' and "depositDate" is not null and "filledDate" is not null;
+    where status = 'filled' and
+          "filledDate" is not null and
+          "depositDate" > NOW() - INTERVAL '30 days' and
+          "depositRelayerFeePct" / power(10, 18) >= 0.0001;
   `;
 };
