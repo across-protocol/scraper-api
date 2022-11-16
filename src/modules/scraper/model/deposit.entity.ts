@@ -59,6 +59,9 @@ export class Deposit {
   @Column({ type: "decimal", default: 0 })
   realizedLpFeePct: string;
 
+  @Column({ type: "decimal" })
+  depositRelayerFeePct?: string;
+
   @Column({ type: "decimal", default: 0 })
   realizedLpFeePctCapped: string;
 
