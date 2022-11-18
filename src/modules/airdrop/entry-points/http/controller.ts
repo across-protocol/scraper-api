@@ -81,8 +81,8 @@ export class AirdropController {
     @UploadedFiles() files: { walletRewards?: Express.Multer.File[]; communityRewards?: Express.Multer.File[] },
   ) {
     return this.airdropService.processUploadedRewardsFiles({
-      communityRewardsFile: files.communityRewards[0],
-      walletRewardsFile: files.walletRewards[0],
+      communityRewardsFile: files?.communityRewards?.[0],
+      walletRewardsFile: files?.walletRewards?.[0],
     });
   }
 
