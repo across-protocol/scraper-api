@@ -309,6 +309,7 @@ export class AirdropService {
           welcomeTravellerRewards: walletRewards[walletAddress]["bridge-traveler"] || 0,
         });
       }
+      await this.walletRewardsRepository.delete({ processed: false });
     } catch (error) {
       this.logger.error(error);
       await this.walletRewardsRepository.update({ id: Not(IsNull()) }, { processed: true });
