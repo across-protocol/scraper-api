@@ -139,7 +139,7 @@ describe("GET /airdrop/rewards", () => {
         status: "filled",
         tokenAddr: token.address,
         tokenId: token.id,
-        amount: BigNumber.from(150).mul(BigNumber.from(10).mul(token.decimals)).toString(),
+        amount: BigNumber.from(150).mul(BigNumber.from(10).pow(token.decimals)).toString(),
       }),
     );
     const response = await request(app.getHttpServer())
