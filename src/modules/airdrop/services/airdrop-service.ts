@@ -111,7 +111,7 @@ export class AirdropService {
         .innerJoin(Token, "token", "deposit.tokenId = token.id")
         .where("deposit.depositorAddr = :depositorAddr", { depositorAddr: checksumAddress })
         .andWhere(
-          "((token.symbol = 'USDC' and deposit.amount / token.decimals >= :usdAmount) or (token.symbol = 'WETH' and deposit.amount / token.decimals >= :wethAmount))",
+          "((token.symbol = 'USDC' and deposit.amount / power(10, token.decimals) >= :usdAmount) or (token.symbol = 'WETH' and deposit.amount / power(10, token.decimals) >= :wethAmount))",
           { usdAmount: 150, wethAmount: 0.1 },
         );
       const depositCount = await depositCountQuery.getCount();
