@@ -36,3 +36,5 @@ git rebase master
   - `feature-branch` -> `master`: The branch will be deployed on the production environment for testing purposes. Most of the time, all feature branches will be merged into `stage` branch before the `master` branch.
 
 3. Update the `stage` branch with the latest master whenever is needed 
+
+Test
