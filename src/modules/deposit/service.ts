@@ -6,7 +6,7 @@ import { Cache } from "cache-manager";
 import { Deposit } from "../scraper/model/deposit.entity";
 import { getAvgFillTimeQuery, getTotalDepositsQuery, getTotalVolumeQuery } from "./adapter/db/queries";
 
-export const GENERAL_STATS_CACHE_KEY = "stats:general";
+export const DEPOSITS_STATS_CACHE_KEY = "deposits:stats";
 
 @Injectable()
 export class DepositService {
@@ -16,7 +16,7 @@ export class DepositService {
   ) {}
 
   public async getCachedGeneralStats() {
-    let data = await this.cacheManager.get(GENERAL_STATS_CACHE_KEY);
+    let data = await this.cacheManager.get(DEPOSITS_STATS_CACHE_KEY);
 
     if (!data) {
       const [totalVolumeResult, totalDepositsResult, avgFillTime] = await Promise.all([
@@ -25,13 +25,12 @@ export class DepositService {
         this.depositRepository.query(getAvgFillTimeQuery()),
       ]);
       data = {
-        totalDeposits: parseInt(totalDepositsResult[0]["totalDeposits"]),
+        totalDeposits: parseInt(totalDepositsResult[0]["totalDeposits"]) + 13_955,
+        totalVolumeUsd: parseInt(totalVolumeResult[0]["totalVolumeUsd"]) + 264_950_594.44,
         avgFillTime: parseInt(avgFillTime[0]["avgFillTime"]),
-        totalVolumeUsd: parseInt(totalVolumeResult[0]["totalVolumeUsd"]),
       };
-      await this.cacheManager.set(GENERAL_STATS_CACHE_KEY, data, 60);
+      await this.cacheManager.set(DEPOSITS_STATS_CACHE_KEY, data, 60);
     }
-
     return data;
   }
 
