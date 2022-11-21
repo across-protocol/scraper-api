@@ -35,8 +35,8 @@ export class DepositService {
   }
 
   public async getDeposits(status: "filled" | "pending", limit = 10, offset = 0) {
-    let deposits: Deposit[];
-    let total: number;
+    let deposits: Deposit[] = [];
+    let total = 0;
 
     if (status === "filled") {
       [deposits, total] = await this.depositRepository
