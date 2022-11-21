@@ -49,7 +49,7 @@ export class DepositService {
         .skip(offset)
         .getManyAndCount();
     } else if (status === "pending") {
-      // filter out pending deposits older than 1 day
+      // filter out pending deposits older than 1 day because the relayer will ignore such deposits using its fixed lookback
       [deposits, total] = await this.depositRepository
         .createQueryBuilder("d")
         .where("d.status = :status", { status })
