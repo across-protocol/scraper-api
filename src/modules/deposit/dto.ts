@@ -13,7 +13,7 @@ export class GetDepositsQuery {
     },
   )
   @ApiProperty({ example: "filled", required: false })
-  status: string;
+  status: "filled" | "pending";
 
   @IsOptional()
   @IsNumberString({ no_symbols: true })
