@@ -1,7 +1,7 @@
 import { DateTime } from "luxon";
 import { CACHE_MANAGER, Inject, Injectable } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
-import { Repository, IsNull, Not } from "typeorm";
+import { Repository } from "typeorm";
 import { Cache } from "cache-manager";
 import { Deposit } from "../scraper/model/deposit.entity";
 import { getAvgFillTimeQuery, getTotalDepositsQuery, getTotalVolumeQuery } from "./adapter/db/queries";
@@ -35,18 +35,38 @@ export class DepositService {
     return data;
   }
 
-  public async getDeposits(status, limit = 10, offset = 0) {
-    const [deposits, total] = await this.depositRepository.findAndCount({
-      where: {
-        depositDate: Not(IsNull()),
-        status,
-      },
-      skip: offset,
-      take: limit,
-      order: {
-        depositDate: "desc",
-      },
-    });
+  public async getDeposits(status: "filled" | "pending", limit = 10, offset = 0) {
+    let deposits: Deposit[] = [];
+    let total = 0;
+
+    if (status === "filled") {
+      [deposits, total] = await this.depositRepository
+        .createQueryBuilder("d")
+        .where("d.status = :status", { status })
+        .andWhere("d.depositDate is not null")
+        .orderBy("d.depositDate", "DESC")
+        .take(limit)
+        .skip(offset)
+        .getManyAndCount();
+    } else if (status === "pending") {
+      // filter out pending deposits older than 1 day because the relayer will ignore such deposits using its fixed lookback
+      [deposits, total] = await this.depositRepository
+        .createQueryBuilder("d")
+        .where("d.status = :status", { status })
+        .andWhere("d.depositDate > NOW() - INTERVAL '1 days'")
+        .orderBy("d.depositDate", "DESC")
+        .take(limit)
+        .skip(offset)
+        .getManyAndCount();
+    } else {
+      [deposits, total] = await this.depositRepository
+        .createQueryBuilder("d")
+        .where("d.depositDate is not null")
+        .orderBy("d.depositDate", "DESC")
+        .take(limit)
+        .skip(offset)
+        .getManyAndCount();
+    }
 
     return {
       deposits: deposits.map(formatDeposit),
