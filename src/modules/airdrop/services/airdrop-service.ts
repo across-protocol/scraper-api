@@ -45,12 +45,10 @@ export class AirdropService {
       .innerJoin(WalletRewards, "wr", "wr.walletAddress = d.depositorAddr")
       .select("distinct d.depositorAddr")
       .where(
-        "((t.symbol = 'USDC' and d.amount / power(10, t.decimals) >= :usdAmount) or (t.symbol = 'WETH' and d.amount / power(10, t.decimals) >= :wethAmount))",
-        { usdAmount: 149.99, wethAmount: 0.099 },
+        "((t.symbol = 'USDC' and d.amount / t.decimals >= :usdAmount) or (t.symbol = 'WETH' and d.amount / t.decimals >= :wethAmount))",
+        { usdAmount: 150, wethAmount: 0.1 },
       )
       .andWhere("wr.welcomeTravellerRewards > 0")
-      .andWhere("d.depositDate <= '2022-11-09 14:00'")
-      .andWhere("d.depositDate >= '2022-10-11 00:00'")
       .getRawMany();
 
     return {
