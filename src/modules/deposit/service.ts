@@ -57,6 +57,14 @@ export class DepositService {
         .take(limit)
         .skip(offset)
         .getManyAndCount();
+    } else {
+      [deposits, total] = await this.depositRepository
+        .createQueryBuilder("d")
+        .where("d.depositDate is not null")
+        .orderBy("d.depositDate", "DESC")
+        .take(limit)
+        .skip(offset)
+        .getManyAndCount();
     }
 
     return {
