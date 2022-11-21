@@ -49,6 +49,7 @@ export class AirdropService {
         { usdAmount: 150, wethAmount: 0.1 },
       )
       .andWhere("wr.welcomeTravellerRewards > 0")
+      .andWhere("d.depositDate < '2022-11-22 00:00:00'")
       .getRawMany();
 
     return {
@@ -104,14 +105,15 @@ export class AirdropService {
     let welcomeTravellerCompleted = false;
 
     if (welcomeTravellerEligible) {
-      const depositCountQuery = await this.depositRepository
+      const depositCountQuery = this.depositRepository
         .createQueryBuilder("deposit")
         .innerJoin(Token, "token", "deposit.tokenId = token.id")
         .where("deposit.depositorAddr = :depositorAddr", { depositorAddr: checksumAddress })
         .andWhere(
           "((token.symbol = 'USDC' and deposit.amount / token.decimals >= :usdAmount) or (token.symbol = 'WETH' and deposit.amount / token.decimals >= :wethAmount))",
           { usdAmount: 150, wethAmount: 0.1 },
-        );
+        )
+        .andWhere("deposit.depositDate < '2022-11-22 00:00:00'");
       const depositCount = await depositCountQuery.getCount();
 
       if (depositCount > 0) {
