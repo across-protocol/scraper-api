@@ -105,7 +105,7 @@ export class AirdropService {
     let welcomeTravellerCompleted = false;
 
     if (welcomeTravellerEligible) {
-      const depositCountQuery = await this.depositRepository
+      const depositCountQuery = this.depositRepository
         .createQueryBuilder("deposit")
         .innerJoin(Token, "token", "deposit.tokenId = token.id")
         .where("deposit.depositorAddr = :depositorAddr", { depositorAddr: checksumAddress })
