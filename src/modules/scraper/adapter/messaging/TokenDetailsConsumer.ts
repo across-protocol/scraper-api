@@ -22,7 +22,7 @@ export class TokenDetailsConsumer {
   private async process(job: Job<TokenDetailsQueueMessage>) {
     const { depositId } = job.data;
     const deposit = await this.depositRepository.findOne({ where: { id: depositId } });
-    if (!deposit) throw new Error("Deposit not found");
+    if (!deposit) return;
     const { sourceChainId, tokenAddr } = deposit;
     const token = await this.ethProvidersService.getCachedToken(sourceChainId, tokenAddr);
     if (!token) throw new Error("Token not found");
