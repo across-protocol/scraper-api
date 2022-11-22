@@ -115,6 +115,33 @@ describe("GET /airdrop/rewards", () => {
         tokenAddr: token.address,
         tokenId: token.id,
         amount: BigNumber.from(149).mul(token.decimals).toString(),
+        depositDate: new Date("2022-11-20 00:00:00"),
+      }),
+    );
+    const response = await request(app.getHttpServer())
+      .get("/airdrop/rewards")
+      .set({ Authorization: `Bearer ${userJwt}` })
+      .query({ address: "0x0000000000000000000000000000000000000002" });
+    const responseBody = response.body as GetAirdropRewardsResponse;
+    expect(response.status).toBe(200);
+    expect(responseBody.communityRewards.eligible).toEqual(true);
+    expect(responseBody.earlyUserRewards.eligible).toEqual(true);
+    expect(responseBody.liquidityProviderRewards.eligible).toEqual(true);
+    expect(responseBody.welcomeTravellerRewards.completed).toEqual(false);
+  });
+
+  it("should be elligible for all rewards, but welcome traveller not completed due to incorrect date", async () => {
+    const user = await userFixture.insertUser({ discordId: "1" });
+    const userJwt = app.get(JwtService).sign({ id: user.id }, { secret: configValues().auth.jwtSecret });
+    const token = await tokenFixture.insertToken({ address: "0x1", symbol: "USDC" });
+    await depositFixture.insertDeposit(
+      mockDepositEntity({
+        depositorAddr: "0x0000000000000000000000000000000000000002",
+        status: "filled",
+        tokenAddr: token.address,
+        tokenId: token.id,
+        amount: BigNumber.from(200).mul(token.decimals).toString(),
+        depositDate: new Date("2022-11-23 00:00:00"),
       }),
     );
     const response = await request(app.getHttpServer())
@@ -140,6 +167,7 @@ describe("GET /airdrop/rewards", () => {
         tokenAddr: token.address,
         tokenId: token.id,
         amount: BigNumber.from(150).mul(token.decimals).toString(),
+        depositDate: new Date("2022-11-20 00:00:00"),
       }),
     );
     const response = await request(app.getHttpServer())

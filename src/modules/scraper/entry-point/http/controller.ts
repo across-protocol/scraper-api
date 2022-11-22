@@ -8,6 +8,7 @@ import {
   DepositFilledDateQueueMessage,
   DepositReferralQueueMessage,
   ScraperQueue,
+  TokenDetailsQueueMessage,
   TokenPriceQueueMessage,
 } from "../../adapter/messaging";
 import { ScraperQueuesService } from "../../service/ScraperQueuesService";
@@ -34,6 +35,20 @@ export class ScraperController {
     const { fromDepositId, toDepositId } = body;
     for (let depositId = fromDepositId; depositId <= toDepositId; depositId++) {
       await this.scraperQueuesService.publishMessage<TokenPriceQueueMessage>(ScraperQueue.TokenPrice, {
+        depositId,
+      });
+    }
+  }
+
+  @Post("scraper/token-details")
+  @ApiTags("scraper")
+  @Roles(Role.Admin)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @ApiBearerAuth()
+  async submitTokenDetailsJobs(@Body() body: ProcessPricesBody) {
+    const { fromDepositId, toDepositId } = body;
+    for (let depositId = fromDepositId; depositId <= toDepositId; depositId++) {
+      await this.scraperQueuesService.publishMessage<TokenDetailsQueueMessage>(ScraperQueue.TokenDetails, {
         depositId,
       });
     }
