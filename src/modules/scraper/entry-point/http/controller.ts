@@ -41,11 +41,11 @@ export class ScraperController {
     });
   }
 
+  @Post("scraper/blocks/merkle-distributor")
   @ApiTags("scraper")
   @Roles(Role.Admin)
   @UseGuards(JwtAuthGuard, RolesGuard)
   @ApiBearerAuth()
-  @Post("scraper/blocks/merkle-distributor")
   async processMerkleDistributorBlocks(@Req() req: Request, @Body() body: ProcessBlocksBody) {
     const { chainId, from, to } = body;
     await this.scraperQueuesService.publishMessage<MerkleDistributorBlocksEventsQueueMessage>(
