@@ -39,6 +39,20 @@ export class ScraperController {
     }
   }
 
+  @Post("scraper/token-details")
+  @ApiTags("scraper")
+  @Roles(Role.Admin)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @ApiBearerAuth()
+  async submitTokenDetailsJobs(@Body() body: ProcessPricesBody) {
+    const { fromDepositId, toDepositId } = body;
+    for (let depositId = fromDepositId; depositId <= toDepositId; depositId++) {
+      await this.scraperQueuesService.publishMessage<TokenDetailsQueueMessage>(ScraperQueue.TokenDetails, {
+        depositId,
+      });
+    }
+  }
+
   @Post("scraper/referral-address")
   @ApiTags("scraper")
   async submitReferralAddressJob(@Body() body: SubmitReferralAddressJobBody) {
