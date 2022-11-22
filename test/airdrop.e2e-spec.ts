@@ -115,6 +115,7 @@ describe("GET /airdrop/rewards", () => {
         tokenAddr: token.address,
         tokenId: token.id,
         amount: BigNumber.from(149).mul(token.decimals).toString(),
+        depositDate: new Date("2022-11-20 00:00:00"),
       }),
     );
     const response = await request(app.getHttpServer())
@@ -140,6 +141,7 @@ describe("GET /airdrop/rewards", () => {
         tokenAddr: token.address,
         tokenId: token.id,
         amount: BigNumber.from(150).mul(token.decimals).toString(),
+        depositDate: new Date("2022-11-20 00:00:00"),
       }),
     );
     const response = await request(app.getHttpServer())
