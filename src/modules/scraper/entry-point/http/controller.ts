@@ -8,6 +8,7 @@ import {
   DepositFilledDateQueueMessage,
   DepositReferralQueueMessage,
   ScraperQueue,
+  TokenDetailsQueueMessage,
   TokenPriceQueueMessage,
 } from "../../adapter/messaging";
 import { ScraperQueuesService } from "../../service/ScraperQueuesService";
