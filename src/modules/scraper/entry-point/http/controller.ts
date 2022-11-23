@@ -10,8 +10,8 @@ import {
   DepositFilledDateQueueMessage,
   DepositReferralQueueMessage,
   ScraperQueue,
-  TokenDetailsQueueMessage,
   TokenPriceQueueMessage,
+  TokenDetailsQueueMessage,
 } from "../../adapter/messaging";
 import { ScraperService } from "../../service";
 import { ScraperQueuesService } from "../../service/ScraperQueuesService";
