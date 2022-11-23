@@ -41,20 +41,6 @@ export class ScraperController {
     });
   }
 
-  @Post("scraper/block-number")
-  @ApiTags("scraper")
-  @Roles(Role.Admin)
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @ApiBearerAuth()
-  async submitBlockNumberJobs(@Body() body: ProcessBlockNumberBody) {
-    const { fromDepositId, toDepositId } = body;
-    for (let depositId = fromDepositId; depositId <= toDepositId; depositId++) {
-      await this.scraperQueuesService.publishMessage<BlockNumberQueueMessage>(ScraperQueue.BlockNumber, {
-        depositId,
-      });
-    }
-  }
-
   @Post("scraper/blocks/merkle-distributor")
   @ApiTags("scraper")
   @Roles(Role.Admin)
@@ -70,6 +56,20 @@ export class ScraperController {
         to,
       },
     );
+  }
+
+  @Post("scraper/block-number")
+  @ApiTags("scraper")
+  @Roles(Role.Admin)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @ApiBearerAuth()
+  async submitBlockNumberJobs(@Body() body: ProcessBlockNumberBody) {
+    const { fromDepositId, toDepositId } = body;
+    for (let depositId = fromDepositId; depositId <= toDepositId; depositId++) {
+      await this.scraperQueuesService.publishMessage<BlockNumberQueueMessage>(ScraperQueue.BlockNumber, {
+        depositId,
+      });
+    }
   }
 
   @Post("scraper/prices")
