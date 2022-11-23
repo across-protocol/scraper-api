@@ -4,6 +4,7 @@ import { Request } from "express";
 import { JwtAuthGuard } from "../../../auth/entry-points/http/jwt.guard";
 import { Role, Roles, RolesGuard } from "../../../auth/entry-points/http/roles";
 import {
+  BlockNumberQueueMessage,
   BlocksEventsQueueMessage,
   MerkleDistributorBlocksEventsQueueMessage,
   DepositFilledDateQueueMessage,
@@ -14,7 +15,13 @@ import {
 } from "../../adapter/messaging";
 import { ScraperService } from "../../service";
 import { ScraperQueuesService } from "../../service/ScraperQueuesService";
-import { SubmitReferralAddressJobBody, ProcessBlocksBody, ProcessPricesBody, SubmitDepositFilledDateBody } from "./dto";
+import {
+  SubmitReferralAddressJobBody,
+  ProcessBlocksBody,
+  ProcessPricesBody,
+  SubmitDepositFilledDateBody,
+  ProcessBlockNumberBody,
+} from "./dto";
 
 @Controller()
 export class ScraperController {
@@ -49,6 +56,20 @@ export class ScraperController {
         to,
       },
     );
+  }
+
+  @Post("scraper/block-number")
+  @ApiTags("scraper")
+  @Roles(Role.Admin)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @ApiBearerAuth()
+  async submitBlockNumberJobs(@Body() body: ProcessBlockNumberBody) {
+    const { fromDepositId, toDepositId } = body;
+    for (let depositId = fromDepositId; depositId <= toDepositId; depositId++) {
+      await this.scraperQueuesService.publishMessage<BlockNumberQueueMessage>(ScraperQueue.BlockNumber, {
+        depositId,
+      });
+    }
   }
 
   @Post("scraper/prices")
