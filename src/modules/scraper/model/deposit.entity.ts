@@ -100,6 +100,9 @@ export class Deposit {
   @Column({ nullable: true })
   stickyReferralAddress?: string;
 
+  @Column({ nullable: true })
+  rewardsWindowIndex?: number;
+
   @CreateDateColumn()
   createdAt: Date;
 

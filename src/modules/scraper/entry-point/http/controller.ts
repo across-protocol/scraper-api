@@ -6,12 +6,14 @@ import { Role, Roles, RolesGuard } from "../../../auth/entry-points/http/roles";
 import {
   BlockNumberQueueMessage,
   BlocksEventsQueueMessage,
+  MerkleDistributorBlocksEventsQueueMessage,
   DepositFilledDateQueueMessage,
   DepositReferralQueueMessage,
   ScraperQueue,
   TokenDetailsQueueMessage,
   TokenPriceQueueMessage,
 } from "../../adapter/messaging";
+import { ScraperService } from "../../service";
 import { ScraperQueuesService } from "../../service/ScraperQueuesService";
 import {
   SubmitReferralAddressJobBody,
@@ -23,7 +25,7 @@ import {
 
 @Controller()
 export class ScraperController {
-  constructor(private scraperQueuesService: ScraperQueuesService) {}
+  constructor(private scraperQueuesService: ScraperQueuesService, private scraperService: ScraperService) {}
 
   @Post("scraper/blocks")
   @ApiTags("scraper")
@@ -51,6 +53,23 @@ export class ScraperController {
         depositId,
       });
     }
+  }
+
+  @Post("scraper/blocks/merkle-distributor")
+  @ApiTags("scraper")
+  @Roles(Role.Admin)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @ApiBearerAuth()
+  async processMerkleDistributorBlocks(@Req() req: Request, @Body() body: ProcessBlocksBody) {
+    const { chainId, from, to } = body;
+    await this.scraperQueuesService.publishMessage<MerkleDistributorBlocksEventsQueueMessage>(
+      ScraperQueue.MerkleDistributorBlocksEvents,
+      {
+        chainId,
+        from,
+        to,
+      },
+    );
   }
 
   @Post("scraper/prices")

@@ -17,3 +17,9 @@ export const getRandomInt = (min = 0, max = 1000000) => {
   max = Math.floor(max);
   return Math.floor(Math.random() * (max - min + 1)) + min;
 };
+
+export const splitArrayInChunks = <T>(array: T[], chunk_size: number) =>
+  Array(Math.ceil(array.length / chunk_size))
+    .fill(0)
+    .map((_, index) => index * chunk_size)
+    .map((begin) => array.slice(begin, begin + chunk_size));
