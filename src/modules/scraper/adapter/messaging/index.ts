@@ -6,9 +6,16 @@ export enum ScraperQueue {
   DepositReferral = "DepositReferral",
   TokenPrice = "TokenPrice",
   DepositFilledDate = "DepositFilledDate",
+  MerkleDistributorBlocksEvents = "MerkleDistributorBlocksEvents",
 }
 
 export type BlocksEventsQueueMessage = {
+  chainId: number;
+  from: number;
+  to: number;
+};
+
+export type MerkleDistributorBlocksEventsQueueMessage = {
   chainId: number;
   from: number;
   to: number;

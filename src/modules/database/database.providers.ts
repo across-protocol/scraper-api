@@ -2,6 +2,8 @@ import { TypeOrmOptionsFactory, TypeOrmModuleOptions } from "@nestjs/typeorm";
 import { Injectable } from "@nestjs/common";
 import { AppConfig } from "../configuration/configuration.service";
 import { ProcessedBlock } from "../scraper/model/ProcessedBlock.entity";
+import { MerkleDistributorProcessedBlock } from "../scraper/model/MerkleDistributorProcessedBlock.entity";
+import { Claim } from "../scraper/model/claim.entity";
 import { Block } from "../web3/model/block.entity";
 import { Deposit } from "../scraper/model/deposit.entity";
 import { Token } from "../web3/model/token.entity";
@@ -13,10 +15,16 @@ import { CommunityRewards } from "../airdrop/model/community-rewards.entity";
 import { UserWallet } from "../user/model/user-wallet.entity";
 import { MerkleDistributorRecipient } from "../airdrop/model/merkle-distributor-recipient.entity";
 import { MerkleDistributorWindow } from "../airdrop/model/merkle-distributor-window.entity";
+import { DepositReferralStats } from "../referral/model/DepositReferralStats.entity";
+import { DepositsMv } from "../deposit/model/DepositsMv.entity";
+import { DepositsFilteredReferrals } from "../referral/model/DepositsFilteredReferrals.entity";
+import { DepositReferralStat } from "../deposit/model/deposit-referral-stat.entity";
 
 // TODO: Add db entities here
 const entities = [
   ProcessedBlock,
+  MerkleDistributorProcessedBlock,
+  Claim,
   Block,
   Deposit,
   Token,
@@ -28,6 +36,10 @@ const entities = [
   UserWallet,
   MerkleDistributorWindow,
   MerkleDistributorRecipient,
+  DepositReferralStats,
+  DepositsMv,
+  DepositsFilteredReferrals,
+  DepositReferralStat,
 ];
 
 @Injectable()

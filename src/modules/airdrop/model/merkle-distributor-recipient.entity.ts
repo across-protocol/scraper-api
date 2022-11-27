@@ -13,7 +13,7 @@ export type MerkleDistributorRecipientPayload = {
 
 @Entity()
 // A recipient address can't appear twice for the same window
-@Unique("UK_merkle_distributor_recipient_merkleDistributorWindowId_address", ["merkleDistributorWindowId", "address"])
+@Unique("UK_merkle_distributor_recipient_windowId_address", ["merkleDistributorWindowId", "address"])
 export class MerkleDistributorRecipient {
   @PrimaryGeneratedColumn()
   id: number;

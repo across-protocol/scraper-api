@@ -1,4 +1,4 @@
-import { ERC20__factory, SpokePool__factory } from "@across-protocol/contracts-v2";
+import { ERC20__factory, AcrossMerkleDistributor__factory, SpokePool__factory } from "@across-protocol/contracts-v2";
 import { Injectable } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { ethers } from "ethers";
@@ -8,12 +8,14 @@ import { Block } from "../model/block.entity";
 import { ChainId } from "../model/ChainId";
 import { Token } from "../model/token.entity";
 import { SpokePoolEventsQuerier } from "./SpokePoolEventsQuerier";
+import { MerkleDistributorEventsQuerier } from "./MerkleDistributorEventsQuerier";
 import { Transaction } from "../model/transaction.entity";
 
 @Injectable()
 export class EthProvidersService {
   private providers: Record<string, ethers.providers.JsonRpcProvider> = {};
   private spokePoolEventQueriers: Record<string, SpokePoolEventsQuerier> = {};
+  private merkleDistributorEventQuerier: MerkleDistributorEventsQuerier;
 
   public constructor(
     private appConfig: AppConfig,
@@ -21,22 +23,9 @@ export class EthProvidersService {
     @InjectRepository(Token) private tokenRepository: Repository<Token>,
     @InjectRepository(Transaction) private transactionRepository: Repository<Transaction>,
   ) {
-    const supportedChainIds = Object.keys(this.appConfig.values.web3.providers);
-
-    for (const chainId of supportedChainIds) {
-      if (this.appConfig.values.web3.providers[chainId]) {
-        const provider = new ethers.providers.JsonRpcProvider(this.appConfig.values.web3.providers[chainId]);
-        this.providers[chainId] = provider;
-      }
-    }
-
-    for (const chainId of Object.keys(this.getProviders())) {
-      const spokePool = SpokePool__factory.connect(
-        appConfig.values.web3.spokePoolContracts[parseInt(chainId)].address,
-        this.getProvider(parseInt(chainId)),
-      );
-      this.spokePoolEventQueriers[chainId] = new SpokePoolEventsQuerier(spokePool);
-    }
+    this.setProviders();
+    this.setSpokePoolEventQueriers();
+    this.setMerkleDistributorEventQuerier();
   }
 
   public getProvider(chainId: ChainId): ethers.providers.JsonRpcProvider | undefined {
@@ -53,6 +42,10 @@ export class EthProvidersService {
 
   public getSpokePoolEventQueriers() {
     return this.spokePoolEventQueriers;
+  }
+
+  public getMerkleDistributorQuerier(): MerkleDistributorEventsQuerier | undefined {
+    return this.merkleDistributorEventQuerier;
   }
 
   public async getCachedBlock(chainId: number, blockNumber: number) {
@@ -110,5 +103,41 @@ export class EthProvidersService {
     }
 
     return transaction;
+  }
+
+  private setProviders() {
+    const supportedChainIds = Object.keys(this.appConfig.values.web3.providers);
+
+    for (const chainId of supportedChainIds) {
+      if (this.appConfig.values.web3.providers[chainId]) {
+        const provider = new ethers.providers.JsonRpcProvider(this.appConfig.values.web3.providers[chainId]);
+        this.providers[chainId] = provider;
+      }
+    }
+  }
+
+  private setSpokePoolEventQueriers() {
+    for (const chainIdStr of Object.keys(this.getProviders())) {
+      const chainId = parseInt(chainIdStr);
+      const spokePoolAddress = this.appConfig.values.web3.spokePoolContracts[chainId]?.address;
+      if (spokePoolAddress) {
+        const spokePool = SpokePool__factory.connect(
+          this.appConfig.values.web3.spokePoolContracts[chainId].address,
+          this.getProvider(chainId),
+        );
+        this.spokePoolEventQueriers[chainId] = new SpokePoolEventsQuerier(spokePool);
+      }
+    }
+  }
+
+  private setMerkleDistributorEventQuerier() {
+    const provider = this.getProvider(this.appConfig.values.web3.merkleDistributor.chainId);
+    if (provider) {
+      const merkleDistributor = AcrossMerkleDistributor__factory.connect(
+        this.appConfig.values.web3.merkleDistributor.address,
+        provider,
+      );
+      this.merkleDistributorEventQuerier = new MerkleDistributorEventsQuerier(merkleDistributor);
+    }
   }
 }
