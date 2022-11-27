@@ -280,6 +280,7 @@ export class ReferralService {
   }
 
   private async computeStatsForReferralAddress(entityManager: EntityManager, window: number, referralAddress: string) {
+    const t1 = performance.now();
     const depositsResult = await entityManager
       .createQueryBuilder(DepositsFilteredReferrals, "d")
       .where("d.claimedWindowIndex = :claimedWindowIndex", { claimedWindowIndex: window })
@@ -292,6 +293,9 @@ export class ReferralService {
 
     let currentCount = 0;
     const sortedDeposits = depositsResult.sort((d1, d2) => (d1.depositDate < d2.depositDate ? -1 : 0));
+
+    const t2 = performance.now();
+    this.logger.log(`computeStatsForReferralAddress::sqlSelectAndSort::${referralAddress} ${(t2 - t1) / 1000} seconds`);
 
     for (const deposit of sortedDeposits) {
       const prevCount = depositorAddrCounts[deposit.depositorAddr];
@@ -310,18 +314,25 @@ export class ReferralService {
       depositVolume[deposit.id] = totalVolume;
     }
 
-    for (const depositsChunk of splitArrayInChunks(sortedDeposits, 100)) {
-      const values = depositsChunk.map((d) => ({
-        depositId: d.id,
-        referralCount: depositCounts[d.id],
-        referralVolume: depositVolume[d.id].toFixed(),
-      }));
-      await entityManager
-        .createQueryBuilder(DepositReferralStat, "d")
-        .insert()
-        .values(values)
-        .orUpdate({ conflict_target: ["depositId"], overwrite: ["referralCount", "referralVolume"] })
-        .execute();
-    }
+    const t3 = performance.now();
+    this.logger.log(`computeStatsForReferralAddress::computedStats::${referralAddress} ${(t3 - t2) / 1000} seconds`);
+
+    await Promise.all(
+      splitArrayInChunks(sortedDeposits, 100).map((depositsChunk) => {
+        const values = depositsChunk.map((d) => ({
+          depositId: d.id,
+          referralCount: depositCounts[d.id],
+          referralVolume: depositVolume[d.id].toFixed(),
+        }));
+        return entityManager
+          .createQueryBuilder(DepositReferralStat, "d")
+          .insert()
+          .values(values)
+          .orUpdate({ conflict_target: ["depositId"], overwrite: ["referralCount", "referralVolume"] })
+          .execute();
+      }),
+    );
+    const t4 = performance.now();
+    this.logger.log(`computeStatsForReferralAddress::computedStats::${referralAddress} ${(t4 - t3) / 1000} seconds`);
   }
 }
