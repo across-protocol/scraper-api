@@ -1,10 +1,11 @@
-import { Injectable, Logger } from "@nestjs/common";
+import { CACHE_MANAGER, Inject, Injectable, Logger } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { DataSource, EntityManager, In, Repository } from "typeorm";
 import BigNumber from "bignumber.js";
 import { performance } from "perf_hooks";
 import Bluebird from "bluebird";
 import { ethers } from "ethers";
+import { Cache } from "cache-manager";
 
 import { Deposit } from "../../scraper/model/deposit.entity";
 import {
@@ -25,6 +26,7 @@ import { DepositReferralStat } from "../../deposit/model/deposit-referral-stat.e
 import { splitArrayInChunks } from "../../../utils";
 
 const REFERRAL_ADDRESS_DELIMITER = "d00dfeeddeadbeef";
+const getReferralsSummaryCacheKey = (address: string) => `referrals:summary:${address}`;
 
 @Injectable()
 export class ReferralService {
@@ -35,9 +37,14 @@ export class ReferralService {
     @InjectRepository(DepositsMv) private depositsMvRepository: Repository<DepositsMv>,
     private appConfig: AppConfig,
     private dataSource: DataSource,
+    @Inject(CACHE_MANAGER) private cacheManager: Cache,
   ) {}
 
   public async getReferralSummary(address: string) {
+    let data = await this.cacheManager.get(getReferralsSummaryCacheKey(address));
+
+    if (data) return data;
+
     const referreeWalletsQuery = getReferreeWalletsQuery();
     const referralTransfersQuery = getReferralTransfersQuery();
     const referralVolumeQuery = getReferralVolumeQuery();
@@ -64,7 +71,7 @@ export class ReferralService {
     const { referralRate, tier } = this.getTierLevelAndBonus(referreeWallets, volume);
     const activeRefereesCount = parseInt(activeRefereesCountResult[0].count);
 
-    return {
+    data = {
       referreeWallets,
       transfers,
       volume,
@@ -73,6 +80,9 @@ export class ReferralService {
       tier,
       activeRefereesCount,
     };
+    await this.cacheManager.set(getReferralsSummaryCacheKey(address), data, 120);
+
+    return data;
   }
 
   public async getReferrals(address: string, limit = 10, offset = 0) {
