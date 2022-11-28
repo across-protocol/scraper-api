@@ -1,9 +1,10 @@
-import { BadRequestException, Injectable, Logger } from "@nestjs/common";
+import { BadRequestException, CACHE_MANAGER, Inject, Injectable, Logger } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { ethers } from "ethers";
 import { readFile } from "fs/promises";
 import BigNumber from "bignumber.js";
 import { DataSource, IsNull, Not, QueryFailedError, Repository } from "typeorm";
+import { Cache } from "cache-manager";
 
 import { Deposit } from "../../scraper/model/deposit.entity";
 import { CommunityRewards } from "../model/community-rewards.entity";
@@ -23,6 +24,11 @@ import { MerkleDistributorRecipient } from "../model/merkle-distributor-recipien
 import { UserWallet } from "../../user/model/user-wallet.entity";
 import { User } from "../../user/model/user.entity";
 
+const getMerkleDistributorProofCacheKey = (address: string, windowIndex: number) =>
+  `distributor:proof:${address}:${windowIndex}`;
+const getMerkleDistributorProofsCacheKey = (address: string, startWindowIndex: number) =>
+  `distributor:proofs:${address}:${startWindowIndex}`;
+
 @Injectable()
 export class AirdropService {
   private logger = new Logger(AirdropService.name);
@@ -36,6 +42,7 @@ export class AirdropService {
     private userService: UserService,
     private appConfig: AppConfig,
     private dataSource: DataSource,
+    @Inject(CACHE_MANAGER) private cacheManager: Cache,
   ) {}
 
   public async getWelcomeTravellerEligibleWallets() {
@@ -231,6 +238,10 @@ export class AirdropService {
 
   public async getMerkleDistributorProof(address: string, windowIndex: number, includeDiscord: boolean) {
     const checksumAddress = ethers.utils.getAddress(address);
+    const cacheKey = getMerkleDistributorProofCacheKey(checksumAddress, windowIndex);
+    let data = await this.cacheManager.get(cacheKey);
+
+    if (data) return data;
 
     const query = this.dataSource
       .createQueryBuilder(MerkleDistributorRecipient, "recipient")
@@ -251,7 +262,7 @@ export class AirdropService {
         .getOne();
     }
 
-    return {
+    data = {
       accountIndex: recipient.accountIndex,
       address: recipient.address,
       amount: recipient.amount,
@@ -268,10 +279,17 @@ export class AirdropService {
           }
         : null,
     };
+
+    await this.cacheManager.set(cacheKey, data, 300);
+    return data;
   }
 
   public async getMerkleDistributorProofs(address: string, startWindowIndex = 0) {
     const checksumAddress = ethers.utils.getAddress(address);
+    const cacheKey = getMerkleDistributorProofsCacheKey(checksumAddress, startWindowIndex);
+    let data = await this.cacheManager.get(cacheKey);
+
+    if (data) return data;
 
     const query = this.dataSource
       .createQueryBuilder(MerkleDistributorRecipient, "recipient")
@@ -282,7 +300,7 @@ export class AirdropService {
 
     if (!recipients) return [];
 
-    return recipients.map((recipient) => ({
+    data = recipients.map((recipient) => ({
       accountIndex: recipient.accountIndex,
       address: recipient.address,
       amount: recipient.amount,
@@ -293,6 +311,9 @@ export class AirdropService {
       ipfsHash: recipient.merkleDistributorWindow.ipfsHash || null,
       discord: null,
     }));
+
+    await this.cacheManager.set(cacheKey, data, 300);
+    return data;
   }
 
   private async processWalletRewardsFile(walletRewardsFile: Express.Multer.File) {
