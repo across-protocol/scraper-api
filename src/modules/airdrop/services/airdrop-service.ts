@@ -28,6 +28,7 @@ const getMerkleDistributorProofCacheKey = (address: string, windowIndex: number)
   `distributor:proof:${address}:${windowIndex}`;
 const getMerkleDistributorProofsCacheKey = (address: string, startWindowIndex: number) =>
   `distributor:proofs:${address}:${startWindowIndex}`;
+const DISTRIBUTOR_PROOFS_CACHE_SECONDS_DURATION = 300;
 
 @Injectable()
 export class AirdropService {
@@ -280,7 +281,7 @@ export class AirdropService {
         : null,
     };
 
-    await this.cacheManager.set(cacheKey, data, 300);
+    await this.cacheManager.set(cacheKey, data, DISTRIBUTOR_PROOFS_CACHE_SECONDS_DURATION);
     return data;
   }
 
@@ -312,7 +313,7 @@ export class AirdropService {
       discord: null,
     }));
 
-    await this.cacheManager.set(cacheKey, data, 300);
+    await this.cacheManager.set(cacheKey, data, DISTRIBUTOR_PROOFS_CACHE_SECONDS_DURATION);
     return data;
   }
 
