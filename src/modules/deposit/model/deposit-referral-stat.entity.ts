@@ -15,6 +15,9 @@ export class DepositReferralStat {
   @Column({ type: "decimal" })
   referralVolume: string;
 
+  @Column({ nullable: true })
+  referralClaimedWindowIndex?: number;
+
   @CreateDateColumn()
   createdAt: Date;
 
