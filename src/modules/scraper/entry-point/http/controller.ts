@@ -73,6 +73,9 @@ export class ScraperController {
   }
 
   @Post("scraper/prices")
+  @Roles(Role.Admin)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @ApiBearerAuth()
   @ApiTags("scraper")
   async submitPricesJobs(@Body() body: ProcessPricesBody) {
     const { fromDepositId, toDepositId } = body;
@@ -98,6 +101,9 @@ export class ScraperController {
   }
 
   @Post("scraper/referral-address")
+  @Roles(Role.Admin)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @ApiBearerAuth()
   @ApiTags("scraper")
   async submitReferralAddressJob(@Body() body: SubmitReferralAddressJobBody) {
     const { fromDepositId, toDepositId } = body;
