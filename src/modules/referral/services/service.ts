@@ -271,7 +271,7 @@ export class ReferralService {
       const deposits = await entityManager
         .createQueryBuilder(DepositsFilteredReferrals, "d")
         .select("d.stickyReferralAddress")
-        .where("d.claimedWindowIndex = :claimedWindowIndex", { claimedWindowIndex: window })
+        .where("d.referralClaimedWindowIndex = :claimedWindowIndex", { claimedWindowIndex: window })
         .groupBy("d.stickyReferralAddress")
         .getMany();
       const referralAddresses = deposits.map((deposit) => deposit.stickyReferralAddress);
@@ -292,7 +292,7 @@ export class ReferralService {
   private async computeStatsForReferralAddress(entityManager: EntityManager, window: number, referralAddress: string) {
     const depositsResult = await entityManager
       .createQueryBuilder(DepositsFilteredReferrals, "d")
-      .where("d.claimedWindowIndex = :claimedWindowIndex", { claimedWindowIndex: window })
+      .where("d.referralClaimedWindowIndex = :claimedWindowIndex", { claimedWindowIndex: window })
       .andWhere("d.stickyReferralAddress = :referralAddress", { referralAddress })
       .getMany();
     const depositorAddrCounts = {};
@@ -321,16 +321,20 @@ export class ReferralService {
     }
 
     for (const depositsChunk of splitArrayInChunks(sortedDeposits, 100)) {
-      const values = depositsChunk.map((d) => ({
+      const values: Partial<DepositReferralStat>[] = depositsChunk.map((d) => ({
         depositId: d.id,
         referralCount: depositCounts[d.id],
         referralVolume: depositVolume[d.id].toFixed(),
+        referralClaimedWindowIndex: d.referralClaimedWindowIndex,
       }));
       await entityManager
         .createQueryBuilder(DepositReferralStat, "d")
         .insert()
         .values(values)
-        .orUpdate({ conflict_target: ["depositId"], overwrite: ["referralCount", "referralVolume"] })
+        .orUpdate({
+          conflict_target: ["depositId"],
+          overwrite: ["referralCount", "referralVolume", "referralClaimedWindowIndex"],
+        })
         .execute();
     }
   }
