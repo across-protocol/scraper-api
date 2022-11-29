@@ -19,8 +19,6 @@ export class LogsMiddleware implements NestMiddleware {
       if (statusCode >= 400) {
         return this.logger.warn(message);
       }
-
-      return this.logger.log(message);
     });
 
     next();
