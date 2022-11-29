@@ -53,6 +53,7 @@ export class DepositService {
         .createQueryBuilder("d")
         .where("d.status = :status", { status })
         .andWhere("d.depositDate > NOW() - INTERVAL '1 days'")
+        .andWhere("d.depositRelayerFeePct / power(10, 18) >= 0.0001")
         .orderBy("d.depositDate", "DESC")
         .take(limit)
         .skip(offset)
@@ -95,5 +96,6 @@ export function formatDeposit(deposit: Deposit) {
     amount: deposit.amount,
     depositTxHash: deposit.depositTxHash,
     fillTxs: deposit.fillTxs.map(({ hash }) => hash),
+    depositRelayerFeePct: deposit.depositRelayerFeePct,
   };
 }
