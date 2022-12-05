@@ -103,6 +103,9 @@ export class Deposit {
   @Column({ nullable: true })
   rewardsWindowIndex?: number;
 
+  @Column({ type: "decimal", nullable: true })
+  acxUsdPrice?: string;
+
   @CreateDateColumn()
   createdAt: Date;
 

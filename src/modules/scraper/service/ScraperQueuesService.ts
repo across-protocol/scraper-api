@@ -16,6 +16,7 @@ export class ScraperQueuesService {
     @InjectQueue(ScraperQueue.DepositReferral) private depositReferralQueue: Queue,
     @InjectQueue(ScraperQueue.TokenPrice) private tokenPriceQueue: Queue,
     @InjectQueue(ScraperQueue.DepositFilledDate) private depositFilledDateQueue: Queue,
+    @InjectQueue(ScraperQueue.DepositAcxPrice) private depositAcxPriceQueue: Queue,
   ) {
     setInterval(() => {
       this.blocksEventsQueue
@@ -42,6 +43,9 @@ export class ScraperQueuesService {
       this.depositFilledDateQueue
         .getJobCounts()
         .then((data) => this.logger.log(`${ScraperQueue.DepositFilledDate} ${JSON.stringify(data)}`));
+      this.depositAcxPriceQueue
+        .getJobCounts()
+        .then((data) => this.logger.log(`${ScraperQueue.DepositAcxPrice} ${JSON.stringify(data)}`));
     }, 1000 * 60);
   }
 
@@ -62,6 +66,8 @@ export class ScraperQueuesService {
       await this.depositFilledDateQueue.add(message);
     } else if (queue === ScraperQueue.MerkleDistributorBlocksEvents) {
       await this.merkleDistributorBlocksEventsQueue.add(message);
+    } else if (queue === ScraperQueue.DepositAcxPrice) {
+      await this.depositAcxPriceQueue.add(message);
     }
   }
 
@@ -82,6 +88,8 @@ export class ScraperQueuesService {
       await this.depositFilledDateQueue.addBulk(messages.map((m) => ({ data: m })));
     } else if (queue === ScraperQueue.MerkleDistributorBlocksEvents) {
       await this.merkleDistributorBlocksEventsQueue.addBulk(messages.map((m) => ({ data: m })));
+    } else if (queue === ScraperQueue.DepositAcxPrice) {
+      await this.depositAcxPriceQueue.addBulk(messages.map((m) => ({ data: m })));
     }
   }
 }
