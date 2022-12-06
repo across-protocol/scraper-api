@@ -26,6 +26,7 @@ import { ProcessedBlock } from "./model/ProcessedBlock.entity";
 import { MerkleDistributorProcessedBlock } from "./model/MerkleDistributorProcessedBlock.entity";
 import { ScraperService } from "./service";
 import { ScraperQueuesService } from "./service/ScraperQueuesService";
+import { DepositAcxPriceConsumer } from "./adapter/messaging/DepositAcxPriceConsumer";
 
 @Module({
   providers: [
@@ -39,6 +40,7 @@ import { ScraperQueuesService } from "./service/ScraperQueuesService";
     DepositReferralConsumer,
     TokenPriceConsumer,
     DepositFilledDateConsumer,
+    DepositAcxPriceConsumer,
     DepositFixture,
     ClaimFixture,
   ],
@@ -66,6 +68,9 @@ import { ScraperQueuesService } from "./service/ScraperQueuesService";
     }),
     BullModule.registerQueue({
       name: ScraperQueue.DepositReferral,
+    }),
+    BullModule.registerQueue({
+      name: ScraperQueue.DepositAcxPrice,
     }),
     BullModule.registerQueue({
       name: ScraperQueue.FillEvents,

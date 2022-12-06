@@ -18,19 +18,39 @@ export class MarketPriceService {
     let price = await this.historicMarketPriceRepository.findOne({ where: { date: dbFormattedDate, symbol } });
 
     if (!price) {
-      const cgPrice = await this.coinGeckoService.getHistoricPrice(formattedDate, symbol);
-      const usd = cgPrice?.market_data?.current_price?.usd;
+      const acxLaunchDate = DateTime.fromISO("2022-11-28");
+      const isBeforeAcxLaunchDate = DateTime.fromJSDate(date).startOf("day") < acxLaunchDate.startOf("day");
 
-      if (!usd) return undefined;
-
-      price = this.historicMarketPriceRepository.create({
-        symbol,
-        usd: usd.toString(),
-        date: dbFormattedDate,
-      });
-      price = await this.historicMarketPriceRepository.save(price);
+      if (symbol === "acx" && isBeforeAcxLaunchDate) {
+        price = await this.getHardcodedAcxHistoricMarketPrice(symbol, dbFormattedDate);
+      } else {
+        price = await this.getTokenHistoricMarketPrice(symbol, formattedDate, dbFormattedDate);
+      }
     }
 
     return price;
+  }
+
+  private async getHardcodedAcxHistoricMarketPrice(symbol: string, dbFormattedDate: string) {
+    const price = this.historicMarketPriceRepository.create({
+      symbol,
+      usd: "0.1",
+      date: dbFormattedDate,
+    });
+    return this.historicMarketPriceRepository.save(price);
+  }
+
+  private async getTokenHistoricMarketPrice(symbol: string, formattedDate: string, dbFormattedDate: string) {
+    const cgPrice = await this.coinGeckoService.getHistoricPrice(formattedDate, symbol);
+    const usd = cgPrice?.market_data?.current_price?.usd;
+
+    if (!usd) return undefined;
+
+    const price = this.historicMarketPriceRepository.create({
+      symbol,
+      usd: usd.toString(),
+      date: dbFormattedDate,
+    });
+    return this.historicMarketPriceRepository.save(price);
   }
 }
