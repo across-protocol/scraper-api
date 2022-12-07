@@ -4,9 +4,10 @@ import { Job } from "bull";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
 import { DateTime } from "luxon";
-import { ScraperQueue, TokenPriceQueueMessage } from ".";
+import { DepositAcxPriceQueueMessage, ScraperQueue, TokenPriceQueueMessage } from ".";
 import { Deposit } from "../../model/deposit.entity";
 import { MarketPriceService } from "../../../market-price/services/service";
+import { ScraperQueuesService } from "../../service/ScraperQueuesService";
 
 @Processor(ScraperQueue.TokenPrice)
 export class TokenPriceConsumer {
@@ -15,6 +16,7 @@ export class TokenPriceConsumer {
   constructor(
     @InjectRepository(Deposit) private depositRepository: Repository<Deposit>,
     private marketPriceService: MarketPriceService,
+    private scraperQueuesService: ScraperQueuesService,
   ) {}
 
   @Process()
@@ -32,6 +34,7 @@ export class TokenPriceConsumer {
 
     if (!price) throw new Error("Price not found");
     await this.depositRepository.update({ id: depositId }, { priceId: price.id });
+    this.scraperQueuesService.publishMessage<DepositAcxPriceQueueMessage>(ScraperQueue.DepositAcxPrice, { depositId });
   }
 
   @OnQueueFailed()
