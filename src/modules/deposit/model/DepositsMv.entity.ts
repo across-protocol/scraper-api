@@ -24,6 +24,7 @@ import { DepositReferralStats } from "../../referral/model/DepositReferralStats.
       hmp.usd AS "tokenUsdPrice",
       (d."realizedLpFeePctCapped" / power(10, 18)) * (d.amount / power(10, t.decimals)) * hmp.usd AS "realizedLpFeeUsd",
       (d."bridgeFeePct" / power(10, 18)) * (d.amount / power(10, t.decimals)) * hmp.usd AS "bridgeFeeUsd",
+      d."acxUsdPrice",
     CASE
       WHEN d1."referralCount" >= 20 OR d1."referralVolume" >= 500000 THEN 0.8
       WHEN d1."referralCount" >= 10 OR d1."referralVolume" >= 250000 THEN 0.7
@@ -101,4 +102,7 @@ export class DepositsMv {
 
   @ViewColumn()
   bridgeFeeUsd: string;
+
+  @ViewColumn()
+  acxUsdPrice: string;
 }

@@ -60,7 +60,7 @@ export class ReferralService {
       this.depositRepository.query(referreeWalletsQuery, [address]),
       this.depositRepository.query(referralTransfersQuery, [address]),
       this.depositRepository.query(referralVolumeQuery, [address]),
-      this.depositRepository.query(totalReferralRewardsQuery, [address, this.appConfig.values.acxUsdPrice]),
+      this.depositRepository.query(totalReferralRewardsQuery, [address]),
       this.depositRepository.query(activeRefereesCountQuery, [address]),
     ]);
 
@@ -89,7 +89,7 @@ export class ReferralService {
     const query = getReferralsQuery();
     const totalQuery = getReferralsTotalQuery();
     const [result, totalResult] = await Promise.all([
-      this.depositRepository.manager.query(query, [address, this.appConfig.values.acxUsdPrice, limit, offset]),
+      this.depositRepository.manager.query(query, [address, limit, offset]),
       this.depositRepository.query(totalQuery, [address]),
     ]);
     const total = parseInt(totalResult[0].count);
@@ -242,7 +242,7 @@ export class ReferralService {
           .multipliedBy(feePct)
           .multipliedBy(d.multiplier)
           .multipliedBy(new BigNumber(10).pow(18))
-          .dividedBy(this.appConfig.values.acxUsdPrice)
+          .dividedBy(d.acxUsdPrice)
           .toFixed(0);
         return sum.plus(rewards);
       }, new BigNumber(0));
