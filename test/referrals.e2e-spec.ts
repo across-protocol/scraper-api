@@ -25,6 +25,7 @@ const usdc = {
 const tier5DepositAmount = utils.parseUnits("500000", usdc.decimals).toString();
 const tier4DepositAmount = utils.parseUnits("250000", usdc.decimals).toString();
 const dayInMS = 24 * 60 * 60 * 1000;
+const acxUsdPrice = utils.parseEther("0.1").toString();
 
 let app: INestApplication;
 let depositFixture: DepositFixture;
@@ -92,6 +93,7 @@ describe("POST /referrals/merkle-distribution", () => {
         amount: tier5DepositAmount,
         depositDate: new Date(),
         bridgeFeePct: ethers.utils.parseEther("0.01").toString(), // 1%
+        acxUsdPrice,
       }),
     ]);
     await referralService.cumputeReferralStats();
@@ -208,6 +210,7 @@ describe("GET /referrals/summary", () => {
           tokenId: token.id,
           priceId: price.id,
           depositorAddr: `0x${i}`,
+          acxUsdPrice,
         }),
       ),
     );
@@ -232,6 +235,7 @@ describe("GET /referrals/summary", () => {
         depositorAddr: `0x1`,
         depositDate: new Date(Date.now() - dayInMS),
         rewardsWindowIndex: 1,
+        acxUsdPrice,
       }),
     ]);
     await referralService.cumputeReferralStats();
@@ -260,6 +264,7 @@ describe("GET /referrals/summary", () => {
       amount: tier5DepositAmount,
       tokenId: token.id,
       priceId: price.id,
+      acxUsdPrice,
     };
 
     await depositFixture.insertManyDeposits([
