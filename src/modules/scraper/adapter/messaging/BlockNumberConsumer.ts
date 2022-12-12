@@ -4,7 +4,13 @@ import { Job } from "bull";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
 import { EthProvidersService } from "../../../web3/services/EthProvidersService";
-import { BlockNumberQueueMessage, DepositReferralQueueMessage, ScraperQueue, TokenDetailsQueueMessage } from ".";
+import {
+  BlockNumberQueueMessage,
+  DepositReferralQueueMessage,
+  ScraperQueue,
+  TokenDetailsQueueMessage,
+  SuggestedFeesQueueMessage,
+} from ".";
 import { Deposit } from "../../model/deposit.entity";
 import { ScraperQueuesService } from "../../service/ScraperQueuesService";
 
@@ -29,6 +35,9 @@ export class BlockNumberConsumer {
       depositId: deposit.id,
     });
     await this.scraperQueuesService.publishMessage<DepositReferralQueueMessage>(ScraperQueue.DepositReferral, {
+      depositId: deposit.id,
+    });
+    await this.scraperQueuesService.publishMessage<SuggestedFeesQueueMessage>(ScraperQueue.SuggestedFees, {
       depositId: deposit.id,
     });
   }
