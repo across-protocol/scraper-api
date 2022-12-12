@@ -22,7 +22,8 @@ import { ViewEntity, ViewColumn } from "typeorm";
       AND "depositDate" is not null
       AND "tokenId" is not null
       AND "priceId" is not null
-      AND status = 'filled';    
+      AND status = 'filled'
+      AND d."acxUsdPrice" is not null;
   `,
 })
 export class DepositsFilteredReferrals {

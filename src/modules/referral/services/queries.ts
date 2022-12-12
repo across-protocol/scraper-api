@@ -4,17 +4,17 @@ export const getReferralsQuery = () => {
       *,
       case
         when d."depositorAddr" = $1 and d."referralAddress" = $1
-          then trunc(cast(d."bridgeFeeUsd" * d."referralRate" / $2 * power(10, 18) * d.multiplier as decimal))
+          then trunc(cast(d."bridgeFeeUsd" * d."referralRate" / d."acxUsdPrice" * power(10, 18) * d.multiplier as decimal))
         when d."depositorAddr" = $1
-        then trunc(cast(d."bridgeFeeUsd" * d."referralRate" / $2 * 0.25 * power(10, 18) * d.multiplier as decimal))
-        else trunc(cast(d."bridgeFeeUsd" * d."referralRate" / $2 * 0.75 * power(10, 18) * d.multiplier as decimal))
+        then trunc(cast(d."bridgeFeeUsd" * d."referralRate" / d."acxUsdPrice" * 0.25 * power(10, 18) * d.multiplier as decimal))
+        else trunc(cast(d."bridgeFeeUsd" * d."referralRate" / d."acxUsdPrice" * 0.75 * power(10, 18) * d.multiplier as decimal))
       end as "acxRewards"
     from deposits_mv as d
     where d."referralAddress" = $1 or
     (d."depositorAddr" = $1 and d."referralAddress" is not null)
     order by d."depositDate" DESC
-    limit $3
-    offset $4;
+    limit $2
+    offset $3;
   `;
 };
 
@@ -33,10 +33,10 @@ export const getTotalReferralRewardsQuery = () => {
       sum(
         case
           when d."depositorAddr" = $1 and d."referralAddress" = $1
-            then trunc(cast(d."bridgeFeeUsd" * d."referralRate" / $2 * power(10, 18) * d.multiplier as decimal))
+            then trunc(cast(d."bridgeFeeUsd" * d."referralRate" / d."acxUsdPrice" * power(10, 18) * d.multiplier as decimal))
           when d."depositorAddr" = $1
-          then trunc(cast(d."bridgeFeeUsd" * d."referralRate" / $2 * 0.25 * power(10, 18) * d.multiplier as decimal))
-          else trunc(cast(d."bridgeFeeUsd" * d."referralRate" / $2 * 0.75 * power(10, 18) * d.multiplier as decimal))
+          then trunc(cast(d."bridgeFeeUsd" * d."referralRate" / d."acxUsdPrice" * 0.25 * power(10, 18) * d.multiplier as decimal))
+          else trunc(cast(d."bridgeFeeUsd" * d."referralRate" / d."acxUsdPrice" * 0.75 * power(10, 18) * d.multiplier as decimal))
         end
       ) as "acxRewards"
     from deposits_mv as d
