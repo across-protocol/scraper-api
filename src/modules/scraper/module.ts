@@ -28,7 +28,7 @@ import { ScraperService } from "./service";
 import { ScraperQueuesService } from "./service/ScraperQueuesService";
 import { DepositAcxPriceConsumer } from "./adapter/messaging/DepositAcxPriceConsumer";
 import { SuggestedFeesConsumer } from "./adapter/messaging/SuggestedFeesConsumer";
-import { SuggestedFeesService } from "../suggested-fees/service";
+import { SuggestedFeesService } from "./adapter/across-serverless-api/suggested-fees-service";
 
 @Module({
   providers: [

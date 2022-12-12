@@ -1,7 +1,7 @@
 import { HttpService } from "@nestjs/axios";
 import { Injectable } from "@nestjs/common";
 
-import { AppConfig } from "../configuration/configuration.service";
+import { AppConfig } from "../../../configuration/configuration.service";
 
 type SuggestedFeesApiParams = {
   amount: string;

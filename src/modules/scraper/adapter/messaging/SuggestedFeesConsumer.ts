@@ -6,7 +6,7 @@ import { Repository } from "typeorm";
 import { DateTime } from "luxon";
 import { utils } from "ethers";
 
-import { SuggestedFeesService } from "../../../suggested-fees/service";
+import { SuggestedFeesService } from "../across-serverless-api/suggested-fees-service";
 import { SuggestedFeesQueueMessage, ScraperQueue } from ".";
 import { Deposit } from "../../model/deposit.entity";
 import { AppConfig } from "../../../configuration/configuration.service";
@@ -31,13 +31,6 @@ export class SuggestedFeesConsumer {
 
     if (!deposit) {
       this.logger.verbose(`${ScraperQueue.SuggestedFees} deposit with id '${depositId}' does not exist in db`);
-      return;
-    }
-
-    if (deposit.suggestedRelayerFeePct) {
-      this.logger.verbose(
-        `${ScraperQueue.SuggestedFees} deposit with id '${depositId}' already has a suggested fees entry`,
-      );
       return;
     }
 
