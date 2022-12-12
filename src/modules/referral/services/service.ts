@@ -43,6 +43,8 @@ export class ReferralService {
   public async getReferralSummary(address: string) {
     let data = await this.cacheManager.get(getReferralsSummaryCacheKey(address));
 
+    console.log("CACHE", data);
+
     if (data) return data;
 
     const referreeWalletsQuery = getReferreeWalletsQuery();
@@ -80,7 +82,11 @@ export class ReferralService {
       tier,
       activeRefereesCount,
     };
-    await this.cacheManager.set(getReferralsSummaryCacheKey(address), data, 120);
+    await this.cacheManager.set(
+      getReferralsSummaryCacheKey(address),
+      data,
+      this.appConfig.values.app.cacheDuration.referralsSummary,
+    );
 
     return data;
   }

@@ -26,6 +26,10 @@ export const configValues = () => ({
       ? parseInt(process.env.REFERRAL_DELIMITER_START_TIMESTAMP)
       : undefined,
     disableCrons: process.env.DISABLE_CRONS === "true" || false,
+    cacheDuration: {
+      distributorProofs: parseInt(process.env.DISTRIBUTOR_PROOFS_CACHE_SECONDS_DURATION) ?? 300,
+      referralsSummary: parseInt(process.env.REFERRALS_SUMMARY_CACHE_SECONDS_DURATION) ?? 120,
+    },
   },
   web3: {
     providers: {
