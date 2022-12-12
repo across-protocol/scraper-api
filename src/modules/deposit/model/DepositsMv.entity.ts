@@ -33,8 +33,9 @@ import { DepositReferralStats } from "../../referral/model/DepositReferralStats.
       ELSE 0.4
     END AS "referralRate",
     CASE
-        WHEN d."depositDate" < '2022-07-22 17:00:00' THEN 3
-        ELSE 2
+      WHEN d."depositDate" < '2022-07-22 17:00:00' THEN 3
+      WHEN d."depositDate" < '2022-12-13 00:00:00' THEN 2
+      ELSE 1
     END AS multiplier
     FROM deposit d
     JOIN "deposit_referral_stat" d1 ON d."id" = d1."depositId"
