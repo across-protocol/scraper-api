@@ -17,6 +17,7 @@ import { MerkleDistributorBlocksEventsConsumer } from "./adapter/messaging/Merkl
 import { DepositFilledDateConsumer } from "./adapter/messaging/DepositFilledDateConsumer";
 import { DepositReferralConsumer } from "./adapter/messaging/DepositReferralConsumer";
 import { FillEventsConsumer } from "./adapter/messaging/FillEventsConsumer";
+import { SpeedUpEventsConsumer } from "./adapter/messaging/SpeedUpEventsConsumer";
 import { TokenDetailsConsumer } from "./adapter/messaging/TokenDetailsConsumer";
 import { TokenPriceConsumer } from "./adapter/messaging/TokenPriceConsumer";
 import { ScraperController } from "./entry-point/http/controller";
@@ -38,6 +39,7 @@ import { SuggestedFeesService } from "./adapter/across-serverless-api/suggested-
     BlocksEventsConsumer,
     MerkleDistributorBlocksEventsConsumer,
     FillEventsConsumer,
+    SpeedUpEventsConsumer,
     BlockNumberConsumer,
     TokenDetailsConsumer,
     DepositReferralConsumer,
@@ -78,6 +80,15 @@ import { SuggestedFeesService } from "./adapter/across-serverless-api/suggested-
     }),
     BullModule.registerQueue({
       name: ScraperQueue.FillEvents,
+      defaultJobOptions: {
+        backoff: 120 * 1000,
+        attempts: Number.MAX_SAFE_INTEGER,
+        removeOnComplete: true,
+        removeOnFail: true,
+      },
+    }),
+    BullModule.registerQueue({
+      name: ScraperQueue.SpeedUpEvents,
       defaultJobOptions: {
         backoff: 120 * 1000,
         attempts: Number.MAX_SAFE_INTEGER,

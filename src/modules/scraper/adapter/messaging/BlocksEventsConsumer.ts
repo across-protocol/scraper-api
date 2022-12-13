@@ -5,8 +5,18 @@ import { InjectRepository } from "@nestjs/typeorm";
 import { Repository, QueryFailedError } from "typeorm";
 
 import { EthProvidersService } from "../../../web3/services/EthProvidersService";
-import { BlockNumberQueueMessage, BlocksEventsQueueMessage, FillEventsQueueMessage, ScraperQueue } from ".";
-import { FundsDepositedEvent, FilledRelayEvent } from "@across-protocol/contracts-v2/dist/typechain/SpokePool";
+import {
+  BlockNumberQueueMessage,
+  BlocksEventsQueueMessage,
+  FillEventsQueueMessage,
+  ScraperQueue,
+  SpeedUpEventsQueueMessage,
+} from ".";
+import {
+  FundsDepositedEvent,
+  FilledRelayEvent,
+  RequestedSpeedUpDepositEvent,
+} from "@across-protocol/contracts-v2/dist/typechain/SpokePool";
 import { Deposit } from "../../model/deposit.entity";
 import { ScraperQueuesService } from "../../service/ScraperQueuesService";
 
@@ -31,6 +41,12 @@ export class BlocksEventsConsumer {
       .getSpokePoolEventQuerier(chainId)
       .getFilledRelayEvents(from, to);
     this.logger.log(`(${from}, ${to}) - chainId ${chainId} - found ${fillEvents.length} FilledRelayEvent`);
+    const speedUpEvents: RequestedSpeedUpDepositEvent[] = await this.providers
+      .getSpokePoolEventQuerier(chainId)
+      .getRequestedSpeedUpDepositEvents(from, to);
+    this.logger.log(
+      `(${from}, ${to}) - chainId ${chainId} - found ${speedUpEvents.length} RequestedSpeedUpDepositEvent`,
+    );
 
     for (const event of depositEvents) {
       try {
@@ -59,6 +75,20 @@ export class BlocksEventsConsumer {
       appliedRelayerFeePct: e.args.appliedRelayerFeePct.toString(),
     }));
     await this.scraperQueuesService.publishMessagesBulk<FillEventsQueueMessage>(ScraperQueue.FillEvents, fillMessages);
+
+    const speedUpMessages: SpeedUpEventsQueueMessage[] = speedUpEvents.map((e) => ({
+      depositSourceChainId: chainId,
+      depositId: e.args.depositId,
+      depositor: e.args.depositor,
+      depositorSignature: e.args.depositorSignature,
+      transactionHash: e.transactionHash,
+      blockNumber: e.blockNumber,
+      newRelayerFeePct: e.args.newRelayerFeePct.toString(),
+    }));
+    await this.scraperQueuesService.publishMessagesBulk<SpeedUpEventsQueueMessage>(
+      ScraperQueue.SpeedUpEvents,
+      speedUpMessages,
+    );
   }
 
   private async fromFundsDepositedEventToDeposit(event: FundsDepositedEvent) {
@@ -78,6 +108,7 @@ export class BlocksEventsConsumer {
       blockNumber,
       depositorAddr: depositor,
       depositRelayerFeePct: relayerFeePct.toString(),
+      initialRelayerFeePct: relayerFeePct.toString(),
     });
   }
 
