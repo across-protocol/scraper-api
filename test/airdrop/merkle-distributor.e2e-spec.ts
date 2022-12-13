@@ -32,6 +32,10 @@ beforeAll(async () => {
   userWalletFixture = app.get(UserWalletFixture);
 });
 
+afterAll(async () => {
+  await app.close();
+});
+
 describe("GET /airdrop/merkle-distributor-proof", () => {
   const url = "/airdrop/merkle-distributor-proof";
 
@@ -319,8 +323,4 @@ describe("POST /airdrop/upload/merkle-distributor-recipients", () => {
     expect(response.statusCode).toStrictEqual(201);
     expect(response.body.recipients).toStrictEqual(2);
   });
-});
-
-afterAll(async () => {
-  await app.close();
 });
