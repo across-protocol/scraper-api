@@ -27,11 +27,14 @@ import { MerkleDistributorProcessedBlock } from "./model/MerkleDistributorProces
 import { ScraperService } from "./service";
 import { ScraperQueuesService } from "./service/ScraperQueuesService";
 import { DepositAcxPriceConsumer } from "./adapter/messaging/DepositAcxPriceConsumer";
+import { SuggestedFeesConsumer } from "./adapter/messaging/SuggestedFeesConsumer";
+import { SuggestedFeesService } from "./adapter/across-serverless-api/suggested-fees-service";
 
 @Module({
   providers: [
     ScraperService,
     ScraperQueuesService,
+    SuggestedFeesService,
     BlocksEventsConsumer,
     MerkleDistributorBlocksEventsConsumer,
     FillEventsConsumer,
@@ -41,6 +44,7 @@ import { DepositAcxPriceConsumer } from "./adapter/messaging/DepositAcxPriceCons
     TokenPriceConsumer,
     DepositFilledDateConsumer,
     DepositAcxPriceConsumer,
+    SuggestedFeesConsumer,
     DepositFixture,
     ClaimFixture,
   ],
@@ -83,6 +87,9 @@ import { DepositAcxPriceConsumer } from "./adapter/messaging/DepositAcxPriceCons
     }),
     BullModule.registerQueue({
       name: ScraperQueue.DepositFilledDate,
+    }),
+    BullModule.registerQueue({
+      name: ScraperQueue.SuggestedFees,
     }),
   ],
   exports: [ScraperQueuesService],
