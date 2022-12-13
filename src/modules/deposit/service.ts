@@ -7,6 +7,7 @@ import { Deposit } from "../scraper/model/deposit.entity";
 import { getAvgFillTimeQuery, getTotalDepositsQuery, getTotalVolumeQuery } from "./adapter/db/queries";
 
 export const DEPOSITS_STATS_CACHE_KEY = "deposits:stats";
+export const SUGGESTED_FEES_DEVIATION_BUFFER_MULTIPLIER = 1.1;
 
 @Injectable()
 export class DepositService {
@@ -53,7 +54,9 @@ export class DepositService {
         .createQueryBuilder("d")
         .where("d.status = :status", { status })
         .andWhere("d.depositDate > NOW() - INTERVAL '1 days'")
-        .andWhere("d.depositRelayerFeePct / power(10, 18) >= 0.0001")
+        .andWhere(
+          `d.depositRelayerFeePct / power(10, 18) * ${SUGGESTED_FEES_DEVIATION_BUFFER_MULTIPLIER} >= d.suggestedRelayerFeePct / power(10, 18)`,
+        )
         .orderBy("d.depositDate", "DESC")
         .take(limit)
         .skip(offset)
@@ -86,16 +89,11 @@ export class DepositService {
  */
 export function formatDeposit(deposit: Deposit) {
   return {
-    depositId: deposit.depositId,
     depositTime: Math.round(DateTime.fromISO(deposit.depositDate.toISOString()).toSeconds()),
-    status: deposit.status,
-    filled: deposit.filled,
     sourceChainId: deposit.sourceChainId,
     destinationChainId: deposit.destinationChainId,
     assetAddr: deposit.tokenAddr,
-    amount: deposit.amount,
-    depositTxHash: deposit.depositTxHash,
     fillTxs: deposit.fillTxs.map(({ hash }) => hash),
-    depositRelayerFeePct: deposit.depositRelayerFeePct,
+    ...deposit,
   };
 }
