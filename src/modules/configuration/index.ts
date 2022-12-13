@@ -93,6 +93,10 @@ export const configValues = () => ({
     clientSecret: process.env.DISCORD_CLIENT_SECRET,
     redirectUri: process.env.DISCORD_REDIRECT_URI,
   },
+  suggestedFees: {
+    apiUrl: process.env.SUGGESTED_FEES_API_URL || "https://across.to/api/suggested-fees",
+    fallbackThresholdHours: Number(process.env.SUGGESTED_FEES_FALLBACK_THRESHOLD_HOURS || "24"),
+  },
 });
 
 export default registerAs("config", () => configValues());
