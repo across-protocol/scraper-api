@@ -22,13 +22,11 @@ import { AppConfig } from "../../configuration/configuration.service";
 import { MerkleDistributorWindow } from "../model/merkle-distributor-window.entity";
 import { MerkleDistributorRecipient } from "../model/merkle-distributor-recipient.entity";
 import { UserWallet } from "../../user/model/user-wallet.entity";
-import { User } from "../../user/model/user.entity";
 
 const getMerkleDistributorProofCacheKey = (address: string, windowIndex: number) =>
   `distributor:proof:${address}:${windowIndex}`;
 const getMerkleDistributorProofsCacheKey = (address: string, startWindowIndex: number) =>
   `distributor:proofs:${address}:${startWindowIndex}`;
-const DISTRIBUTOR_PROOFS_CACHE_SECONDS_DURATION = 300;
 
 @Injectable()
 export class AirdropService {
@@ -281,7 +279,7 @@ export class AirdropService {
         : null,
     };
 
-    await this.cacheManager.set(cacheKey, data, DISTRIBUTOR_PROOFS_CACHE_SECONDS_DURATION);
+    await this.cacheManager.set(cacheKey, data, this.appConfig.values.app.cacheDuration.distributorProofs);
     return data;
   }
 
@@ -313,7 +311,9 @@ export class AirdropService {
       discord: null,
     }));
 
-    await this.cacheManager.set(cacheKey, data, DISTRIBUTOR_PROOFS_CACHE_SECONDS_DURATION);
+    if (this.appConfig.values.app.cacheDuration.distributorProofs) {
+      await this.cacheManager.set(cacheKey, data, this.appConfig.values.app.cacheDuration.distributorProofs);
+    }
     return data;
   }
 

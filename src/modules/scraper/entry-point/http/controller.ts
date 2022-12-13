@@ -13,6 +13,7 @@ import {
   TokenPriceQueueMessage,
   TokenDetailsQueueMessage,
   DepositAcxPriceQueueMessage,
+  SuggestedFeesQueueMessage,
 } from "../../adapter/messaging";
 import { ScraperService } from "../../service";
 import { ScraperQueuesService } from "../../service/ScraperQueuesService";
@@ -23,6 +24,7 @@ import {
   SubmitDepositFilledDateBody,
   ProcessBlockNumberBody,
   SubmitDepositAcxPriceBody,
+  SubmitSuggestedFeesBody,
 } from "./dto";
 
 @Controller()
@@ -142,6 +144,21 @@ export class ScraperController {
 
     for (let depositId = fromDepositId; depositId <= toDepositId; depositId++) {
       await this.scraperQueuesService.publishMessage<DepositAcxPriceQueueMessage>(ScraperQueue.DepositAcxPrice, {
+        depositId,
+      });
+    }
+  }
+
+  @Post("scraper/suggested-fees")
+  @ApiTags("scraper")
+  @Roles(Role.Admin)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @ApiBearerAuth()
+  async submitSuggestedFeesJob(@Body() body: SubmitSuggestedFeesBody) {
+    const { fromDepositId, toDepositId } = body;
+
+    for (let depositId = fromDepositId; depositId <= toDepositId; depositId++) {
+      await this.scraperQueuesService.publishMessage<SuggestedFeesQueueMessage>(ScraperQueue.SuggestedFees, {
         depositId,
       });
     }

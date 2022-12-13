@@ -243,7 +243,6 @@ describe("GET /referrals/summary", () => {
 
     await claimFixture.insertClaim({
       account: referrer,
-      claimedAt: new Date(Date.now()),
       windowIndex: 1,
     });
     await referralService.cumputeReferralStats();

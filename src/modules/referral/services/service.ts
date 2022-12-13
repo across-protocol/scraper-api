@@ -80,7 +80,14 @@ export class ReferralService {
       tier,
       activeRefereesCount,
     };
-    await this.cacheManager.set(getReferralsSummaryCacheKey(address), data, 120);
+
+    if (this.appConfig.values.app.cacheDuration.referralsSummary) {
+      await this.cacheManager.set(
+        getReferralsSummaryCacheKey(address),
+        data,
+        this.appConfig.values.app.cacheDuration.referralsSummary,
+      );
+    }
 
     return data;
   }

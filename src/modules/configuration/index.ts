@@ -26,6 +26,10 @@ export const configValues = () => ({
       ? parseInt(process.env.REFERRAL_DELIMITER_START_TIMESTAMP)
       : undefined,
     disableCrons: process.env.DISABLE_CRONS === "true" || false,
+    cacheDuration: {
+      distributorProofs: parseInt(process.env.DISTRIBUTOR_PROOFS_CACHE_SECONDS_DURATION) ?? 300,
+      referralsSummary: parseInt(process.env.REFERRALS_SUMMARY_CACHE_SECONDS_DURATION) ?? 120,
+    },
   },
   web3: {
     providers: {
@@ -92,6 +96,10 @@ export const configValues = () => ({
     clientId: process.env.DISCORD_CLIENT_ID,
     clientSecret: process.env.DISCORD_CLIENT_SECRET,
     redirectUri: process.env.DISCORD_REDIRECT_URI,
+  },
+  suggestedFees: {
+    apiUrl: process.env.SUGGESTED_FEES_API_URL || "https://across.to/api/suggested-fees",
+    fallbackThresholdHours: Number(process.env.SUGGESTED_FEES_FALLBACK_THRESHOLD_HOURS || "24"),
   },
 });
 

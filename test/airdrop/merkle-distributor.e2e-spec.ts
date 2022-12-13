@@ -32,6 +32,10 @@ beforeAll(async () => {
   userWalletFixture = app.get(UserWalletFixture);
 });
 
+afterAll(async () => {
+  await app.close();
+});
+
 describe("GET /airdrop/merkle-distributor-proof", () => {
   const url = "/airdrop/merkle-distributor-proof";
 
@@ -77,7 +81,7 @@ describe("GET /airdrop/merkle-distributor-proof", () => {
   });
 
   it("should get the merkle proof and discord details", async () => {
-    const address = "0x00B591BC2b682a0B30dd72Bac9406BfA13e5d3cd";
+    const address = "0x9A8f92a830A5cB89a3816e3D267CB7791c16b04D";
     const user = await userFixture.insertUser({
       discordAvatar: "https://discord.avatar",
       discordId: "discordId",
@@ -319,8 +323,4 @@ describe("POST /airdrop/upload/merkle-distributor-recipients", () => {
     expect(response.statusCode).toStrictEqual(201);
     expect(response.body.recipients).toStrictEqual(2);
   });
-});
-
-afterAll(async () => {
-  await app.close();
 });

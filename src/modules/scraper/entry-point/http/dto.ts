@@ -64,3 +64,13 @@ export class ProcessBlockNumberBody {
   @ApiProperty({ example: 2 })
   toDepositId: number;
 }
+
+export class SubmitSuggestedFeesBody {
+  @IsInt()
+  @ApiProperty({ example: 1 })
+  fromDepositId: number;
+
+  @IsInt()
+  @ApiProperty({ example: 2 })
+  toDepositId: number;
+}
