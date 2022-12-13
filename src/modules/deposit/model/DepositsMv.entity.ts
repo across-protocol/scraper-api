@@ -18,7 +18,7 @@ import { DepositReferralStats } from "../../referral/model/DepositReferralStats.
       d."depositorAddr",
       d."rewardsWindowIndex",
       case when d."rewardsWindowIndex" = c."windowIndex" and d."depositorAddr" = c.account then d."rewardsWindowIndex" else -1 end as "depositorClaimedWindowIndex",
-      d1."referralClaimedWindowIndex",
+      d2."referralClaimedWindowIndex",
       d."stickyReferralAddress" AS "referralAddress",
       d."depositDate",
       hmp.usd AS "tokenUsdPrice",
@@ -39,6 +39,7 @@ import { DepositReferralStats } from "../../referral/model/DepositReferralStats.
     END AS multiplier
     FROM deposit d
     JOIN "deposit_referral_stat" d1 ON d."id" = d1."depositId"
+    JOIN "deposits_filtered_referrals" d2 ON d."id" = d2."id"
     JOIN token t ON d."tokenId" = t.id
     JOIN historic_market_price hmp ON d."priceId" = hmp.id
     LEFT JOIN claim c on d."rewardsWindowIndex" = c."windowIndex" and c.account = d."depositorAddr"
