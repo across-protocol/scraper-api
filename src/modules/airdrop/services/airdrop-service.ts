@@ -311,7 +311,9 @@ export class AirdropService {
       discord: null,
     }));
 
-    await this.cacheManager.set(cacheKey, data, this.appConfig.values.app.cacheDuration.distributorProofs);
+    if (this.appConfig.values.app.cacheDuration.distributorProofs) {
+      await this.cacheManager.set(cacheKey, data, this.appConfig.values.app.cacheDuration.distributorProofs);
+    }
     return data;
   }
 
