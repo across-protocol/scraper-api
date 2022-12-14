@@ -11,6 +11,7 @@ export class ScraperQueuesService {
     @InjectQueue(ScraperQueue.BlocksEvents) private blocksEventsQueue: Queue,
     @InjectQueue(ScraperQueue.MerkleDistributorBlocksEvents) private merkleDistributorBlocksEventsQueue: Queue,
     @InjectQueue(ScraperQueue.FillEvents) private fillEventsQueue: Queue,
+    @InjectQueue(ScraperQueue.SpeedUpEvents) private speedUpEventsQueue: Queue,
     @InjectQueue(ScraperQueue.BlockNumber) private blockNumberQueue: Queue,
     @InjectQueue(ScraperQueue.TokenDetails) private tokenDetailsQueue: Queue,
     @InjectQueue(ScraperQueue.DepositReferral) private depositReferralQueue: Queue,
@@ -29,6 +30,9 @@ export class ScraperQueuesService {
       this.fillEventsQueue
         .getJobCounts()
         .then((data) => this.logger.log(`${ScraperQueue.FillEvents} ${JSON.stringify(data)}`));
+      this.speedUpEventsQueue
+        .getJobCounts()
+        .then((data) => this.logger.log(`${ScraperQueue.SpeedUpEvents} ${JSON.stringify(data)}`));
       this.blockNumberQueue
         .getJobCounts()
         .then((data) => this.logger.log(`${ScraperQueue.BlockNumber} ${JSON.stringify(data)}`));
@@ -58,6 +62,8 @@ export class ScraperQueuesService {
       await this.blocksEventsQueue.add(message);
     } else if (queue === ScraperQueue.FillEvents) {
       await this.fillEventsQueue.add(message);
+    } else if (queue === ScraperQueue.SpeedUpEvents) {
+      await this.speedUpEventsQueue.add(message);
     } else if (queue === ScraperQueue.BlockNumber) {
       await this.blockNumberQueue.add(message);
     } else if (queue === ScraperQueue.TokenDetails) {
@@ -82,6 +88,8 @@ export class ScraperQueuesService {
       await this.blocksEventsQueue.addBulk(messages.map((m) => ({ data: m })));
     } else if (queue === ScraperQueue.FillEvents) {
       await this.fillEventsQueue.addBulk(messages.map((m) => ({ data: m })));
+    } else if (queue === ScraperQueue.SpeedUpEvents) {
+      await this.speedUpEventsQueue.addBulk(messages.map((m) => ({ data: m })));
     } else if (queue === ScraperQueue.BlockNumber) {
       await this.blockNumberQueue.addBulk(messages.map((m) => ({ data: m })));
     } else if (queue === ScraperQueue.TokenDetails) {
