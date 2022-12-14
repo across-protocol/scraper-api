@@ -5,12 +5,14 @@ import { Repository } from "typeorm";
 import { Cache } from "cache-manager";
 import { Deposit } from "../scraper/model/deposit.entity";
 import { getAvgFillTimeQuery, getTotalDepositsQuery, getTotalVolumeQuery } from "./adapter/db/queries";
+import { AppConfig } from "../configuration/configuration.service";
 
 export const DEPOSITS_STATS_CACHE_KEY = "deposits:stats";
 
 @Injectable()
 export class DepositService {
   constructor(
+    private appConfig: AppConfig,
     @InjectRepository(Deposit) private depositRepository: Repository<Deposit>,
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
   ) {}
@@ -53,7 +55,9 @@ export class DepositService {
         .createQueryBuilder("d")
         .where("d.status = :status", { status })
         .andWhere("d.depositDate > NOW() - INTERVAL '1 days'")
-        .andWhere("d.depositRelayerFeePct / power(10, 18) >= 0.0001")
+        .andWhere(`d.depositRelayerFeePct * :multiplier >= d.suggestedRelayerFeePct`, {
+          multiplier: this.appConfig.values.suggestedFees.deviationBufferMultiplier,
+        })
         .orderBy("d.depositDate", "DESC")
         .take(limit)
         .skip(offset)
