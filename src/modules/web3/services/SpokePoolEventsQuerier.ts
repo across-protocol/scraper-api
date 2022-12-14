@@ -16,6 +16,14 @@ export class SpokePoolEventsQuerier extends EventsQuerier {
     return this.getEvents(from, to, this.getFilledRelayEventsFilter(depositorAddr));
   }
 
+  public async getRequestedSpeedUpDepositEvents(
+    from: number,
+    to: number,
+    depositorAddr?: string,
+  ): Promise<TypedEvent<any>[]> {
+    return this.getEvents(from, to, this.getRequestedSpeedUpDepositEventsFilters(depositorAddr));
+  }
+
   private getFilledRelayEventsFilter(depositorAddr?: string) {
     if (depositorAddr) {
       return this.spokePool.filters.FilledRelay(
@@ -54,5 +62,12 @@ export class SpokePoolEventsQuerier extends EventsQuerier {
       );
     }
     return this.spokePool.filters.FundsDeposited();
+  }
+
+  private getRequestedSpeedUpDepositEventsFilters(depositorAddr?: string) {
+    if (depositorAddr) {
+      return this.spokePool.filters.RequestedSpeedUpDeposit(undefined, undefined, depositorAddr.toLowerCase());
+    }
+    return this.spokePool.filters.RequestedSpeedUpDeposit();
   }
 }
