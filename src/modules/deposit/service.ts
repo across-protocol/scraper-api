@@ -54,9 +54,9 @@ export class DepositService {
         .createQueryBuilder("d")
         .where("d.status = :status", { status })
         .andWhere("d.depositDate > NOW() - INTERVAL '1 days'")
-        .andWhere(
-          `d.depositRelayerFeePct / power(10, 18) * ${SUGGESTED_FEES_DEVIATION_BUFFER_MULTIPLIER} >= d.suggestedRelayerFeePct / power(10, 18)`,
-        )
+        .andWhere(`d.depositRelayerFeePct * :multiplier >= d.suggestedRelayerFeePct`, {
+          multiplier: SUGGESTED_FEES_DEVIATION_BUFFER_MULTIPLIER,
+        })
         .orderBy("d.depositDate", "DESC")
         .take(limit)
         .skip(offset)
@@ -89,11 +89,15 @@ export class DepositService {
  */
 export function formatDeposit(deposit: Deposit) {
   return {
+    depositId: deposit.depositId,
     depositTime: Math.round(DateTime.fromISO(deposit.depositDate.toISOString()).toSeconds()),
+    status: deposit.status,
+    filled: deposit.filled,
     sourceChainId: deposit.sourceChainId,
     destinationChainId: deposit.destinationChainId,
     assetAddr: deposit.tokenAddr,
+    amount: deposit.amount,
+    depositTxHash: deposit.depositTxHash,
     fillTxs: deposit.fillTxs.map(({ hash }) => hash),
-    ...deposit,
   };
 }
