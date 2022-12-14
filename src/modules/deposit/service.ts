@@ -99,5 +99,6 @@ export function formatDeposit(deposit: Deposit) {
     amount: deposit.amount,
     depositTxHash: deposit.depositTxHash,
     fillTxs: deposit.fillTxs.map(({ hash }) => hash),
+    depositRelayerFeePct: deposit.depositRelayerFeePct,
   };
 }
