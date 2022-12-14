@@ -21,6 +21,12 @@ export type DepositFillTx = {
   appliedRelayerFeePct: string;
   date?: string;
 };
+export type RequestedSpeedUpDepositTx = {
+  hash: string;
+  blockNumber: number;
+  newRelayerFeePct: string;
+  depositSourceChainId: number;
+};
 
 @Entity()
 @Unique("UK_deposit_depositId_sourceChainId", ["depositId", "sourceChainId"])
@@ -62,6 +68,9 @@ export class Deposit {
   @Column({ type: "decimal" })
   depositRelayerFeePct?: string;
 
+  @Column({ type: "decimal", nullable: true })
+  initialRelayerFeePct?: string;
+
   @Column({ type: "decimal", default: 100000000000000 }) // default 1bp = 0.01%
   suggestedRelayerFeePct: string;
 
@@ -93,6 +102,9 @@ export class Deposit {
 
   @Column({ type: "jsonb", default: [] })
   fillTxs: DepositFillTx[];
+
+  @Column({ type: "jsonb", default: [] })
+  speedUps: RequestedSpeedUpDepositTx[];
 
   @Column()
   blockNumber: number;
