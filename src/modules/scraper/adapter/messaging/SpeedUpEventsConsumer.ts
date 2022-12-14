@@ -47,8 +47,6 @@ export class SpeedUpEventsConsumer {
       { hash: transactionHash, newRelayerFeePct, blockNumber, depositSourceChainId },
     ].sort((a, b) => b.blockNumber - a.blockNumber);
 
-    deposit.depositRelayerFeePct = deposit.speedUps[0].newRelayerFeePct;
-
     return this.depositRepository.update(
       { id: deposit.id },
       {
