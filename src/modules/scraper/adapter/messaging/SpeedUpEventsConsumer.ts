@@ -42,14 +42,20 @@ export class SpeedUpEventsConsumer {
   public async processSpeedUpEventQueueMessage(deposit: Deposit, data: SpeedUpEventsQueueMessage) {
     const { transactionHash, newRelayerFeePct, blockNumber, depositSourceChainId } = data;
 
-    deposit.speedUps = [
+    const sortedSpeedUps = [
       ...deposit.speedUps,
       { hash: transactionHash, newRelayerFeePct, blockNumber, depositSourceChainId },
     ].sort((a, b) => b.blockNumber - a.blockNumber);
 
     deposit.depositRelayerFeePct = deposit.speedUps[0].newRelayerFeePct;
 
-    return this.depositRepository.save(deposit);
+    return this.depositRepository.update(
+      { id: deposit.id },
+      {
+        speedUps: sortedSpeedUps,
+        depositRelayerFeePct: sortedSpeedUps[0].newRelayerFeePct,
+      },
+    );
   }
 
   public isSpeedUpAlreadyProcessed(deposit: Deposit, speedUp: SpeedUpEventsQueueMessage) {
