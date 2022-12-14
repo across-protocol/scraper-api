@@ -1,5 +1,6 @@
-import { Controller, Get, Query } from "@nestjs/common";
+import { Controller, Get, Param, Query } from "@nestjs/common";
 import { ApiResponse, ApiTags } from "@nestjs/swagger";
+import { utils } from "ethers";
 import { DepositService } from "./service";
 import { GetDepositsQuery, GetDepositsStatsResponse } from "./dto";
 
@@ -13,6 +14,14 @@ export class DepositController {
     const limit = parseInt(query.limit ?? "10");
     const offset = parseInt(query.offset ?? "0");
     return this.depositService.getDeposits(query.status, limit, offset);
+  }
+
+  @Get("deposits/:address")
+  @ApiTags("deposits")
+  getUserDeposits(@Param("address") address: string, @Query() query: GetDepositsQuery) {
+    const limit = parseInt(query.limit ?? "10");
+    const offset = parseInt(query.offset ?? "0");
+    return this.depositService.getUserDeposits(address, query.status, limit, offset);
   }
 
   @Get("deposits/stats")
