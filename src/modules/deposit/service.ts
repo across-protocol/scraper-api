@@ -2,10 +2,12 @@ import { DateTime } from "luxon";
 import { CACHE_MANAGER, Inject, Injectable } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
+import { utils } from "ethers";
 import { Cache } from "cache-manager";
 import { Deposit } from "../scraper/model/deposit.entity";
 import { getAvgFillTimeQuery, getTotalDepositsQuery, getTotalVolumeQuery } from "./adapter/db/queries";
 import { AppConfig } from "../configuration/configuration.service";
+import { InvalidAddressException } from "./exceptions";
 
 export const DEPOSITS_STATS_CACHE_KEY = "deposits:stats";
 
@@ -34,6 +36,47 @@ export class DepositService {
       await this.cacheManager.set(DEPOSITS_STATS_CACHE_KEY, data, 60);
     }
     return data;
+  }
+
+  public async getUserDeposits(userAddress: string, status?: "filled" | "pending", limit = 10, offset = 0) {
+    let userDeposits: Deposit[] = [];
+    let total = 0;
+
+    try {
+      userAddress = utils.getAddress(userAddress);
+    } catch (error) {
+      throw new InvalidAddressException();
+    }
+
+    if (status) {
+      [userDeposits, total] = await this.depositRepository
+        .createQueryBuilder("d")
+        .where("d.status = :status", { status })
+        .andWhere("d.depositDate is not null")
+        .andWhere("d.depositorAddr = :userAddress", { userAddress })
+        .orderBy("d.depositDate", "DESC")
+        .take(limit)
+        .skip(offset)
+        .getManyAndCount();
+    } else {
+      [userDeposits, total] = await this.depositRepository
+        .createQueryBuilder("d")
+        .andWhere("d.depositDate is not null")
+        .andWhere("d.depositorAddr = :userAddress", { userAddress })
+        .orderBy("d.depositDate", "DESC")
+        .take(limit)
+        .skip(offset)
+        .getManyAndCount();
+    }
+
+    return {
+      deposits: userDeposits.map(formatDeposit),
+      pagination: {
+        limit,
+        offset,
+        total,
+      },
+    };
   }
 
   public async getDeposits(status: "filled" | "pending", limit = 10, offset = 0) {
@@ -97,9 +140,13 @@ export function formatDeposit(deposit: Deposit) {
     sourceChainId: deposit.sourceChainId,
     destinationChainId: deposit.destinationChainId,
     assetAddr: deposit.tokenAddr,
+    depositorAddr: deposit.depositorAddr,
     amount: deposit.amount,
     depositTxHash: deposit.depositTxHash,
     fillTxs: deposit.fillTxs.map(({ hash }) => hash),
+    speedUps: deposit.speedUps,
     depositRelayerFeePct: deposit.depositRelayerFeePct,
+    initialRelayerFeePct: deposit.initialRelayerFeePct,
+    suggestedRelayerFeePct: deposit.suggestedRelayerFeePct,
   };
 }
