@@ -12,6 +12,11 @@ export class DepositController {
   getDeposits(@Query() query: GetDepositsQuery) {
     const limit = parseInt(query.limit ?? "10");
     const offset = parseInt(query.offset ?? "0");
+
+    if (query.address) {
+      return this.depositService.getUserDeposits(query.address, query.status, limit, offset);
+    }
+
     return this.depositService.getDeposits(query.status, limit, offset);
   }
 
