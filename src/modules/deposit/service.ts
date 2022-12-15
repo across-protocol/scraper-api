@@ -42,7 +42,9 @@ export class DepositService {
     let userDeposits: Deposit[] = [];
     let total = 0;
 
-    if (!utils.isAddress(userAddress)) {
+    try {
+      userAddress = utils.getAddress(userAddress);
+    } catch (error) {
       throw new InvalidAddressException();
     }
 

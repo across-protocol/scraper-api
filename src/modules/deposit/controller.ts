@@ -12,15 +12,12 @@ export class DepositController {
   getDeposits(@Query() query: GetDepositsQuery) {
     const limit = parseInt(query.limit ?? "10");
     const offset = parseInt(query.offset ?? "0");
-    return this.depositService.getDeposits(query.status, limit, offset);
-  }
 
-  @Get("deposits/:address")
-  @ApiTags("deposits")
-  getUserDeposits(@Param("address") address: string, @Query() query: GetDepositsQuery) {
-    const limit = parseInt(query.limit ?? "10");
-    const offset = parseInt(query.offset ?? "0");
-    return this.depositService.getUserDeposits(address, query.status, limit, offset);
+    if (query.address) {
+      return this.depositService.getUserDeposits(query.address, query.status, limit, offset);
+    }
+
+    return this.depositService.getDeposits(query.status, limit, offset);
   }
 
   @Get("deposits/stats")
