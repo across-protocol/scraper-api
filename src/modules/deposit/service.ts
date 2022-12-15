@@ -143,5 +143,6 @@ export function formatDeposit(deposit: Deposit) {
     speedUps: deposit.speedUps,
     depositRelayerFeePct: deposit.depositRelayerFeePct,
     initialRelayerFeePct: deposit.initialRelayerFeePct,
+    suggestedRelayerFeePct: deposit.suggestedRelayerFeePct,
   };
 }
