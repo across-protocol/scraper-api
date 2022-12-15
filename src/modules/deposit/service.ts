@@ -62,6 +62,7 @@ export class DepositService {
       [userDeposits, total] = await this.depositRepository
         .createQueryBuilder("d")
         .andWhere("d.depositDate is not null")
+        .andWhere("d.depositorAddr = :userAddress", { userAddress })
         .orderBy("d.depositDate", "DESC")
         .take(limit)
         .skip(offset)
