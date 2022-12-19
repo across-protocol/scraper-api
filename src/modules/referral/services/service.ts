@@ -24,6 +24,7 @@ import { WindowAlreadySetException } from "./exceptions";
 import { DepositsFilteredReferrals } from "../model/DepositsFilteredReferrals.entity";
 import { DepositReferralStat } from "../../deposit/model/deposit-referral-stat.entity";
 import { splitArrayInChunks } from "../../../utils";
+import { Claim } from "../../scraper/model/claim.entity";
 
 const REFERRAL_ADDRESS_DELIMITER = "d00dfeeddeadbeef";
 const getReferralsSummaryCacheKey = (address: string) => `referrals:summary:${address}`;
@@ -127,7 +128,6 @@ export class ReferralService {
         .where("deposit.rewardsWindowIndex IS NULL")
         .andWhere("deposit.depositDate <= :maxDepositDate", { maxDepositDate })
         .getMany();
-      console.log(`found ${deposits.length} deposits`);
       const { recipients, rewardsToDeposit } = this.calculateReferralRewards(deposits);
 
       for (const depositsChunk of splitArrayInChunks(deposits, 100)) {
@@ -274,11 +274,9 @@ export class ReferralService {
       this.logger.log(`start cumputeReferralStats()`);
       const t1 = performance.now();
       const window = -1;
-
       const deposits = await entityManager
         .createQueryBuilder(DepositsFilteredReferrals, "d")
         .select("d.stickyReferralAddress")
-        .where("d.referralClaimedWindowIndex = :claimedWindowIndex", { claimedWindowIndex: window })
         .groupBy("d.stickyReferralAddress")
         .getMany();
       const referralAddresses = deposits.map((deposit) => deposit.stickyReferralAddress);
@@ -286,7 +284,7 @@ export class ReferralService {
       await Bluebird.Promise.map(
         referralAddresses,
         (address) => {
-          return this.computeStatsForReferralAddress(entityManager, window, address);
+          return this.computeStatsForReferralAddress(entityManager, address);
         },
         { concurrency: 10 },
       );
@@ -296,21 +294,33 @@ export class ReferralService {
     });
   }
 
-  private async computeStatsForReferralAddress(entityManager: EntityManager, window: number, referralAddress: string) {
-    const depositsResult = await entityManager
+  private async computeStatsForReferralAddress(entityManager: EntityManager, referralAddress: string) {
+    const claims = await entityManager
+      .createQueryBuilder(Claim, "c")
+      .where("c.account = :account", { account: referralAddress })
+      .orderBy("c.claimedAt", "ASC")
+      .getMany();
+    const deposits = await entityManager
       .createQueryBuilder(DepositsFilteredReferrals, "d")
-      .where("d.referralClaimedWindowIndex = :claimedWindowIndex", { claimedWindowIndex: window })
       .andWhere("d.stickyReferralAddress = :referralAddress", { referralAddress })
       .getMany();
+    const sortedDeposits = deposits.sort((d1, d2) => (d1.depositDate.getTime() < d2.depositDate.getTime() ? -1 : 0));
+    const sortedClaims = claims.sort((c1, c2) => (c1.claimedAt.getTime() < c2.claimedAt.getTime() ? -1 : 0));
+    const groupedDeposits = this.groupDepositsByClaimDate(sortedDeposits, sortedClaims);
+
+    for (const deposits of Object.values(groupedDeposits)) {
+      await this.computeReferralStatsForDeposits(deposits, entityManager);
+    }
+  }
+
+  private async computeReferralStatsForDeposits(deposits: DepositsFilteredReferrals[], entityManager: EntityManager) {
     const depositorAddrCounts = {};
     const depositCounts = {};
     const depositVolume = {};
     let totalVolume = new BigNumber(0);
-
     let currentCount = 0;
-    const sortedDeposits = depositsResult.sort((d1, d2) => (d1.depositDate < d2.depositDate ? -1 : 0));
 
-    for (const deposit of sortedDeposits) {
+    for (const deposit of deposits) {
       const prevCount = depositorAddrCounts[deposit.depositorAddr];
 
       if (!prevCount) {
@@ -327,22 +337,35 @@ export class ReferralService {
       depositVolume[deposit.id] = totalVolume;
     }
 
-    for (const depositsChunk of splitArrayInChunks(sortedDeposits, 100)) {
-      const values: Partial<DepositReferralStat>[] = depositsChunk.map((d) => ({
-        depositId: d.id,
-        referralCount: depositCounts[d.id],
-        referralVolume: depositVolume[d.id].toFixed(),
-        referralClaimedWindowIndex: d.referralClaimedWindowIndex,
-      }));
-      await entityManager
-        .createQueryBuilder(DepositReferralStat, "d")
-        .insert()
-        .values(values)
-        .orUpdate({
-          conflict_target: ["depositId"],
-          overwrite: ["referralCount", "referralVolume", "referralClaimedWindowIndex"],
-        })
-        .execute();
-    }
+    await Promise.all(
+      splitArrayInChunks(deposits, 100).map((depositsChunk) => {
+        const values: Partial<DepositReferralStat>[] = depositsChunk.map((d) => ({
+          depositId: d.id,
+          referralCount: depositCounts[d.id],
+          referralVolume: depositVolume[d.id].toFixed(),
+          referralClaimedWindowIndex: d.referralClaimedWindowIndex,
+        }));
+        return entityManager
+          .createQueryBuilder(DepositReferralStat, "d")
+          .insert()
+          .values(values)
+          .orUpdate({
+            conflict_target: ["depositId"],
+            overwrite: ["referralCount", "referralVolume", "referralClaimedWindowIndex"],
+          })
+          .execute();
+      }),
+    );
+  }
+
+  private groupDepositsByClaimDate(deposits: DepositsFilteredReferrals[], claims: Claim[]) {
+    return deposits.reduce((acc, deposit) => {
+      const claim = claims.filter((claim) => claim.claimedAt.getTime() >= deposit.depositDate.getTime())[0];
+      const windowIndex = claim?.windowIndex || -1;
+      return {
+        ...acc,
+        [windowIndex]: [...(acc[windowIndex] || []), deposit],
+      };
+    }, {} as Record<string, DepositsFilteredReferrals[]>);
   }
 }
