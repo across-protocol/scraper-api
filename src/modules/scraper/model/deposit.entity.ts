@@ -31,6 +31,13 @@ export type RequestedSpeedUpDepositTx = {
 @Entity()
 @Unique("UK_deposit_depositId_sourceChainId", ["depositId", "sourceChainId"])
 @Index("IX_deposit_depositorAddr", ["depositorAddr"])
+@Index("IX_deposit_srAddress_depositDate_pId_tId_status", [
+  "stickyReferralAddress",
+  "depositDate",
+  "priceId",
+  "tokenId",
+  "status",
+])
 export class Deposit {
   @PrimaryGeneratedColumn()
   id: number;
