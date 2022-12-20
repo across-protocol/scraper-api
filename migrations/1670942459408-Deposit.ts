@@ -4,6 +4,9 @@ export class Deposit1670942459408 implements MigrationInterface {
   name = "Deposit1670942459408";
 
   public async up(queryRunner: QueryRunner): Promise<void> {
+    await queryRunner.query(
+      `UPDATE "deposit" SET "suggestedRelayerFeePct" = '100000000000000' WHERE "suggestedRelayerFeePct" IS NULL`,
+    );
     await queryRunner.query(`ALTER TABLE "deposit" ALTER COLUMN "suggestedRelayerFeePct" SET NOT NULL`);
     await queryRunner.query(
       `ALTER TABLE "deposit" ALTER COLUMN "suggestedRelayerFeePct" SET DEFAULT '100000000000000'`,
