@@ -1,5 +1,5 @@
 import { ApiProperty } from "@nestjs/swagger";
-import { IsEnum, IsNumberString, IsOptional } from "class-validator";
+import { IsEnum, IsNumberString, IsOptional, IsString } from "class-validator";
 
 export class GetDepositsQuery {
   @IsOptional()
@@ -24,6 +24,11 @@ export class GetDepositsQuery {
   @IsNumberString({ no_symbols: true })
   @ApiProperty({ example: "0", required: false })
   offset: string;
+
+  @IsOptional()
+  @IsString()
+  @ApiProperty({ required: false })
+  address: string;
 }
 
 export class GetDepositsStatsResponse {
