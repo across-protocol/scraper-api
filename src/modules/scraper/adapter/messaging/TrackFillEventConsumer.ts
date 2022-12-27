@@ -54,7 +54,7 @@ export class TrackFillEventConsumer {
       NetworkFeeNative: "-",
       NetworkFeeNativeToken: "-",
       NetworkFeeUsd: "-",
-      recipient: deposit.depositorAddr, // TODO: extend deposit entity to also index `recipient`
+      recipient: deposit.recipientAddr,
       referralProgramAddress: deposit.referralAddress || "-",
       relayFeePct: formattedRelayFeeValues.pct,
       relayFeeTotal: formattedRelayFeeValues.total,
