@@ -10,6 +10,7 @@ export enum ScraperQueue {
   MerkleDistributorBlocksEvents = "MerkleDistributorBlocksEvents",
   DepositAcxPrice = "DepositAcxPrice",
   SuggestedFees = "SuggestedFees",
+  TrackFillEvent = "TrackFillEvent",
 }
 
 export type BlocksEventsQueueMessage = {
@@ -69,5 +70,9 @@ export type DepositAcxPriceQueueMessage = {
 };
 
 export type SuggestedFeesQueueMessage = {
+  depositId: number;
+};
+
+export type TrackFillEventQueueMessage = {
   depositId: number;
 };
