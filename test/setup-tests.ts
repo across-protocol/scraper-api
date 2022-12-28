@@ -1,3 +1,3 @@
-import dotenv from "dotenv";
+// import dotenv from "dotenv";
 
-dotenv.config({ path: `${process.cwd}/.env.test` });
+// dotenv.config({ path: `${process.cwd}/.env.test` });

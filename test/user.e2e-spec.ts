@@ -35,7 +35,7 @@ let userWalletFixture: UserWalletFixture;
 
 beforeAll(async () => {
   const testingModule = await Test.createTestingModule({
-    imports: [AppModule.forRoot({ runMode: RunMode.Test })],
+    imports: [AppModule.forRoot({ runModes: [RunMode.Normal, RunMode.Test] })],
   }).compile();
 
   app = testingModule.createNestApplication();

@@ -9,9 +9,6 @@ export enum StickyReferralAddressesMechanism {
 }
 
 export const configValues = () => ({
-  runMode: Object.values(RunMode).includes(process.env.RUN_MODE as RunMode)
-    ? (process.env.RUN_MODE as RunMode)
-    : RunMode.Normal,
   database: {
     host: process.env.DB_HOST,
     port: parseInt(process.env.DB_PORT, 10),
@@ -38,6 +35,7 @@ export const configValues = () => ({
         ? 120
         : parseInt(process.env.REFERRALS_SUMMARY_CACHE_SECONDS_DURATION),
     },
+    runModes: process.env.RUN_MODES ? (process.env.RUN_MODES.split(",") as RunMode[]) : ([RunMode.Normal] as RunMode[]),
   },
   web3: {
     providers: {

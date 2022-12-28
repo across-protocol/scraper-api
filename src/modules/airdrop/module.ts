@@ -23,7 +23,7 @@ export class AirdropModule {
   static forRoot(moduleOptions: ModuleOptions): DynamicModule {
     const providers: Provider<any>[] = [AirdropService];
 
-    if (moduleOptions.runMode === RunMode.Test) {
+    if (moduleOptions.runModes.includes(RunMode.Test)) {
       providers.push(
         WalletRewardsFixture,
         CommunityRewardsFixture,

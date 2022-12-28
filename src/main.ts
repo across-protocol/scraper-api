@@ -1,8 +1,8 @@
 import { NestFactory } from "@nestjs/core";
 import helmet from "helmet";
 import { NestExpressApplication } from "@nestjs/platform-express";
-import dotenv from "dotenv";
-dotenv.config();
+// import dotenv from "dotenv";
+// dotenv.config();
 
 import { AppModule } from "./app.module";
 import { AppConfig } from "./modules/configuration/configuration.service";
@@ -13,7 +13,7 @@ import { ValidationPipe } from "./validation.pipe";
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(
     AppModule.forRoot({
-      runMode: configValues().runMode,
+      runModes: configValues().app.runModes,
     }),
   );
   const config = app.get(AppConfig);

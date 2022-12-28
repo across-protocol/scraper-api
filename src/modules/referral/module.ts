@@ -13,7 +13,7 @@ export class ReferralModule {
   static forRoot(moduleOptions: ModuleOptions): DynamicModule {
     const providers: Provider<any>[] = [ReferralService];
 
-    if ([RunMode.Scraper, RunMode.Test].includes(moduleOptions.runMode)) {
+    if (moduleOptions.runModes.includes(RunMode.Scraper) || moduleOptions.runModes.includes(RunMode.Test)) {
       providers.push(ReferralCronService);
     }
 

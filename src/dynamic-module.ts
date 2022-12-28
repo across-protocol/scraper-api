@@ -5,7 +5,5 @@ export enum RunMode {
 }
 
 export interface ModuleOptions {
-  runMode: RunMode;
+  runModes: RunMode[];
 }
-
-export const MODULE_OPTIONS_TOKEN = "MODULE_OPTIONS_TOKEN";

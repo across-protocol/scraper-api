@@ -12,7 +12,7 @@ describe("Scraper module", () => {
 
   beforeAll(async () => {
     const moduleFixture = await Test.createTestingModule({
-      imports: [AppModule.forRoot({ runMode: RunMode.Test })],
+      imports: [AppModule.forRoot({ runModes: [RunMode.Normal, RunMode.Test] })],
     }).compile();
 
     app = moduleFixture.createNestApplication();

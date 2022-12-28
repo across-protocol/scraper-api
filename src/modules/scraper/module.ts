@@ -56,7 +56,7 @@ export class ScraperModule {
       TrackFillEventConsumer,
     ];
 
-    if (moduleOptions.runMode === RunMode.Test) {
+    if (moduleOptions.runModes.includes(RunMode.Test)) {
       providers.push(DepositFixture, ClaimFixture);
     }
 

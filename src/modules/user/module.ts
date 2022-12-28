@@ -14,7 +14,7 @@ export class UserModule {
   static forRoot(moduleOptions: ModuleOptions): DynamicModule {
     const providers: Provider<any>[] = [UserService, UserWalletService];
 
-    if (moduleOptions.runMode === RunMode.Test) {
+    if (moduleOptions.runModes.includes(RunMode.Test)) {
       providers.push(UserFixture, UserWalletFixture);
     }
 

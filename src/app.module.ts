@@ -47,7 +47,7 @@ export class AppModule {
       CacheModule.register({ isGlobal: true }),
     ];
 
-    if ([RunMode.Scraper, RunMode.Test].includes(moduleOptions.runMode)) {
+    if (moduleOptions.runModes.includes(RunMode.Scraper)) {
       imports.push(
         ScraperModule.forRoot(moduleOptions),
         BullModule.forRootAsync({
