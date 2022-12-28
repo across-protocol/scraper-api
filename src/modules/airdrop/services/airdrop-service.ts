@@ -36,8 +36,6 @@ export class AirdropService {
     @InjectRepository(CommunityRewards) private communityRewardsRepository: Repository<CommunityRewards>,
     @InjectRepository(WalletRewards) private walletRewardsRepository: Repository<WalletRewards>,
     @InjectRepository(Deposit) private depositRepository: Repository<Deposit>,
-    @InjectRepository(Deposit) private merkleDistributorWindowRepository: Repository<MerkleDistributorWindow>,
-    @InjectRepository(Deposit) private merkleDistributorRecipientRepository: Repository<MerkleDistributorRecipient>,
     private userService: UserService,
     private appConfig: AppConfig,
     private dataSource: DataSource,

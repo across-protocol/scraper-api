@@ -21,33 +21,41 @@ import { ModuleOptions, RunMode } from "../../dynamic-module";
 @Module({})
 export class AirdropModule {
   static forRoot(moduleOptions: ModuleOptions): DynamicModule {
-    const providers: Provider<any>[] = [AirdropService];
+    let module: DynamicModule = { module: AirdropModule, providers: [], controllers: [], imports: [], exports: [] };
 
-    if (moduleOptions.runModes.includes(RunMode.Test)) {
-      providers.push(
-        WalletRewardsFixture,
-        CommunityRewardsFixture,
-        MerkleDistributorWindowFixture,
-        MerkleDistributorRecipientFixture,
-      );
+    if (moduleOptions.runModes.includes(RunMode.Normal) || moduleOptions.runModes.includes(RunMode.Test)) {
+      module = {
+        ...module,
+        providers: [...module.providers, AirdropService],
+        controllers: [...module.controllers, AirdropController],
+        imports: [
+          ...module.imports,
+          TypeOrmModule.forFeature([
+            CommunityRewards,
+            WalletRewards,
+            Deposit,
+            MerkleDistributorWindow,
+            MerkleDistributorRecipient,
+          ]),
+          UserModule.forRoot(moduleOptions),
+          AppConfigModule,
+        ],
+      };
     }
 
-    return {
-      module: AirdropModule,
-      providers,
-      controllers: [AirdropController],
-      imports: [
-        TypeOrmModule.forFeature([
-          CommunityRewards,
-          WalletRewards,
-          Deposit,
-          MerkleDistributorWindow,
-          MerkleDistributorRecipient,
-        ]),
-        UserModule.forRoot(moduleOptions),
-        AppConfigModule,
-      ],
-      exports: [],
-    };
+    if (moduleOptions.runModes.includes(RunMode.Test)) {
+      module = {
+        ...module,
+        providers: [
+          ...module.providers,
+          WalletRewardsFixture,
+          CommunityRewardsFixture,
+          MerkleDistributorWindowFixture,
+          MerkleDistributorRecipientFixture,
+        ],
+      };
+    }
+
+    return module;
   }
 }
