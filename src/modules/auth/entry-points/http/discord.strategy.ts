@@ -1,7 +1,6 @@
 import { PassportStrategy } from "@nestjs/passport";
 import { Injectable } from "@nestjs/common";
 import { Strategy } from "passport-oauth2";
-import { HttpService } from "@nestjs/axios";
 import { stringify } from "querystring";
 import { AppConfig } from "../../../configuration/configuration.service";
 import { DiscordApiService } from "../../adapters/discord";
@@ -10,7 +9,7 @@ const ACROSS_DISCORD_GUILD_ID = "887426921892315137";
 
 @Injectable()
 export class DiscordStrategy extends PassportStrategy(Strategy, "discord") {
-  constructor(private http: HttpService, private config: AppConfig, private discordApi: DiscordApiService) {
+  constructor(private config: AppConfig, private discordApi: DiscordApiService) {
     super({
       authorizationURL: `https://discordapp.com/api/oauth2/authorize?${stringify({
         client_id: config.values.discord.clientId,
