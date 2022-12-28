@@ -43,6 +43,7 @@ jobs:
       DISCORD_REDIRECT_URI: http://localhost
       DISTRIBUTOR_PROOFS_CACHE_SECONDS_DURATION: 0
       REFERRALS_SUMMARY_CACHE_SECONDS_DURATION: 0
+      RUN_MODES: normal,test
     steps:
       - uses: actions/checkout@v3
       - uses: ./.github/actions/setup
