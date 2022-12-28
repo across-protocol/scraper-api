@@ -12,8 +12,8 @@ import { Deposit } from "../../model/deposit.entity";
 import { TrackService } from "../amplitude/track-service";
 import { fixedPointAdjustment, makeWeiPctValuesFormatter } from "../amplitude/utils";
 import { EthProvidersService } from "../../../web3/services/EthProvidersService";
-import { chainIdToInfo } from "src/utils";
-import { MarketPriceService } from "src/modules/market-price/services/service";
+import { chainIdToInfo } from "../../../../utils";
+import { MarketPriceService } from "../../../market-price/services/service";
 
 @Processor(ScraperQueue.TrackFillEvent)
 export class TrackFillEventConsumer {
