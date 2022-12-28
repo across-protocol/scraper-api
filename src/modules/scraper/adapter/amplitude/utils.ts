@@ -35,3 +35,15 @@ export function getFormattedAmountValues(amount: string, decimals: number, usdPr
 export function makeAmountValuesFormatter(decimals: number, usdPrice: string) {
   return (amount: string) => getFormattedAmountValues(amount, decimals, usdPrice);
 }
+
+export function deriveRelayerFeeComponents(gasFeeUsd: string, relayerFeeUsd: string, relayerFeePct: string) {
+  const gasFeePct = new BigNumber(gasFeeUsd).dividedBy(relayerFeeUsd).multipliedBy(relayerFeePct);
+  const capitalFeeUsd = new BigNumber(relayerFeeUsd).minus(gasFeeUsd);
+  const capitalFeePct = new BigNumber(relayerFeePct).minus(gasFeePct);
+  return {
+    gasFeeUsd,
+    gasFeePct: gasFeePct.toFixed(),
+    capitalFeeUsd: capitalFeeUsd.toFixed(),
+    capitalFeePct: capitalFeePct.toFixed(),
+  };
+}

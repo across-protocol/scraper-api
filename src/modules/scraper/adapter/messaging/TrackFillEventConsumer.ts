@@ -10,7 +10,12 @@ import { DateTime } from "luxon";
 import { TrackFillEventQueueMessage, ScraperQueue } from ".";
 import { Deposit } from "../../model/deposit.entity";
 import { TrackService } from "../amplitude/track-service";
-import { fixedPointAdjustment, makeAmountValuesFormatter, makeWeiPctValuesFormatter } from "../amplitude/utils";
+import {
+  deriveRelayerFeeComponents,
+  fixedPointAdjustment,
+  makeAmountValuesFormatter,
+  makeWeiPctValuesFormatter,
+} from "../amplitude/utils";
 import { EthProvidersService } from "../../../web3/services/EthProvidersService";
 import { chainIdToInfo } from "../../../../utils";
 import { MarketPriceService } from "../../../market-price/services/service";
@@ -74,10 +79,16 @@ export class TrackFillEventConsumer {
       new BigNumber(fillTx.realizedLpFeePct).plus(fillTx.appliedRelayerFeePct).toString(),
     );
 
+    const { gasFeePct, capitalFeeUsd, capitalFeePct } = deriveRelayerFeeComponents(
+      feeUsd,
+      formattedRelayFeeValues.totalUsd,
+      formattedRelayFeeValues.pct,
+    );
+
     this.trackService.trackDepositFilledEvent(deposit.depositorAddr, {
-      capitalFeePct: "-",
-      capitalFeeTotal: "-",
-      capitalFeeTotalUsd: "-",
+      capitalFeePct,
+      capitalFeeTotal: new BigNumber(capitalFeePct).dividedBy(100).multipliedBy(fromAmounts.formattedAmount).toFixed(),
+      capitalFeeTotalUsd: capitalFeeUsd,
       fillAmount: fillAmounts.formattedAmount,
       fillAmountUsd: fillAmounts.formattedAmountUsd,
       fromAmount: fromAmounts.formattedAmount,
@@ -97,9 +108,9 @@ export class TrackFillEventConsumer {
       relayFeePct: formattedRelayFeeValues.pct,
       relayFeeTotal: formattedRelayFeeValues.total,
       relayFeeTotalUsd: formattedRelayFeeValues.totalUsd,
-      relayGasFeePct: "-",
-      relayGasFeeTotal: "-",
-      relayGasFeeTotalUsd: "-",
+      relayGasFeePct: gasFeePct,
+      relayGasFeeTotal: new BigNumber(gasFeePct).dividedBy(100).multipliedBy(fromAmounts.formattedAmount).toFixed(),
+      relayGasFeeTotalUsd: feeUsd,
       routeChainIdFromTo: `${deposit.sourceChainId}-${deposit.destinationChainId}`,
       routeChainNameFromTo: `${sourceChainInfo.name}-${destinationChainInfo.name}`,
       sender: deposit.depositorAddr,
@@ -140,14 +151,12 @@ export class TrackFillEventConsumer {
       fillTxBlock.date,
       destinationChainInfo.nativeSymbol.toLowerCase(),
     );
+    const fee = new BigNumber(fillTxGasCostsWei).dividedBy(fixedPointAdjustment);
 
     return {
       fillTxBlock,
-      fee: fillTxGasCostsWei,
-      feeUsd: new BigNumber(fillTxGasCostsWei)
-        .dividedBy(fixedPointAdjustment)
-        .multipliedBy(nativeTokenPriceUsd.usd)
-        .toFixed(),
+      fee: fee.toFixed(),
+      feeUsd: fee.multipliedBy(nativeTokenPriceUsd.usd).toFixed(),
     };
   }
 
