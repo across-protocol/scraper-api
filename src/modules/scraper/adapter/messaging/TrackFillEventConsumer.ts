@@ -10,7 +10,7 @@ import { DateTime } from "luxon";
 import { TrackFillEventQueueMessage, ScraperQueue } from ".";
 import { Deposit } from "../../model/deposit.entity";
 import { TrackService } from "../amplitude/track-service";
-import { fixedPointAdjustment, makeWeiPctValuesFormatter } from "../amplitude/utils";
+import { fixedPointAdjustment, makeAmountValuesFormatter, makeWeiPctValuesFormatter } from "../amplitude/utils";
 import { EthProvidersService } from "../../../web3/services/EthProvidersService";
 import { chainIdToInfo } from "../../../../utils";
 import { MarketPriceService } from "../../../market-price/services/service";
@@ -29,13 +29,15 @@ export class TrackFillEventConsumer {
   @Process()
   private async process(job: Job<TrackFillEventQueueMessage>) {
     if (!this.trackService.isEnabled()) {
+      this.logger.verbose("Amplitude tracking is disabled");
       return;
     }
 
     const { depositId, fillTxHash, destinationToken } = job.data;
     const deposit = await this.depositRepository.findOne({ where: { id: depositId }, relations: ["token", "price"] });
 
-    if (!deposit || deposit.status !== "filled") {
+    if (!deposit) {
+      this.logger.verbose("Deposit not found in db");
       return;
     }
 
@@ -53,25 +55,22 @@ export class TrackFillEventConsumer {
       throw new Error("Fill tx does not have a date");
     }
 
-    const destinationChainProvider = this.providers.getProvider(deposit.destinationChainId);
     const destinationChainInfo = chainIdToInfo[deposit.destinationChainId];
     const sourceChainInfo = chainIdToInfo[deposit.sourceChainId];
+    const depositTokenPriceUsd = deposit.price.usd;
 
-    const fillTxReceipt = await destinationChainProvider.getTransactionReceipt(fillTx.hash);
-    // Some chains, e.g. Optimism, do not return the effective gas price in the receipt. We need to fetch it separately.
-    const gasPrice = fillTxReceipt.effectiveGasPrice || (await destinationChainProvider.getGasPrice());
-    const fillTxGasCostsWei = gasPrice.mul(fillTxReceipt.gasUsed).toString();
-    const fillTxBlock = await this.providers.getCachedBlock(deposit.destinationChainId, fillTxReceipt.blockNumber);
-    const nativeTokenPriceUsd = await this.marketPriceService.getCachedHistoricMarketPrice(
-      fillTxBlock.date,
-      destinationChainInfo.nativeSymbol.toLowerCase(),
-    );
+    const { fee, feeUsd, fillTxBlock } = await this.getFillTxNetworkFee(deposit.destinationChainId, fillTx.hash);
 
-    const amountFormatted = utils.formatUnits(deposit.amount, deposit.token.decimals);
-    const weiPctValuesFormatter = makeWeiPctValuesFormatter(amountFormatted, deposit.price.usd);
-    const formattedLpFeeValues = weiPctValuesFormatter(fillTx.realizedLpFeePct);
-    const formattedRelayFeeValues = weiPctValuesFormatter(fillTx.appliedRelayerFeePct);
-    const formattedBridgeFeeValues = weiPctValuesFormatter(
+    const formatAmountValues = makeAmountValuesFormatter(deposit.token.decimals, depositTokenPriceUsd);
+    const fromAmounts = formatAmountValues(deposit.amount);
+
+    const fillAmounts = formatAmountValues(fillTx.fillAmount);
+    const totalFilledAmounts = formatAmountValues(fillTx.totalFilledAmount);
+
+    const formatWeiPctValues = makeWeiPctValuesFormatter(fromAmounts.formattedAmount, deposit.price.usd);
+    const formattedLpFeeValues = formatWeiPctValues(fillTx.realizedLpFeePct);
+    const formattedRelayFeeValues = formatWeiPctValues(fillTx.appliedRelayerFeePct);
+    const formattedBridgeFeeValues = formatWeiPctValues(
       new BigNumber(fillTx.realizedLpFeePct).plus(fillTx.appliedRelayerFeePct).toString(),
     );
 
@@ -79,8 +78,10 @@ export class TrackFillEventConsumer {
       capitalFeePct: "-",
       capitalFeeTotal: "-",
       capitalFeeTotalUsd: "-",
-      fromAmount: amountFormatted,
-      fromAmountUsd: new BigNumber(amountFormatted).multipliedBy(deposit.price.usd).toFixed(),
+      fillAmount: fillAmounts.formattedAmount,
+      fillAmountUsd: fillAmounts.formattedAmountUsd,
+      fromAmount: fromAmounts.formattedAmount,
+      fromAmountUsd: fromAmounts.formattedAmountUsd,
       fromChainId: String(deposit.sourceChainId),
       fromChainName: sourceChainInfo.name,
       fromTokenAddress: deposit.tokenAddr,
@@ -88,12 +89,9 @@ export class TrackFillEventConsumer {
       lpFeePct: formattedLpFeeValues.pct,
       lpFeeTotal: formattedLpFeeValues.total,
       lpFeeTotalUsd: formattedLpFeeValues.totalUsd,
-      NetworkFeeNative: fillTxGasCostsWei,
+      NetworkFeeNative: fee,
       NetworkFeeNativeToken: destinationChainInfo.nativeSymbol,
-      NetworkFeeUsd: new BigNumber(fillTxGasCostsWei)
-        .dividedBy(fixedPointAdjustment)
-        .multipliedBy(nativeTokenPriceUsd.usd)
-        .toFixed(),
+      NetworkFeeUsd: feeUsd,
       recipient: deposit.recipientAddr,
       referralProgramAddress: deposit.referralAddress || "-",
       relayFeePct: formattedRelayFeeValues.pct,
@@ -109,10 +107,10 @@ export class TrackFillEventConsumer {
       timeFromTransferSignedToTransferCompleteInMilliseconds: String(
         DateTime.fromISO(fillTx.date).diff(DateTime.fromJSDate(deposit.depositDate)).as("milliseconds"),
       ),
-      toAmount: new BigNumber(amountFormatted).minus(formattedBridgeFeeValues.total).toFixed(),
-      toAmountUsd: new BigNumber(amountFormatted)
-        .minus(formattedBridgeFeeValues.total)
-        .multipliedBy(deposit.price.usd)
+      toAmount: new BigNumber(fromAmounts.formattedAmount).minus(formattedBridgeFeeValues.total).toFixed(),
+      toAmountUsd: new BigNumber(fromAmounts.formattedAmountUsd)
+        .minus(formattedBridgeFeeValues.totalUsd)
+        .multipliedBy(depositTokenPriceUsd)
         .toFixed(),
       toChainId: String(deposit.destinationChainId),
       toChainName: destinationChainInfo.name,
@@ -120,11 +118,37 @@ export class TrackFillEventConsumer {
       totalBridgeFee: formattedBridgeFeeValues.total,
       totalBridgeFeePct: formattedBridgeFeeValues.pct,
       totalBridgeFeeUsd: formattedBridgeFeeValues.totalUsd,
+      totalFilledAmount: totalFilledAmounts.formattedAmount,
+      totalFilledAmountUsd: totalFilledAmounts.formattedAmountUsd,
       toTokenAddress: utils.getAddress(destinationToken),
       transactionHash: fillTx.hash,
-      transferCompleteTimestamp: String(deposit.depositDate.getTime()),
+      transferCompleteTimestamp: String(DateTime.fromISO(fillTx.date).toMillis()),
       transferQuoteBlockNumber: String(fillTxBlock.blockNumber),
     });
+  }
+
+  private async getFillTxNetworkFee(destinationChainId: number, fillTxHash: string) {
+    const destinationChainProvider = this.providers.getProvider(destinationChainId);
+    const destinationChainInfo = chainIdToInfo[destinationChainId];
+
+    const fillTxReceipt = await destinationChainProvider.getTransactionReceipt(fillTxHash);
+    // Some chains, e.g. Optimism, do not return the effective gas price in the receipt. We need to fetch it separately.
+    const gasPrice = fillTxReceipt.effectiveGasPrice || (await destinationChainProvider.getGasPrice());
+    const fillTxGasCostsWei = gasPrice.mul(fillTxReceipt.gasUsed).toString();
+    const fillTxBlock = await this.providers.getCachedBlock(destinationChainId, fillTxReceipt.blockNumber);
+    const nativeTokenPriceUsd = await this.marketPriceService.getCachedHistoricMarketPrice(
+      fillTxBlock.date,
+      destinationChainInfo.nativeSymbol.toLowerCase(),
+    );
+
+    return {
+      fillTxBlock,
+      fee: fillTxGasCostsWei,
+      feeUsd: new BigNumber(fillTxGasCostsWei)
+        .dividedBy(fixedPointAdjustment)
+        .multipliedBy(nativeTokenPriceUsd.usd)
+        .toFixed(),
+    };
   }
 
   @OnQueueFailed()

@@ -1,6 +1,5 @@
 import { HttpService } from "@nestjs/axios";
 import { Injectable } from "@nestjs/common";
-import { Types } from "@amplitude/analytics-node";
 
 import { EventOptions, TransferTransactionConfirmedProperties, ampli } from "../../../ampli";
 import { AppConfig } from "../../../configuration/configuration.service";
@@ -12,9 +11,6 @@ export class TrackService {
       ampli.load({
         client: {
           apiKey: appConfig.values.amplitude.apiKey,
-          configuration: {
-            logLevel: Types.LogLevel.Debug,
-          },
         },
       });
     }

@@ -7,7 +7,7 @@
  * To update run 'ampli pull scraper'
  *
  * Required dependencies: @amplitude/analytics-node@^0.5.0
- * Tracking Plan Version: 29
+ * Tracking Plan Version: 30
  * Build: 1.0.0
  * Runtime: node.js:typescript-ampli-v2
  *
@@ -37,10 +37,10 @@ export const ApiKey: Record<Environment, string> = {
  */
 export const DefaultConfiguration: NodeOptions = {
   plan: {
-    version: "29",
+    version: "30",
     branch: "main",
     source: "scraper",
-    versionId: "d15c177e-3e08-4827-bbb7-67ab60058daf",
+    versionId: "0b21d764-e05a-48ac-9da6-95b3efc901dd",
   },
   ...{
     ingestionMetadata: {
@@ -130,6 +130,8 @@ export interface TransferTransactionConfirmedProperties {
    * Capital fee in USD
    */
   capitalFeeTotalUsd: string;
+  fillAmount: string;
+  fillAmountUsd: string;
   /**
    * From amount in the bridge token, in decimals
    */
@@ -259,6 +261,8 @@ export interface TransferTransactionConfirmedProperties {
    * Total bridge fee in USD
    */
   totalBridgeFeeUsd: string;
+  totalFilledAmount: string;
+  totalFilledAmountUsd: string;
   /**
    * Token address of bridge token on to chain
    */
@@ -340,7 +344,7 @@ export class Ampli {
       this.amplitude = options.client.instance;
     } else if (apiKey) {
       this.amplitude = amplitude.createInstance();
-      return this.amplitude.init(apiKey, { ...DefaultConfiguration });
+      return this.amplitude.init(apiKey, { ...DefaultConfiguration, ...(options.client as any)?.configuration });
     } else {
       console.error("ERROR: ampli.load() requires 'environment', 'client.apiKey', or 'client.instance'");
     }

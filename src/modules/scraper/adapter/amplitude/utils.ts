@@ -1,4 +1,5 @@
 import BigNumber from "bignumber.js";
+import { utils } from "ethers";
 
 export const fixedPointAdjustment = new BigNumber(10).pow(18);
 
@@ -21,4 +22,16 @@ export function getFormattedWeiPctValues(weiPct: string, totalAmount: string, us
 
 export function makeWeiPctValuesFormatter(totalAmount: string, usdPrice: string) {
   return (weiPct: string) => getFormattedWeiPctValues(weiPct, totalAmount, usdPrice);
+}
+
+export function getFormattedAmountValues(amount: string, decimals: number, usdPrice: string) {
+  const formattedAmount = utils.formatUnits(amount, decimals);
+  return {
+    formattedAmount,
+    formattedAmountUsd: new BigNumber(formattedAmount).multipliedBy(usdPrice).toFixed(),
+  };
+}
+
+export function makeAmountValuesFormatter(decimals: number, usdPrice: string) {
+  return (amount: string) => getFormattedAmountValues(amount, decimals, usdPrice);
 }
