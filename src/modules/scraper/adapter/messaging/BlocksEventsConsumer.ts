@@ -73,6 +73,7 @@ export class BlocksEventsConsumer {
       fillAmount: e.args.fillAmount.toString(),
       transactionHash: e.transactionHash,
       appliedRelayerFeePct: e.args.appliedRelayerFeePct.toString(),
+      destinationToken: e.args.destinationToken,
     }));
     await this.scraperQueuesService.publishMessagesBulk<FillEventsQueueMessage>(ScraperQueue.FillEvents, fillMessages);
 

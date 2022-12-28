@@ -340,7 +340,7 @@ export class Ampli {
       this.amplitude = options.client.instance;
     } else if (apiKey) {
       this.amplitude = amplitude.createInstance();
-      return this.amplitude.init(apiKey, { ...DefaultConfiguration, ...options.client?.configuration });
+      return this.amplitude.init(apiKey, { ...DefaultConfiguration });
     } else {
       console.error("ERROR: ampli.load() requires 'environment', 'client.apiKey', or 'client.instance'");
     }

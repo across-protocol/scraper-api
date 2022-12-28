@@ -33,6 +33,7 @@ export type FillEventsQueueMessage = {
   fillAmount: string;
   transactionHash: string;
   appliedRelayerFeePct: string;
+  destinationToken: string;
 };
 
 export type SpeedUpEventsQueueMessage = {
@@ -75,4 +76,6 @@ export type SuggestedFeesQueueMessage = {
 
 export type TrackFillEventQueueMessage = {
   depositId: number;
+  fillTxHash: string;
+  destinationToken: string;
 };

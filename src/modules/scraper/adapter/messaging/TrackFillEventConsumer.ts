@@ -4,56 +4,96 @@ import { Job } from "bull";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
 import { utils } from "ethers";
+import BigNumber from "bignumber.js";
+import { DateTime } from "luxon";
+
 import { TrackFillEventQueueMessage, ScraperQueue } from ".";
 import { Deposit } from "../../model/deposit.entity";
 import { TrackService } from "../amplitude/track-service";
-import { makeWeiPctValuesFormatter } from "../amplitude/utils";
-import { ChainIdToName } from "../../../web3/model/ChainId";
-import BigNumber from "bignumber.js";
+import { fixedPointAdjustment, makeWeiPctValuesFormatter } from "../amplitude/utils";
+import { EthProvidersService } from "../../../web3/services/EthProvidersService";
+import { chainIdToInfo } from "src/utils";
+import { MarketPriceService } from "src/modules/market-price/services/service";
 
 @Processor(ScraperQueue.TrackFillEvent)
 export class TrackFillEventConsumer {
   private logger = new Logger(TrackFillEventConsumer.name);
 
   constructor(
+    private providers: EthProvidersService,
+    private marketPriceService: MarketPriceService,
     private trackService: TrackService,
     @InjectRepository(Deposit) private depositRepository: Repository<Deposit>,
   ) {}
 
   @Process()
   private async process(job: Job<TrackFillEventQueueMessage>) {
-    const { depositId } = job.data;
+    if (!this.trackService.isEnabled()) {
+      return;
+    }
+
+    const { depositId, fillTxHash, destinationToken } = job.data;
     const deposit = await this.depositRepository.findOne({ where: { id: depositId }, relations: ["token", "price"] });
 
-    if (!deposit) return;
-    if (deposit.status !== "filled") return;
-
-    if (!deposit.token || !deposit.price) {
-      throw new Error("Can not track fill event without token or price");
+    if (!deposit || deposit.status !== "filled") {
+      return;
     }
+
+    if (!deposit.token || !deposit.price || !deposit.depositDate) {
+      throw new Error("Can not track fill event without token, price or deposit date");
+    }
+
+    const fillTx = deposit.fillTxs.find((tx) => tx.hash === fillTxHash);
+
+    if (!fillTx) {
+      throw new Error("Fill tx does not exist on deposit");
+    }
+
+    if (!fillTx.date) {
+      throw new Error("Fill tx does not have a date");
+    }
+
+    const destinationChainProvider = this.providers.getProvider(deposit.destinationChainId);
+    const destinationChainInfo = chainIdToInfo[deposit.destinationChainId];
+    const sourceChainInfo = chainIdToInfo[deposit.sourceChainId];
+
+    const fillTxReceipt = await destinationChainProvider.getTransactionReceipt(fillTx.hash);
+    // Some chains, e.g. Optimism, do not return the effective gas price in the receipt. We need to fetch it separately.
+    const gasPrice = fillTxReceipt.effectiveGasPrice || (await destinationChainProvider.getGasPrice());
+    const fillTxGasCostsWei = gasPrice.mul(fillTxReceipt.gasUsed).toString();
+    const fillTxBlock = await this.providers.getCachedBlock(deposit.destinationChainId, fillTxReceipt.blockNumber);
+    const nativeTokenPriceUsd = await this.marketPriceService.getCachedHistoricMarketPrice(
+      fillTxBlock.date,
+      destinationChainInfo.nativeSymbol.toLowerCase(),
+    );
 
     const amountFormatted = utils.formatUnits(deposit.amount, deposit.token.decimals);
     const weiPctValuesFormatter = makeWeiPctValuesFormatter(amountFormatted, deposit.price.usd);
-    const formattedLpFeeValues = weiPctValuesFormatter(deposit.realizedLpFeePct);
-    const formattedRelayFeeValues = weiPctValuesFormatter(deposit.depositRelayerFeePct);
-    const formattedBridgeFeeValues = weiPctValuesFormatter(deposit.bridgeFeePct);
+    const formattedLpFeeValues = weiPctValuesFormatter(fillTx.realizedLpFeePct);
+    const formattedRelayFeeValues = weiPctValuesFormatter(fillTx.appliedRelayerFeePct);
+    const formattedBridgeFeeValues = weiPctValuesFormatter(
+      new BigNumber(fillTx.realizedLpFeePct).plus(fillTx.appliedRelayerFeePct).toString(),
+    );
 
     this.trackService.trackDepositFilledEvent(deposit.depositorAddr, {
       capitalFeePct: "-",
       capitalFeeTotal: "-",
       capitalFeeTotalUsd: "-",
       fromAmount: amountFormatted,
-      fromAmountUsd: new BigNumber(amountFormatted).multipliedBy(deposit.price.usd).toFixed(2),
+      fromAmountUsd: new BigNumber(amountFormatted).multipliedBy(deposit.price.usd).toFixed(),
       fromChainId: String(deposit.sourceChainId),
-      fromChainName: ChainIdToName[deposit.sourceChainId],
+      fromChainName: sourceChainInfo.name,
       fromTokenAddress: deposit.tokenAddr,
       isAmountTooLow: false,
       lpFeePct: formattedLpFeeValues.pct,
       lpFeeTotal: formattedLpFeeValues.total,
       lpFeeTotalUsd: formattedLpFeeValues.totalUsd,
-      NetworkFeeNative: "-",
-      NetworkFeeNativeToken: "-",
-      NetworkFeeUsd: "-",
+      NetworkFeeNative: fillTxGasCostsWei,
+      NetworkFeeNativeToken: destinationChainInfo.nativeSymbol,
+      NetworkFeeUsd: new BigNumber(fillTxGasCostsWei)
+        .dividedBy(fixedPointAdjustment)
+        .multipliedBy(nativeTokenPriceUsd.usd)
+        .toFixed(),
       recipient: deposit.recipientAddr,
       referralProgramAddress: deposit.referralAddress || "-",
       relayFeePct: formattedRelayFeeValues.pct,
@@ -63,27 +103,27 @@ export class TrackFillEventConsumer {
       relayGasFeeTotal: "-",
       relayGasFeeTotalUsd: "-",
       routeChainIdFromTo: `${deposit.sourceChainId}-${deposit.destinationChainId}`,
-      routeChainNameFromTo: `${ChainIdToName[deposit.sourceChainId]}-${ChainIdToName[deposit.destinationChainId]}`,
+      routeChainNameFromTo: `${sourceChainInfo.name}-${destinationChainInfo.name}`,
       sender: deposit.depositorAddr,
       succeeded: true,
       timeFromTransferSignedToTransferCompleteInMilliseconds: String(
-        deposit.filledDate.getTime() - deposit.depositDate.getTime(),
+        DateTime.fromISO(fillTx.date).diff(DateTime.fromJSDate(deposit.depositDate)).as("milliseconds"),
       ),
       toAmount: new BigNumber(amountFormatted).minus(formattedBridgeFeeValues.total).toFixed(),
       toAmountUsd: new BigNumber(amountFormatted)
         .minus(formattedBridgeFeeValues.total)
         .multipliedBy(deposit.price.usd)
-        .toFixed(2),
+        .toFixed(),
       toChainId: String(deposit.destinationChainId),
-      toChainName: ChainIdToName[deposit.destinationChainId],
+      toChainName: destinationChainInfo.name,
       tokenSymbol: deposit.token.symbol,
       totalBridgeFee: formattedBridgeFeeValues.total,
       totalBridgeFeePct: formattedBridgeFeeValues.pct,
       totalBridgeFeeUsd: formattedBridgeFeeValues.totalUsd,
-      toTokenAddress: deposit.tokenAddr, // TODO: retrieve correct address
-      transactionHash: deposit.fillTxs[0].hash, // TODO: determine which tx hash to use
+      toTokenAddress: utils.getAddress(destinationToken),
+      transactionHash: fillTx.hash,
       transferCompleteTimestamp: String(deposit.depositDate.getTime()),
-      transferQuoteBlockNumber: "-",
+      transferQuoteBlockNumber: String(fillTxBlock.blockNumber),
     });
   }
 

@@ -8,9 +8,18 @@ import { AppConfig } from "../../../configuration/configuration.service";
 @Injectable()
 export class TrackService {
   constructor(private appConfig: AppConfig, private httpService: HttpService) {
-    init(appConfig.values.amplitude.apiKey, {
-      logLevel: Types.LogLevel.None,
+    ampli.load({
+      client: {
+        apiKey: appConfig.values.amplitude.apiKey,
+        configuration: {
+          logLevel: Types.LogLevel.Debug,
+        },
+      },
     });
+  }
+
+  public isEnabled() {
+    return Boolean(this.appConfig.values.amplitude.apiKey);
   }
 
   public async trackDepositFilledEvent(
