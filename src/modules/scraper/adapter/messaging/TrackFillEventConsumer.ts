@@ -3,7 +3,7 @@ import { Logger } from "@nestjs/common";
 import { Job } from "bull";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
-import { utils } from "ethers";
+import { utils, constants } from "ethers";
 import BigNumber from "bignumber.js";
 import { DateTime } from "luxon";
 
@@ -139,7 +139,9 @@ export class TrackFillEventConsumer {
       totalBridgeFeeUsd: formattedBridgeFeeValues.totalUsd,
       totalFilledAmount: totalFilledAmounts.formattedAmount,
       totalFilledAmountUsd: totalFilledAmounts.formattedAmountUsd,
-      toTokenAddress: utils.getAddress(destinationToken),
+      // Old queued up redis jobs might not have the `destinationToken` field,
+      // so we default to `0x0000000000000000000000000000000000000000`
+      toTokenAddress: utils.getAddress(destinationToken || constants.AddressZero),
       transactionHash: fillTx.hash,
       transferCompleteTimestamp: String(DateTime.fromISO(fillTx.date).toMillis()),
       transferQuoteBlockNumber: String(fillTxBlockNumber),
