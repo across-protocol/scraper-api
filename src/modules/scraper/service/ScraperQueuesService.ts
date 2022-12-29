@@ -21,44 +21,8 @@ export class ScraperQueuesService {
     @InjectQueue(ScraperQueue.SuggestedFees) private suggestedFeesQueue: Queue,
     @InjectQueue(ScraperQueue.TrackFillEvent) private trackFillEventsQueue: Queue,
   ) {
-    setInterval(() => {
-      this.blocksEventsQueue
-        .getJobCounts()
-        .then((data) => this.logger.log(`${ScraperQueue.BlocksEvents} ${JSON.stringify(data)}`));
-      this.merkleDistributorBlocksEventsQueue
-        .getJobCounts()
-        .then((data) => this.logger.log(`${ScraperQueue.MerkleDistributorBlocksEvents} ${JSON.stringify(data)}`));
-      this.fillEventsQueue
-        .getJobCounts()
-        .then((data) => this.logger.log(`${ScraperQueue.FillEvents} ${JSON.stringify(data)}`));
-      this.speedUpEventsQueue
-        .getJobCounts()
-        .then((data) => this.logger.log(`${ScraperQueue.SpeedUpEvents} ${JSON.stringify(data)}`));
-      this.blockNumberQueue
-        .getJobCounts()
-        .then((data) => this.logger.log(`${ScraperQueue.BlockNumber} ${JSON.stringify(data)}`));
-      this.tokenDetailsQueue
-        .getJobCounts()
-        .then((data) => this.logger.log(`${ScraperQueue.TokenDetails} ${JSON.stringify(data)}`));
-      this.depositReferralQueue
-        .getJobCounts()
-        .then((data) => this.logger.log(`${ScraperQueue.DepositReferral} ${JSON.stringify(data)}`));
-      this.tokenPriceQueue
-        .getJobCounts()
-        .then((data) => this.logger.log(`${ScraperQueue.TokenPrice} ${JSON.stringify(data)}`));
-      this.depositFilledDateQueue
-        .getJobCounts()
-        .then((data) => this.logger.log(`${ScraperQueue.DepositFilledDate} ${JSON.stringify(data)}`));
-      this.depositAcxPriceQueue
-        .getJobCounts()
-        .then((data) => this.logger.log(`${ScraperQueue.DepositAcxPrice} ${JSON.stringify(data)}`));
-      this.suggestedFeesQueue
-        .getJobCounts()
-        .then((data) => this.logger.log(`${ScraperQueue.SuggestedFees} ${JSON.stringify(data)}`));
-      this.trackFillEventsQueue
-        .getJobCounts()
-        .then((data) => this.logger.log(`${ScraperQueue.TrackFillEvent} ${JSON.stringify(data)}`));
-    }, 1000 * 60);
+    this.initLogs();
+    this.retryFailedJobs();
   }
 
   public async publishMessage<T>(queue: ScraperQueue, message: T) {
@@ -115,5 +79,76 @@ export class ScraperQueuesService {
     } else if (queue === ScraperQueue.TrackFillEvent) {
       await this.trackFillEventsQueue.addBulk(messages.map((m) => ({ data: m })));
     }
+  }
+
+  public getAllQueues() {
+    return [
+      this.blocksEventsQueue,
+      this.merkleDistributorBlocksEventsQueue,
+      this.fillEventsQueue,
+      this.speedUpEventsQueue,
+      this.blockNumberQueue,
+      this.tokenDetailsQueue,
+      this.depositReferralQueue,
+      this.tokenPriceQueue,
+      this.depositFilledDateQueue,
+      this.depositAcxPriceQueue,
+      this.suggestedFeesQueue,
+      this.trackFillEventsQueue,
+    ];
+  }
+
+  private async retryFailedJobs() {
+    try {
+      for (const queue of this.getAllQueues()) {
+        const failedJobs = await queue.getFailed();
+        for (const failedJob of failedJobs) {
+          await failedJob.retry();
+        }
+      }
+    } catch (error) {
+      this.logger.error(error);
+    }
+  }
+
+  private initLogs() {
+    setInterval(() => {
+      this.blocksEventsQueue
+        .getJobCounts()
+        .then((data) => this.logger.log(`${ScraperQueue.BlocksEvents} ${JSON.stringify(data)}`));
+      this.merkleDistributorBlocksEventsQueue
+        .getJobCounts()
+        .then((data) => this.logger.log(`${ScraperQueue.MerkleDistributorBlocksEvents} ${JSON.stringify(data)}`));
+      this.fillEventsQueue
+        .getJobCounts()
+        .then((data) => this.logger.log(`${ScraperQueue.FillEvents} ${JSON.stringify(data)}`));
+      this.speedUpEventsQueue
+        .getJobCounts()
+        .then((data) => this.logger.log(`${ScraperQueue.SpeedUpEvents} ${JSON.stringify(data)}`));
+      this.blockNumberQueue
+        .getJobCounts()
+        .then((data) => this.logger.log(`${ScraperQueue.BlockNumber} ${JSON.stringify(data)}`));
+      this.tokenDetailsQueue
+        .getJobCounts()
+        .then((data) => this.logger.log(`${ScraperQueue.TokenDetails} ${JSON.stringify(data)}`));
+      this.depositReferralQueue
+        .getJobCounts()
+        .then((data) => this.logger.log(`${ScraperQueue.DepositReferral} ${JSON.stringify(data)}`));
+      this.tokenPriceQueue
+        .getJobCounts()
+        .then((data) => this.logger.log(`${ScraperQueue.TokenPrice} ${JSON.stringify(data)}`));
+      this.depositFilledDateQueue
+        .getJobCounts()
+        .then((data) => this.logger.log(`${ScraperQueue.DepositFilledDate} ${JSON.stringify(data)}`));
+      this.depositAcxPriceQueue
+        .getJobCounts()
+        .then((data) => this.logger.log(`${ScraperQueue.DepositAcxPrice} ${JSON.stringify(data)}`));
+      this.suggestedFeesQueue
+        .getJobCounts()
+        .then((data) => this.logger.log(`${ScraperQueue.SuggestedFees} ${JSON.stringify(data)}`));
+      this.trackFillEventsQueue
+        .getJobCounts()
+        .then((data) => this.logger.log(`${ScraperQueue.TrackFillEvent} ${JSON.stringify(data)}`));
+    }, 1000 * 60);
   }
 }
