@@ -1,5 +1,34 @@
 import { applyDecorators } from "@nestjs/common";
 import { Cron } from "@nestjs/schedule";
+import { ChainIds } from "./modules/web3/model/ChainId";
+
+export const chainIdToInfo = {
+  [ChainIds.mainnet]: {
+    name: "Ethereum",
+    chainId: ChainIds.mainnet,
+    nativeSymbol: "eth",
+  },
+  [ChainIds.arbitrum]: {
+    name: "Arbitrum",
+    chainId: ChainIds.arbitrum,
+    nativeSymbol: "eth",
+  },
+  [ChainIds.boba]: {
+    name: "Boba",
+    chainId: ChainIds.boba,
+    nativeSymbol: "eth",
+  },
+  [ChainIds.optimism]: {
+    name: "Optimism",
+    chainId: ChainIds.optimism,
+    nativeSymbol: "eth",
+  },
+  [ChainIds.polygon]: {
+    name: "Polygon",
+    chainId: ChainIds.polygon,
+    nativeSymbol: "matic",
+  },
+};
 
 export const wait = (seconds = 1) =>
   new Promise((res) => {

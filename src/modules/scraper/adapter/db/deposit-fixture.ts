@@ -31,6 +31,7 @@ export function mockDepositEntity(overrides: Partial<Deposit>) {
     destinationChainId: 1,
     depositDate: new Date(),
     depositorAddr: "0x",
+    recipientAddr: "0x",
     status: "pending" as TransferStatus,
     amount: "0",
     filled: "0",

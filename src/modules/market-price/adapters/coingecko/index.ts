@@ -3,6 +3,8 @@ import { Injectable } from "@nestjs/common";
 import { CGHistoricPrice } from "./model";
 
 const symbolIdMap = {
+  eth: "ethereum",
+  matic: "matic-network",
   wbtc: "wrapped-bitcoin",
   usdc: "usd-coin",
   uma: "uma",
