@@ -22,7 +22,7 @@ export class ScraperQueuesService {
     @InjectQueue(ScraperQueue.TrackFillEvent) private trackFillEventsQueue: Queue,
   ) {
     this.initLogs();
-    this.removeFailedJobs();
+    this.retryFailedJobs();
   }
 
   public async publishMessage<T>(queue: ScraperQueue, message: T) {
@@ -98,12 +98,12 @@ export class ScraperQueuesService {
     ];
   }
 
-  private async removeFailedJobs() {
+  private async retryFailedJobs() {
     try {
       for (const queue of this.getAllQueues()) {
         const failedJobs = await queue.getFailed();
         for (const failedJob of failedJobs) {
-          await failedJob.remove();
+          await failedJob.retry();
         }
       }
     } catch (error) {
