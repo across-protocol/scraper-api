@@ -23,7 +23,8 @@ export class FillEventsConsumer {
     const deposit = await this.depositRepository.findOne({ where: { sourceChainId: originChainId, depositId } });
 
     if (!deposit) {
-      await this.tryToRefetchDepositEvents(job.data);
+      // this is not needed anymore. At least for now
+      // await this.tryToRefetchDepositEvents(job.data);
       throw new Error("Deposit not found in db");
     }
 
