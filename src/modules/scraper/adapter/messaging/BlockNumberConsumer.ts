@@ -11,7 +11,7 @@ import {
   TokenDetailsQueueMessage,
   SuggestedFeesQueueMessage,
 } from ".";
-import { Deposit } from "../../model/deposit.entity";
+import { Deposit } from "../../../deposit/model/deposit.entity";
 import { ScraperQueuesService } from "../../service/ScraperQueuesService";
 
 @Processor(ScraperQueue.BlockNumber)

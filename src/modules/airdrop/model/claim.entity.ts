@@ -8,7 +8,7 @@ import {
   UpdateDateColumn,
   ManyToOne,
 } from "typeorm";
-import { MerkleDistributorWindow } from "../../airdrop/model/merkle-distributor-window.entity";
+import { MerkleDistributorWindow } from "./merkle-distributor-window.entity";
 
 @Entity()
 @Unique("UK_claim_windowIndex_accountIndex", ["windowIndex", "accountIndex"])

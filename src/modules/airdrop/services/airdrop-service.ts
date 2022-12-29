@@ -6,7 +6,7 @@ import BigNumber from "bignumber.js";
 import { DataSource, IsNull, Not, QueryFailedError, Repository } from "typeorm";
 import { Cache } from "cache-manager";
 
-import { Deposit } from "../../scraper/model/deposit.entity";
+import { Deposit } from "../../deposit/model/deposit.entity";
 import { CommunityRewards } from "../model/community-rewards.entity";
 import { WalletRewards } from "../model/wallet-rewards.entity";
 import { Token } from "../../web3/model/token.entity";

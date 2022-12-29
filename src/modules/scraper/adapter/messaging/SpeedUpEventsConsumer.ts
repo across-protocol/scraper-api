@@ -3,7 +3,7 @@ import { Logger } from "@nestjs/common";
 import { Job } from "bull";
 import { DepositFilledDateQueueMessage, ScraperQueue, SpeedUpEventsQueueMessage } from ".";
 import { InjectRepository } from "@nestjs/typeorm";
-import { Deposit } from "../../model/deposit.entity";
+import { Deposit } from "../../../deposit/model/deposit.entity";
 import { Repository } from "typeorm";
 import { ScraperQueuesService } from "../../service/ScraperQueuesService";
 

@@ -7,7 +7,7 @@ import Bluebird from "bluebird";
 import { ethers } from "ethers";
 import { Cache } from "cache-manager";
 
-import { Deposit } from "../../scraper/model/deposit.entity";
+import { Deposit } from "../../deposit/model/deposit.entity";
 import {
   getActiveRefereesCountQuery,
   getReferralsQuery,
@@ -24,7 +24,7 @@ import { WindowAlreadySetException } from "./exceptions";
 import { DepositsFilteredReferrals } from "../model/DepositsFilteredReferrals.entity";
 import { DepositReferralStat } from "../../deposit/model/deposit-referral-stat.entity";
 import { splitArrayInChunks } from "../../../utils";
-import { Claim } from "../../scraper/model/claim.entity";
+import { Claim } from "../../airdrop/model/claim.entity";
 
 const REFERRAL_ADDRESS_DELIMITER = "d00dfeeddeadbeef";
 const getReferralsSummaryCacheKey = (address: string) => `referrals:summary:${address}`;

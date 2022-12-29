@@ -2,7 +2,7 @@ import { DynamicModule, Module, Provider } from "@nestjs/common";
 import { TypeOrmModule } from "@nestjs/typeorm";
 import { AppConfigModule } from "../configuration/configuration.module";
 import { DepositsMv } from "../deposit/model/DepositsMv.entity";
-import { Deposit } from "../scraper/model/deposit.entity";
+import { Deposit } from "../deposit/model/deposit.entity";
 import { ReferralController } from "./entry-points/http/controller";
 import { ReferralCronService } from "./services/cron-service";
 import { ReferralService } from "./services/service";

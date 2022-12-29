@@ -6,7 +6,7 @@ import { JwtService } from "@nestjs/jwt";
 import { ValidationPipe } from "../src/validation.pipe";
 import { AppModule } from "../src/app.module";
 import { GetAirdropRewardsResponse } from "../src/modules/airdrop/entry-points/http/dto";
-import { DepositFixture, mockDepositEntity } from "../src/modules/scraper/adapter/db/deposit-fixture";
+import { DepositFixture, mockDepositEntity } from "../src/modules/deposit/adapter/db/deposit-fixture";
 import { Role } from "../src/modules/auth/entry-points/http/roles";
 import { WalletRewardsFixture } from "../src/modules/airdrop/adapter/db/wallet-rewards-fixture";
 import { CommunityRewardsFixture } from "../src/modules/airdrop/adapter/db/community-rewards-fixture";

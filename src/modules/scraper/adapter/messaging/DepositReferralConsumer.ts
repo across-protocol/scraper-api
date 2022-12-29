@@ -4,7 +4,7 @@ import { Job } from "bull";
 import { IsNull, Not, Repository } from "typeorm";
 import { InjectRepository } from "@nestjs/typeorm";
 import { DepositReferralQueueMessage, ScraperQueue } from ".";
-import { Deposit } from "../../model/deposit.entity";
+import { Deposit } from "../../../deposit/model/deposit.entity";
 import { EthProvidersService } from "../../../web3/services/EthProvidersService";
 import { AppConfig } from "../../../configuration/configuration.service";
 import { ReferralService } from "../../../referral/services/service";

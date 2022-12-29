@@ -3,7 +3,7 @@ import { Logger } from "@nestjs/common";
 import { Job } from "bull";
 import { ScraperQueue, TokenDetailsQueueMessage, TokenPriceQueueMessage } from ".";
 import { InjectRepository } from "@nestjs/typeorm";
-import { Deposit } from "../../model/deposit.entity";
+import { Deposit } from "../../../deposit/model/deposit.entity";
 import { Repository } from "typeorm";
 import { EthProvidersService } from "../../../web3/services/EthProvidersService";
 import { ScraperQueuesService } from "../../service/ScraperQueuesService";

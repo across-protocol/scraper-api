@@ -5,7 +5,7 @@ import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
 import { DateTime } from "luxon";
 import { DepositAcxPriceQueueMessage, ScraperQueue } from ".";
-import { Deposit } from "../../model/deposit.entity";
+import { Deposit } from "../../../deposit/model/deposit.entity";
 import { MarketPriceService } from "../../../market-price/services/service";
 
 @Processor(ScraperQueue.DepositAcxPrice)

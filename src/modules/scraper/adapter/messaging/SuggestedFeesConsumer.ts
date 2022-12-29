@@ -8,7 +8,7 @@ import { utils } from "ethers";
 
 import { SuggestedFeesService } from "../across-serverless-api/suggested-fees-service";
 import { SuggestedFeesQueueMessage, ScraperQueue } from ".";
-import { Deposit } from "../../model/deposit.entity";
+import { Deposit } from "../../../deposit/model/deposit.entity";
 import { AppConfig } from "../../../configuration/configuration.service";
 
 @Processor(ScraperQueue.SuggestedFees)

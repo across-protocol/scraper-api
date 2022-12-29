@@ -1,6 +1,6 @@
 import { INestApplication } from "@nestjs/common";
 import { Test } from "@nestjs/testing";
-import { DepositFixture } from "../src/modules/scraper/adapter/db/deposit-fixture";
+import { DepositFixture } from "../src/modules/deposit/adapter/db/deposit-fixture";
 import { AppModule } from "../src/app.module";
 import { QueryFailedError } from "typeorm";
 import { FillEventsConsumer } from "../src/modules/scraper/adapter/messaging/FillEventsConsumer";

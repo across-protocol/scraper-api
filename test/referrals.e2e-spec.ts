@@ -4,8 +4,8 @@ import { JwtService } from "@nestjs/jwt";
 import { Test } from "@nestjs/testing";
 import { ethers, utils } from "ethers";
 
-import { DepositFixture, mockDepositEntity } from "../src/modules/scraper/adapter/db/deposit-fixture";
-import { ClaimFixture } from "../src/modules/scraper/adapter/db/claim-fixture";
+import { DepositFixture, mockDepositEntity } from "../src/modules/deposit/adapter/db/deposit-fixture";
+import { ClaimFixture } from "../src/modules/airdrop/adapter/db/claim-fixture";
 import { TokenFixture } from "../src/modules/web3/adapters/db/token-fixture";
 import { HistoricMarketPriceFixture } from "../src/modules/market-price/adapters/hmp-fixture";
 import { AppModule } from "../src/app.module";

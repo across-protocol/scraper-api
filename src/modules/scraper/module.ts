@@ -7,8 +7,6 @@ import { AppConfigModule } from "../configuration/configuration.module";
 import { MarketPriceModule } from "../market-price/module";
 import { ReferralModule } from "../referral/module";
 import { Web3Module } from "../web3/module";
-import { DepositFixture } from "./adapter/db/deposit-fixture";
-import { ClaimFixture } from "./adapter/db/claim-fixture";
 
 import { ScraperQueue } from "./adapter/messaging";
 import { BlockNumberConsumer } from "./adapter/messaging/BlockNumberConsumer";
@@ -21,8 +19,8 @@ import { SpeedUpEventsConsumer } from "./adapter/messaging/SpeedUpEventsConsumer
 import { TokenDetailsConsumer } from "./adapter/messaging/TokenDetailsConsumer";
 import { TokenPriceConsumer } from "./adapter/messaging/TokenPriceConsumer";
 import { ScraperController } from "./entry-point/http/controller";
-import { Deposit } from "./model/deposit.entity";
-import { Claim } from "./model/claim.entity";
+import { Deposit } from "../deposit/model/deposit.entity";
+import { Claim } from "../airdrop/model/claim.entity";
 import { ProcessedBlock } from "./model/ProcessedBlock.entity";
 import { MerkleDistributorProcessedBlock } from "./model/MerkleDistributorProcessedBlock.entity";
 import { ScraperService } from "./service";
@@ -33,6 +31,8 @@ import { SuggestedFeesService } from "./adapter/across-serverless-api/suggested-
 import { TrackFillEventConsumer } from "./adapter/messaging/TrackFillEventConsumer";
 import { TrackService } from "./adapter/amplitude/track-service";
 import { ModuleOptions, RunMode } from "../../dynamic-module";
+import { DepositModule } from "../deposit/module";
+import { AirdropModule } from "../airdrop/module";
 
 @Module({})
 export class ScraperModule {
@@ -56,10 +56,6 @@ export class ScraperModule {
       TrackFillEventConsumer,
     ];
 
-    if (moduleOptions.runModes.includes(RunMode.Test)) {
-      providers.push(DepositFixture, ClaimFixture);
-    }
-
     return {
       module: ScraperModule,
       providers,
@@ -69,6 +65,8 @@ export class ScraperModule {
         TypeOrmModule.forFeature([ProcessedBlock, MerkleDistributorProcessedBlock, Claim, Deposit]),
         MarketPriceModule,
         HttpModule,
+        DepositModule.forRoot(moduleOptions),
+        AirdropModule.forRoot(moduleOptions),
         ReferralModule.forRoot(moduleOptions),
         BullModule.registerQueue({
           name: ScraperQueue.BlockNumber,
