@@ -20,6 +20,7 @@ export class ScraperQueuesService {
     @InjectQueue(ScraperQueue.DepositAcxPrice) private depositAcxPriceQueue: Queue,
     @InjectQueue(ScraperQueue.SuggestedFees) private suggestedFeesQueue: Queue,
   ) {
+    this.blocksEventsQueue.empty().catch(() => {});
     setInterval(() => {
       this.blocksEventsQueue
         .getJobCounts()
