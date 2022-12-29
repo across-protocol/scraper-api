@@ -60,11 +60,19 @@ export class TrackFillEventConsumer {
       throw new Error("Fill tx does not have a date");
     }
 
-    const destinationChainInfo = chainIdToInfo[deposit.destinationChainId];
-    const sourceChainInfo = chainIdToInfo[deposit.sourceChainId];
+    const destinationChainInfo = chainIdToInfo[deposit.destinationChainId] || {
+      name: "unknown",
+      chainId: deposit.destinationChainId,
+      nativeSymbol: "unknown",
+    };
+    const sourceChainInfo = chainIdToInfo[deposit.sourceChainId] || {
+      name: "unknown",
+      chainId: deposit.sourceChainId,
+      nativeSymbol: "unknown",
+    };
     const depositTokenPriceUsd = deposit.price.usd;
 
-    const { fee, feeUsd, fillTxBlock } = await this.getFillTxNetworkFee(deposit.destinationChainId, fillTx.hash);
+    const { fee, feeUsd, fillTxBlockNumber } = await this.getFillTxNetworkFee(deposit.destinationChainId, fillTx.hash);
 
     const formatAmountValues = makeAmountValuesFormatter(deposit.token.decimals, depositTokenPriceUsd);
     const fromAmounts = formatAmountValues(deposit.amount);
@@ -134,13 +142,21 @@ export class TrackFillEventConsumer {
       toTokenAddress: utils.getAddress(destinationToken),
       transactionHash: fillTx.hash,
       transferCompleteTimestamp: String(DateTime.fromISO(fillTx.date).toMillis()),
-      transferQuoteBlockNumber: String(fillTxBlock.blockNumber),
+      transferQuoteBlockNumber: String(fillTxBlockNumber),
     });
   }
 
   private async getFillTxNetworkFee(destinationChainId: number, fillTxHash: string) {
     const destinationChainProvider = this.providers.getProvider(destinationChainId);
     const destinationChainInfo = chainIdToInfo[destinationChainId];
+
+    if (!destinationChainProvider || !destinationChainInfo) {
+      return {
+        fillTxBlockNumber: 0,
+        fee: "0",
+        feeUsd: "0",
+      };
+    }
 
     const fillTxReceipt = await destinationChainProvider.getTransactionReceipt(fillTxHash);
     // Some chains, e.g. Optimism, do not return the effective gas price in the receipt. We need to fetch it separately.
@@ -154,7 +170,7 @@ export class TrackFillEventConsumer {
     const fee = new BigNumber(fillTxGasCostsWei).dividedBy(fixedPointAdjustment);
 
     return {
-      fillTxBlock,
+      fillTxBlockNumber: fillTxBlock.blockNumber,
       fee: fee.toFixed(),
       feeUsd: fee.multipliedBy(nativeTokenPriceUsd.usd).toFixed(),
     };
