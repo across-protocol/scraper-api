@@ -30,12 +30,15 @@ import { ScraperQueuesService } from "./service/ScraperQueuesService";
 import { DepositAcxPriceConsumer } from "./adapter/messaging/DepositAcxPriceConsumer";
 import { SuggestedFeesConsumer } from "./adapter/messaging/SuggestedFeesConsumer";
 import { SuggestedFeesService } from "./adapter/across-serverless-api/suggested-fees-service";
+import { TrackFillEventConsumer } from "./adapter/messaging/TrackFillEventConsumer";
+import { TrackService } from "./adapter/amplitude/track-service";
 
 @Module({
   providers: [
     ScraperService,
     ScraperQueuesService,
     SuggestedFeesService,
+    TrackService,
     BlocksEventsConsumer,
     MerkleDistributorBlocksEventsConsumer,
     FillEventsConsumer,
@@ -47,6 +50,7 @@ import { SuggestedFeesService } from "./adapter/across-serverless-api/suggested-
     DepositFilledDateConsumer,
     DepositAcxPriceConsumer,
     SuggestedFeesConsumer,
+    TrackFillEventConsumer,
     DepositFixture,
     ClaimFixture,
   ],
@@ -101,6 +105,9 @@ import { SuggestedFeesService } from "./adapter/across-serverless-api/suggested-
     }),
     BullModule.registerQueue({
       name: ScraperQueue.SuggestedFees,
+    }),
+    BullModule.registerQueue({
+      name: ScraperQueue.TrackFillEvent,
     }),
   ],
   exports: [ScraperQueuesService],

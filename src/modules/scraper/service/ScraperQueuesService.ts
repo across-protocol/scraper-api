@@ -20,6 +20,7 @@ export class ScraperQueuesService {
     @InjectQueue(ScraperQueue.DepositFilledDate) private depositFilledDateQueue: Queue,
     @InjectQueue(ScraperQueue.DepositAcxPrice) private depositAcxPriceQueue: Queue,
     @InjectQueue(ScraperQueue.SuggestedFees) private suggestedFeesQueue: Queue,
+    @InjectQueue(ScraperQueue.TrackFillEvent) private trackFillEventsQueue: Queue,
   ) {
     this.queuesMap = {
       [ScraperQueue.BlocksEvents]: this.blocksEventsQueue,
@@ -33,6 +34,7 @@ export class ScraperQueuesService {
       [ScraperQueue.DepositFilledDate]: this.depositFilledDateQueue,
       [ScraperQueue.DepositAcxPrice]: this.depositAcxPriceQueue,
       [ScraperQueue.SuggestedFees]: this.suggestedFeesQueue,
+      [ScraperQueue.TrackFillEvent]: this.trackFillEventsQueue,
     };
     this.initLogs();
   }
