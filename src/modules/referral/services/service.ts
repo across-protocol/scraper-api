@@ -298,6 +298,7 @@ export class ReferralService {
     const claims = await entityManager
       .createQueryBuilder(Claim, "c")
       .where("c.account = :account", { account: referralAddress })
+      .andWhere("c.windowIndex > 0")
       .orderBy("c.claimedAt", "ASC")
       .getMany();
     const deposits = await entityManager
