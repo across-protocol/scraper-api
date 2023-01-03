@@ -27,8 +27,12 @@ export const configValues = () => ({
       : undefined,
     disableCrons: process.env.DISABLE_CRONS === "true" || false,
     cacheDuration: {
-      distributorProofs: parseInt(process.env.DISTRIBUTOR_PROOFS_CACHE_SECONDS_DURATION) ?? 300,
-      referralsSummary: parseInt(process.env.REFERRALS_SUMMARY_CACHE_SECONDS_DURATION) ?? 120,
+      distributorProofs: isNaN(parseInt(process.env.DISTRIBUTOR_PROOFS_CACHE_SECONDS_DURATION))
+        ? 300
+        : parseInt(process.env.DISTRIBUTOR_PROOFS_CACHE_SECONDS_DURATION),
+      referralsSummary: isNaN(parseInt(process.env.REFERRALS_SUMMARY_CACHE_SECONDS_DURATION))
+        ? 120
+        : parseInt(process.env.REFERRALS_SUMMARY_CACHE_SECONDS_DURATION),
     },
   },
   web3: {
