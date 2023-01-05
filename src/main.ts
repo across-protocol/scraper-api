@@ -8,9 +8,12 @@ import { AppModule } from "./app.module";
 import { AppConfig } from "./modules/configuration/configuration.service";
 import { DocumentBuilder, SwaggerModule } from "@nestjs/swagger";
 import { ValidationPipe } from "./validation.pipe";
+import { configValues } from "./modules/configuration";
 
 async function bootstrap() {
-  const app = await NestFactory.create<NestExpressApplication>(AppModule.forRoot());
+  const app = await NestFactory.create<NestExpressApplication>(
+    AppModule.forRoot({ runModes: configValues().app.runModes }),
+  );
   const config = app.get(AppConfig);
   const port = config.values.app.port;
 

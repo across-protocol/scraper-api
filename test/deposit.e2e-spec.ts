@@ -6,12 +6,13 @@ import { constants } from "ethers";
 import { DepositFixture, mockManyDepositEntities } from "../src/modules/deposit/adapter/db/deposit-fixture";
 import { ValidationPipe } from "../src/validation.pipe";
 import { AppModule } from "../src/app.module";
+import { RunMode } from "../src/dynamic-module";
 
 let app: INestApplication;
 
 beforeAll(async () => {
   const moduleFixture = await Test.createTestingModule({
-    imports: [AppModule.forRoot()],
+    imports: [AppModule.forRoot({ runModes: [RunMode.Normal, RunMode.Test, RunMode.Scraper] })],
   }).compile();
 
   app = moduleFixture.createNestApplication();

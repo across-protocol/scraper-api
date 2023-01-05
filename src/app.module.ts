@@ -22,8 +22,7 @@ import { ModuleOptions, RunMode } from "./dynamic-module";
 
 @Module({})
 export class AppModule {
-  static forRoot(): DynamicModule {
-    const moduleOptions: ModuleOptions = { runModes: configValues().app.runModes };
+  static forRoot(moduleOptions: ModuleOptions): DynamicModule {
     const imports = [
       ConfigModule.forRoot({
         ignoreEnvFile: false,

@@ -15,12 +15,13 @@ import { UserWalletFixture } from "../src/modules/user/adapter/db/user-wallet-fi
 import { configValues } from "../src/modules/configuration";
 import { TokenFixture } from "../src/modules/web3/adapters/db/token-fixture";
 import { BigNumber } from "ethers";
+import { RunMode } from "../src/dynamic-module";
 
 let app: INestApplication;
 
 beforeAll(async () => {
   const moduleFixture = await Test.createTestingModule({
-    imports: [AppModule.forRoot()],
+    imports: [AppModule.forRoot({ runModes: [RunMode.Normal, RunMode.Test, RunMode.Scraper] })],
   }).compile();
 
   app = moduleFixture.createNestApplication();
