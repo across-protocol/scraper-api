@@ -4,7 +4,7 @@ import { ConfigModule } from "@nestjs/config";
 import { ScheduleModule } from "@nestjs/schedule";
 import { TypeOrmModule } from "@nestjs/typeorm";
 import { LogsMiddleware } from "./logging.interceptor";
-import configuration from "./modules/configuration";
+import configuration, { configValues } from "./modules/configuration";
 import { DatabaseModule } from "./modules/database/database.module";
 import { TypeOrmDefaultConfigService } from "./modules/database/database.providers";
 import { HealthModule } from "./modules/health/health.module";
@@ -22,7 +22,8 @@ import { ModuleOptions, RunMode } from "./dynamic-module";
 
 @Module({})
 export class AppModule {
-  static forRoot(moduleOptions: ModuleOptions): DynamicModule {
+  static forRoot(): DynamicModule {
+    const moduleOptions: ModuleOptions = { runModes: configValues().app.runModes };
     const imports = [
       ConfigModule.forRoot({
         ignoreEnvFile: false,

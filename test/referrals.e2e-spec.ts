@@ -39,7 +39,7 @@ let adminJwt: string;
 
 beforeAll(async () => {
   const moduleFixture = await Test.createTestingModule({
-    imports: [AppModule],
+    imports: [AppModule.forRoot()],
   }).compile();
 
   app = moduleFixture.createNestApplication();

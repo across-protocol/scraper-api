@@ -6,16 +6,11 @@ import { NestExpressApplication } from "@nestjs/platform-express";
 
 import { AppModule } from "./app.module";
 import { AppConfig } from "./modules/configuration/configuration.service";
-import { configValues } from "./modules/configuration";
 import { DocumentBuilder, SwaggerModule } from "@nestjs/swagger";
 import { ValidationPipe } from "./validation.pipe";
 
 async function bootstrap() {
-  const app = await NestFactory.create<NestExpressApplication>(
-    AppModule.forRoot({
-      runModes: configValues().app.runModes,
-    }),
-  );
+  const app = await NestFactory.create<NestExpressApplication>(AppModule.forRoot());
   const config = app.get(AppConfig);
   const port = config.values.app.port;
 

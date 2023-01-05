@@ -43,7 +43,6 @@ export class AirdropModule {
           UserModule.forRoot(moduleOptions),
           AppConfigModule,
         ],
-        exports: [...module.exports, ClaimFixture],
       };
     }
 
@@ -52,6 +51,7 @@ export class AirdropModule {
         ...module,
         providers: [
           ...module.providers,
+          ClaimFixture,
           WalletRewardsFixture,
           CommunityRewardsFixture,
           MerkleDistributorWindowFixture,

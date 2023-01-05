@@ -11,7 +11,6 @@ import { User } from "../src/modules/user/model/user.entity";
 import { UserFixture } from "../src/modules/user/adapter/db/user-fixture";
 import { getRandomInt } from "../src/utils";
 import { UserWalletFixture } from "../src/modules/user/adapter/db/user-wallet-fixture";
-import { RunMode } from "../src/dynamic-module";
 
 const signer = Wallet.createRandom();
 const nonExistingUser = {
@@ -35,7 +34,7 @@ let userWalletFixture: UserWalletFixture;
 
 beforeAll(async () => {
   const testingModule = await Test.createTestingModule({
-    imports: [AppModule.forRoot({ runModes: [RunMode.Normal, RunMode.Test] })],
+    imports: [AppModule.forRoot()],
   }).compile();
 
   app = testingModule.createNestApplication();

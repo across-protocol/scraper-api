@@ -5,14 +5,13 @@ import { AppModule } from "../src/app.module";
 import { QueryFailedError } from "typeorm";
 import { FillEventsConsumer } from "../src/modules/scraper/adapter/messaging/FillEventsConsumer";
 import { FillEventsQueueMessage } from "../src/modules/scraper/adapter/messaging";
-import { RunMode } from "../src/dynamic-module";
 
 describe("Scraper module", () => {
   let app: INestApplication;
 
   beforeAll(async () => {
     const moduleFixture = await Test.createTestingModule({
-      imports: [AppModule.forRoot({ runModes: [RunMode.Normal, RunMode.Test] })],
+      imports: [AppModule.forRoot()],
     }).compile();
 
     app = moduleFixture.createNestApplication();

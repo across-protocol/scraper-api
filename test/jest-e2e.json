@@ -7,6 +7,5 @@
     "^.+\\.(t|j)s$": "ts-jest"
   },
   "verbose": true,
-  "testTimeout": 20000,
-  "setupFiles": ["./setup-tests.ts"]
+  "testTimeout": 20000
 }

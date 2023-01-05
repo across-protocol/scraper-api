@@ -5,6 +5,7 @@ import { AppConfigModule } from "../configuration/configuration.module";
 import { Deposit } from "./model/deposit.entity";
 import { DepositController } from "./controller";
 import { DepositService } from "./service";
+import { DepositFixture } from "./adapter/db/deposit-fixture";
 
 @Module({})
 export class DepositModule {
@@ -18,6 +19,13 @@ export class DepositModule {
         providers: [...module.providers, DepositService],
         exports: [...module.exports, DepositService],
         imports: [...module.imports, TypeOrmModule.forFeature([Deposit]), AppConfigModule],
+      };
+    }
+
+    if (moduleOptions.runModes.includes(RunMode.Test)) {
+      module = {
+        ...module,
+        providers: [...module.providers, DepositFixture],
       };
     }
 
