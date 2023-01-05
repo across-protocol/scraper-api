@@ -11,18 +11,27 @@ import { ModuleOptions, RunMode } from "../../dynamic-module";
 @Module({})
 export class ReferralModule {
   static forRoot(moduleOptions: ModuleOptions): DynamicModule {
-    const providers: Provider<any>[] = [ReferralService];
+    let module: DynamicModule = { module: ReferralModule, providers: [], controllers: [], imports: [], exports: [] };
 
-    if (moduleOptions.runModes.includes(RunMode.Scraper) || moduleOptions.runModes.includes(RunMode.Test)) {
-      providers.push(ReferralCronService);
+    if (moduleOptions.runModes.includes(RunMode.Normal)) {
+      module = {
+        ...module,
+        controllers: [...module.controllers, ReferralController],
+        providers: [...module.providers, ReferralService],
+        imports: [...module.imports, TypeOrmModule.forFeature([Deposit, DepositsMv]), AppConfigModule],
+        exports: [...module.exports, ReferralService],
+      };
     }
 
-    return {
-      module: ReferralModule,
-      controllers: [ReferralController],
-      exports: [ReferralService],
-      providers,
-      imports: [TypeOrmModule.forFeature([Deposit, DepositsMv]), AppConfigModule],
-    };
+    if (moduleOptions.runModes.includes(RunMode.Scraper)) {
+      module = {
+        ...module,
+        providers: [...module.providers, ReferralCronService, ReferralService],
+        imports: [...module.imports, TypeOrmModule.forFeature([Deposit, DepositsMv]), AppConfigModule],
+        exports: [...module.exports, ReferralService],
+      };
+    }
+
+    return module;
   }
 }

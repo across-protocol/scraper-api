@@ -12,18 +12,25 @@ import { ModuleOptions, RunMode } from "../../dynamic-module";
 @Module({})
 export class UserModule {
   static forRoot(moduleOptions: ModuleOptions): DynamicModule {
-    const providers: Provider<any>[] = [UserService, UserWalletService];
+    let module: DynamicModule = { module: UserModule, providers: [], controllers: [], imports: [], exports: [] };
 
-    if (moduleOptions.runModes.includes(RunMode.Test)) {
-      providers.push(UserFixture, UserWalletFixture);
+    if (moduleOptions.runModes.includes(RunMode.Normal) || moduleOptions.runModes.includes(RunMode.Test)) {
+      module = {
+        ...module,
+        controllers: [...module.controllers, UserController],
+        providers: [...module.providers, UserService, UserWalletService],
+        imports: [...module.imports, TypeOrmModule.forFeature([User, UserWallet])],
+        exports: [UserService, UserWalletService],
+      };
     }
 
-    return {
-      module: UserModule,
-      providers,
-      controllers: [UserController],
-      imports: [TypeOrmModule.forFeature([User, UserWallet])],
-      exports: [UserService, UserWalletService],
-    };
+    if (moduleOptions.runModes.includes(RunMode.Test)) {
+      module = {
+        ...module,
+        providers: [...module.providers, UserFixture, UserWalletFixture],
+      };
+    }
+
+    return module;
   }
 }

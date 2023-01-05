@@ -63,7 +63,7 @@ export class ScraperModule {
         Web3Module,
         AppConfigModule,
         TypeOrmModule.forFeature([ProcessedBlock, MerkleDistributorProcessedBlock, Claim, Deposit]),
-        MarketPriceModule,
+        MarketPriceModule.forRoot(moduleOptions),
         HttpModule,
         DepositModule.forRoot(moduleOptions),
         AirdropModule.forRoot(moduleOptions),

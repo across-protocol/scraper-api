@@ -8,7 +8,7 @@ import BigNumber from "bignumber.js";
 import { DateTime } from "luxon";
 
 import { TrackFillEventQueueMessage, ScraperQueue } from ".";
-import { Deposit } from "../../model/deposit.entity";
+import { Deposit } from "../../../deposit/model/deposit.entity";
 import { TrackService } from "../amplitude/track-service";
 import {
   deriveRelayerFeeComponents,
