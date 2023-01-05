@@ -1,6 +1,6 @@
 import { DynamicModule, Module } from "@nestjs/common";
 import { TypeOrmModule } from "@nestjs/typeorm";
-import { ModuleOptions, RunMode } from "src/dynamic-module";
+import { ModuleOptions, RunMode } from "../../dynamic-module";
 import { AppConfigModule } from "../configuration/configuration.module";
 import { Deposit } from "./model/deposit.entity";
 import { DepositController } from "./controller";

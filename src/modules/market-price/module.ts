@@ -1,7 +1,7 @@
 import { HttpModule } from "@nestjs/axios";
 import { DynamicModule, Module } from "@nestjs/common";
 import { TypeOrmModule } from "@nestjs/typeorm";
-import { ModuleOptions, RunMode } from "src/dynamic-module";
+import { ModuleOptions, RunMode } from "../../dynamic-module";
 import { Deposit } from "../deposit/model/deposit.entity";
 import { CoinGeckoService } from "./adapters/coingecko";
 import { HistoricMarketPriceFixture } from "./adapters/hmp-fixture";
