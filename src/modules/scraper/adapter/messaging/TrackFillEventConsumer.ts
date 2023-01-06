@@ -97,8 +97,11 @@ export class TrackFillEventConsumer {
       capitalFeePct,
       capitalFeeTotal: new BigNumber(capitalFeePct).dividedBy(100).multipliedBy(fromAmounts.formattedAmount).toFixed(),
       capitalFeeTotalUsd: capitalFeeUsd,
+      depositCompleteTimestamp: String(DateTime.fromJSDate(deposit.depositDate).toMillis()),
       fillAmount: fillAmounts.formattedAmount,
       fillAmountUsd: fillAmounts.formattedAmountUsd,
+      fillCompleteTimestamp: String(DateTime.fromISO(fillTx.date).toMillis()),
+      fillTime: String(DateTime.fromISO(fillTx.date).diff(DateTime.fromJSDate(deposit.depositDate)).as("milliseconds")),
       fromAmount: fromAmounts.formattedAmount,
       fromAmountUsd: fromAmounts.formattedAmountUsd,
       fromChainId: String(deposit.sourceChainId),
@@ -109,7 +112,7 @@ export class TrackFillEventConsumer {
       lpFeeTotal: formattedLpFeeValues.total,
       lpFeeTotalUsd: formattedLpFeeValues.totalUsd,
       NetworkFeeNative: fee,
-      NetworkFeeNativeToken: destinationChainInfo.nativeSymbol,
+      NetworkFeeNativeToken: destinationChainInfo.nativeSymbol.toUpperCase(),
       NetworkFeeUsd: feeUsd,
       recipient: deposit.recipientAddr,
       referralProgramAddress: deposit.referralAddress || "-",
@@ -123,9 +126,6 @@ export class TrackFillEventConsumer {
       routeChainNameFromTo: `${sourceChainInfo.name}-${destinationChainInfo.name}`,
       sender: deposit.depositorAddr,
       succeeded: true,
-      timeFromTransferSignedToTransferCompleteInMilliseconds: String(
-        DateTime.fromISO(fillTx.date).diff(DateTime.fromJSDate(deposit.depositDate)).as("milliseconds"),
-      ),
       toAmount: new BigNumber(fromAmounts.formattedAmount).minus(formattedBridgeFeeValues.total).toFixed(),
       toAmountUsd: new BigNumber(fromAmounts.formattedAmountUsd)
         .minus(formattedBridgeFeeValues.totalUsd)
@@ -133,7 +133,7 @@ export class TrackFillEventConsumer {
         .toFixed(),
       toChainId: String(deposit.destinationChainId),
       toChainName: destinationChainInfo.name,
-      tokenSymbol: deposit.token.symbol,
+      tokenSymbol: deposit.token.symbol.toUpperCase(),
       totalBridgeFee: formattedBridgeFeeValues.total,
       totalBridgeFeePct: formattedBridgeFeeValues.pct,
       totalBridgeFeeUsd: formattedBridgeFeeValues.totalUsd,
@@ -143,8 +143,6 @@ export class TrackFillEventConsumer {
       // so we default to `0x0000000000000000000000000000000000000000`
       toTokenAddress: utils.getAddress(destinationToken || constants.AddressZero),
       transactionHash: fillTx.hash,
-      transferCompleteTimestamp: String(DateTime.fromISO(fillTx.date).toMillis()),
-      transferQuoteBlockNumber: String(fillTxBlockNumber),
     });
   }
 
