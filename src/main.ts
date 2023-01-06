@@ -1,8 +1,6 @@
 import { NestFactory } from "@nestjs/core";
 import helmet from "helmet";
 import { NestExpressApplication } from "@nestjs/platform-express";
-// import dotenv from "dotenv";
-// dotenv.config();
 
 import { AppModule } from "./app.module";
 import { AppConfig } from "./modules/configuration/configuration.service";
