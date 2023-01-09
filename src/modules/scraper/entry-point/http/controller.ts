@@ -25,6 +25,7 @@ import {
   ProcessBlockNumberBody,
   SubmitDepositAcxPriceBody,
   SubmitSuggestedFeesBody,
+  RetryFailedJobsBody,
 } from "./dto";
 
 @Controller()
@@ -162,5 +163,15 @@ export class ScraperController {
         depositId,
       });
     }
+  }
+
+  @Post("scraper/failed-jobs/retry")
+  @ApiTags("scraper")
+  @Roles(Role.Admin)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @ApiBearerAuth()
+  async retryFailedJobs(@Body() body: RetryFailedJobsBody) {
+    const { queue } = body;
+    this.scraperQueuesService.retryFailedJobs(queue);
   }
 }
