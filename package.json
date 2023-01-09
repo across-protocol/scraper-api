@@ -58,7 +58,7 @@
     "dotenv": "^16.0.0",
     "ethers": "^5.6.8",
     "helmet": "^5.0.2",
-    "luxon": "^2.4.0",
+    "luxon": "^2.5.2",
     "nanoid": "^3.0.0",
     "passport": "^0.6.0",
     "passport-jwt": "^4.0.0",
