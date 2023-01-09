@@ -6,6 +6,7 @@ import { ScraperQueue } from "../adapter/messaging";
 @Injectable()
 export class ScraperQueuesService {
   private logger = new Logger(ScraperQueuesService.name);
+  private queuesMap: Record<ScraperQueue, Queue>;
 
   public constructor(
     @InjectQueue(ScraperQueue.BlocksEvents) private blocksEventsQueue: Queue,
@@ -20,92 +21,59 @@ export class ScraperQueuesService {
     @InjectQueue(ScraperQueue.DepositAcxPrice) private depositAcxPriceQueue: Queue,
     @InjectQueue(ScraperQueue.SuggestedFees) private suggestedFeesQueue: Queue,
   ) {
-    setInterval(() => {
-      this.blocksEventsQueue
-        .getJobCounts()
-        .then((data) => this.logger.log(`${ScraperQueue.BlocksEvents} ${JSON.stringify(data)}`));
-      this.merkleDistributorBlocksEventsQueue
-        .getJobCounts()
-        .then((data) => this.logger.log(`${ScraperQueue.MerkleDistributorBlocksEvents} ${JSON.stringify(data)}`));
-      this.fillEventsQueue
-        .getJobCounts()
-        .then((data) => this.logger.log(`${ScraperQueue.FillEvents} ${JSON.stringify(data)}`));
-      this.speedUpEventsQueue
-        .getJobCounts()
-        .then((data) => this.logger.log(`${ScraperQueue.SpeedUpEvents} ${JSON.stringify(data)}`));
-      this.blockNumberQueue
-        .getJobCounts()
-        .then((data) => this.logger.log(`${ScraperQueue.BlockNumber} ${JSON.stringify(data)}`));
-      this.tokenDetailsQueue
-        .getJobCounts()
-        .then((data) => this.logger.log(`${ScraperQueue.TokenDetails} ${JSON.stringify(data)}`));
-      this.depositReferralQueue
-        .getJobCounts()
-        .then((data) => this.logger.log(`${ScraperQueue.DepositReferral} ${JSON.stringify(data)}`));
-      this.tokenPriceQueue
-        .getJobCounts()
-        .then((data) => this.logger.log(`${ScraperQueue.TokenPrice} ${JSON.stringify(data)}`));
-      this.depositFilledDateQueue
-        .getJobCounts()
-        .then((data) => this.logger.log(`${ScraperQueue.DepositFilledDate} ${JSON.stringify(data)}`));
-      this.depositAcxPriceQueue
-        .getJobCounts()
-        .then((data) => this.logger.log(`${ScraperQueue.DepositAcxPrice} ${JSON.stringify(data)}`));
-      this.suggestedFeesQueue
-        .getJobCounts()
-        .then((data) => this.logger.log(`${ScraperQueue.SuggestedFees} ${JSON.stringify(data)}`));
-    }, 1000 * 60);
+    this.queuesMap = {
+      [ScraperQueue.BlocksEvents]: this.blocksEventsQueue,
+      [ScraperQueue.MerkleDistributorBlocksEvents]: this.merkleDistributorBlocksEventsQueue,
+      [ScraperQueue.FillEvents]: this.fillEventsQueue,
+      [ScraperQueue.SpeedUpEvents]: this.speedUpEventsQueue,
+      [ScraperQueue.BlockNumber]: this.blockNumberQueue,
+      [ScraperQueue.TokenDetails]: this.tokenDetailsQueue,
+      [ScraperQueue.DepositReferral]: this.depositReferralQueue,
+      [ScraperQueue.TokenPrice]: this.tokenPriceQueue,
+      [ScraperQueue.DepositFilledDate]: this.depositFilledDateQueue,
+      [ScraperQueue.DepositAcxPrice]: this.depositAcxPriceQueue,
+      [ScraperQueue.SuggestedFees]: this.suggestedFeesQueue,
+    };
+    this.initLogs();
   }
 
   public async publishMessage<T>(queue: ScraperQueue, message: T) {
-    if (queue === ScraperQueue.BlocksEvents) {
-      await this.blocksEventsQueue.add(message);
-    } else if (queue === ScraperQueue.FillEvents) {
-      await this.fillEventsQueue.add(message);
-    } else if (queue === ScraperQueue.SpeedUpEvents) {
-      await this.speedUpEventsQueue.add(message);
-    } else if (queue === ScraperQueue.BlockNumber) {
-      await this.blockNumberQueue.add(message);
-    } else if (queue === ScraperQueue.TokenDetails) {
-      await this.tokenDetailsQueue.add(message);
-    } else if (queue === ScraperQueue.DepositReferral) {
-      await this.depositReferralQueue.add(message);
-    } else if (queue === ScraperQueue.TokenPrice) {
-      await this.tokenPriceQueue.add(message);
-    } else if (queue === ScraperQueue.DepositFilledDate) {
-      await this.depositFilledDateQueue.add(message);
-    } else if (queue === ScraperQueue.MerkleDistributorBlocksEvents) {
-      await this.merkleDistributorBlocksEventsQueue.add(message);
-    } else if (queue === ScraperQueue.DepositAcxPrice) {
-      await this.depositAcxPriceQueue.add(message);
-    } else if (queue === ScraperQueue.SuggestedFees) {
-      await this.suggestedFeesQueue.add(message);
+    const q = this.queuesMap[queue];
+
+    if (q) {
+      await q.add(message);
     }
   }
 
   public async publishMessagesBulk<T>(queue: ScraperQueue, messages: T[]) {
-    if (queue === ScraperQueue.BlocksEvents) {
-      await this.blocksEventsQueue.addBulk(messages.map((m) => ({ data: m })));
-    } else if (queue === ScraperQueue.FillEvents) {
-      await this.fillEventsQueue.addBulk(messages.map((m) => ({ data: m })));
-    } else if (queue === ScraperQueue.SpeedUpEvents) {
-      await this.speedUpEventsQueue.addBulk(messages.map((m) => ({ data: m })));
-    } else if (queue === ScraperQueue.BlockNumber) {
-      await this.blockNumberQueue.addBulk(messages.map((m) => ({ data: m })));
-    } else if (queue === ScraperQueue.TokenDetails) {
-      await this.tokenDetailsQueue.addBulk(messages.map((m) => ({ data: m })));
-    } else if (queue === ScraperQueue.DepositReferral) {
-      await this.depositReferralQueue.addBulk(messages.map((m) => ({ data: m })));
-    } else if (queue === ScraperQueue.TokenPrice) {
-      await this.tokenPriceQueue.addBulk(messages.map((m) => ({ data: m })));
-    } else if (queue === ScraperQueue.DepositFilledDate) {
-      await this.depositFilledDateQueue.addBulk(messages.map((m) => ({ data: m })));
-    } else if (queue === ScraperQueue.MerkleDistributorBlocksEvents) {
-      await this.merkleDistributorBlocksEventsQueue.addBulk(messages.map((m) => ({ data: m })));
-    } else if (queue === ScraperQueue.DepositAcxPrice) {
-      await this.depositAcxPriceQueue.addBulk(messages.map((m) => ({ data: m })));
-    } else if (queue === ScraperQueue.SuggestedFees) {
-      await this.suggestedFeesQueue.addBulk(messages.map((m) => ({ data: m })));
+    const q = this.queuesMap[queue];
+
+    if (q) {
+      await q.addBulk(messages.map((m) => ({ data: m })));
+    }
+  }
+
+  private initLogs() {
+    setInterval(() => {
+      for (const queueName of Object.keys(this.queuesMap)) {
+        const queue = this.queuesMap[queueName] as Queue;
+        queue.getJobCounts().then((data) => this.logger.log(`${queueName} ${JSON.stringify(data)}`));
+      }
+    }, 1000 * 60);
+  }
+
+  public async retryFailedJobs(queue: ScraperQueue) {
+    const q = this.queuesMap[queue];
+
+    if (!q) return;
+
+    try {
+      const failedJobs = await q.getFailed();
+      for (const failedJob of failedJobs) {
+        await failedJob.retry();
+      }
+    } catch (error) {
+      this.logger.error(error);
     }
   }
 }
