@@ -7,7 +7,7 @@
  * To update run 'ampli pull scraper'
  *
  * Required dependencies: @amplitude/analytics-node@^0.5.0
- * Tracking Plan Version: 30
+ * Tracking Plan Version: 32
  * Build: 1.0.0
  * Runtime: node.js:typescript-ampli-v2
  *
@@ -37,10 +37,10 @@ export const ApiKey: Record<Environment, string> = {
  */
 export const DefaultConfiguration: NodeOptions = {
   plan: {
-    version: "30",
+    version: "32",
     branch: "main",
     source: "scraper",
-    versionId: "0b21d764-e05a-48ac-9da6-95b3efc901dd",
+    versionId: "e6298d8b-58e2-45e6-a09d-0f244c0489ab",
   },
   ...{
     ingestionMetadata: {
@@ -117,7 +117,7 @@ export interface IdentifyProperties {
   walletType?: string;
 }
 
-export interface TransferTransactionConfirmedProperties {
+export interface FillTransactionCompletedProperties {
   /**
    * Capital fee percent, in decimals
    */
@@ -130,8 +130,11 @@ export interface TransferTransactionConfirmedProperties {
    * Capital fee in USD
    */
   capitalFeeTotalUsd: string;
+  depositCompleteTimestamp: string;
   fillAmount: string;
   fillAmountUsd: string;
+  fillCompleteTimestamp: string;
+  fillTime: string;
   /**
    * From amount in the bridge token, in decimals
    */
@@ -141,7 +144,7 @@ export interface TransferTransactionConfirmedProperties {
    */
   fromAmountUsd: string;
   /**
-   * From chain id
+   * Id of the fromChain
    */
   fromChainId: string;
   /**
@@ -226,10 +229,6 @@ export interface TransferTransactionConfirmedProperties {
    */
   succeeded: boolean;
   /**
-   * Duration in milliseconds between TransferSigned event to the TransferTransactionCompleted event
-   */
-  timeFromTransferSignedToTransferCompleteInMilliseconds: string;
-  /**
    * To amount of bridge token, in decimals
    */
   toAmount: string;
@@ -268,14 +267,9 @@ export interface TransferTransactionConfirmedProperties {
    */
   toTokenAddress: string;
   /**
-   * Resulting transaction hash of transaction, null if "result" if TransferTransactionCompleted = failed
+   * Resulting transaction hash of transaction, null if "result" if SwapSigned event = failed
    */
   transactionHash: string;
-  /**
-   * Timestamp transfer completed
-   */
-  transferCompleteTimestamp: string;
-  transferQuoteBlockNumber: string;
 }
 
 export class Identify implements BaseEvent {
@@ -286,10 +280,10 @@ export class Identify implements BaseEvent {
   }
 }
 
-export class TransferTransactionConfirmed implements BaseEvent {
-  event_type = "TransferTransactionConfirmed";
+export class FillTransactionCompleted implements BaseEvent {
+  event_type = "FillTransactionCompleted";
 
-  constructor(public event_properties: TransferTransactionConfirmedProperties) {
+  constructor(public event_properties: FillTransactionCompletedProperties) {
     this.event_properties = event_properties;
   }
 }
@@ -411,24 +405,22 @@ export class Ampli {
   }
 
   /**
-   * TransferTransactionConfirmed
+   * FillTransactionCompleted
    *
-   * [View in Tracking Plan](https://data.amplitude.com/risklabs/Risk%20Labs/events/main/latest/TransferTransactionConfirmed)
+   * [View in Tracking Plan](https://data.amplitude.com/risklabs/Risk%20Labs/events/main/latest/FillTransactionCompleted)
    *
-   * On-chain transfer completed
-   *
-   * Owner: James Morris
+   * Owner: Dong-Ha Kim
    *
    * @param userId The user's ID.
    * @param properties The event's properties (e.g. capitalFeePct)
    * @param options Amplitude event options.
    */
-  transferTransactionConfirmed(
+  fillTransactionCompleted(
     userId: string | undefined,
-    properties: TransferTransactionConfirmedProperties,
+    properties: FillTransactionCompletedProperties,
     options?: EventOptions,
   ) {
-    return this.track(userId, new TransferTransactionConfirmed(properties), options);
+    return this.track(userId, new FillTransactionCompleted(properties), options);
   }
 }
 
