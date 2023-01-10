@@ -170,29 +170,37 @@ export class ReferralService {
     return { referralRate: 0.4, tier: 1 };
   }
 
+  /**
+   * Returns the calldata string without the arguments of the deposit function
+   * @param data
+   */
   public subtractFunctionArgsFromCallData(data: string) {
-    const coder = new ethers.utils.AbiCoder();
-    // strip hex method identifier
-    const dataNoMethod = ethers.utils.hexDataSlice(data, 4);
-    // keep method hex identifier
-    const methodHex = data.replace(dataNoMethod.replace("0x", ""), "");
-    const decodedData = coder.decode(
-      ["address", "address", "uint256", "uint256", "uint64", "uint32"],
-      ethers.utils.hexDataSlice(data, 4),
-    );
-    const encoded = coder.encode(["address", "address", "uint256", "uint256", "uint64", "uint32"], decodedData);
-    const fullEncoded = methodHex + encoded.replace("0x", "");
-    return data.replace(fullEncoded, "");
+    try {
+      const coder = new ethers.utils.AbiCoder();
+      // strip hex method identifier
+      const dataNoMethod = ethers.utils.hexDataSlice(data, 4);
+      // keep method hex identifier
+      const methodHex = data.replace(dataNoMethod.replace("0x", ""), "");
+      const decodedData = coder.decode(
+        ["address", "address", "uint256", "uint256", "uint64", "uint32"],
+        ethers.utils.hexDataSlice(data, 4),
+      );
+      const encoded = coder.encode(["address", "address", "uint256", "uint256", "uint64", "uint32"], decodedData);
+      const fullEncoded = methodHex + encoded.replace("0x", "");
+      return data.replace(fullEncoded, "");
+    } catch (error) {
+      if (error.code === "BUFFER_OVERRUN") {
+        // return empty string if the calldata's length in bytes is less than the length of the deposit function signature
+        return "";
+      } else {
+        this.logger.error(JSON.stringify(error, undefined, 2));
+        throw error;
+      }
+    }
   }
 
   public extractReferralAddressUsingDelimiter(data: string) {
-    let referralData = "";
-
-    try {
-      referralData = this.subtractFunctionArgsFromCallData(data);
-    } catch (error) {
-      return undefined;
-    }
+    const referralData = this.subtractFunctionArgsFromCallData(data);
 
     if (referralData.indexOf(REFERRAL_ADDRESS_DELIMITER) !== -1) {
       const addressIndex = referralData.indexOf(REFERRAL_ADDRESS_DELIMITER) + REFERRAL_ADDRESS_DELIMITER.length;
