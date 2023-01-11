@@ -175,33 +175,14 @@ export class ReferralService {
    * @param data
    */
   public subtractFunctionArgsFromCallData(data: string) {
-    try {
-      const coder = new ethers.utils.AbiCoder();
-      // strip hex method identifier
-      const dataNoMethod = ethers.utils.hexDataSlice(data, 4);
-      // keep method hex identifier
-      const methodHex = data.replace(dataNoMethod.replace("0x", ""), "");
-      const decodedData = coder.decode(
-        ["address", "address", "uint256", "uint256", "uint64", "uint32"],
-        ethers.utils.hexDataSlice(data, 4),
-      );
-      const encoded = coder.encode(["address", "address", "uint256", "uint256", "uint64", "uint32"], decodedData);
-      const fullEncoded = methodHex + encoded.replace("0x", "");
-      return data.replace(fullEncoded, "");
-    } catch (error) {
-      if (error?.code === "BUFFER_OVERRUN") {
-        // return empty string if the calldata's length in bytes is less than the length of the deposit function signature
-        return "";
-      } else {
-        this.logger.error(JSON.stringify(error, undefined, 2));
-        throw error;
-      }
-    }
+    // the length of the string including the method identifier and
+    // the deposit function args ["address", "address", "uint256", "uint256", "uint64", "uint32"]
+    const methodIdAndArgsLength = 395;
+    return data.slice(methodIdAndArgsLength - 1);
   }
 
   public extractReferralAddressUsingDelimiter(data: string) {
     const referralData = this.subtractFunctionArgsFromCallData(data);
-
     if (referralData.indexOf(REFERRAL_ADDRESS_DELIMITER) !== -1) {
       const addressIndex = referralData.indexOf(REFERRAL_ADDRESS_DELIMITER) + REFERRAL_ADDRESS_DELIMITER.length;
       const potentialAddress = referralData.slice(addressIndex, addressIndex + 40);
