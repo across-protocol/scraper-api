@@ -189,7 +189,7 @@ export class ReferralService {
       const fullEncoded = methodHex + encoded.replace("0x", "");
       return data.replace(fullEncoded, "");
     } catch (error) {
-      if (error.code === "BUFFER_OVERRUN") {
+      if (error?.code === "BUFFER_OVERRUN") {
         // return empty string if the calldata's length in bytes is less than the length of the deposit function signature
         return "";
       } else {
