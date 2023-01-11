@@ -183,6 +183,7 @@ export class ReferralService {
 
   public extractReferralAddressUsingDelimiter(data: string) {
     const referralData = this.subtractFunctionArgsFromCallData(data);
+
     if (referralData.indexOf(REFERRAL_ADDRESS_DELIMITER) !== -1) {
       const addressIndex = referralData.indexOf(REFERRAL_ADDRESS_DELIMITER) + REFERRAL_ADDRESS_DELIMITER.length;
       const potentialAddress = referralData.slice(addressIndex, addressIndex + 40);
