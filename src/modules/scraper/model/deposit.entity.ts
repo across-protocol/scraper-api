@@ -60,6 +60,9 @@ export class Deposit {
   @Column()
   depositorAddr: string;
 
+  @Column()
+  recipientAddr: string;
+
   @Column({ default: "pending" })
   status: TransferStatus;
 

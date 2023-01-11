@@ -37,6 +37,7 @@ describe("Scraper module", () => {
       realizedLpFeePct: "0",
       totalFilledAmount: "0",
       transactionHash: "0x",
+      destinationToken: "0x",
     };
     deposit = await app.get(FillEventsConsumer).processFillEventQueueMessage(deposit, fillEventMessage);
     const isFillTxAlreadyProcessed = app.get(FillEventsConsumer).fillTxAlreadyProcessed(deposit, fillEventMessage);

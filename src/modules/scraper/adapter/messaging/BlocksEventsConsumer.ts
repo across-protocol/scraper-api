@@ -73,6 +73,7 @@ export class BlocksEventsConsumer {
       fillAmount: e.args.fillAmount.toString(),
       transactionHash: e.transactionHash,
       appliedRelayerFeePct: e.args.appliedRelayerFeePct.toString(),
+      destinationToken: e.args.destinationToken,
     }));
     await this.scraperQueuesService.publishMessagesBulk<FillEventsQueueMessage>(ScraperQueue.FillEvents, fillMessages);
 
@@ -93,7 +94,8 @@ export class BlocksEventsConsumer {
 
   private async fromFundsDepositedEventToDeposit(event: FundsDepositedEvent) {
     const { transactionHash, blockNumber } = event;
-    const { depositId, originChainId, destinationChainId, amount, originToken, depositor, relayerFeePct } = event.args;
+    const { depositId, originChainId, destinationChainId, amount, originToken, depositor, relayerFeePct, recipient } =
+      event.args;
 
     return this.depositRepository.create({
       depositId,
@@ -107,6 +109,7 @@ export class BlocksEventsConsumer {
       fillTxs: [],
       blockNumber,
       depositorAddr: depositor,
+      recipientAddr: recipient,
       depositRelayerFeePct: relayerFeePct.toString(),
       initialRelayerFeePct: relayerFeePct.toString(),
     });

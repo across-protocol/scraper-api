@@ -106,6 +106,9 @@ export const configValues = () => ({
     fallbackThresholdHours: Number(process.env.SUGGESTED_FEES_FALLBACK_THRESHOLD_HOURS || "4"),
     deviationBufferMultiplier: Number(process.env.SUGGESTED_FEES_DEVIATION_BUFFER_MULTIPLIER || "1.25"),
   },
+  amplitude: {
+    apiKey: process.env.AMPLITUDE_API_KEY,
+  },
 });
 
 export default registerAs("config", () => configValues());

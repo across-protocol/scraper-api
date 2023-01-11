@@ -14,6 +14,14 @@ export const ChainIds = {
   polygonMumbai: 80001,
 };
 
+export const ChainIdToName = Object.entries(ChainIds).reduce((idToName, entry) => {
+  const [name, id] = entry;
+  return {
+    ...idToName,
+    [id]: name,
+  };
+}, {} as Record<string, keyof typeof ChainIds>);
+
 export type Web3Error = {
   error: {
     code: Web3ErrorCode;

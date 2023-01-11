@@ -1,7 +1,13 @@
 import { OnQueueFailed, Process, Processor } from "@nestjs/bull";
 import { Logger } from "@nestjs/common";
 import { Job } from "bull";
-import { BlocksEventsQueueMessage, DepositFilledDateQueueMessage, FillEventsQueueMessage, ScraperQueue } from ".";
+import {
+  BlocksEventsQueueMessage,
+  DepositFilledDateQueueMessage,
+  FillEventsQueueMessage,
+  ScraperQueue,
+  TrackFillEventQueueMessage,
+} from ".";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Deposit } from "../../model/deposit.entity";
 import { LessThan, MoreThan, Repository } from "typeorm";
@@ -19,7 +25,7 @@ export class FillEventsConsumer {
 
   @Process()
   private async process(job: Job<FillEventsQueueMessage>) {
-    const { depositId, originChainId } = job.data;
+    const { depositId, originChainId, destinationToken, transactionHash } = job.data;
     const deposit = await this.depositRepository.findOne({ where: { sourceChainId: originChainId, depositId } });
 
     if (!deposit) {
@@ -37,6 +43,11 @@ export class FillEventsConsumer {
 
     this.scraperQueuesService.publishMessage<DepositFilledDateQueueMessage>(ScraperQueue.DepositFilledDate, {
       depositId: deposit.id,
+    });
+    this.scraperQueuesService.publishMessage<TrackFillEventQueueMessage>(ScraperQueue.TrackFillEvent, {
+      depositId: deposit.id,
+      destinationToken,
+      fillTxHash: transactionHash,
     });
   }
 
