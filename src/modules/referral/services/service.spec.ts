@@ -8,10 +8,8 @@ describe("ReferralService", () => {
     const moduleRef = await Test.createTestingModule({
       providers: [ReferralService],
     })
-      .useMocker((token) => {
-        if (token === "DepositRepository") {
-          return {};
-        }
+      .useMocker(() => {
+        return {};
       })
       .compile();
 
@@ -42,6 +40,13 @@ describe("ReferralService", () => {
   it("should extract referral address if delimiter is not found", () => {
     const address = service.extractReferralAddressUsingDelimiter(
       "0x492289780000000000000000000000009a8f92a830a5cb89a3816e3d267cb7791c16b04d000000000000000000000000d693ec944a85eeca4247ec1c3b130dca9b0c3b220000000000000000000000000000000000000000000000000de0b6b3a764000000000000000000000000000000000000000000000000000000000000000000890000000000000000000000000000000000000000000000000004119f446d1d2f0000000000000000000000000000000000000000000000000000000062c836e59a8f92a830a5cb89a3816e3d267cb7791c16b04d",
+    );
+    expect(address).toEqual(undefined);
+  });
+
+  it("should not extract referral address if calldata too short", () => {
+    const address = service.extractReferralAddressUsingDelimiter(
+      "0xb1a8f7c700000000000000000000000000000000000000000000000000000000000000ca00000000000000000000000000000000000000000000000000000000000000400000000000000000000000000000000000000000000000000000000000000022000100000000000000000000000000000000000000000000000000000000000c3500000000000000000000000000000000000000000000000000000000000000",
     );
     expect(address).toEqual(undefined);
   });
