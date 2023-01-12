@@ -28,7 +28,7 @@ export class BlockNumberConsumer {
   private async process(job: Job<BlockNumberQueueMessage>) {
     const { depositId } = job.data;
     const deposit = await this.depositRepository.findOne({ where: { id: depositId } });
-    if (!deposit) throw new Error("Deposit not found");
+    if (!deposit) return;
     const block = await this.providers.getCachedBlock(deposit.sourceChainId, deposit.blockNumber);
     await this.depositRepository.update({ id: deposit.id }, { depositDate: block.date });
     await this.scraperQueuesService.publishMessage<TokenDetailsQueueMessage>(ScraperQueue.TokenDetails, {
