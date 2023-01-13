@@ -1,16 +1,17 @@
 import request from "supertest";
 import { INestApplication } from "@nestjs/common";
 import { Test } from "@nestjs/testing";
+import { JwtService } from "@nestjs/jwt";
 import { Wallet, constants } from "ethers";
 
 import { ValidationPipe } from "../src/validation.pipe";
 import { AppModule } from "../src/app.module";
-import { generateJwtForUser } from "./utils";
 import { UserService } from "../src/modules/user/services/user.service";
 import { User } from "../src/modules/user/model/user.entity";
 import { UserFixture } from "../src/modules/user/adapter/db/user-fixture";
 import { getRandomInt } from "../src/utils";
 import { UserWalletFixture } from "../src/modules/user/adapter/db/user-wallet-fixture";
+import { RunMode } from "../src/dynamic-module";
 
 const signer = Wallet.createRandom();
 const nonExistingUser = {
@@ -34,7 +35,7 @@ let userWalletFixture: UserWalletFixture;
 
 beforeAll(async () => {
   const testingModule = await Test.createTestingModule({
-    imports: [AppModule],
+    imports: [AppModule.forRoot({ runModes: [RunMode.Normal, RunMode.Test, RunMode.Scraper] })],
   }).compile();
 
   app = testingModule.createNestApplication();
@@ -56,9 +57,9 @@ beforeAll(async () => {
       discordName: "name1",
     }),
   ]);
-  validJwtForExistingUser = generateJwtForUser(existingUser);
-  validJwtForExistingUser2 = generateJwtForUser(existingUser2);
-  validJwtForNonExistingUser = generateJwtForUser(nonExistingUser);
+  validJwtForExistingUser = app.get(JwtService).sign({ id: existingUser.id });
+  validJwtForExistingUser2 = app.get(JwtService).sign({ id: existingUser2.id });
+  validJwtForNonExistingUser = app.get(JwtService).sign({ id: nonExistingUser.id });
   [validSignatureForExistingUser, validSignatureForNonExistingUser] = await Promise.all([
     signer.signMessage(existingUser.discordId),
     signer.signMessage(nonExistingUser.discordId),

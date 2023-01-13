@@ -2,7 +2,7 @@ import { Injectable, Logger } from "@nestjs/common";
 import { Repository } from "typeorm";
 import { InjectRepository } from "@nestjs/typeorm";
 import { AppConfig } from "../../configuration/configuration.service";
-import { Deposit } from "../../scraper/model/deposit.entity";
+import { Deposit } from "../../deposit/model/deposit.entity";
 import { EnhancedCron } from "../../../utils";
 import { updateStickyReferralAddressesQuery } from "../services/queries";
 import { StickyReferralAddressesMechanism } from "../../configuration";

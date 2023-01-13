@@ -6,7 +6,7 @@ import { Repository } from "typeorm";
 import { DateTime } from "luxon";
 import { EthProvidersService } from "../../../web3/services/EthProvidersService";
 import { DepositFilledDateQueueMessage, ScraperQueue } from ".";
-import { Deposit, DepositFillTx } from "../../model/deposit.entity";
+import { Deposit, DepositFillTx } from "../../../deposit/model/deposit.entity";
 
 @Processor(ScraperQueue.DepositFilledDate)
 export class DepositFilledDateConsumer {

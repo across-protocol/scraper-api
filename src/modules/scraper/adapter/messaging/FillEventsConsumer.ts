@@ -9,7 +9,7 @@ import {
   TrackFillEventQueueMessage,
 } from ".";
 import { InjectRepository } from "@nestjs/typeorm";
-import { Deposit } from "../../model/deposit.entity";
+import { Deposit } from "../../../deposit/model/deposit.entity";
 import { LessThan, MoreThan, Repository } from "typeorm";
 import { BigNumber } from "bignumber.js";
 import { ScraperQueuesService } from "../../service/ScraperQueuesService";

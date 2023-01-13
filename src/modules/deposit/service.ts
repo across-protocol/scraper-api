@@ -4,7 +4,7 @@ import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
 import { utils } from "ethers";
 import { Cache } from "cache-manager";
-import { Deposit } from "../scraper/model/deposit.entity";
+import { Deposit } from "./model/deposit.entity";
 import { getAvgFillTimeQuery, getTotalDepositsQuery, getTotalVolumeQuery } from "./adapter/db/queries";
 import { AppConfig } from "../configuration/configuration.service";
 import { InvalidAddressException } from "./exceptions";

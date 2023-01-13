@@ -6,7 +6,7 @@ import BigNumber from "bignumber.js";
 import { DataSource, IsNull, Not, QueryFailedError, Repository } from "typeorm";
 import { Cache } from "cache-manager";
 
-import { Deposit } from "../../scraper/model/deposit.entity";
+import { Deposit } from "../../deposit/model/deposit.entity";
 import { CommunityRewards } from "../model/community-rewards.entity";
 import { WalletRewards } from "../model/wallet-rewards.entity";
 import { Token } from "../../web3/model/token.entity";
@@ -36,8 +36,6 @@ export class AirdropService {
     @InjectRepository(CommunityRewards) private communityRewardsRepository: Repository<CommunityRewards>,
     @InjectRepository(WalletRewards) private walletRewardsRepository: Repository<WalletRewards>,
     @InjectRepository(Deposit) private depositRepository: Repository<Deposit>,
-    @InjectRepository(Deposit) private merkleDistributorWindowRepository: Repository<MerkleDistributorWindow>,
-    @InjectRepository(Deposit) private merkleDistributorRecipientRepository: Repository<MerkleDistributorRecipient>,
     private userService: UserService,
     private appConfig: AppConfig,
     private dataSource: DataSource,

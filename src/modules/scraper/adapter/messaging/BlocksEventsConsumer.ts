@@ -17,7 +17,7 @@ import {
   FilledRelayEvent,
   RequestedSpeedUpDepositEvent,
 } from "@across-protocol/contracts-v2/dist/typechain/SpokePool";
-import { Deposit } from "../../model/deposit.entity";
+import { Deposit } from "../../../deposit/model/deposit.entity";
 import { ScraperQueuesService } from "../../service/ScraperQueuesService";
 
 @Processor(ScraperQueue.BlocksEvents)

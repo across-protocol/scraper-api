@@ -4,8 +4,8 @@ import { JwtService } from "@nestjs/jwt";
 import { Test } from "@nestjs/testing";
 import { ethers, utils } from "ethers";
 
-import { DepositFixture, mockDepositEntity } from "../src/modules/scraper/adapter/db/deposit-fixture";
-import { ClaimFixture } from "../src/modules/scraper/adapter/db/claim-fixture";
+import { DepositFixture, mockDepositEntity } from "../src/modules/deposit/adapter/db/deposit-fixture";
+import { ClaimFixture } from "../src/modules/airdrop/adapter/db/claim-fixture";
 import { TokenFixture } from "../src/modules/web3/adapters/db/token-fixture";
 import { HistoricMarketPriceFixture } from "../src/modules/market-price/adapters/hmp-fixture";
 import { AppModule } from "../src/app.module";
@@ -14,6 +14,7 @@ import { Token } from "../src/modules/web3/model/token.entity";
 import { HistoricMarketPrice } from "../src/modules/market-price/model/historic-market-price.entity";
 import { Role } from "../src/modules/auth/entry-points/http/roles";
 import { configValues } from "../src/modules/configuration";
+import { RunMode } from "../src/dynamic-module";
 
 const referrer = "0x9A8f92a830A5cB89a3816e3D267CB7791c16b04D";
 const depositor = "0xdf120Bf3AEE9892f213B1Ba95035a60682D637c3";
@@ -39,7 +40,7 @@ let adminJwt: string;
 
 beforeAll(async () => {
   const moduleFixture = await Test.createTestingModule({
-    imports: [AppModule],
+    imports: [AppModule.forRoot({ runModes: [RunMode.Normal, RunMode.Test, RunMode.Scraper] })],
   }).compile();
 
   app = moduleFixture.createNestApplication();
