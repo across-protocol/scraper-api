@@ -3,15 +3,16 @@ import { INestApplication } from "@nestjs/common";
 import { Test } from "@nestjs/testing";
 import { constants } from "ethers";
 
-import { DepositFixture, mockManyDepositEntities } from "../src/modules/scraper/adapter/db/deposit-fixture";
+import { DepositFixture, mockManyDepositEntities } from "../src/modules/deposit/adapter/db/deposit-fixture";
 import { ValidationPipe } from "../src/validation.pipe";
 import { AppModule } from "../src/app.module";
+import { RunMode } from "../src/dynamic-module";
 
 let app: INestApplication;
 
 beforeAll(async () => {
   const moduleFixture = await Test.createTestingModule({
-    imports: [AppModule],
+    imports: [AppModule.forRoot({ runModes: [RunMode.Normal, RunMode.Test, RunMode.Scraper] })],
   }).compile();
 
   app = moduleFixture.createNestApplication();

@@ -1,5 +1,6 @@
 import { registerAs } from "@nestjs/config";
 import { ChainIds } from "../web3/model/ChainId";
+import { RunMode } from "../../dynamic-module";
 
 export enum StickyReferralAddressesMechanism {
   Queue = "queue",
@@ -34,6 +35,7 @@ export const configValues = () => ({
         ? 120
         : parseInt(process.env.REFERRALS_SUMMARY_CACHE_SECONDS_DURATION),
     },
+    runModes: process.env.RUN_MODES ? (process.env.RUN_MODES.split(",") as RunMode[]) : ([RunMode.Normal] as RunMode[]),
   },
   web3: {
     providers: {

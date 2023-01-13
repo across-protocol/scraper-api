@@ -59,7 +59,10 @@ export class ScraperQueuesService {
     setInterval(() => {
       for (const queueName of Object.keys(this.queuesMap)) {
         const queue = this.queuesMap[queueName] as Queue;
-        queue.getJobCounts().then((data) => this.logger.log(`${queueName} ${JSON.stringify(data)}`));
+        queue
+          .getJobCounts()
+          .then((data) => this.logger.log(`${queueName} ${JSON.stringify(data)}`))
+          .catch((data) => this.logger.error(`${queueName} ${JSON.stringify(data)}`));
       }
     }, 1000 * 60);
   }

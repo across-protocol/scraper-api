@@ -10,6 +10,7 @@ import { MerkleDistributorWindowFixture } from "../../src/modules/airdrop/adapte
 import { MerkleDistributorRecipientFixture } from "../../src/modules/airdrop/adapter/db/merkle-distributor-recipient";
 import { UserFixture } from "../../src/modules/user/adapter/db/user-fixture";
 import { UserWalletFixture } from "../../src/modules/user/adapter/db/user-wallet-fixture";
+import { RunMode } from "../../src/dynamic-module";
 
 let app: INestApplication;
 let merkleDistributorWindowFixture: MerkleDistributorWindowFixture;
@@ -19,7 +20,7 @@ let userWalletFixture: UserWalletFixture;
 
 beforeAll(async () => {
   const moduleFixture = await Test.createTestingModule({
-    imports: [AppModule],
+    imports: [AppModule.forRoot({ runModes: [RunMode.Normal, RunMode.Test, RunMode.Scraper] })],
   }).compile();
 
   app = moduleFixture.createNestApplication();

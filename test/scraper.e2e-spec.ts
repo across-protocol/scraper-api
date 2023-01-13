@@ -1,17 +1,18 @@
 import { INestApplication } from "@nestjs/common";
 import { Test } from "@nestjs/testing";
-import { DepositFixture } from "../src/modules/scraper/adapter/db/deposit-fixture";
+import { DepositFixture } from "../src/modules/deposit/adapter/db/deposit-fixture";
 import { AppModule } from "../src/app.module";
 import { QueryFailedError } from "typeorm";
 import { FillEventsConsumer } from "../src/modules/scraper/adapter/messaging/FillEventsConsumer";
 import { FillEventsQueueMessage } from "../src/modules/scraper/adapter/messaging";
+import { RunMode } from "../src/dynamic-module";
 
 describe("Scraper module", () => {
   let app: INestApplication;
 
   beforeAll(async () => {
     const moduleFixture = await Test.createTestingModule({
-      imports: [AppModule],
+      imports: [AppModule.forRoot({ runModes: [RunMode.Normal, RunMode.Test, RunMode.Scraper] })],
     }).compile();
 
     app = moduleFixture.createNestApplication();

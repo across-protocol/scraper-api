@@ -77,6 +77,7 @@ export class AirdropController {
     ),
   )
   @ApiTags("airdrop")
+  @ApiBearerAuth()
   async feedWalletRewards(
     @UploadedFiles() files: { walletRewards?: Express.Multer.File[]; communityRewards?: Express.Multer.File[] },
   ) {
@@ -96,6 +97,7 @@ export class AirdropController {
     }),
   )
   @ApiTags("airdrop")
+  @ApiBearerAuth()
   uploadMerkleDistributorRecipients(@UploadedFile() file: Express.Multer.File) {
     return this.airdropService.processMerkleDistributorRecipientsFile(file);
   }

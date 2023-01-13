@@ -1,6 +1,6 @@
 import { Column, CreateDateColumn, Entity, OneToMany, PrimaryGeneratedColumn, Unique } from "typeorm";
 import { MerkleDistributorRecipient } from "./merkle-distributor-recipient.entity";
-import { Claim } from "../../scraper/model/claim.entity";
+import { Claim } from "./claim.entity";
 
 @Entity()
 // Don't allow duplicates of the window index
