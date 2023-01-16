@@ -1,5 +1,6 @@
 import { ApiProperty } from "@nestjs/swagger";
-import { IsDate, IsDateString, IsNumberString, IsString, Length } from "class-validator";
+import { Type } from "class-transformer";
+import { IsDateString, IsInt, IsNumberString, IsString, Length, Max, Min } from "class-validator";
 
 export class GetReferralsSummaryQuery {
   @IsString()
@@ -14,12 +15,18 @@ export class GetReferralsQuery {
   @ApiProperty({ example: "0x9A8f92a830A5cB89a3816e3D267CB7791c16b04D", minLength: 42, maxLength: 42, required: true })
   address: string;
 
-  @IsNumberString()
-  @ApiProperty({ example: "10", required: false })
+  @IsInt()
+  @Min(1)
+  @Max(100)
+  @Type(() => Number)
+  @ApiProperty({ example: 10, required: true })
   limit: string;
 
-  @IsNumberString()
-  @ApiProperty({ example: "0", required: false })
+  @IsInt()
+  @Min(0)
+  @Max(10_000_000)
+  @Type(() => Number)
+  @ApiProperty({ example: 0, required: true })
   offset: string;
 }
 

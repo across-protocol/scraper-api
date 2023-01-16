@@ -1,5 +1,6 @@
 import { ApiProperty } from "@nestjs/swagger";
-import { IsEnum, IsNumberString, IsOptional, IsString } from "class-validator";
+import { Type } from "class-transformer";
+import { IsEnum, IsInt, IsOptional, IsString, Max, Min } from "class-validator";
 
 export class GetDepositsQuery {
   @IsOptional()
@@ -16,13 +17,19 @@ export class GetDepositsQuery {
   status: "filled" | "pending";
 
   @IsOptional()
-  @IsNumberString({ no_symbols: true })
-  @ApiProperty({ example: "10", required: false })
+  @IsInt()
+  @Min(1)
+  @Max(100)
+  @Type(() => Number)
+  @ApiProperty({ example: 10, required: false })
   limit: string;
 
   @IsOptional()
-  @IsNumberString({ no_symbols: true })
-  @ApiProperty({ example: "0", required: false })
+  @IsInt()
+  @Min(0)
+  @Max(10_000_000)
+  @Type(() => Number)
+  @ApiProperty({ example: 0, required: false })
   offset: string;
 
   @IsOptional()
