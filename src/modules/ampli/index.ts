@@ -7,7 +7,7 @@
  * To update run 'ampli pull scraper'
  *
  * Required dependencies: @amplitude/analytics-node@^0.5.0
- * Tracking Plan Version: 40
+ * Tracking Plan Version: 43
  * Build: 1.0.0
  * Runtime: node.js:typescript-ampli-v2
  *
@@ -38,10 +38,10 @@ export const ApiKey: Record<Environment, string> = {
  */
 export const DefaultConfiguration: NodeOptions = {
   plan: {
-    version: "40",
+    version: "43",
     branch: "main",
     source: "scraper",
-    versionId: "cbc4a092-7d03-473a-bbba-f4fc79ef25b2",
+    versionId: "364c665a-00b3-4f3a-86b4-72245b71f5a0",
   },
   ...{
     ingestionMetadata: {
@@ -118,7 +118,7 @@ export interface IdentifyProperties {
   walletType?: string;
 }
 
-export interface TransferFillConfirmedProperties {
+export interface TransferFillCompletedProperties {
   /**
    * Capital fee percent, in decimals
    */
@@ -135,7 +135,7 @@ export interface TransferFillConfirmedProperties {
   fillAmount: string;
   fillAmountUsd: string;
   fillCompleteTimestamp: string;
-  fillTime: string;
+  fillTimeInMs: string;
   /**
    * From amount in the bridge token, in decimals
    */
@@ -169,18 +169,9 @@ export interface TransferFillConfirmedProperties {
    * Lp fee in USD
    */
   lpFeeTotalUsd: string;
-  /**
-   * Gas fee in network token
-   */
-  NetworkFeeNative: string;
-  /**
-   * Network native token
-   */
-  NetworkFeeNativeToken: string;
-  /**
-   * Gas fee in USD
-   */
-  NetworkFeeUsd: string;
+  networkFeeNative: string;
+  networkFeeNativeToken: string;
+  networkFeeUsd: string;
   /**
    * Recipient wallet address
    */
@@ -281,10 +272,10 @@ export class Identify implements BaseEvent {
   }
 }
 
-export class TransferFillConfirmed implements BaseEvent {
-  event_type = "TransferFillConfirmed";
+export class TransferFillCompleted implements BaseEvent {
+  event_type = "TransferFillCompleted";
 
-  constructor(public event_properties: TransferFillConfirmedProperties) {
+  constructor(public event_properties: TransferFillCompletedProperties) {
     this.event_properties = event_properties;
   }
 }
@@ -406,9 +397,9 @@ export class Ampli {
   }
 
   /**
-   * TransferFillConfirmed
+   * TransferFillCompleted
    *
-   * [View in Tracking Plan](https://data.amplitude.com/risklabs/Risk%20Labs/events/main/latest/TransferFillConfirmed)
+   * [View in Tracking Plan](https://data.amplitude.com/risklabs/Risk%20Labs/events/main/latest/TransferFillCompleted)
    *
    * Owner: Dong-Ha Kim
    *
@@ -416,12 +407,12 @@ export class Ampli {
    * @param properties The event's properties (e.g. capitalFeePct)
    * @param options Amplitude event options.
    */
-  transferFillConfirmed(
+  transferFillCompleted(
     userId: string | undefined,
-    properties: TransferFillConfirmedProperties,
+    properties: TransferFillCompletedProperties,
     options?: EventOptions,
   ) {
-    return this.track(userId, new TransferFillConfirmed(properties), options);
+    return this.track(userId, new TransferFillCompleted(properties), options);
   }
 }
 

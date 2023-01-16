@@ -1,7 +1,7 @@
 import { HttpService } from "@nestjs/axios";
 import { Injectable } from "@nestjs/common";
 
-import { EventOptions, TransferFillConfirmedProperties, ampli } from "../../../ampli";
+import { EventOptions, TransferFillCompletedProperties, ampli } from "../../../ampli";
 import { AppConfig } from "../../../configuration/configuration.service";
 
 @Injectable()
@@ -22,9 +22,9 @@ export class TrackService {
 
   public async trackDepositFilledEvent(
     userId: string,
-    eventProperties: TransferFillConfirmedProperties,
+    eventProperties: TransferFillCompletedProperties,
     eventOptions?: EventOptions,
   ) {
-    return ampli.transferFillConfirmed(userId, eventProperties, eventOptions);
+    return ampli.transferFillCompleted(userId, eventProperties, eventOptions);
   }
 }
