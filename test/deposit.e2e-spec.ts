@@ -25,12 +25,12 @@ describe("GET /deposits", () => {
   // filled deposits with depositIds 10 - 19 and ascending depositDate
   const FILLED_DEPOSITS = mockManyDepositEntities(10, {
     depositIdStartIndex: 10,
-    overrides: { status: "filled", depositorAddr: depositorAddress },
+    overrides: { status: "filled", depositorAddr: depositorAddress, amount: "10", filled: "10" },
   });
   // pending deposits with depositIds 20 - 29 and ascending depositDate
   const PENDING_DEPOSITS = mockManyDepositEntities(10, {
     depositIdStartIndex: 20,
-    overrides: { status: "pending", depositorAddr: depositorAddress },
+    overrides: { status: "pending", depositorAddr: depositorAddress, amount: "10" },
   });
 
   beforeAll(async () => {
