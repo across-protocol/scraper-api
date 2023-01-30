@@ -97,6 +97,7 @@ export class DepositService {
       [deposits, total] = await this.depositRepository
         .createQueryBuilder("d")
         .where("d.status = :status", { status })
+        .andWhere("d.amount > 0")
         .andWhere("d.depositDate > NOW() - INTERVAL '1 days'")
         .andWhere(`d.depositRelayerFeePct * :multiplier >= d.suggestedRelayerFeePct`, {
           multiplier: this.appConfig.values.suggestedFees.deviationBufferMultiplier,
