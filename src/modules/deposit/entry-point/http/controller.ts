@@ -1,7 +1,7 @@
 import { Controller, Get, Query } from "@nestjs/common";
 import { ApiResponse, ApiTags } from "@nestjs/swagger";
-import { DepositService } from "./service";
-import { GetDepositsQuery, GetDepositsStatsResponse } from "./dto";
+import { DepositService } from "../../service";
+import { GetDepositsQuery, GetDepositsStatsResponse, GetEtlReferralDepositsQuery } from "./dto";
 
 @Controller()
 export class DepositController {

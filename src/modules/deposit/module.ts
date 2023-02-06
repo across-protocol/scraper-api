@@ -3,9 +3,10 @@ import { TypeOrmModule } from "@nestjs/typeorm";
 import { ModuleOptions, RunMode } from "../../dynamic-module";
 import { AppConfigModule } from "../configuration/configuration.module";
 import { Deposit } from "./model/deposit.entity";
-import { DepositController } from "./controller";
+import { DepositController } from "./entry-point/http/controller";
 import { DepositService } from "./service";
 import { DepositFixture } from "./adapter/db/deposit-fixture";
+import { EtlController } from "./entry-point/http/etl-controller";
 
 @Module({})
 export class DepositModule {
@@ -15,7 +16,7 @@ export class DepositModule {
     if (moduleOptions.runModes.includes(RunMode.Normal) || moduleOptions.runModes.includes(RunMode.Test)) {
       module = {
         ...module,
-        controllers: [...module.controllers, DepositController],
+        controllers: [...module.controllers, DepositController, EtlController],
         providers: [...module.providers, DepositService],
         exports: [...module.exports, DepositService],
         imports: [...module.imports, TypeOrmModule.forFeature([Deposit]), AppConfigModule],
