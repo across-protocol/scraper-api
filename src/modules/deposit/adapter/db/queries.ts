@@ -1,3 +1,5 @@
+const wei = 1_000_000_000_000_000_000;
+
 export const getTotalVolumeQuery = () => {
   return `
     select trunc(sum(d.amount / power(10, t.decimals) * hmp.usd)) as "totalVolumeUsd"
@@ -35,9 +37,9 @@ export const getReferralsForEtl = () => {
       d."referralRate",
       d."bridgeFeeUsd",
       d."acxUsdPrice",
-      trunc(cast(d."bridgeFeeUsd" * d."referralRate" / d."acxUsdPrice" * power(10, 18) * d.multiplier as decimal))as "acxRewards",
-      trunc(cast(d."bridgeFeeUsd" * d."referralRate" / d."acxUsdPrice" * 0.75 * power(10, 18) * d.multiplier as decimal)) as "acxRewardsAmountReferrer",
-      trunc(cast(d."bridgeFeeUsd" * d."referralRate" / d."acxUsdPrice" * 0.25 * power(10, 18) * d.multiplier as decimal)) as "acxRewardsAmountReferee"
+      trunc(cast(d."bridgeFeeUsd" * d."referralRate" / d."acxUsdPrice" * ${wei} * d.multiplier as decimal))as "acxRewards",
+      trunc(cast(d."bridgeFeeUsd" * d."referralRate" / d."acxUsdPrice" * 0.75 * ${wei} * d.multiplier as decimal)) as "acxRewardsAmountReferrer",
+      trunc(cast(d."bridgeFeeUsd" * d."referralRate" / d."acxUsdPrice" * 0.25 * ${wei} * d.multiplier as decimal)) as "acxRewardsAmountReferee"
     from deposits_mv as d
     where d."depositDate"::date = $1
     order by d."depositDate" DESC;
