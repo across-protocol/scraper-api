@@ -148,7 +148,7 @@ export class DepositService {
       acx_usd_price: Number(d.acxUsdPrice),
       acx_rewards_amount: d.acxRewards,
       acx_rewards_amount_referrer: d.acxRewardsAmountReferrer,
-      acx_rewards_amount_refere: d.acxRewardsAmountReferee,
+      acx_rewards_amount_referee: d.acxRewardsAmountReferee,
     }));
   }
 }
