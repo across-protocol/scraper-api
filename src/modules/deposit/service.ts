@@ -1,11 +1,16 @@
 import { DateTime } from "luxon";
 import { CACHE_MANAGER, Inject, Injectable } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
-import { Repository } from "typeorm";
+import { DataSource, Repository } from "typeorm";
 import { utils } from "ethers";
 import { Cache } from "cache-manager";
 import { Deposit } from "./model/deposit.entity";
-import { getAvgFillTimeQuery, getTotalDepositsQuery, getTotalVolumeQuery } from "./adapter/db/queries";
+import {
+  getAvgFillTimeQuery,
+  getReferralsForEtl,
+  getTotalDepositsQuery,
+  getTotalVolumeQuery,
+} from "./adapter/db/queries";
 import { AppConfig } from "../configuration/configuration.service";
 import { InvalidAddressException } from "./exceptions";
 
@@ -17,6 +22,7 @@ export class DepositService {
     private appConfig: AppConfig,
     @InjectRepository(Deposit) private depositRepository: Repository<Deposit>,
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
+    private dataSource: DataSource,
   ) {}
 
   public async getCachedGeneralStats() {
@@ -124,6 +130,26 @@ export class DepositService {
         total,
       },
     };
+  }
+
+  public async getEtlReferralDeposits(date: string) {
+    // delete time from date in case of datetime
+    const parsedDate = new Date(date).toISOString().split("T")[0];
+    const query = getReferralsForEtl();
+    const data = await this.dataSource.query(query, [parsedDate]);
+
+    return data.map((d) => ({
+      deposit_id: d.depositId,
+      origin_chain_id: d.sourceChainId,
+      applied_referrer: d.referralAddress,
+      multiplier: d.multiplier,
+      referral_rate: Number(d.referralRate),
+      bridge_fee_usd: d.bridgeFeeUsd,
+      acx_usd_price: Number(d.acxUsdPrice),
+      acx_rewards_amount: d.acxRewards,
+      acx_rewards_amount_referrer: d.acxRewardsAmountReferrer,
+      acx_rewards_amount_referee: d.acxRewardsAmountReferee,
+    }));
   }
 }
 

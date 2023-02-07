@@ -1,6 +1,6 @@
 import { ApiProperty } from "@nestjs/swagger";
 import { Type } from "class-transformer";
-import { IsEnum, IsInt, IsOptional, IsString, Max, Min } from "class-validator";
+import { IsDateString, IsEnum, IsInt, IsOptional, IsString, Max, Min } from "class-validator";
 
 export class GetDepositsQuery {
   @IsOptional()
@@ -47,4 +47,9 @@ export class GetDepositsStatsResponse {
 
   @ApiProperty({ description: "The total bridged volume in USD", example: 1_000_000 })
   totalVolumeUsd: number;
+}
+
+export class GetEtlReferralDepositsQuery {
+  @IsDateString()
+  date: string;
 }

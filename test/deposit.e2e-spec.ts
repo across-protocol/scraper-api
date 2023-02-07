@@ -1,14 +1,31 @@
 import request from "supertest";
 import { INestApplication } from "@nestjs/common";
 import { Test } from "@nestjs/testing";
-import { constants } from "ethers";
+import { constants, ethers } from "ethers";
 
 import { DepositFixture, mockManyDepositEntities } from "../src/modules/deposit/adapter/db/deposit-fixture";
 import { ValidationPipe } from "../src/validation.pipe";
 import { AppModule } from "../src/app.module";
 import { RunMode } from "../src/dynamic-module";
+import { ReferralService } from "../src/modules/referral/services/service";
+import { TokenFixture } from "../src/modules/web3/adapters/db/token-fixture";
+import { HistoricMarketPriceFixture } from "../src/modules/market-price/adapters/hmp-fixture";
+import { HistoricMarketPrice } from "../src/modules/market-price/model/historic-market-price.entity";
+import { Token } from "../src/modules/web3/model/token.entity";
+
+const usdc = {
+  address: "0x1",
+  symbol: "USDC",
+  decimals: 6,
+};
 
 let app: INestApplication;
+let referralService: ReferralService;
+let priceFixture: HistoricMarketPriceFixture;
+let tokenFixture: TokenFixture;
+
+let token: Token;
+let price: HistoricMarketPrice;
 
 beforeAll(async () => {
   const moduleFixture = await Test.createTestingModule({
@@ -100,6 +117,63 @@ describe("GET /deposits", () => {
 
   afterAll(async () => {
     await app.get(DepositFixture).deleteAllDeposits();
+  });
+});
+
+describe("GET /etl/referral-deposits", () => {
+  const date = "2022-01-01";
+
+  beforeAll(async () => {
+    referralService = app.get(ReferralService);
+    priceFixture = app.get(HistoricMarketPriceFixture);
+    tokenFixture = app.get(TokenFixture);
+    [token, price] = await Promise.all([
+      tokenFixture.insertToken({ ...usdc }),
+      priceFixture.insertPrice({ symbol: usdc.symbol, usd: "1" }),
+    ]);
+
+    const depositorAddr = "0x9A8f92a830A5cB89a3816e3D267CB7791c16b04D";
+    const deposits = mockManyDepositEntities(5, {
+      depositIdStartIndex: 10,
+      overrides: {
+        status: "filled",
+        depositorAddr,
+        amount: "10",
+        filled: "10",
+        referralAddress: depositorAddr,
+        stickyReferralAddress: depositorAddr,
+        depositDate: new Date(date),
+        bridgeFeePct: ethers.utils.parseEther("0.01").toString(),
+        priceId: price.id,
+        tokenId: token.id,
+      },
+    });
+
+    await app.get(DepositFixture).insertManyDeposits(deposits);
+    await referralService.cumputeReferralStats();
+    await referralService.refreshMaterializedView();
+  });
+
+  afterAll(async () => {
+    await app.get(DepositFixture).deleteAllDeposits();
+    await Promise.all([tokenFixture.deleteAllTokens(), priceFixture.deleteAllPrices()]);
+  });
+
+  it("should fail if date is not provided", async () => {
+    const response = await request(app.getHttpServer()).get("/etl/referral-deposits");
+    expect(response.status).toBe(400);
+  });
+
+  it("should return referral deposits", async () => {
+    const response = await request(app.getHttpServer()).get("/etl/referral-deposits").query({ date });
+    expect(response.status).toBe(200);
+    expect(response.body.length).toBe(5);
+  });
+
+  it("should return no referral deposits", async () => {
+    const response = await request(app.getHttpServer()).get("/etl/referral-deposits").query({ date: "2022-01-02" });
+    expect(response.status).toBe(200);
+    expect(response.body.length).toBe(0);
   });
 });
 

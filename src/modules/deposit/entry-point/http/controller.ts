@@ -1,6 +1,6 @@
 import { Controller, Get, Query } from "@nestjs/common";
 import { ApiResponse, ApiTags } from "@nestjs/swagger";
-import { DepositService } from "./service";
+import { DepositService } from "../../service";
 import { GetDepositsQuery, GetDepositsStatsResponse } from "./dto";
 
 @Controller()
