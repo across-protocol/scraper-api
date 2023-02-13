@@ -325,3 +325,38 @@ describe("POST /airdrop/upload/merkle-distributor-recipients", () => {
     expect(response.body.recipients).toStrictEqual(2);
   });
 });
+
+describe("GET /airdrop/etl/merkle-distributor-recipients", () => {
+  const url = "/airdrop/etl/merkle-distributor-recipients";
+
+  afterEach(async () => {
+    await merkleDistributorWindowFixture.deleteAllMerkleDistributorWindows();
+    await merkleDistributorRecipientFixture.deleteAllMerkleDistributorRecipients();
+  });
+
+  it("should return recipients formatted for across-etl tasks", async () => {
+    const address = "0x00B591BC2b682a0B30dd72Bac9406BfA13e5d3cd";
+    const window = await merkleDistributorWindowFixture.insertMerkleDistributorWindow({
+      windowIndex: 0,
+      rewardsToDeposit: "10",
+    });
+    await merkleDistributorRecipientFixture.insertMerkleDistributorRecipient({
+      address,
+      amount: "10",
+      merkleDistributorWindowId: window.id,
+      payload: {
+        amountBreakdown: {
+          communityRewards: "2",
+          earlyUserRewards: "2",
+          liquidityProviderRewards: "2",
+          welcomeTravelerRewards: "4",
+          referralRewards: "0",
+        },
+      },
+    });
+    const response = await request(app.getHttpServer()).get(url).query({
+      windowIndex: window.windowIndex,
+    });
+    expect(response.statusCode).toStrictEqual(200);
+  });
+});
