@@ -26,11 +26,11 @@ import {
   GetMerkleDistributorProofsQuery,
 } from "./dto";
 
-@Controller()
+@Controller("airdrop")
 export class AirdropController {
   constructor(private airdropService: AirdropService) {}
 
-  @Get("airdrop/rewards")
+  @Get("rewards")
   @ApiResponse({ type: GetAirdropRewardsResponse })
   @ApiTags("airdrop")
   @UseGuards(OptionalJwtAuthGuard)
@@ -38,13 +38,13 @@ export class AirdropController {
     return this.airdropService.getRewards(query.address, req.user.id);
   }
 
-  @Patch("airdrop/rewards/wallet-rewards")
+  @Patch("rewards/wallet-rewards")
   @ApiTags("airdrop")
   editWalletRewards(@Body() body: EditWalletRewardsBody) {
     return this.airdropService.editWalletRewards(body);
   }
 
-  @Get("airdrop/welcome-traveller-eligible")
+  @Get("welcome-traveller-eligible")
   @Roles(Role.Admin)
   @UseGuards(JwtAuthGuard, RolesGuard)
   @ApiTags("airdrop")
@@ -53,7 +53,7 @@ export class AirdropController {
     return this.airdropService.getWelcomeTravellerEligibleWallets();
   }
 
-  @Get("airdrop/community-rewards-eligible")
+  @Get("community-rewards-eligible")
   @Roles(Role.Admin)
   @UseGuards(JwtAuthGuard, RolesGuard)
   @ApiTags("airdrop")
@@ -62,7 +62,7 @@ export class AirdropController {
     return this.airdropService.getCommunityRewardsEligibleWallets();
   }
 
-  @Post("airdrop/upload/rewards")
+  @Post("upload/rewards")
   @Roles(Role.Admin)
   @UseGuards(JwtAuthGuard, RolesGuard)
   @UseInterceptors(
@@ -88,7 +88,7 @@ export class AirdropController {
     });
   }
 
-  @Post("airdrop/upload/merkle-distributor-recipients")
+  @Post("upload/merkle-distributor-recipients")
   @Roles(Role.Admin)
   @UseGuards(JwtAuthGuard, RolesGuard)
   @UseInterceptors(
@@ -103,20 +103,20 @@ export class AirdropController {
     return this.airdropService.processMerkleDistributorRecipientsFile(file);
   }
 
-  @Get("airdrop/merkle-distributor-proof")
+  @Get("merkle-distributor-proof")
   @ApiTags("airdrop")
   getMerkleDistributorProof(@Query() query: GetMerkleDistributorProofQuery) {
     const includeDiscord = query.includeDiscord === "true";
     return this.airdropService.getMerkleDistributorProof(query.address, query.windowIndex, includeDiscord);
   }
 
-  @Get("airdrop/merkle-distributor-proofs")
+  @Get("merkle-distributor-proofs")
   @ApiTags("airdrop")
   getMerkleDistributorProofs(@Query() query: GetMerkleDistributorProofsQuery) {
     return this.airdropService.getMerkleDistributorProofs(query.address, query.startWindowIndex);
   }
 
-  @Get("airdrop/etl/merkle-distributor-recipients")
+  @Get("etl/merkle-distributor-recipients")
   @ApiTags("etl")
   getEtlMerkleDistributorRecipients(@Query() query: GetEtlMerkleDistributorRecipientsQuery) {
     return this.airdropService.getEtlMerkleDistributorRecipients(query);
