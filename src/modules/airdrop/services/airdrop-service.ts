@@ -17,7 +17,7 @@ import {
   ProcessCommunityRewardsFileException,
   ProcessWalletRewardsFileException,
 } from "./exceptions";
-import { EditWalletRewardsBody } from "../entry-points/http/dto";
+import { EditWalletRewardsBody, GetEtlMerkleDistributorRecipientsQuery } from "../entry-points/http/dto";
 import { AppConfig } from "../../configuration/configuration.service";
 import { MerkleDistributorWindow } from "../model/merkle-distributor-window.entity";
 import { MerkleDistributorRecipient } from "../model/merkle-distributor-recipient.entity";
@@ -314,6 +314,29 @@ export class AirdropService {
     }
     return data;
   }
+
+  public async getEtlMerkleDistributorRecipients(queryParams: GetEtlMerkleDistributorRecipientsQuery) {
+    const sqlQery = this.dataSource
+      .createQueryBuilder(MerkleDistributorRecipient, "recipient")
+      .innerJoinAndSelect("recipient.merkleDistributorWindow", "window")
+      .andWhere("window.windowIndex = :windowIndex", { windowIndex: queryParams.windowIndex });
+    const recipients = await sqlQery.getMany();
+
+    return recipients.map((recipient) => ({
+      window_index: recipient.merkleDistributorWindow.windowIndex,
+      address: recipient.address,
+      bridge_traveler: recipient.payload.amountBreakdown.welcomeTravelerRewards,
+      bridgoor: recipient.payload.amountBreakdown.earlyUserRewards,
+      community: recipient.payload.amountBreakdown.communityRewards,
+      lp: recipient.payload.amountBreakdown.liquidityProviderRewards,
+      total: recipient.amount,
+      referral_rewards_amount: recipient.payload.amountBreakdown.referralRewards,
+    }));
+  }
+
+  ////////////////////////////////////
+  ////       PRIVATE METHODS      ////
+  ////////////////////////////////////
 
   private async processWalletRewardsFile(walletRewardsFile: Express.Multer.File) {
     try {

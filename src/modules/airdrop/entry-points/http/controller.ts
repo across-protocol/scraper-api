@@ -21,6 +21,7 @@ import {
   EditWalletRewardsBody,
   GetAirdropRewardsQuery,
   GetAirdropRewardsResponse,
+  GetEtlMerkleDistributorRecipientsQuery,
   GetMerkleDistributorProofQuery,
   GetMerkleDistributorProofsQuery,
 } from "./dto";
@@ -113,5 +114,11 @@ export class AirdropController {
   @ApiTags("airdrop")
   getMerkleDistributorProofs(@Query() query: GetMerkleDistributorProofsQuery) {
     return this.airdropService.getMerkleDistributorProofs(query.address, query.startWindowIndex);
+  }
+
+  @Get("etl/merkle-distributor-recipients")
+  @ApiTags("etl")
+  getEtlMerkleDistributorRecipients(@Query() query: GetEtlMerkleDistributorRecipientsQuery) {
+    return this.airdropService.getEtlMerkleDistributorRecipients(query);
   }
 }

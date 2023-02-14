@@ -80,3 +80,9 @@ export class GetMerkleDistributorProofsQuery {
   @IsEthereumAddress()
   address: string;
 }
+
+export class GetEtlMerkleDistributorRecipientsQuery {
+  @ApiProperty({ example: "0" })
+  @IsNumberString({ no_symbols: true })
+  windowIndex: number;
+}
