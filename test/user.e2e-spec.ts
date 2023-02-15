@@ -265,6 +265,22 @@ describe("PATCH /users/me/wallets", () => {
   });
 });
 
+describe("GET users/etl/discord-wallet", () => {
+  it("should get discord users wallet", async () => {
+    await userWalletFixture.insertUserWallet({ userId: existingUser.id, walletAddress: "0x" });
+    const adminJwt = app.get(JwtService).sign({ roles: ["admin"] });
+    const response = await request(app.getHttpServer())
+      .get("/users/etl/discord-wallets")
+      .set("Authorization", `Bearer ${adminJwt}`);
+    expect(response.status).toBe(200);
+    expect(response.body.length).toBeGreaterThan(0);
+  });
+
+  afterEach(async () => {
+    await userWalletFixture.deleteAllUserWallets();
+  });
+});
+
 async function createWalletForExistingUser() {
   await request(app.getHttpServer())
     .post("/users/me/wallets")

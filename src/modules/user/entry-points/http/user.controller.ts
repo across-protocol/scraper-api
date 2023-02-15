@@ -1,11 +1,12 @@
 import { Controller, Get, Post, Patch, Body, Req, UseGuards } from "@nestjs/common";
-import { ApiTags } from "@nestjs/swagger";
+import { ApiBearerAuth, ApiTags } from "@nestjs/swagger";
 import { utils } from "ethers";
 
 import { JwtAuthGuard } from "../../../auth/entry-points/http/jwt.guard";
 import { UserService } from "../../services/user.service";
 import { UserWalletService } from "../../services/user-wallet.service";
 import { UsersWalletsBody } from "./dto";
+import { Role, Roles, RolesGuard } from "../../../auth/entry-points/http/roles";
 
 @Controller("users")
 export class UserController {
@@ -65,5 +66,14 @@ export class UserController {
     });
 
     return { walletAddress: updatedUserWallet.walletAddress };
+  }
+
+  @Get("etl/discord-wallets")
+  @ApiTags("scraper")
+  @Roles(Role.Admin)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @ApiBearerAuth()
+  public async getEtlDiscordUsersWallet() {
+    return this.userWalletService.getEtlDiscordUsersWallet();
   }
 }

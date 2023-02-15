@@ -132,4 +132,16 @@ export class UserWalletService {
 
     return user;
   }
+
+  public async getEtlDiscordUsersWallet() {
+    const query = this.userWalletRepository
+      .createQueryBuilder("uw")
+      .leftJoinAndSelect("uw.user", "u")
+      .select(["uw.walletAddress", "u.discordId"]);
+    const userWallets = await query.getMany();
+    return userWallets.map((uw) => ({
+      address: uw.walletAddress,
+      discordId: uw.user.discordId,
+    }));
+  }
 }
