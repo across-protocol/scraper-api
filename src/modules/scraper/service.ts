@@ -28,14 +28,20 @@ export class ScraperService {
   }
 
   public async run() {
-    this.publishBlocks(ChainIds.mainnet, 10);
-    this.publishBlocks(ChainIds.arbitrum, 4);
-    this.publishBlocks(ChainIds.optimism, 4);
-    this.publishBlocks(ChainIds.polygon, 6);
-    this.publishMerkleDistributorBlocks(30);
+    if (this.appConfig.values.enableSpokePoolsEventsProcessing) {
+      // the seconds interval used to query the contract events is based on the chain's block time
+      this.publishBlocks(ChainIds.mainnet, 10);
+      this.publishBlocks(ChainIds.arbitrum, 4);
+      this.publishBlocks(ChainIds.optimism, 4);
+      this.publishBlocks(ChainIds.polygon, 6);
+    }
+
+    if (this.appConfig.values.enableMerkleDistributorEventsProcessing) {
+      this.publishMerkleDistributorBlocks(30);
+    }
   }
 
-  public async publishBlocks(chainId: number, interval: number) {
+  public async publishBlocks(chainId: number, secondsInterval: number) {
     while (true) {
       try {
         const blockNumber = await this.providers.getProvider(chainId).getBlockNumber();
@@ -60,7 +66,7 @@ export class ScraperService {
       } catch (error) {
         this.logger.error(error);
       }
-      await wait(interval);
+      await wait(secondsInterval);
     }
   }
 
@@ -97,6 +103,7 @@ export class ScraperService {
    * `from` is computed depending on the latest block saved in DB || start block number defined in config file || 1
    * `to` is a block number up to the latest block number from chain, but capped at a max value. This way we avoid
    * huge block ranges to be processed.
+   * @returns the block range or undefined if from > to
    */
   public async determineBlockRange(
     chainId: number,
