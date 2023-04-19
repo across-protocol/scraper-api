@@ -52,7 +52,7 @@ export class ScraperService {
           this.appConfig.values.web3.spokePoolContracts[chainId].startBlockNumber,
           this.processedBlockRepository,
         );
-        if (range) {
+        if (!!range) {
           const queueMsg = { chainId, ...range };
           await this.scraperQueuesService.publishMessage<BlocksEventsQueueMessage>(ScraperQueue.BlocksEvents, queueMsg);
           // publish the block range to be processed with a delay of 60 seconds
@@ -84,7 +84,7 @@ export class ScraperService {
           true,
         );
 
-        if (range) {
+        if (!!range) {
           const queueMsg = { chainId, ...range };
           await this.scraperQueuesService.publishMessage<MerkleDistributorBlocksEventsQueueMessage>(
             ScraperQueue.MerkleDistributorBlocksEvents,
