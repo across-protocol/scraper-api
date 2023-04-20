@@ -1,6 +1,6 @@
 import { InjectQueue } from "@nestjs/bull";
 import { Injectable, Logger } from "@nestjs/common";
-import { Queue } from "bull";
+import { JobOptions, Queue } from "bull";
 import { ScraperQueue } from "../adapter/messaging";
 
 @Injectable()
@@ -39,11 +39,11 @@ export class ScraperQueuesService {
     this.initLogs();
   }
 
-  public async publishMessage<T>(queue: ScraperQueue, message: T) {
+  public async publishMessage<T>(queue: ScraperQueue, message: T, options: JobOptions = {}) {
     const q = this.queuesMap[queue];
 
     if (q) {
-      await q.add(message);
+      await q.add(message, options);
     }
   }
 
