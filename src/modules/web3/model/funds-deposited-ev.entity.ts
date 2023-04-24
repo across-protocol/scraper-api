@@ -32,6 +32,9 @@ export class FundsDepositedEv {
   address: string;
 
   @Column()
+  chainId: number;
+
+  @Column()
   transactionHash: string;
 
   @Column()

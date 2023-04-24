@@ -27,6 +27,9 @@ export class RequestedSpeedUpDepositEv {
   address: string;
 
   @Column()
+  chainId: number;
+
+  @Column()
   transactionHash: string;
 
   @Column()

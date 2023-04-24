@@ -70,7 +70,7 @@ export class BlocksEventsConsumer {
       }
 
       try {
-        await this.insertRawDepositEvent(event);
+        await this.insertRawDepositEvent(chainId, event);
       } catch (error) {
         if (error instanceof QueryFailedError && error.driverError?.code === "23505") {
           // Ignore duplicate key value violates unique constraint error.
@@ -81,7 +81,7 @@ export class BlocksEventsConsumer {
       }
     }
 
-    await this.insertRawFillEvents(fillEvents);
+    await this.insertRawFillEvents(chainId, fillEvents);
     const fillMessages: FillEventsQueueMessage[] = fillEvents.map((e) => ({
       depositId: e.args.depositId,
       originChainId: e.args.originChainId.toNumber(),
@@ -94,7 +94,7 @@ export class BlocksEventsConsumer {
     }));
     await this.scraperQueuesService.publishMessagesBulk<FillEventsQueueMessage>(ScraperQueue.FillEvents, fillMessages);
 
-    await this.insertRawSpeedUpEvents(speedUpEvents);
+    await this.insertRawSpeedUpEvents(chainId, speedUpEvents);
     const speedUpMessages: SpeedUpEventsQueueMessage[] = speedUpEvents.map((e) => ({
       depositSourceChainId: chainId,
       depositId: e.args.depositId,
@@ -133,7 +133,7 @@ export class BlocksEventsConsumer {
     });
   }
 
-  private async insertRawDepositEvent(event: FundsDepositedEvent) {
+  private async insertRawDepositEvent(chainId: number, event: FundsDepositedEvent) {
     const { blockNumber, blockHash, transactionIndex, address, transactionHash, logIndex, args } = event;
     const {
       amount,
@@ -151,6 +151,7 @@ export class BlocksEventsConsumer {
       blockHash,
       transactionIndex,
       address,
+      chainId,
       transactionHash,
       logIndex,
       args: {
@@ -167,7 +168,7 @@ export class BlocksEventsConsumer {
     });
   }
 
-  private async insertRawFillEvents(events: FilledRelayEvent[]) {
+  private async insertRawFillEvents(chainId: number, events: FilledRelayEvent[]) {
     const dbEvents = events.map((event) => {
       const { blockNumber, blockHash, transactionIndex, address, transactionHash, logIndex, args } = event;
       const {
@@ -193,6 +194,7 @@ export class BlocksEventsConsumer {
         blockHash,
         transactionIndex,
         address,
+        chainId,
         transactionHash,
         logIndex,
         args: {
@@ -229,7 +231,7 @@ export class BlocksEventsConsumer {
     }
   }
 
-  private async insertRawSpeedUpEvents(events: RequestedSpeedUpDepositEvent[]) {
+  private async insertRawSpeedUpEvents(chainId: number, events: RequestedSpeedUpDepositEvent[]) {
     const dbEvents = events.map((event) => {
       const { blockNumber, blockHash, transactionIndex, address, transactionHash, logIndex, args } = event;
       const { newRelayerFeePct, depositId, depositor, depositorSignature } = args;
@@ -239,6 +241,7 @@ export class BlocksEventsConsumer {
         blockHash,
         transactionIndex,
         address,
+        chainId,
         transactionHash,
         logIndex,
         args: {

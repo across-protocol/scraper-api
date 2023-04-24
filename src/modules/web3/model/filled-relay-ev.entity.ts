@@ -39,6 +39,9 @@ export class FilledRelayEv {
   address: string;
 
   @Column()
+  chainId: number;
+
+  @Column()
   transactionHash: string;
 
   @Column()

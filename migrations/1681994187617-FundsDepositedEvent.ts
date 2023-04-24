@@ -10,6 +10,7 @@ export class FundsDepositedEvent1681994187617 implements MigrationInterface {
       "blockHash" character varying NOT NULL, 
       "transactionIndex" integer NOT NULL, 
       "address" character varying NOT NULL, 
+      "chainId" integer NOT NULL,
       "transactionHash" character varying NOT NULL, 
       "logIndex" integer NOT NULL, 
       "args" jsonb NOT NULL, 
