@@ -33,6 +33,7 @@ import { TrackService } from "./adapter/amplitude/track-service";
 import { ModuleOptions, RunMode } from "../../dynamic-module";
 import { DepositModule } from "../deposit/module";
 import { AirdropModule } from "../airdrop/module";
+import { RefundRequestedEv } from "../web3/model/refund-requested-ev.entity";
 
 @Module({})
 export class ScraperModule {
@@ -70,6 +71,7 @@ export class ScraperModule {
           FundsDepositedEv,
           FilledRelayEv,
           RequestedSpeedUpDepositEv,
+          RefundRequestedEv,
         ]),
         MarketPriceModule.forRoot(moduleOptions),
         HttpModule,

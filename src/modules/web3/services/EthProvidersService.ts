@@ -14,7 +14,7 @@ import { Transaction } from "../model/transaction.entity";
 @Injectable()
 export class EthProvidersService {
   private providers: Record<string, ethers.providers.JsonRpcProvider> = {};
-  private spokePoolEventQueriers: Record<string, SpokePoolEventsQuerier> = {};
+  private spokePoolEventQueriers: Record<string, Record<string, SpokePoolEventsQuerier>> = {};
   private merkleDistributorEventQuerier: MerkleDistributorEventsQuerier;
 
   public constructor(
@@ -36,8 +36,8 @@ export class EthProvidersService {
     return this.providers;
   }
 
-  public getSpokePoolEventQuerier(chainId: ChainId): SpokePoolEventsQuerier | undefined {
-    return this.spokePoolEventQueriers[chainId];
+  public getSpokePoolEventQuerier(chainId: ChainId, address: string): SpokePoolEventsQuerier | undefined {
+    return this.spokePoolEventQueriers[chainId][address];
   }
 
   public getSpokePoolEventQueriers() {
@@ -117,15 +117,13 @@ export class EthProvidersService {
   }
 
   private setSpokePoolEventQueriers() {
-    for (const chainIdStr of Object.keys(this.getProviders())) {
-      const chainId = parseInt(chainIdStr);
-      const spokePoolAddress = this.appConfig.values.web3.spokePoolContracts[chainId]?.address;
-      if (spokePoolAddress) {
-        const spokePool = SpokePool__factory.connect(
-          this.appConfig.values.web3.spokePoolContracts[chainId].address,
-          this.getProvider(chainId),
-        );
-        this.spokePoolEventQueriers[chainId] = new SpokePoolEventsQuerier(spokePool);
+    const chains = this.appConfig.values.spokePoolsEventsProcessingChainIds;
+    for (const chainId of chains) {
+      this.spokePoolEventQueriers[chainId] = {};
+      const spokePools = this.appConfig.values.web3.spokePoolContracts[chainId];
+      for (const spokePool of spokePools) {
+        const contract = new ethers.Contract(spokePool.address, spokePool.abi, this.getProvider(chainId));
+        this.spokePoolEventQueriers[chainId][spokePool.address] = new SpokePoolEventsQuerier(contract);
       }
     }
   }
