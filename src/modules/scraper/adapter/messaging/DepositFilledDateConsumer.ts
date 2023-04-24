@@ -42,10 +42,10 @@ export class DepositFilledDateConsumer {
     const sortedFillTx = deposit.fillTxs.sort((tx1, tx2) =>
       DateTime.fromISO(tx1.date) <= DateTime.fromISO(tx2.date) ? 1 : -1,
     );
-    const filledDate = new Date(sortedFillTx[0].date);
+    let filledDate = new Date(sortedFillTx[0].date);
 
     if (DateTime.fromJSDate(deposit.depositDate) > DateTime.fromJSDate(filledDate)) {
-      return;
+      filledDate = deposit.depositDate;
     }
 
     deposit.filledDate = filledDate;
