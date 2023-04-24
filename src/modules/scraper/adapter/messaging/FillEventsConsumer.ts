@@ -1,16 +1,10 @@
 import { OnQueueFailed, Process, Processor } from "@nestjs/bull";
 import { Logger } from "@nestjs/common";
 import { Job } from "bull";
-import {
-  BlocksEventsQueueMessage,
-  DepositFilledDateQueueMessage,
-  FillEventsQueueMessage,
-  ScraperQueue,
-  TrackFillEventQueueMessage,
-} from ".";
+import { DepositFilledDateQueueMessage, FillEventsQueueMessage, ScraperQueue, TrackFillEventQueueMessage } from ".";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Deposit } from "../../../deposit/model/deposit.entity";
-import { LessThan, MoreThan, Repository } from "typeorm";
+import { Repository } from "typeorm";
 import { BigNumber } from "bignumber.js";
 import { ScraperQueuesService } from "../../service/ScraperQueuesService";
 
@@ -29,8 +23,6 @@ export class FillEventsConsumer {
     const deposit = await this.depositRepository.findOne({ where: { sourceChainId: originChainId, depositId } });
 
     if (!deposit) {
-      // this is not needed anymore. At least for now
-      // await this.tryToRefetchDepositEvents(job.data);
       throw new Error("Deposit not found in db");
     }
 
@@ -98,34 +90,6 @@ export class FillEventsConsumer {
     }
 
     return false;
-  }
-
-  /**
-   * If a deposit is not found in a database, but we store newer deposits,
-   * then try refetch deposit events around that block number
-   */
-  private async tryToRefetchDepositEvents(fill: FillEventsQueueMessage) {
-    const { originChainId, depositId } = fill;
-    const newerDeposit = await this.depositRepository.findOne({
-      where: { sourceChainId: originChainId, depositId: MoreThan(depositId) },
-      order: { depositId: "asc" },
-    });
-    const olderDeposit = await this.depositRepository.findOne({
-      where: { sourceChainId: originChainId, depositId: LessThan(depositId) },
-      order: { depositId: "desc" },
-    });
-
-    if (newerDeposit && olderDeposit) {
-      const now = new Date();
-      const diffMinutes = Math.round((now.getTime() - newerDeposit.createdAt.getTime()) / 60000);
-      if (diffMinutes >= 20) {
-        await this.scraperQueuesService.publishMessage<BlocksEventsQueueMessage>(ScraperQueue.BlocksEvents, {
-          chainId: originChainId,
-          from: olderDeposit.blockNumber,
-          to: newerDeposit.blockNumber,
-        });
-      }
-    }
   }
 
   @OnQueueFailed()

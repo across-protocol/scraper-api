@@ -19,6 +19,7 @@ import {
 } from "@across-protocol/contracts-v2/dist/typechain/SpokePool";
 import { Deposit } from "../../../deposit/model/deposit.entity";
 import { ScraperQueuesService } from "../../service/ScraperQueuesService";
+import { RequestedSpeedUpDepositEv, FilledRelayEv, FundsDepositedEv } from "../../../web3/model";
 
 @Processor(ScraperQueue.BlocksEvents)
 export class BlocksEventsConsumer {
@@ -27,6 +28,10 @@ export class BlocksEventsConsumer {
   constructor(
     private providers: EthProvidersService,
     @InjectRepository(Deposit) private depositRepository: Repository<Deposit>,
+    @InjectRepository(FundsDepositedEv) private fundsDepositedEvRepository: Repository<FundsDepositedEv>,
+    @InjectRepository(FilledRelayEv) private filledRelayEvRepository: Repository<FilledRelayEv>,
+    @InjectRepository(RequestedSpeedUpDepositEv)
+    private requestedSpeedUpDepositEvRepository: Repository<RequestedSpeedUpDepositEv>,
     private scraperQueuesService: ScraperQueuesService,
   ) {}
 
@@ -50,7 +55,7 @@ export class BlocksEventsConsumer {
 
     for (const event of depositEvents) {
       try {
-        const deposit = await this.fromFundsDepositedEventToDeposit(event);
+        const deposit = this.fromFundsDepositedEventToDeposit(event);
         const result = await this.depositRepository.insert(deposit);
         await this.scraperQueuesService.publishMessage<BlockNumberQueueMessage>(ScraperQueue.BlockNumber, {
           depositId: result.identifiers[0].id,
@@ -63,8 +68,20 @@ export class BlocksEventsConsumer {
           throw error;
         }
       }
+
+      try {
+        await this.insertRawDepositEvent(chainId, event);
+      } catch (error) {
+        if (error instanceof QueryFailedError && error.driverError?.code === "23505") {
+          // Ignore duplicate key value violates unique constraint error.
+          this.logger.warn(error);
+        } else {
+          throw error;
+        }
+      }
     }
 
+    await this.insertRawFillEvents(chainId, fillEvents);
     const fillMessages: FillEventsQueueMessage[] = fillEvents.map((e) => ({
       depositId: e.args.depositId,
       originChainId: e.args.originChainId.toNumber(),
@@ -77,6 +94,7 @@ export class BlocksEventsConsumer {
     }));
     await this.scraperQueuesService.publishMessagesBulk<FillEventsQueueMessage>(ScraperQueue.FillEvents, fillMessages);
 
+    await this.insertRawSpeedUpEvents(chainId, speedUpEvents);
     const speedUpMessages: SpeedUpEventsQueueMessage[] = speedUpEvents.map((e) => ({
       depositSourceChainId: chainId,
       depositId: e.args.depositId,
@@ -92,7 +110,7 @@ export class BlocksEventsConsumer {
     );
   }
 
-  private async fromFundsDepositedEventToDeposit(event: FundsDepositedEvent) {
+  private fromFundsDepositedEventToDeposit(event: FundsDepositedEvent) {
     const { transactionHash, blockNumber } = event;
     const { depositId, originChainId, destinationChainId, amount, originToken, depositor, relayerFeePct, recipient } =
       event.args;
@@ -113,6 +131,140 @@ export class BlocksEventsConsumer {
       depositRelayerFeePct: relayerFeePct.toString(),
       initialRelayerFeePct: relayerFeePct.toString(),
     });
+  }
+
+  private async insertRawDepositEvent(chainId: number, event: FundsDepositedEvent) {
+    const { blockNumber, blockHash, transactionIndex, address, transactionHash, logIndex, args } = event;
+    const {
+      amount,
+      originChainId,
+      destinationChainId,
+      relayerFeePct,
+      depositId,
+      quoteTimestamp,
+      originToken,
+      recipient,
+      depositor,
+    } = args;
+    return this.fundsDepositedEvRepository.insert({
+      blockNumber,
+      blockHash,
+      transactionIndex,
+      address,
+      chainId,
+      transactionHash,
+      logIndex,
+      args: {
+        amount: amount.toString(),
+        originChainId: originChainId.toString(),
+        destinationChainId: destinationChainId.toString(),
+        relayerFeePct: relayerFeePct.toString(),
+        depositId,
+        quoteTimestamp,
+        originToken,
+        recipient,
+        depositor,
+      },
+    });
+  }
+
+  private async insertRawFillEvents(chainId: number, events: FilledRelayEvent[]) {
+    const dbEvents = events.map((event) => {
+      const { blockNumber, blockHash, transactionIndex, address, transactionHash, logIndex, args } = event;
+      const {
+        amount,
+        totalFilledAmount,
+        fillAmount,
+        repaymentChainId,
+        originChainId,
+        destinationChainId,
+        relayerFeePct,
+        appliedRelayerFeePct,
+        realizedLpFeePct,
+        depositId,
+        destinationToken,
+        relayer,
+        depositor,
+        recipient,
+        isSlowRelay,
+      } = args;
+
+      return this.filledRelayEvRepository.create({
+        blockNumber,
+        blockHash,
+        transactionIndex,
+        address,
+        chainId,
+        transactionHash,
+        logIndex,
+        args: {
+          amount: amount.toString(),
+          totalFilledAmount: totalFilledAmount.toString(),
+          fillAmount: fillAmount.toString(),
+          repaymentChainId: repaymentChainId.toString(),
+          originChainId: originChainId.toString(),
+          destinationChainId: destinationChainId.toString(),
+          relayerFeePct: relayerFeePct.toString(),
+          appliedRelayerFeePct: appliedRelayerFeePct.toString(),
+          realizedLpFeePct: realizedLpFeePct.toString(),
+          depositId,
+          destinationToken,
+          relayer,
+          depositor,
+          recipient,
+          isSlowRelay,
+        },
+      });
+    });
+
+    for (const event of dbEvents) {
+      try {
+        await this.filledRelayEvRepository.insert(event);
+      } catch (error) {
+        if (error instanceof QueryFailedError && error.driverError?.code === "23505") {
+          // Ignore duplicate key value violates unique constraint error.
+          this.logger.warn(error);
+        } else {
+          throw error;
+        }
+      }
+    }
+  }
+
+  private async insertRawSpeedUpEvents(chainId: number, events: RequestedSpeedUpDepositEvent[]) {
+    const dbEvents = events.map((event) => {
+      const { blockNumber, blockHash, transactionIndex, address, transactionHash, logIndex, args } = event;
+      const { newRelayerFeePct, depositId, depositor, depositorSignature } = args;
+
+      return this.requestedSpeedUpDepositEvRepository.create({
+        blockNumber,
+        blockHash,
+        transactionIndex,
+        address,
+        chainId,
+        transactionHash,
+        logIndex,
+        args: {
+          newRelayerFeePct: newRelayerFeePct.toString(),
+          depositId,
+          depositor,
+          depositorSignature,
+        },
+      });
+    });
+
+    for (const event of dbEvents) {
+      try {
+        await this.requestedSpeedUpDepositEvRepository.insert(event);
+      } catch (error) {
+        if (error instanceof QueryFailedError && error.driverError?.code === "23505") {
+          // Ignore duplicate key value violates unique constraint error.
+          this.logger.warn(error);
+        } else {
+          throw error;
+        }
+      }
+    }
   }
 
   @OnQueueFailed()

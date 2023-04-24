@@ -7,7 +7,7 @@ import { AppConfigModule } from "../configuration/configuration.module";
 import { MarketPriceModule } from "../market-price/module";
 import { ReferralModule } from "../referral/module";
 import { Web3Module } from "../web3/module";
-
+import { FilledRelayEv, FundsDepositedEv, RequestedSpeedUpDepositEv } from "../web3/model";
 import { ScraperQueue } from "./adapter/messaging";
 import { BlockNumberConsumer } from "./adapter/messaging/BlockNumberConsumer";
 import { BlocksEventsConsumer } from "./adapter/messaging/BlocksEventsConsumer";
@@ -62,7 +62,15 @@ export class ScraperModule {
       imports: [
         Web3Module,
         AppConfigModule,
-        TypeOrmModule.forFeature([ProcessedBlock, MerkleDistributorProcessedBlock, Claim, Deposit]),
+        TypeOrmModule.forFeature([
+          ProcessedBlock,
+          MerkleDistributorProcessedBlock,
+          Claim,
+          Deposit,
+          FundsDepositedEv,
+          FilledRelayEv,
+          RequestedSpeedUpDepositEv,
+        ]),
         MarketPriceModule.forRoot(moduleOptions),
         HttpModule,
         DepositModule.forRoot(moduleOptions),
