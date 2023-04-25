@@ -8,7 +8,7 @@ import BigNumber from "bignumber.js";
 import { DateTime } from "luxon";
 
 import { TrackFillEventQueueMessage, ScraperQueue } from ".";
-import { Deposit } from "../../../deposit/model/deposit.entity";
+import { Deposit, DepositFillTx, DepositFillTx2 } from "../../../deposit/model/deposit.entity";
 import { TrackService } from "../amplitude/track-service";
 import {
   deriveRelayerFeeComponents,
@@ -82,9 +82,12 @@ export class TrackFillEventConsumer {
 
     const formatWeiPctValues = makeWeiPctValuesFormatter(fromAmounts.formattedAmount, deposit.price.usd);
     const formattedLpFeeValues = formatWeiPctValues(fillTx.realizedLpFeePct);
-    const formattedRelayFeeValues = formatWeiPctValues(fillTx.appliedRelayerFeePct);
+    const fillRelayerFeePct = (fillTx as DepositFillTx).appliedRelayerFeePct
+      ? (fillTx as DepositFillTx).appliedRelayerFeePct
+      : (fillTx as DepositFillTx2).relayerFeePct;
+    const formattedRelayFeeValues = formatWeiPctValues(fillRelayerFeePct);
     const formattedBridgeFeeValues = formatWeiPctValues(
-      new BigNumber(fillTx.realizedLpFeePct).plus(fillTx.appliedRelayerFeePct).toString(),
+      new BigNumber(fillTx.realizedLpFeePct).plus(fillRelayerFeePct).toString(),
     );
 
     const { gasFeePct, capitalFeeUsd, capitalFeePct } = deriveRelayerFeeComponents(

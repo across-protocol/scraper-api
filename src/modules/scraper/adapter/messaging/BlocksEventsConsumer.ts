@@ -9,6 +9,7 @@ import {
   BlockNumberQueueMessage,
   BlocksEventsQueueMessage,
   FillEventsQueueMessage,
+  FillEventsQueueMessage2,
   ScraperQueue,
   SpeedUpEventsQueueMessage,
 } from ".";
@@ -178,7 +179,18 @@ export class BlocksEventsConsumer {
         };
         await this.scraperQueuesService.publishMessage<FillEventsQueueMessage>(ScraperQueue.FillEvents, message);
       } else if (acrossVersion === "2.5") {
-        // TODO Process Across v2.5 fill events
+        const typedEvent = event as FilledRelayEvent2_5;
+        const message: FillEventsQueueMessage2 = {
+          depositId: typedEvent.args.depositId,
+          originChainId: typedEvent.args.originChainId.toNumber(),
+          realizedLpFeePct: typedEvent.args.realizedLpFeePct.toString(),
+          totalFilledAmount: typedEvent.args.totalFilledAmount.toString(),
+          fillAmount: typedEvent.args.fillAmount.toString(),
+          transactionHash: typedEvent.transactionHash,
+          relayerFeePct: typedEvent.args.updatableRelayData.relayerFeePct.toString(),
+          destinationToken: typedEvent.args.destinationToken,
+        };
+        await this.scraperQueuesService.publishMessage<FillEventsQueueMessage2>(ScraperQueue.FillEvents2, message);
       }
     }
   }

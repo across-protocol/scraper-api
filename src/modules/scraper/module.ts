@@ -15,6 +15,7 @@ import { MerkleDistributorBlocksEventsConsumer } from "./adapter/messaging/Merkl
 import { DepositFilledDateConsumer } from "./adapter/messaging/DepositFilledDateConsumer";
 import { DepositReferralConsumer } from "./adapter/messaging/DepositReferralConsumer";
 import { FillEventsConsumer } from "./adapter/messaging/FillEventsConsumer";
+import { FillEventsConsumer2 } from "./adapter/messaging/FillEventsConsumer2";
 import { SpeedUpEventsConsumer } from "./adapter/messaging/SpeedUpEventsConsumer";
 import { TokenDetailsConsumer } from "./adapter/messaging/TokenDetailsConsumer";
 import { TokenPriceConsumer } from "./adapter/messaging/TokenPriceConsumer";
@@ -46,6 +47,7 @@ export class ScraperModule {
       BlocksEventsConsumer,
       MerkleDistributorBlocksEventsConsumer,
       FillEventsConsumer,
+      FillEventsConsumer2,
       SpeedUpEventsConsumer,
       BlockNumberConsumer,
       TokenDetailsConsumer,
@@ -101,6 +103,15 @@ export class ScraperModule {
         }),
         BullModule.registerQueue({
           name: ScraperQueue.FillEvents,
+          defaultJobOptions: {
+            backoff: 120 * 1000,
+            attempts: Number.MAX_SAFE_INTEGER,
+            removeOnComplete: true,
+            removeOnFail: true,
+          },
+        }),
+        BullModule.registerQueue({
+          name: ScraperQueue.FillEvents2,
           defaultJobOptions: {
             backoff: 120 * 1000,
             attempts: Number.MAX_SAFE_INTEGER,

@@ -172,13 +172,13 @@ export class ScraperService {
       return 10;
     }
     if (chainId === ChainIds.arbitrum) {
-      return 4;
+      return 10;
     }
     if (chainId === ChainIds.optimism) {
-      return 4;
+      return 10;
     }
     if (chainId === ChainIds.polygon) {
-      return 6;
+      return 10;
     }
   }
 }
