@@ -120,7 +120,7 @@ export class EthProvidersService {
     const chains = this.appConfig.values.spokePoolsEventsProcessingChainIds;
     for (const chainId of chains) {
       this.spokePoolEventQueriers[chainId] = {};
-      const spokePools = this.appConfig.values.web3.spokePoolContracts[chainId];
+      const spokePools = this.appConfig.values.web3.spokePoolContracts[chainId] || [];
       for (const spokePool of spokePools) {
         const contract = new ethers.Contract(spokePool.address, spokePool.abi, this.getProvider(chainId));
         this.spokePoolEventQueriers[chainId][spokePool.address] = new SpokePoolEventsQuerier(contract);

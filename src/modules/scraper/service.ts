@@ -44,6 +44,10 @@ export class ScraperService {
       try {
         const blockNumber = await this.providers.getProvider(chainId).getBlockNumber();
         this.logger.log(`latest block chainId: ${chainId} ${blockNumber}`);
+        const spokePoolContracts = this.appConfig.values.web3.spokePoolContracts[chainId] || [];
+
+        if (spokePoolContracts.length === 0) return;
+
         const defaultStartBlockNumber = Math.min(
           ...this.appConfig.values.web3.spokePoolContracts[chainId].map((contract) => contract.startBlockNumber),
         );
@@ -180,5 +184,7 @@ export class ScraperService {
     if (chainId === ChainIds.polygon) {
       return 10;
     }
+
+    return 10;
   }
 }

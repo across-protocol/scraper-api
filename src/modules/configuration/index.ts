@@ -6,6 +6,7 @@ import ArbitrumSpokePool2Abi from "../web3/services/abi/ArbitrumSpokePool2.json"
 import OptimismSpokePool2Abi from "../web3/services/abi/OptimismSpokePool2.json";
 import PolygonSpokePool2Abi from "../web3/services/abi/PolygonSpokePool2.json";
 import BobaSpokePool2Abi from "../web3/services/abi/BobaSpokePool2.json";
+import GoerliSpokePool2_5Abi from "../web3/services/abi/GoerliSpokePool2_5.json";
 
 export enum StickyReferralAddressesMechanism {
   Queue = "queue",
@@ -49,6 +50,7 @@ export const configValues = () => ({
       288: process.env.WEB3_NODE_URL_288,
       137: process.env.WEB3_NODE_URL_137,
       42161: process.env.WEB3_NODE_URL_42161,
+      421613: process.env.WEB3_NODE_URL_421613,
       5: process.env.WEB3_NODE_URL_5,
     },
     spokePoolContracts: {
@@ -90,6 +92,22 @@ export const configValues = () => ({
           startBlockNumber: 28604263,
           abi: JSON.stringify(PolygonSpokePool2Abi),
           acrossVersion: "2",
+        },
+      ],
+      [ChainIds.goerli]: [
+        {
+          address: "0x063fFa6C9748e3f0b9bA8ee3bbbCEe98d92651f7",
+          startBlockNumber: 8824950,
+          abi: JSON.stringify(GoerliSpokePool2_5Abi),
+          acrossVersion: "2.5",
+        },
+      ],
+      [ChainIds.arbitrumGoerli]: [
+        {
+          address: "0xD29C85F15DF544bA632C9E25829fd29d767d7978",
+          startBlockNumber: 16711650,
+          abi: JSON.stringify(GoerliSpokePool2_5Abi),
+          acrossVersion: "2.5",
         },
       ],
     },
