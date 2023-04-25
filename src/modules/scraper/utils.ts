@@ -24,8 +24,17 @@ export function splitBlockRanges(
           address: contracts[i].address,
           acrossVersion: contracts[i].acrossVersion,
         });
-      } else {
-        continue;
+      } else if (
+        contracts[i].startBlockNumber <= from &&
+        contracts[i + 1].startBlockNumber <= from &&
+        i === contracts.length - 2
+      ) {
+        intervals.push({
+          from,
+          to,
+          address: contracts[i + 1].address,
+          acrossVersion: contracts[i + 1].acrossVersion,
+        });
       }
     } else {
       if (contracts[i].startBlockNumber > to) break;
