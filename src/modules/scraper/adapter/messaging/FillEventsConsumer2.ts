@@ -1,16 +1,16 @@
 import { OnQueueFailed, Process, Processor } from "@nestjs/bull";
 import { Logger } from "@nestjs/common";
 import { Job } from "bull";
-import { DepositFilledDateQueueMessage, FillEventsQueueMessage, ScraperQueue, TrackFillEventQueueMessage } from ".";
+import { DepositFilledDateQueueMessage, FillEventsQueueMessage2, ScraperQueue, TrackFillEventQueueMessage } from ".";
 import { InjectRepository } from "@nestjs/typeorm";
-import { Deposit, DepositFillTx } from "../../../deposit/model/deposit.entity";
+import { Deposit, DepositFillTx2 } from "../../../deposit/model/deposit.entity";
 import { Repository } from "typeorm";
 import { BigNumber } from "bignumber.js";
 import { ScraperQueuesService } from "../../service/ScraperQueuesService";
 
-@Processor(ScraperQueue.FillEvents)
-export class FillEventsConsumer {
-  private logger = new Logger(FillEventsConsumer.name);
+@Processor(ScraperQueue.FillEvents2)
+export class FillEventsConsumer2 {
+  private logger = new Logger(FillEventsConsumer2.name);
 
   constructor(
     @InjectRepository(Deposit) private depositRepository: Repository<Deposit>,
@@ -18,7 +18,7 @@ export class FillEventsConsumer {
   ) {}
 
   @Process()
-  private async process(job: Job<FillEventsQueueMessage>) {
+  private async process(job: Job<FillEventsQueueMessage2>) {
     const { depositId, originChainId, destinationToken, transactionHash } = job.data;
     const deposit = await this.depositRepository.findOne({ where: { sourceChainId: originChainId, depositId } });
 
@@ -43,12 +43,12 @@ export class FillEventsConsumer {
     });
   }
 
-  public async processFillEventQueueMessage(deposit: Deposit, data: FillEventsQueueMessage) {
-    const { realizedLpFeePct, totalFilledAmount, transactionHash, fillAmount, appliedRelayerFeePct } = data;
+  public async processFillEventQueueMessage(deposit: Deposit, data: FillEventsQueueMessage2) {
+    const { realizedLpFeePct, totalFilledAmount, transactionHash, fillAmount, relayerFeePct } = data;
 
     deposit.fillTxs = [
       ...deposit.fillTxs,
-      { fillAmount, hash: transactionHash, realizedLpFeePct, totalFilledAmount, appliedRelayerFeePct },
+      { fillAmount, hash: transactionHash, realizedLpFeePct, totalFilledAmount, relayerFeePct },
     ];
     const bridgeFeePct = this.computeBridgeFee(deposit, data);
 
@@ -62,14 +62,14 @@ export class FillEventsConsumer {
     return this.depositRepository.save(deposit);
   }
 
-  private computeBridgeFee(deposit: Deposit, fill: FillEventsQueueMessage) {
+  private computeBridgeFee(deposit: Deposit, fill: FillEventsQueueMessage2) {
     if (new BigNumber(deposit.amount).eq(0)) {
       return new BigNumber(0);
     }
     const maxBridgeFeePct = new BigNumber(10).pow(18).times(0.0012);
-    const validFills = (deposit.fillTxs as DepositFillTx[]).filter((fill) => fill.appliedRelayerFeePct !== "0"); // all fills associated with a deposit that are NOT slow fills
+    const validFills = (deposit.fillTxs as DepositFillTx2[]).filter((fill) => fill.relayerFeePct !== "0"); // all fills associated with a deposit that are NOT slow fills
     const relayerFeeChargedToUser = validFills.reduce((cumulativeFee, fill) => {
-      const relayerFee = new BigNumber(fill.fillAmount).multipliedBy(fill.appliedRelayerFeePct);
+      const relayerFee = new BigNumber(fill.fillAmount).multipliedBy(fill.relayerFeePct);
       return relayerFee.plus(cumulativeFee);
     }, new BigNumber(0));
     const blendedRelayerFeePct = relayerFeeChargedToUser.dividedBy(deposit.amount).decimalPlaces(0, 1);
@@ -79,9 +79,9 @@ export class FillEventsConsumer {
     return bridgeFeePctCapped;
   }
 
-  public fillTxAlreadyProcessed(deposit: Deposit, fill: FillEventsQueueMessage) {
+  public fillTxAlreadyProcessed(deposit: Deposit, fill: FillEventsQueueMessage2) {
     const { totalFilledAmount, transactionHash } = fill;
-    const fillTxIndex = (deposit.fillTxs as DepositFillTx[]).findIndex(
+    const fillTxIndex = (deposit.fillTxs as DepositFillTx2[]).findIndex(
       (fillTx) => fillTx.hash === transactionHash && fillTx.totalFilledAmount === totalFilledAmount,
     );
 

@@ -1,73 +1,41 @@
-import { SpokePool } from "@across-protocol/contracts-v2";
-import { TypedEvent } from "@across-protocol/contracts-v2/dist/typechain/common";
 import { Logger } from "@nestjs/common";
 import { EventsQuerier } from "./EventsQuerier";
+import { Contract, Event } from "ethers";
 
 export class SpokePoolEventsQuerier extends EventsQuerier {
-  constructor(private spokePool: SpokePool, blockRangeSize?: number) {
+  constructor(private spokePool: Contract, blockRangeSize?: number) {
     super(spokePool, new Logger(SpokePoolEventsQuerier.name), blockRangeSize);
   }
 
-  public async getFundsDepositEvents(from: number, to: number, depositorAddr?: string): Promise<TypedEvent<any>[]> {
-    return this.getEvents(from, to, this.getDepositEventsFilters(depositorAddr));
+  public async getFundsDepositEvents(from: number, to: number): Promise<Event[]> {
+    return this.getEvents(from, to, this.getDepositEventsFilters());
   }
 
-  public async getFilledRelayEvents(from: number, to: number, depositorAddr?: string): Promise<TypedEvent<any>[]> {
-    return this.getEvents(from, to, this.getFilledRelayEventsFilter(depositorAddr));
+  public async getFilledRelayEvents(from: number, to: number): Promise<Event[]> {
+    return this.getEvents(from, to, this.getFilledRelayEventsFilter());
   }
 
-  public async getRequestedSpeedUpDepositEvents(
-    from: number,
-    to: number,
-    depositorAddr?: string,
-  ): Promise<TypedEvent<any>[]> {
-    return this.getEvents(from, to, this.getRequestedSpeedUpDepositEventsFilters(depositorAddr));
+  public async getRequestedSpeedUpDepositEvents(from: number, to: number): Promise<Event[]> {
+    return this.getEvents(from, to, this.getRequestedSpeedUpDepositEventsFilters());
   }
 
-  private getFilledRelayEventsFilter(depositorAddr?: string) {
-    if (depositorAddr) {
-      return this.spokePool.filters.FilledRelay(
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        depositorAddr,
-        undefined,
-        undefined,
-      );
-    }
+  public async getRefundRequestedEvents(from: number, to: number): Promise<Event[]> {
+    return this.getEvents(from, to, this.getRefundRequestedEventsFilters());
+  }
+
+  private getFilledRelayEventsFilter() {
     return this.spokePool.filters.FilledRelay();
   }
 
-  private getDepositEventsFilters(depositorAddr?: string) {
-    if (depositorAddr) {
-      return this.spokePool.filters.FundsDeposited(
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        depositorAddr.toLowerCase(),
-      );
-    }
+  private getDepositEventsFilters() {
     return this.spokePool.filters.FundsDeposited();
   }
 
-  private getRequestedSpeedUpDepositEventsFilters(depositorAddr?: string) {
-    if (depositorAddr) {
-      return this.spokePool.filters.RequestedSpeedUpDeposit(undefined, undefined, depositorAddr.toLowerCase());
-    }
+  private getRequestedSpeedUpDepositEventsFilters() {
     return this.spokePool.filters.RequestedSpeedUpDeposit();
+  }
+
+  private getRefundRequestedEventsFilters() {
+    return this.spokePool.filters.RefundRequested();
   }
 }

@@ -21,6 +21,14 @@ export type DepositFillTx = {
   appliedRelayerFeePct: string;
   date?: string;
 };
+export type DepositFillTx2 = {
+  hash: string;
+  totalFilledAmount: string;
+  fillAmount: string;
+  realizedLpFeePct: string;
+  relayerFeePct: string;
+  date?: string;
+};
 export type RequestedSpeedUpDepositTx = {
   hash: string;
   blockNumber: number;
@@ -111,7 +119,7 @@ export class Deposit {
   depositTxHash: string;
 
   @Column({ type: "jsonb", default: [] })
-  fillTxs: DepositFillTx[];
+  fillTxs: (DepositFillTx | DepositFillTx2)[];
 
   @Column({ type: "jsonb", default: [] })
   speedUps: RequestedSpeedUpDepositTx[];
