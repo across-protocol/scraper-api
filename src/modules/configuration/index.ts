@@ -6,7 +6,12 @@ import ArbitrumSpokePool2Abi from "../web3/services/abi/ArbitrumSpokePool2.json"
 import OptimismSpokePool2Abi from "../web3/services/abi/OptimismSpokePool2.json";
 import PolygonSpokePool2Abi from "../web3/services/abi/PolygonSpokePool2.json";
 import BobaSpokePool2Abi from "../web3/services/abi/BobaSpokePool2.json";
+
 import GoerliSpokePool2_5Abi from "../web3/services/abi/GoerliSpokePool2_5.json";
+import EthereumSpokePool2_5Abi from "../web3/services/abi/EthereumSpokePool2_5.json";
+import ArbitrumSpokePool2_5Abi from "../web3/services/abi/ArbitrumSpokePool2_5.json";
+import PolygonSpokePool2_5Abi from "../web3/services/abi/PolygonSpokePool2_5.json";
+import OptimismSpokePool2_5Abi from "../web3/services/abi/OptimismSpokePool2_5.json";
 
 export enum StickyReferralAddressesMechanism {
   Queue = "queue",
@@ -61,6 +66,12 @@ export const configValues = () => ({
           abi: JSON.stringify(EthereumSpokePool2Abi),
           acrossVersion: "2",
         },
+        {
+          address: "0x5c7BCd6E7De5423a257D81B442095A1a6ced35C5",
+          startBlockNumber: 17125811,
+          abi: JSON.stringify(EthereumSpokePool2_5Abi),
+          acrossVersion: "2.5",
+        },
       ],
       [ChainIds.optimism]: [
         {
@@ -69,6 +80,12 @@ export const configValues = () => ({
           abi: JSON.stringify(OptimismSpokePool2Abi),
           acrossVersion: "2",
         },
+        {
+          address: "0x6f26Bf09B1C792e3228e5467807a900A503c0281",
+          startBlockNumber: 94233880,
+          abi: JSON.stringify(OptimismSpokePool2_5Abi),
+          acrossVersion: "2.5",
+        },
       ],
       [ChainIds.arbitrum]: [
         {
@@ -76,6 +93,12 @@ export const configValues = () => ({
           startBlockNumber: 12741972,
           abi: JSON.stringify(ArbitrumSpokePool2Abi),
           acrossVersion: "2",
+        },
+        {
+          address: "0xe35e9842fceaCA96570B734083f4a58e8F7C5f2A",
+          startBlockNumber: 84268970,
+          abi: JSON.stringify(ArbitrumSpokePool2_5Abi),
+          acrossVersion: "2.5",
         },
       ],
       [ChainIds.boba]: [
@@ -92,6 +115,12 @@ export const configValues = () => ({
           startBlockNumber: 28604263,
           abi: JSON.stringify(PolygonSpokePool2Abi),
           acrossVersion: "2",
+        },
+        {
+          address: "0x9295ee1d8C5b022Be115A2AD3c30C72E34e7F096",
+          startBlockNumber: 41954460,
+          abi: JSON.stringify(PolygonSpokePool2_5Abi),
+          acrossVersion: "2.5",
         },
       ],
       [ChainIds.goerli]: [
