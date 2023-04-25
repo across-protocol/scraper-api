@@ -1,6 +1,11 @@
 import { registerAs } from "@nestjs/config";
 import { ChainIds } from "../web3/model/ChainId";
 import { RunMode } from "../../dynamic-module";
+import EthereumSpokePool2Abi from "../web3/services/abi/EthereumSpokePool2.json";
+import ArbitrumSpokePool2Abi from "../web3/services/abi/ArbitrumSpokePool2.json";
+import OptimismSpokePool2Abi from "../web3/services/abi/OptimismSpokePool2.json";
+import PolygonSpokePool2Abi from "../web3/services/abi/PolygonSpokePool2.json";
+import BobaSpokePool2Abi from "../web3/services/abi/BobaSpokePool2.json";
 
 export enum StickyReferralAddressesMechanism {
   Queue = "queue",
@@ -44,34 +49,49 @@ export const configValues = () => ({
       288: process.env.WEB3_NODE_URL_288,
       137: process.env.WEB3_NODE_URL_137,
       42161: process.env.WEB3_NODE_URL_42161,
-      // 42: process.env.WEB3_NODE_URL_42,
-      // 421611: process.env.WEB3_NODE_URL_421611,
-      // 69: process.env.WEB3_NODE_URL_69,
-      // 4: process.env.WEB3_NODE_URL_4,
-      // 80001: process.env.WEB3_NODE_URL_80001,
       5: process.env.WEB3_NODE_URL_5,
     },
     spokePoolContracts: {
-      [ChainIds.mainnet]: {
-        address: "0x4D9079Bb4165aeb4084c526a32695dCfd2F77381",
-        startBlockNumber: 14819486,
-      },
-      [ChainIds.optimism]: {
-        address: "0xa420b2d1c0841415A695b81E5B867BCD07Dff8C9",
-        startBlockNumber: 8747136,
-      },
-      [ChainIds.arbitrum]: {
-        address: "0xB88690461dDbaB6f04Dfad7df66B7725942FEb9C",
-        startBlockNumber: 12741972,
-      },
-      [ChainIds.boba]: {
-        address: "0xBbc6009fEfFc27ce705322832Cb2068F8C1e0A58",
-        startBlockNumber: 619993,
-      },
-      [ChainIds.polygon]: {
-        address: "0x69B5c72837769eF1e7C164Abc6515DcFf217F920",
-        startBlockNumber: 28604263,
-      },
+      [ChainIds.mainnet]: [
+        {
+          address: "0x4D9079Bb4165aeb4084c526a32695dCfd2F77381",
+          startBlockNumber: 14819486,
+          abi: JSON.stringify(EthereumSpokePool2Abi),
+          acrossVersion: "2",
+        },
+      ],
+      [ChainIds.optimism]: [
+        {
+          address: "0xa420b2d1c0841415A695b81E5B867BCD07Dff8C9",
+          startBlockNumber: 8747136,
+          abi: JSON.stringify(OptimismSpokePool2Abi),
+          acrossVersion: "2",
+        },
+      ],
+      [ChainIds.arbitrum]: [
+        {
+          address: "0xB88690461dDbaB6f04Dfad7df66B7725942FEb9C",
+          startBlockNumber: 12741972,
+          abi: JSON.stringify(ArbitrumSpokePool2Abi),
+          acrossVersion: "2",
+        },
+      ],
+      [ChainIds.boba]: [
+        {
+          address: "0xBbc6009fEfFc27ce705322832Cb2068F8C1e0A58",
+          startBlockNumber: 619993,
+          abi: JSON.stringify(BobaSpokePool2Abi),
+          acrossVersion: "2",
+        },
+      ],
+      [ChainIds.polygon]: [
+        {
+          address: "0x69B5c72837769eF1e7C164Abc6515DcFf217F920",
+          startBlockNumber: 28604263,
+          abi: JSON.stringify(PolygonSpokePool2Abi),
+          acrossVersion: "2",
+        },
+      ],
     },
     merkleDistributor: {
       address: process.env.MERKLE_DISTRIBUTOR_ADDRESS || "0xF633b72A4C2Fb73b77A379bf72864A825aD35b6D", // TODO: replace with mainnet
@@ -84,6 +104,12 @@ export const configValues = () => ({
     },
   },
   enableSpokePoolsEventsProcessing: process.env.ENABLE_SPOKE_POOLS_EVENTS_PROCESSING === "true",
+  /**
+   * The chains for which we want to process SpokePool events
+   */
+  spokePoolsEventsProcessingChainIds: process.env.SPOKE_POOLS_EVENTS_PROCESSING_CHAIN_IDS
+    ? process.env.SPOKE_POOLS_EVENTS_PROCESSING_CHAIN_IDS.split(",").map((chainId) => parseInt(chainId))
+    : [ChainIds.mainnet, ChainIds.optimism, ChainIds.arbitrum, ChainIds.polygon],
   enableMerkleDistributorEventsProcessing: process.env.ENABLE_MERKLE_DISTRIBUTOR_EVENTS_PROCESSING === "true",
   enableReferralsMaterializedViewRefresh: process.env.ENABLE_REFERRALS_MATERIALIZED_VIEW_REFRESH === "true",
   allowWalletRewardsEdit: process.env.ALLOW_WALLET_REWARDS_EDIT === "true",

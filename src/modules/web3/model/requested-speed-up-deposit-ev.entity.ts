@@ -1,11 +1,21 @@
 import { Column, CreateDateColumn, Entity, PrimaryGeneratedColumn, Unique, UpdateDateColumn } from "typeorm";
 
-export type RequestedSpeedUpDepositEventArgs = {
+export type RequestedSpeedUpDepositEv2Args = {
   newRelayerFeePct: string;
   depositId: number;
   depositor: string;
   depositorSignature: string;
 };
+
+export type RequestedSpeedUpDepositEv2_5Args = {
+  newRelayerFeePct: string;
+  depositId: number;
+  depositor: string;
+  updatedRecipient: string;
+  updatedMessage: string;
+  depositorSignature: string;
+};
+
 @Entity({
   schema: "events",
 })
@@ -36,7 +46,7 @@ export class RequestedSpeedUpDepositEv {
   logIndex: number;
 
   @Column({ type: "jsonb" })
-  args: RequestedSpeedUpDepositEventArgs;
+  args: RequestedSpeedUpDepositEv2Args | RequestedSpeedUpDepositEv2_5Args;
 
   @CreateDateColumn()
   createdAt: Date;

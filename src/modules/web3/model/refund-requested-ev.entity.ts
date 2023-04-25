@@ -1,21 +1,21 @@
 import { Column, CreateDateColumn, Entity, PrimaryGeneratedColumn, Unique, UpdateDateColumn } from "typeorm";
 
-export type FundsDepositedEvArgs = {
+export type RefundRequestedEvArgs = {
+  relayer: string;
+  refundToken: string;
   amount: string;
   originChainId: string;
   destinationChainId: string;
-  relayerFeePct: string;
+  realizedLpFeePct: string;
   depositId: number;
-  quoteTimestamp: number;
-  originToken: string;
-  recipient: string;
-  depositor: string;
+  fillBlock: string;
+  previousIdenticalRequests: string;
 };
 @Entity({
   schema: "events",
 })
-@Unique("UK_funds_deposited_ev_transactionHash_logIndex", ["transactionHash", "logIndex"])
-export class FundsDepositedEv {
+@Unique("UK_refund_requested_ev_transactionHash_logIndex", ["transactionHash", "logIndex"])
+export class RefundRequestedEv {
   @PrimaryGeneratedColumn()
   id: number;
 
@@ -41,7 +41,7 @@ export class FundsDepositedEv {
   logIndex: number;
 
   @Column({ type: "jsonb" })
-  args: FundsDepositedEvArgs;
+  args: RefundRequestedEvArgs;
 
   @CreateDateColumn()
   createdAt: Date;

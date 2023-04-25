@@ -1,23 +1,14 @@
-import { MerkleDistributor, SpokePool } from "@across-protocol/contracts-v2";
-import { TypedEvent, TypedEventFilter } from "@across-protocol/contracts-v2/dist/typechain/common";
 import { Logger } from "@nestjs/common";
 import { Web3Error, Web3ErrorCode } from "../model/ChainId";
+import { Contract, EventFilter, Event } from "ethers";
 
 const DEFAULT_BLOCK_RANGE = 100_000;
 
 export class EventsQuerier {
-  constructor(
-    private contract: SpokePool | MerkleDistributor,
-    private logger: Logger,
-    private blockRangeSize?: number,
-  ) {}
+  constructor(private contract: Contract, private logger: Logger, private blockRangeSize?: number) {}
 
-  public async getEvents(
-    from: number,
-    to: number,
-    filters: TypedEventFilter<TypedEvent<any>[], any>,
-  ): Promise<TypedEvent<any>[]> {
-    let events: TypedEvent<any>[] = [];
+  public async getEvents(from: number, to: number, filters: EventFilter): Promise<Event[]> {
+    let events: Event[] = [];
     let retryWithLowerBatchSize;
 
     do {
@@ -25,7 +16,6 @@ export class EventsQuerier {
       try {
         retryWithLowerBatchSize = false;
         events = [];
-
         if (this.blockRangeSize) {
           const intervals = this.getSamplesBetween(from, to, this.blockRangeSize);
           // query events only for the first interval to make sure block range is fine

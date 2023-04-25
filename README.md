@@ -87,3 +87,28 @@ export class ExampleModule {
   }
 }
 ```
+
+## Queuing mechanism
+
+```mermaid
+flowchart TD
+    A(publish blocks) -->|BlocksEventsQueueMsg| B(BlocksEventsQueue)
+
+    B -->|BlockNumberQueueMsg| C(BlockNumberQueue)
+    B -->|FillEventsQueueMsg| D(FillEventsQueue)
+    B -->|FillEvents2QueueMsg| E("FillEventsQueue2 \n (not implemented)")
+    style E stroke:red,color:red
+    B -->|SpeedUpEventsQueueMsg| F(SpeedUpEventsQueue)
+    B -->|SpeedUpEventsQueue2Msg| G("SpeedUpEventsQueue2 \n (not implemented)")
+    style G stroke:red,color:red
+
+    C -->|TokenDetailsQueueMsg| H(TokenDetailsQueue)
+    C -->|DepositReferralQueueMsg| I(DepositReferralQueue)
+    C -->|SuggestedFeesQueueMsg| J(SuggestedFeesQueue)
+    
+    D --> |DepositFilledDateQueueMsg| K(DepositFilledDateQueue)
+    D --> |TrackFillEventQueueMsg| L(TrackFillEventQueue)
+
+    H --> |TokenPriceQueueMsg| M(TokenPriceQueue)
+  ```
+

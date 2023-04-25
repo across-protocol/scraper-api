@@ -1,6 +1,6 @@
 import { Column, CreateDateColumn, Entity, PrimaryGeneratedColumn, Unique, UpdateDateColumn } from "typeorm";
 
-export type FilledRelayEventArgs = {
+export type FilledRelay2EvArgs = {
   amount: string;
   totalFilledAmount: string;
   fillAmount: string;
@@ -16,6 +16,30 @@ export type FilledRelayEventArgs = {
   depositor: string;
   recipient: string;
   isSlowRelay: boolean;
+};
+
+export type FilledRelay2_5EvArgs = {
+  amount: string;
+  totalFilledAmount: string;
+  fillAmount: string;
+  repaymentChainId: string;
+  originChainId: string;
+  destinationChainId: string;
+  relayerFeePct: string;
+  realizedLpFeePct: string;
+  depositId: number;
+  destinationToken: string;
+  relayer: string;
+  depositor: string;
+  recipient: string;
+  message: string;
+  updatableRelayData: {
+    recipient: string;
+    message: string;
+    relayerFeePct: string;
+    isSlowRelay: boolean;
+    payoutAdjustmentPct: string;
+  };
 };
 
 @Entity({
@@ -48,7 +72,7 @@ export class FilledRelayEv {
   logIndex: number;
 
   @Column({ type: "jsonb" })
-  args: FilledRelayEventArgs;
+  args: FilledRelay2EvArgs | FilledRelay2_5EvArgs;
 
   @CreateDateColumn()
   createdAt: Date;

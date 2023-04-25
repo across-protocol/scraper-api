@@ -29,11 +29,9 @@ export class ScraperService {
 
   public async run() {
     if (this.appConfig.values.enableSpokePoolsEventsProcessing) {
-      // the seconds interval used to query the contract events is based on the chain's block time
-      this.publishBlocks(ChainIds.mainnet, 10);
-      this.publishBlocks(ChainIds.arbitrum, 4);
-      this.publishBlocks(ChainIds.optimism, 4);
-      this.publishBlocks(ChainIds.polygon, 6);
+      for (const chainId of this.appConfig.values.spokePoolsEventsProcessingChainIds) {
+        this.publishBlocks(chainId, this.getSecondsInterval(chainId));
+      }
     }
 
     if (this.appConfig.values.enableMerkleDistributorEventsProcessing) {
@@ -46,16 +44,19 @@ export class ScraperService {
       try {
         const blockNumber = await this.providers.getProvider(chainId).getBlockNumber();
         this.logger.log(`latest block chainId: ${chainId} ${blockNumber}`);
+        const defaultStartBlockNumber = Math.min(
+          ...this.appConfig.values.web3.spokePoolContracts[chainId].map((contract) => contract.startBlockNumber),
+        );
         const range = await this.determineBlockRange(
           chainId,
           blockNumber,
-          this.appConfig.values.web3.spokePoolContracts[chainId].startBlockNumber,
+          defaultStartBlockNumber,
           this.processedBlockRepository,
         );
         if (!!range) {
           const queueMsg = { chainId, ...range };
           await this.scraperQueuesService.publishMessage<BlocksEventsQueueMessage>(ScraperQueue.BlocksEvents, queueMsg);
-          // publish the block range to be processed with a delay of 60 seconds
+          // publish the block range again to be processed with a delay of 60 seconds
           await this.scraperQueuesService.publishMessage<BlocksEventsQueueMessage>(
             ScraperQueue.BlocksEvents,
             queueMsg,
@@ -101,8 +102,7 @@ export class ScraperService {
   /**
    * Compute the start and the end of the next batch of blocks that needs to be processed.
    * `from` is computed depending on the latest block saved in DB || start block number defined in config file || 1
-   * `to` is a block number up to the latest block number from chain, but capped at a max value. This way we avoid
-   * huge block ranges to be processed.
+   * `to` is a block number up to the latest block number from chain, but capped at a max value to avoid huge block ranges
    * @returns the block range or undefined if from > to
    */
   public async determineBlockRange(
@@ -160,5 +160,25 @@ export class ScraperService {
     }
 
     return 3;
+  }
+
+  /**
+   * Get seconds interval used to query the contract events based on the chain's block time
+   * @param chainId the chain id
+   * @returns the number of seconds
+   */
+  private getSecondsInterval(chainId: number): number {
+    if (chainId === ChainIds.mainnet) {
+      return 10;
+    }
+    if (chainId === ChainIds.arbitrum) {
+      return 10;
+    }
+    if (chainId === ChainIds.optimism) {
+      return 10;
+    }
+    if (chainId === ChainIds.polygon) {
+      return 10;
+    }
   }
 }

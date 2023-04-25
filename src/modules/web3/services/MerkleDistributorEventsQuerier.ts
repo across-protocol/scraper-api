@@ -1,14 +1,14 @@
 import { AcrossMerkleDistributor } from "@across-protocol/contracts-v2";
-import { TypedEvent } from "@across-protocol/contracts-v2/dist/typechain/common";
 import { Logger } from "@nestjs/common";
 import { EventsQuerier } from "./EventsQuerier";
+import { Event } from "ethers";
 
 export class MerkleDistributorEventsQuerier extends EventsQuerier {
   constructor(private merkleDistributor: AcrossMerkleDistributor, blockRangeSize?: number) {
     super(merkleDistributor, new Logger(MerkleDistributorEventsQuerier.name), blockRangeSize);
   }
 
-  public async getClaimedEvents(from: number, to: number, account?: string): Promise<TypedEvent<any>[]> {
+  public async getClaimedEvents(from: number, to: number, account?: string): Promise<Event[]> {
     return this.getEvents(from, to, this.getClaimedEventsFilter(account));
   }
 
