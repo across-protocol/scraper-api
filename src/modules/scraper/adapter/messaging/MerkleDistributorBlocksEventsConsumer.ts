@@ -22,7 +22,9 @@ export class MerkleDistributorBlocksEventsConsumer {
   @Process({ concurrency: 1 })
   private async process(job: Job<MerkleDistributorBlocksEventsQueueMessage>) {
     const { chainId, from, to } = job.data;
-    const claimedEvents: ClaimedEvent[] = await this.providers.getMerkleDistributorQuerier().getClaimedEvents(from, to);
+    const claimedEvents = (await this.providers
+      .getMerkleDistributorQuerier()
+      .getClaimedEvents(from, to)) as ClaimedEvent[];
     this.logger.log(`(${from}, ${to}) - chainId ${chainId} - found ${claimedEvents.length} ClaimedEvent`);
 
     for (const event of claimedEvents) {

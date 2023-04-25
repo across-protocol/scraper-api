@@ -1,6 +1,6 @@
 import { InjectQueue } from "@nestjs/bull";
 import { Injectable, Logger } from "@nestjs/common";
-import { Queue } from "bull";
+import { JobOptions, Queue } from "bull";
 import { ScraperQueue } from "../adapter/messaging";
 
 @Injectable()
@@ -12,6 +12,7 @@ export class ScraperQueuesService {
     @InjectQueue(ScraperQueue.BlocksEvents) private blocksEventsQueue: Queue,
     @InjectQueue(ScraperQueue.MerkleDistributorBlocksEvents) private merkleDistributorBlocksEventsQueue: Queue,
     @InjectQueue(ScraperQueue.FillEvents) private fillEventsQueue: Queue,
+    @InjectQueue(ScraperQueue.FillEvents2) private fillEventsQueue2: Queue,
     @InjectQueue(ScraperQueue.SpeedUpEvents) private speedUpEventsQueue: Queue,
     @InjectQueue(ScraperQueue.BlockNumber) private blockNumberQueue: Queue,
     @InjectQueue(ScraperQueue.TokenDetails) private tokenDetailsQueue: Queue,
@@ -26,6 +27,7 @@ export class ScraperQueuesService {
       [ScraperQueue.BlocksEvents]: this.blocksEventsQueue,
       [ScraperQueue.MerkleDistributorBlocksEvents]: this.merkleDistributorBlocksEventsQueue,
       [ScraperQueue.FillEvents]: this.fillEventsQueue,
+      [ScraperQueue.FillEvents2]: this.fillEventsQueue2,
       [ScraperQueue.SpeedUpEvents]: this.speedUpEventsQueue,
       [ScraperQueue.BlockNumber]: this.blockNumberQueue,
       [ScraperQueue.TokenDetails]: this.tokenDetailsQueue,
@@ -39,11 +41,11 @@ export class ScraperQueuesService {
     this.initLogs();
   }
 
-  public async publishMessage<T>(queue: ScraperQueue, message: T) {
+  public async publishMessage<T>(queue: ScraperQueue, message: T, options: JobOptions = {}) {
     const q = this.queuesMap[queue];
 
     if (q) {
-      await q.add(message);
+      await q.add(message, options);
     }
   }
 

@@ -9,6 +9,7 @@ export const ChainIds = {
   goerli: 5,
   kovan: 42,
   rinkeby: 4,
+  arbitrumGoerli: 421613,
   arbitrumRinkeby: 421611,
   optimismKovan: 69,
   polygonMumbai: 80001,

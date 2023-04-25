@@ -28,138 +28,108 @@ export class ScraperService {
   }
 
   public async run() {
+    if (this.appConfig.values.enableSpokePoolsEventsProcessing) {
+      for (const chainId of this.appConfig.values.spokePoolsEventsProcessingChainIds) {
+        this.publishBlocks(chainId, this.getSecondsInterval(chainId));
+      }
+    }
+
+    if (this.appConfig.values.enableMerkleDistributorEventsProcessing) {
+      this.publishMerkleDistributorBlocks(30);
+    }
+  }
+
+  public async publishBlocks(chainId: number, secondsInterval: number) {
     while (true) {
       try {
-        const latestBlocks = await this.getLatestBlocks();
+        const blockNumber = await this.providers.getProvider(chainId).getBlockNumber();
+        this.logger.log(`latest block chainId: ${chainId} ${blockNumber}`);
+        const spokePoolContracts = this.appConfig.values.web3.spokePoolContracts[chainId] || [];
 
-        if (this.appConfig.values.enableSpokePoolsEventsProcessing) {
-          await this.publishBlocks(latestBlocks);
-        }
-        if (this.appConfig.values.enableMerkleDistributorEventsProcessing) {
-          await this.publishMerkleDistributorBlocks(latestBlocks);
+        if (spokePoolContracts.length === 0) return;
+
+        const defaultStartBlockNumber = Math.min(
+          ...this.appConfig.values.web3.spokePoolContracts[chainId].map((contract) => contract.startBlockNumber),
+        );
+        const range = await this.determineBlockRange(
+          chainId,
+          blockNumber,
+          defaultStartBlockNumber,
+          this.processedBlockRepository,
+        );
+        if (!!range) {
+          const queueMsg = { chainId, ...range };
+          await this.scraperQueuesService.publishMessage<BlocksEventsQueueMessage>(ScraperQueue.BlocksEvents, queueMsg);
+          // publish the block range again to be processed with a delay of 60 seconds
+          await this.scraperQueuesService.publishMessage<BlocksEventsQueueMessage>(
+            ScraperQueue.BlocksEvents,
+            queueMsg,
+            { delay: 1000 * 60 },
+          );
+          this.logger.log(`publish chainId: ${chainId} from: ${range.from} to: ${range.to}`);
         }
       } catch (error) {
         this.logger.error(error);
       }
-      await wait(20);
+      await wait(secondsInterval);
     }
   }
 
-  public async publishBlocks(latestBlocks: Record<string, number>) {
-    this.logger.log(JSON.stringify(latestBlocks));
-    const blockRanges = await this.determineBlockRanges(
-      latestBlocks,
-      this.appConfig.values.web3.spokePoolContracts,
-      this.processedBlockRepository,
-    );
+  public async publishMerkleDistributorBlocks(interval: number) {
+    while (true) {
+      try {
+        const chainId = this.appConfig.values.web3.merkleDistributor.chainId;
+        const blockNumber = await this.providers.getProvider(chainId).getBlockNumber();
+        const configStartBlockNumber = this.appConfig.values.web3.merkleDistributor.startBlockNumber;
+        const range = await this.determineBlockRange(
+          chainId,
+          blockNumber,
+          configStartBlockNumber,
+          this.merkleDistributorProcessedBlockRepository,
+          true,
+        );
 
-    for (const chainId of Object.keys(blockRanges)) {
-      const { from, to } = blockRanges[chainId];
-      await this.scraperQueuesService.publishMessage<BlocksEventsQueueMessage>(ScraperQueue.BlocksEvents, {
-        chainId: parseInt(chainId),
-        from,
-        to,
-      });
+        if (!!range) {
+          const queueMsg = { chainId, ...range };
+          await this.scraperQueuesService.publishMessage<MerkleDistributorBlocksEventsQueueMessage>(
+            ScraperQueue.MerkleDistributorBlocksEvents,
+            queueMsg,
+          );
+        }
+      } catch (error) {
+        this.logger.error(error);
+      }
+      await wait(interval);
     }
   }
-
-  public async publishMerkleDistributorBlocks(latestBlocks: Record<string, number>) {
-    const chainId = this.appConfig.values.web3.merkleDistributor.chainId;
-    const configStartBlockNumber = this.appConfig.values.web3.merkleDistributor.startBlockNumber;
-    const latestBlockNumber = latestBlocks[chainId];
-
-    const blockRange = await this.determineBlockRange(
-      chainId,
-      latestBlockNumber,
-      configStartBlockNumber,
-      this.merkleDistributorProcessedBlockRepository,
-    );
-
-    if (!blockRange) {
-      return;
-    }
-
-    await this.scraperQueuesService.publishMessage<MerkleDistributorBlocksEventsQueueMessage>(
-      ScraperQueue.MerkleDistributorBlocksEvents,
-      {
-        chainId,
-        ...blockRange,
-      },
-    );
-  }
-
-  /**
-   * Fetch the latest block numbers from all supported chains
-   */
-  public getLatestBlocks = async () => {
-    const chainIds = Object.keys(this.providers.getProviders()).map((chainId) => parseInt(chainId));
-    const blocks = await Promise.all(chainIds.map((chainId) => this.providers.getProvider(chainId).getBlock("latest")));
-    const blockNumbers = blocks.reduce(
-      (acc, block, idx) => ({ ...acc, [chainIds[idx]]: block.number }),
-      {} as Record<string, number>,
-    );
-
-    return blockNumbers;
-  };
 
   /**
    * Compute the start and the end of the next batch of blocks that needs to be processed.
    * `from` is computed depending on the latest block saved in DB || start block number defined in config file || 1
-   * `to` is a block number up to the latest block number from chain, but capped at a max value. This way we avoid
-   *     huge block ranges to be processed.
+   * `to` is a block number up to the latest block number from chain, but capped at a max value to avoid huge block ranges
+   * @returns the block range or undefined if from > to
    */
-  public async determineBlockRanges(
-    latestBlocks: Record<string, number>,
-    startBlockNumbers: Record<string, { startBlockNumber: number }>,
-    blockRepository: Repository<ProcessedBlock | MerkleDistributorProcessedBlock>,
-  ) {
-    const blockRanges: Record<string, { from: number; to: number }> = {};
-
-    for (const chainIdStr of Object.keys(latestBlocks)) {
-      const chainId = parseInt(chainIdStr);
-      const configStartBlockNumber = startBlockNumbers[chainId]?.startBlockNumber;
-
-      if (!configStartBlockNumber) {
-        continue;
-      }
-
-      const blockRange = await this.determineBlockRange(
-        chainId,
-        latestBlocks[chainId],
-        configStartBlockNumber,
-        blockRepository,
-      );
-
-      if (blockRange) {
-        blockRanges[chainId] = blockRange;
-      }
-    }
-
-    return blockRanges;
-  }
-
   public async determineBlockRange(
     chainId: number,
     latestBlockNumber: number,
-    configStartBlockNumber: number,
+    startBlockNumber: number,
     blockRepository: Repository<ProcessedBlock | MerkleDistributorProcessedBlock>,
+    keepDistanceFromHead = false,
   ) {
     let previousProcessedBlock = await blockRepository.findOne({
       where: { chainId },
     });
-
     let from = 1;
-
     if (previousProcessedBlock) {
       from = previousProcessedBlock.latestBlock + 1;
-    } else if (configStartBlockNumber) {
-      from = configStartBlockNumber;
+    } else if (startBlockNumber) {
+      from = startBlockNumber;
     }
+    const distanceFromHead = keepDistanceFromHead ? this.getFollowingDistance(chainId) : 0;
+    const to = Math.min(latestBlockNumber - distanceFromHead, from + this.getMinBlockRange(chainId));
 
-    const to = Math.min(latestBlockNumber - this.getFollowingDistance(chainId), from + this.getMinBlockRange(chainId));
-
-    if (from >= to) {
-      return;
+    if (from > to) {
+      return undefined;
     }
 
     if (!previousProcessedBlock) {
@@ -194,5 +164,27 @@ export class ScraperService {
     }
 
     return 3;
+  }
+
+  /**
+   * Get seconds interval used to query the contract events based on the chain's block time
+   * @param chainId the chain id
+   * @returns the number of seconds
+   */
+  private getSecondsInterval(chainId: number): number {
+    if (chainId === ChainIds.mainnet) {
+      return 10;
+    }
+    if (chainId === ChainIds.arbitrum) {
+      return 10;
+    }
+    if (chainId === ChainIds.optimism) {
+      return 10;
+    }
+    if (chainId === ChainIds.polygon) {
+      return 10;
+    }
+
+    return 10;
   }
 }

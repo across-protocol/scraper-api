@@ -7,7 +7,7 @@ import { AppConfigModule } from "../configuration/configuration.module";
 import { MarketPriceModule } from "../market-price/module";
 import { ReferralModule } from "../referral/module";
 import { Web3Module } from "../web3/module";
-
+import { FilledRelayEv, FundsDepositedEv, RequestedSpeedUpDepositEv } from "../web3/model";
 import { ScraperQueue } from "./adapter/messaging";
 import { BlockNumberConsumer } from "./adapter/messaging/BlockNumberConsumer";
 import { BlocksEventsConsumer } from "./adapter/messaging/BlocksEventsConsumer";
@@ -15,6 +15,7 @@ import { MerkleDistributorBlocksEventsConsumer } from "./adapter/messaging/Merkl
 import { DepositFilledDateConsumer } from "./adapter/messaging/DepositFilledDateConsumer";
 import { DepositReferralConsumer } from "./adapter/messaging/DepositReferralConsumer";
 import { FillEventsConsumer } from "./adapter/messaging/FillEventsConsumer";
+import { FillEventsConsumer2 } from "./adapter/messaging/FillEventsConsumer2";
 import { SpeedUpEventsConsumer } from "./adapter/messaging/SpeedUpEventsConsumer";
 import { TokenDetailsConsumer } from "./adapter/messaging/TokenDetailsConsumer";
 import { TokenPriceConsumer } from "./adapter/messaging/TokenPriceConsumer";
@@ -33,6 +34,7 @@ import { TrackService } from "./adapter/amplitude/track-service";
 import { ModuleOptions, RunMode } from "../../dynamic-module";
 import { DepositModule } from "../deposit/module";
 import { AirdropModule } from "../airdrop/module";
+import { RefundRequestedEv } from "../web3/model/refund-requested-ev.entity";
 
 @Module({})
 export class ScraperModule {
@@ -45,6 +47,7 @@ export class ScraperModule {
       BlocksEventsConsumer,
       MerkleDistributorBlocksEventsConsumer,
       FillEventsConsumer,
+      FillEventsConsumer2,
       SpeedUpEventsConsumer,
       BlockNumberConsumer,
       TokenDetailsConsumer,
@@ -62,7 +65,16 @@ export class ScraperModule {
       imports: [
         Web3Module,
         AppConfigModule,
-        TypeOrmModule.forFeature([ProcessedBlock, MerkleDistributorProcessedBlock, Claim, Deposit]),
+        TypeOrmModule.forFeature([
+          ProcessedBlock,
+          MerkleDistributorProcessedBlock,
+          Claim,
+          Deposit,
+          FundsDepositedEv,
+          FilledRelayEv,
+          RequestedSpeedUpDepositEv,
+          RefundRequestedEv,
+        ]),
         MarketPriceModule.forRoot(moduleOptions),
         HttpModule,
         DepositModule.forRoot(moduleOptions),
@@ -91,6 +103,15 @@ export class ScraperModule {
         }),
         BullModule.registerQueue({
           name: ScraperQueue.FillEvents,
+          defaultJobOptions: {
+            backoff: 120 * 1000,
+            attempts: Number.MAX_SAFE_INTEGER,
+            removeOnComplete: true,
+            removeOnFail: true,
+          },
+        }),
+        BullModule.registerQueue({
+          name: ScraperQueue.FillEvents2,
           defaultJobOptions: {
             backoff: 120 * 1000,
             attempts: Number.MAX_SAFE_INTEGER,
