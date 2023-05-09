@@ -11,3 +11,15 @@ export class InvalidAddressException extends HttpException {
     );
   }
 }
+
+export class DepositNotFoundException extends HttpException {
+  constructor() {
+    super(
+      {
+        error: DepositNotFoundException.name,
+        message: "Deposit not found",
+      },
+      HttpStatus.NOT_FOUND,
+    );
+  }
+}

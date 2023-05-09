@@ -3,7 +3,11 @@ import { INestApplication } from "@nestjs/common";
 import { Test } from "@nestjs/testing";
 import { constants, ethers } from "ethers";
 
-import { DepositFixture, mockManyDepositEntities } from "../src/modules/deposit/adapter/db/deposit-fixture";
+import {
+  DepositFixture,
+  mockManyDepositEntities,
+  mockDepositEntity,
+} from "../src/modules/deposit/adapter/db/deposit-fixture";
 import { ValidationPipe } from "../src/validation.pipe";
 import { AppModule } from "../src/app.module";
 import { RunMode } from "../src/dynamic-module";
@@ -112,6 +116,58 @@ describe("GET /deposits", () => {
 
   it("400 for negative offset", async () => {
     const response = await request(app.getHttpServer()).get("/deposits?limit=-10");
+    expect(response.status).toBe(400);
+  });
+
+  afterAll(async () => {
+    await app.get(DepositFixture).deleteAllDeposits();
+  });
+});
+
+describe("GET /deposits/details", () => {
+  const depositorAddress = "0x9A8f92a830A5cB89a3816e3D267CB7791c16b04D";
+  const depositTxHash = "0x91616c035fe2b7432d1549b9a204e29fd7cf3f5d5d9170cd418e5cc7dcc4e3a0";
+  const sourceChainId = 1;
+
+  const FILLED_DEPOSIT = mockDepositEntity({
+    status: "filled",
+    depositorAddr: depositorAddress,
+    sourceChainId,
+    depositTxHash,
+    amount: "10",
+    filled: "10",
+  });
+
+  beforeAll(async () => {
+    await app.get(DepositFixture).insertManyDeposits([FILLED_DEPOSIT]);
+  });
+
+  it("200 with for correct params", async () => {
+    const response = await request(app.getHttpServer()).get(
+      `/deposits/details?depositTxHash=${depositTxHash}&originChainId=${sourceChainId}`,
+    );
+    expect(response.status).toBe(200);
+    expect(response.body.status).toBe("filled");
+  });
+
+  it("404 for non existent depositTxHash", async () => {
+    const response = await request(app.getHttpServer()).get(
+      `/deposits/details?depositTxHash=0x&originChainId=${sourceChainId}`,
+    );
+    expect(response.status).toBe(404);
+  });
+
+  it("404 for non existent originChainId", async () => {
+    const response = await request(app.getHttpServer()).get(
+      `/deposits/details?depositTxHash=${depositTxHash}&originChainId=10`,
+    );
+    expect(response.status).toBe(404);
+  });
+
+  it("400 for invalid originChainId", async () => {
+    const response = await request(app.getHttpServer()).get(
+      `/deposits/details?depositTxHash=${depositTxHash}&originChainId=invalid`,
+    );
     expect(response.status).toBe(400);
   });
 
