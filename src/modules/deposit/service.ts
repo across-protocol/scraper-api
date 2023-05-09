@@ -12,7 +12,7 @@ import {
   getTotalVolumeQuery,
 } from "./adapter/db/queries";
 import { AppConfig } from "../configuration/configuration.service";
-import { InvalidAddressException } from "./exceptions";
+import { InvalidAddressException, DepositNotFoundException } from "./exceptions";
 
 export const DEPOSITS_STATS_CACHE_KEY = "deposits:stats";
 
@@ -130,6 +130,16 @@ export class DepositService {
         total,
       },
     };
+  }
+
+  public async getDepositDetails(depositTxHash: string, sourceChainId: number) {
+    const deposit = await this.depositRepository.findOne({ where: { depositTxHash, sourceChainId } });
+
+    if (!deposit) {
+      throw new DepositNotFoundException();
+    }
+
+    return deposit;
   }
 
   public async getEtlReferralDeposits(date: string) {
