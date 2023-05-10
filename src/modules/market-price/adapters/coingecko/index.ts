@@ -15,6 +15,7 @@ const symbolIdMap = {
   bal: "balancer",
   usdt: "tether",
   acx: "across-protocol",
+  snx: "havven",
 };
 
 @Injectable()
