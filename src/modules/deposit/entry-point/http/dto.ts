@@ -1,6 +1,6 @@
 import { ApiProperty } from "@nestjs/swagger";
 import { Type } from "class-transformer";
-import { IsDateString, IsEnum, IsInt, IsOptional, IsString, Max, Min } from "class-validator";
+import { IsDateString, IsEnum, IsInt, IsOptional, IsString, Max, Min, IsPositive } from "class-validator";
 
 export class GetDepositsQuery {
   @IsOptional()
@@ -36,6 +36,19 @@ export class GetDepositsQuery {
   @IsString()
   @ApiProperty({ required: false })
   address: string;
+}
+
+export class GetDepositDetailsQuery {
+  @IsString()
+  @Type(() => String)
+  @ApiProperty({ example: "0x", required: true })
+  depositTxHash: string;
+
+  @IsInt()
+  @IsPositive()
+  @Type(() => Number)
+  @ApiProperty({ example: 1, required: true })
+  originChainId: string;
 }
 
 export class GetDepositsStatsResponse {
