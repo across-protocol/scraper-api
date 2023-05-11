@@ -2,7 +2,6 @@ import { HttpModule } from "@nestjs/axios";
 import { BullModule } from "@nestjs/bull";
 import { DynamicModule, Module, Provider } from "@nestjs/common";
 import { TypeOrmModule } from "@nestjs/typeorm";
-
 import { AppConfigModule } from "../configuration/configuration.module";
 import { MarketPriceModule } from "../market-price/module";
 import { ReferralModule } from "../referral/module";
@@ -24,6 +23,7 @@ import { Deposit } from "../deposit/model/deposit.entity";
 import { Claim } from "../airdrop/model/claim.entity";
 import { ProcessedBlock } from "./model/ProcessedBlock.entity";
 import { MerkleDistributorProcessedBlock } from "./model/MerkleDistributorProcessedBlock.entity";
+import { HubPoolExecutedRootBundleProcessedBlock } from "./model/HubPoolExecutedRootBundleProcessedBlock.entity";
 import { ScraperService } from "./service";
 import { ScraperQueuesService } from "./service/ScraperQueuesService";
 import { DepositAcxPriceConsumer } from "./adapter/messaging/DepositAcxPriceConsumer";
@@ -31,10 +31,11 @@ import { SuggestedFeesConsumer } from "./adapter/messaging/SuggestedFeesConsumer
 import { SuggestedFeesService } from "./adapter/across-serverless-api/suggested-fees-service";
 import { TrackFillEventConsumer } from "./adapter/messaging/TrackFillEventConsumer";
 import { TrackService } from "./adapter/amplitude/track-service";
-import { ModuleOptions, RunMode } from "../../dynamic-module";
+import { ModuleOptions } from "../../dynamic-module";
 import { DepositModule } from "../deposit/module";
 import { AirdropModule } from "../airdrop/module";
 import { RefundRequestedEv } from "../web3/model/refund-requested-ev.entity";
+import { HubPoolExecutedRootBundleConsumer } from "./adapter/messaging/HubPoolExecutedRootBundleConsumer";
 
 @Module({})
 export class ScraperModule {
@@ -46,6 +47,7 @@ export class ScraperModule {
       TrackService,
       BlocksEventsConsumer,
       MerkleDistributorBlocksEventsConsumer,
+      HubPoolExecutedRootBundleConsumer,
       FillEventsConsumer,
       FillEventsConsumer2,
       SpeedUpEventsConsumer,
@@ -68,6 +70,7 @@ export class ScraperModule {
         TypeOrmModule.forFeature([
           ProcessedBlock,
           MerkleDistributorProcessedBlock,
+          HubPoolExecutedRootBundleProcessedBlock,
           Claim,
           Deposit,
           FundsDepositedEv,
@@ -136,6 +139,9 @@ export class ScraperModule {
         }),
         BullModule.registerQueue({
           name: ScraperQueue.TrackFillEvent,
+        }),
+        BullModule.registerQueue({
+          name: ScraperQueue.HubPoolExecutedRootBundleEvent,
         }),
       ],
       exports: [ScraperQueuesService],

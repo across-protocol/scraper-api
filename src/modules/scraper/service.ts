@@ -7,8 +7,14 @@ import { ChainIds } from "../web3/model/ChainId";
 import { AppConfig } from "../configuration/configuration.service";
 import { ProcessedBlock } from "./model/ProcessedBlock.entity";
 import { MerkleDistributorProcessedBlock } from "./model/MerkleDistributorProcessedBlock.entity";
+import { HubPoolExecutedRootBundleProcessedBlock } from "./model/HubPoolExecutedRootBundleProcessedBlock.entity";
 import { ScraperQueuesService } from "./service/ScraperQueuesService";
-import { BlocksEventsQueueMessage, MerkleDistributorBlocksEventsQueueMessage, ScraperQueue } from "./adapter/messaging";
+import {
+  BlocksEventsQueueMessage,
+  HubPoolExecutedRootBundleEventQueueMessage,
+  MerkleDistributorBlocksEventsQueueMessage,
+  ScraperQueue,
+} from "./adapter/messaging";
 import { wait } from "../../utils";
 
 @Injectable()
@@ -22,6 +28,8 @@ export class ScraperService {
     private processedBlockRepository: Repository<ProcessedBlock>,
     @InjectRepository(MerkleDistributorProcessedBlock)
     private merkleDistributorProcessedBlockRepository: Repository<MerkleDistributorProcessedBlock>,
+    @InjectRepository(HubPoolExecutedRootBundleProcessedBlock)
+    private hubPoolExecutedRootBundleRepository: Repository<HubPoolExecutedRootBundleProcessedBlock>,
     private scraperQueuesService: ScraperQueuesService,
   ) {
     this.run();
@@ -36,6 +44,10 @@ export class ScraperService {
 
     if (this.appConfig.values.enableMerkleDistributorEventsProcessing) {
       this.publishMerkleDistributorBlocks(30);
+    }
+
+    if (this.appConfig.values.enableHubPoolExecutedRootBundleProcessing) {
+      this.publishHubPoolExecutedRootBundleEvents(30);
     }
   }
 
@@ -103,6 +115,36 @@ export class ScraperService {
     }
   }
 
+  public async publishHubPoolExecutedRootBundleEvents(interval: number) {
+    while (true) {
+      try {
+        const chainId = this.appConfig.values.web3.hubPool.chainId;
+        const blockNumber = await this.providers.getProvider(chainId).getBlockNumber();
+        const configStartBlockNumber = this.appConfig.values.web3.hubPool.startBlockNumber;
+        const range = await this.determineBlockRange(
+          chainId,
+          blockNumber,
+          configStartBlockNumber,
+          this.merkleDistributorProcessedBlockRepository,
+          true,
+        );
+
+        if (!!range) {
+          const queueMsg = { chainId, ...range, tokenAddress: "" };
+          await this.scraperQueuesService.publishMessage<HubPoolExecutedRootBundleEventQueueMessage>(
+            ScraperQueue.HubPoolExecutedRootBundleEvent,
+            queueMsg,
+          );
+          this.logger.log(
+            `publish HubPoolExecutedRootBundleEvent symbol: ${queueMsg.tokenAddress} from: ${range.from} to: ${range.to}`,
+          );
+        }
+      } catch (error) {
+        this.logger.error(error);
+      }
+      await wait(interval);
+    }
+  }
   /**
    * Compute the start and the end of the next batch of blocks that needs to be processed.
    * `from` is computed depending on the latest block saved in DB || start block number defined in config file || 1
@@ -113,7 +155,9 @@ export class ScraperService {
     chainId: number,
     latestBlockNumber: number,
     startBlockNumber: number,
-    blockRepository: Repository<ProcessedBlock | MerkleDistributorProcessedBlock>,
+    blockRepository: Repository<
+      ProcessedBlock | MerkleDistributorProcessedBlock | HubPoolExecutedRootBundleProcessedBlock
+    >,
     keepDistanceFromHead = false,
   ) {
     let previousProcessedBlock = await blockRepository.findOne({
