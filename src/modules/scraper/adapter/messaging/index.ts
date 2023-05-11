@@ -12,6 +12,7 @@ export enum ScraperQueue {
   DepositAcxPrice = "DepositAcxPrice",
   SuggestedFees = "SuggestedFees",
   TrackFillEvent = "TrackFillEvent",
+  HubPoolExecutedRootBundleEvent = "HubPoolExecutedRootBundleEvent",
 }
 
 export type BlocksEventsQueueMessage = {
@@ -21,6 +22,13 @@ export type BlocksEventsQueueMessage = {
 };
 
 export type MerkleDistributorBlocksEventsQueueMessage = {
+  chainId: number;
+  from: number;
+  to: number;
+};
+
+export type HubPoolExecutedRootBundleEventQueueMessage = {
+  tokenAddress: string;
   chainId: number;
   from: number;
   to: number;
