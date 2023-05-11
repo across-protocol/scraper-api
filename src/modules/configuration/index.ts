@@ -117,11 +117,18 @@ export const configValues = () => ({
       referralsStartWindowIndex: Number(process.env.REFERRALS_START_WINDOW_INDEX || "1"),
       startBlockNumber: Number(process.env.MERKLE_DISTRIBUTOR_START_BLOCK || 7884371),
     },
+    hubPool: {
+      address: process.env.HUB_POOL_ADDRESS || "0xc186fA914353c44b2E33eBE05f21846F1048bEda",
+      chainId: Number(process.env.HUB_POOL_ADDRESS_CHAIN_ID || "1"),
+      startBlockNumber: 14819537,
+      acrossVersion: "2",
+    },
     acx: {
       address: process.env.ACX_ADDRESS || "0x40153DdFAd90C49dbE3F5c9F96f2a5B25ec67461", // TODO: replace with mainnet,
     },
   },
   enableSpokePoolsEventsProcessing: process.env.ENABLE_SPOKE_POOLS_EVENTS_PROCESSING === "true",
+  enableHubPoolExecutedRootBundleProcessing: process.env.ENABLE_HUB_POOL_EXECUTED_ROOT_BUNDLE_PROCESSING === "true",
   /**
    * The chains for which we want to process SpokePool events
    */
