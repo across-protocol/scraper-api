@@ -28,8 +28,6 @@ export type MerkleDistributorBlocksEventsQueueMessage = {
 };
 
 export type HubPoolExecutedRootBundleEventQueueMessage = {
-  tokenAddress: string;
-  chainId: number;
   from: number;
   to: number;
 };

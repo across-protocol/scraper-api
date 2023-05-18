@@ -12,7 +12,10 @@ export class HubPoolExecutedRootBundleConsumer {
 
   @Process()
   private async process(job: Job<HubPoolExecutedRootBundleEventQueueMessage>) {
-    job;
+    const { to, from } = job.data;
+    const hubPoolEventQuerier = this.providers.getHubPoolQuerier();
+    const events = await hubPoolEventQuerier.getValidatedProposalEvents(from, to);
+    this.logger.log(events);
   }
 
   @OnQueueFailed()

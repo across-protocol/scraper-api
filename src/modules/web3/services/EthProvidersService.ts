@@ -1,4 +1,4 @@
-import { ERC20__factory, AcrossMerkleDistributor__factory, SpokePool__factory } from "@across-protocol/contracts-v2";
+import { ERC20__factory, AcrossMerkleDistributor__factory, HubPool__factory } from "@across-protocol/contracts-v2";
 import { Injectable } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { ethers } from "ethers";
@@ -10,12 +10,14 @@ import { Token } from "../model/token.entity";
 import { SpokePoolEventsQuerier } from "./SpokePoolEventsQuerier";
 import { MerkleDistributorEventsQuerier } from "./MerkleDistributorEventsQuerier";
 import { Transaction } from "../model/transaction.entity";
+import { HubPoolEventsQuerier } from "./HubPoolEventsQuerier";
 
 @Injectable()
 export class EthProvidersService {
   private providers: Record<string, ethers.providers.JsonRpcProvider> = {};
   private spokePoolEventQueriers: Record<string, Record<string, SpokePoolEventsQuerier>> = {};
   private merkleDistributorEventQuerier: MerkleDistributorEventsQuerier;
+  private hubPoolEventsQuerier: HubPoolEventsQuerier;
 
   public constructor(
     private appConfig: AppConfig,
@@ -26,9 +28,10 @@ export class EthProvidersService {
     this.setProviders();
     this.setSpokePoolEventQueriers();
     this.setMerkleDistributorEventQuerier();
+    this.setHubPoolContractEventsQuerier();
   }
 
-  public getProvider(chainId: ChainId): ethers.providers.JsonRpcProvider | undefined {
+  public getProvider(chainId: ChainId): ethers.providers.Provider | undefined {
     return this.providers[chainId];
   }
 
@@ -38,6 +41,10 @@ export class EthProvidersService {
 
   public getSpokePoolEventQuerier(chainId: ChainId, address: string): SpokePoolEventsQuerier | undefined {
     return this.spokePoolEventQueriers[chainId][address];
+  }
+
+  public getHubPoolQuerier(): HubPoolEventsQuerier | undefined {
+    return this.hubPoolEventsQuerier;
   }
 
   public getSpokePoolEventQueriers() {
@@ -136,6 +143,18 @@ export class EthProvidersService {
         provider,
       );
       this.merkleDistributorEventQuerier = new MerkleDistributorEventsQuerier(merkleDistributor);
+    }
+  }
+
+  private setHubPoolContractEventsQuerier() {
+    const provider = this.getProvider(this.appConfig.values.web3.hubPool.chainId);
+    if (provider) {
+      const hubPool = HubPool__factory.connect(this.appConfig.values.web3.hubPool.address, provider);
+      this.hubPoolEventsQuerier = new HubPoolEventsQuerier(
+        hubPool,
+        this.appConfig.values.web3.hubPool.chainId,
+        this.appConfig.values.web3.hubPool.startBlockNumber,
+      );
     }
   }
 }

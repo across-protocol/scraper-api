@@ -130,14 +130,11 @@ export class ScraperService {
         );
 
         if (!!range) {
-          const queueMsg = { chainId, ...range, tokenAddress: "" };
           await this.scraperQueuesService.publishMessage<HubPoolExecutedRootBundleEventQueueMessage>(
             ScraperQueue.HubPoolExecutedRootBundleEvent,
-            queueMsg,
+            range,
           );
-          this.logger.log(
-            `publish HubPoolExecutedRootBundleEvent symbol: ${queueMsg.tokenAddress} from: ${range.from} to: ${range.to}`,
-          );
+          this.logger.log(`publish HubPoolExecutedRootBundleEvent from: ${range.from} to: ${range.to}`);
         }
       } catch (error) {
         this.logger.error(error);

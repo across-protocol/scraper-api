@@ -6,9 +6,9 @@ import { Repository, QueryFailedError } from "typeorm";
 
 import { EthProvidersService } from "../../../web3/services/EthProvidersService";
 import { MerkleDistributorBlocksEventsQueueMessage, ScraperQueue } from ".";
-import { ClaimedEvent } from "@across-protocol/contracts-v2/dist/typechain/MerkleDistributor";
 import { Claim } from "../../../airdrop/model/claim.entity";
 import { utils } from "ethers";
+import { ClaimedEvent } from "@across-protocol/contracts-v2/dist/typechain/contracts/merkle-distributor/AcrossMerkleDistributor";
 
 @Processor(ScraperQueue.MerkleDistributorBlocksEvents)
 export class MerkleDistributorBlocksEventsConsumer {
