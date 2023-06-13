@@ -76,13 +76,13 @@ export class ScraperQueuesService {
     if (!q) return;
 
     try {
-      let failedJobs: Job[] = [];
+      const failedJobs: Job[] = [];
       if (body.count > 0) {
         await q.getFailed(0, body.count);
       } else {
         await q.getFailed();
       }
-      
+
       for (const failedJob of failedJobs) {
         await failedJob.retry();
       }
