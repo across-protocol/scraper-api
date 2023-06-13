@@ -1,7 +1,8 @@
 import { InjectQueue } from "@nestjs/bull";
 import { Injectable, Logger } from "@nestjs/common";
-import { JobOptions, Queue } from "bull";
+import { Job, JobOptions, Queue } from "bull";
 import { ScraperQueue } from "../adapter/messaging";
+import { RetryFailedJobsBody } from "../entry-point/http/dto";
 
 @Injectable()
 export class ScraperQueuesService {
@@ -69,13 +70,19 @@ export class ScraperQueuesService {
     }, 1000 * 60);
   }
 
-  public async retryFailedJobs(queue: ScraperQueue) {
-    const q = this.queuesMap[queue];
+  public async retryFailedJobs(body: RetryFailedJobsBody) {
+    const q = this.queuesMap[body.queue];
 
     if (!q) return;
 
     try {
-      const failedJobs = await q.getFailed();
+      let failedJobs: Job[] = [];
+      if (body.count > 0) {
+        await q.getFailed(0, body.count);
+      } else {
+        await q.getFailed();
+      }
+      
       for (const failedJob of failedJobs) {
         await failedJob.retry();
       }
