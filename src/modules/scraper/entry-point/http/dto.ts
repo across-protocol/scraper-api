@@ -1,5 +1,5 @@
 import { ApiProperty } from "@nestjs/swagger";
-import { IsIn, IsInt, IsString } from "class-validator";
+import { IsIn, IsInt, IsOptional, IsString } from "class-validator";
 import { ScraperQueue } from "../../adapter/messaging";
 
 export class ProcessBlocksBody {
@@ -81,4 +81,9 @@ export class RetryFailedJobsBody {
   @IsIn(Object.values(ScraperQueue))
   @ApiProperty({ enum: ScraperQueue, isArray: false })
   queue: ScraperQueue;
+
+  @IsOptional()
+  @IsInt()
+  @ApiProperty({ example: 0 })
+  count?: number;
 }

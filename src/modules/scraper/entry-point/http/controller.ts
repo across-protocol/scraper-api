@@ -171,7 +171,6 @@ export class ScraperController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @ApiBearerAuth()
   async retryFailedJobs(@Body() body: RetryFailedJobsBody) {
-    const { queue } = body;
-    this.scraperQueuesService.retryFailedJobs(queue);
+    await this.scraperQueuesService.retryFailedJobs(body);
   }
 }
