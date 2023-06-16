@@ -40,11 +40,12 @@ export class SpeedUpEventsConsumer {
   }
 
   public async processSpeedUpEventQueueMessage(deposit: Deposit, data: SpeedUpEventsQueueMessage) {
-    const { transactionHash, newRelayerFeePct, blockNumber, depositSourceChainId } = data;
+    const { transactionHash, newRelayerFeePct, blockNumber, depositSourceChainId, updatedMessage, updatedRecipient } =
+      data;
 
     const sortedSpeedUps = [
       ...deposit.speedUps,
-      { hash: transactionHash, newRelayerFeePct, blockNumber, depositSourceChainId },
+      { hash: transactionHash, newRelayerFeePct, blockNumber, depositSourceChainId, updatedMessage, updatedRecipient },
     ].sort((a, b) => b.blockNumber - a.blockNumber);
 
     return this.depositRepository.update(
@@ -52,6 +53,8 @@ export class SpeedUpEventsConsumer {
       {
         speedUps: sortedSpeedUps,
         depositRelayerFeePct: sortedSpeedUps[0].newRelayerFeePct,
+        message: sortedSpeedUps[0].updatedMessage || deposit.message,
+        recipientAddr: sortedSpeedUps[0]?.updatedRecipient || deposit.recipientAddr,
       },
     );
   }
