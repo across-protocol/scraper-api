@@ -1,4 +1,5 @@
 import { NestFactory } from "@nestjs/core";
+import { Logger } from "@nestjs/common";
 import helmet from "helmet";
 import { NestExpressApplication } from "@nestjs/platform-express";
 
@@ -30,6 +31,10 @@ async function bootstrap() {
   SwaggerModule.setup("swagger", app, document);
 
   await app.listen(port);
+
+  const logger = new Logger("NestApplication");
+  logger.log(`Listening on port ${port}`);
+  logger.log(`Running in modes: ${config.values.app.runModes}`);
 }
 
 bootstrap();

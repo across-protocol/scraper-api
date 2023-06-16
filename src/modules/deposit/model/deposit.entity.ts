@@ -34,6 +34,8 @@ export type RequestedSpeedUpDepositTx = {
   blockNumber: number;
   newRelayerFeePct: string;
   depositSourceChainId: number;
+  updatedRecipient?: string;
+  updatedMessage?: string;
 };
 
 @Entity()
@@ -70,6 +72,9 @@ export class Deposit {
 
   @Column()
   recipientAddr: string;
+
+  @Column({ default: "0x" })
+  message: string;
 
   @Column({ default: "pending" })
   status: TransferStatus;
