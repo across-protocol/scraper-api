@@ -208,9 +208,11 @@ export class BlocksEventsConsumer {
         (contract) => contract.address === address,
       )[0];
 
+      let message: SpeedUpEventsQueueMessage;
+
       if (acrossVersion === "2") {
         const typedEvent = event as RequestedSpeedUpDepositEvent2;
-        const message: SpeedUpEventsQueueMessage = {
+        message = {
           depositSourceChainId: chainId,
           depositId: typedEvent.args.depositId,
           depositor: typedEvent.args.depositor,
@@ -219,8 +221,23 @@ export class BlocksEventsConsumer {
           blockNumber: typedEvent.blockNumber,
           newRelayerFeePct: typedEvent.args.newRelayerFeePct.toString(),
         };
-        await this.scraperQueuesService.publishMessage<SpeedUpEventsQueueMessage>(ScraperQueue.SpeedUpEvents, message);
       } else if (acrossVersion === "2.5") {
+        const typedEvent = event as RequestedSpeedUpDepositEvent2_5;
+        message = {
+          depositSourceChainId: chainId,
+          depositId: typedEvent.args.depositId,
+          depositor: typedEvent.args.depositor,
+          depositorSignature: typedEvent.args.depositorSignature,
+          transactionHash: typedEvent.transactionHash,
+          blockNumber: typedEvent.blockNumber,
+          newRelayerFeePct: typedEvent.args.newRelayerFeePct.toString(),
+          updatedMessage: typedEvent.args.updatedMessage,
+          updatedRecipient: typedEvent.args.updatedRecipient,
+        };
+      }
+
+      if (message) {
+        await this.scraperQueuesService.publishMessage<SpeedUpEventsQueueMessage>(ScraperQueue.SpeedUpEvents, message);
       }
     }
   }

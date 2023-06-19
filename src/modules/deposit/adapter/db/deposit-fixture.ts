@@ -43,6 +43,7 @@ export function mockDepositEntity(overrides: Partial<Deposit>) {
     fillTxs: [] as DepositFillTx[],
     blockNumber: 1,
     acxUsdPrice: "0.1",
+    message: "0x",
     ...overrides,
   };
 }

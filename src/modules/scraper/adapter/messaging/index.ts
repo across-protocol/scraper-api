@@ -56,6 +56,8 @@ export type SpeedUpEventsQueueMessage = {
   transactionHash: string;
   blockNumber: number;
   newRelayerFeePct: string;
+  updatedRecipient?: string;
+  updatedMessage?: string;
 };
 
 export type BlockNumberQueueMessage = {

@@ -179,6 +179,7 @@ export function formatDeposit(deposit: Deposit) {
     assetAddr: deposit.tokenAddr,
     depositorAddr: deposit.depositorAddr,
     recipientAddr: deposit.recipientAddr,
+    message: deposit.message,
     amount: deposit.amount,
     depositTxHash: deposit.depositTxHash,
     fillTxs: deposit.fillTxs.map(({ hash }) => hash),
