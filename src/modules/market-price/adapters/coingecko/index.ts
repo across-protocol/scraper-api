@@ -16,6 +16,7 @@ const symbolIdMap = {
   usdt: "tether",
   acx: "across-protocol",
   snx: "havven",
+  pool: "pooltogether",
 };
 
 @Injectable()
