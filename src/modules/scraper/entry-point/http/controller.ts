@@ -26,6 +26,7 @@ import {
   SubmitDepositAcxPriceBody,
   SubmitSuggestedFeesBody,
   RetryFailedJobsBody,
+  RetryIncompleteDepositsBody,
 } from "./dto";
 
 @Controller()
@@ -172,5 +173,14 @@ export class ScraperController {
   @ApiBearerAuth()
   async retryFailedJobs(@Body() body: RetryFailedJobsBody) {
     await this.scraperQueuesService.retryFailedJobs(body);
+  }
+
+  @Post("scraper/incomplete-deposits/retry")
+  @ApiTags("scraper")
+  @Roles(Role.Admin)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @ApiBearerAuth()
+  async retryIncompleteDeposits(@Body() body: RetryIncompleteDepositsBody) {
+    await this.scraperService.retryIncompleteDeposits(body);
   }
 }

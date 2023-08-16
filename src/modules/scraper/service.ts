@@ -8,8 +8,15 @@ import { AppConfig } from "../configuration/configuration.service";
 import { ProcessedBlock } from "./model/ProcessedBlock.entity";
 import { MerkleDistributorProcessedBlock } from "./model/MerkleDistributorProcessedBlock.entity";
 import { ScraperQueuesService } from "./service/ScraperQueuesService";
-import { BlocksEventsQueueMessage, MerkleDistributorBlocksEventsQueueMessage, ScraperQueue } from "./adapter/messaging";
+import {
+  BlockNumberQueueMessage,
+  BlocksEventsQueueMessage,
+  MerkleDistributorBlocksEventsQueueMessage,
+  ScraperQueue,
+} from "./adapter/messaging";
 import { wait } from "../../utils";
+import { RetryIncompleteDepositsBody } from "./entry-point/http/dto";
+import { Deposit } from "../deposit/model/deposit.entity";
 
 @Injectable()
 export class ScraperService {
@@ -20,6 +27,8 @@ export class ScraperService {
     private appConfig: AppConfig,
     @InjectRepository(ProcessedBlock)
     private processedBlockRepository: Repository<ProcessedBlock>,
+    @InjectRepository(Deposit)
+    private depositRepository: Repository<Deposit>,
     @InjectRepository(MerkleDistributorProcessedBlock)
     private merkleDistributorProcessedBlockRepository: Repository<MerkleDistributorProcessedBlock>,
     private scraperQueuesService: ScraperQueuesService,
@@ -186,5 +195,22 @@ export class ScraperService {
     }
 
     return 10;
+  }
+
+  public async retryIncompleteDeposits(body: RetryIncompleteDepositsBody) {
+    const deposits = await this.depositRepository
+      .createQueryBuilder("d")
+      .select("d.id, d.depositDate, d.tokenId, d.priceId")
+      .where("d.depositDate < NOW() - INTERVAL '1 hour'")
+      .andWhere("(d.depositDate is null or d.priceId is null or d.tokenId is null)")
+      .orderBy("d.id", "ASC")
+      .take(body.count || undefined)
+      .getMany();
+
+    for (const deposit of deposits) {
+      await this.scraperQueuesService.publishMessage<BlockNumberQueueMessage>(ScraperQueue.BlockNumber, {
+        depositId: deposit.id,
+      });
+    }
   }
 }
