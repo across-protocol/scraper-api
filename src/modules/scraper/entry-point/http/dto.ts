@@ -87,3 +87,10 @@ export class RetryFailedJobsBody {
   @ApiProperty({ example: 0 })
   count?: number;
 }
+
+export class RetryIncompleteDepositsBody {
+  @IsOptional()
+  @IsInt()
+  @ApiProperty({ example: 0 })
+  count?: number;
+}
