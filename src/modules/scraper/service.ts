@@ -206,8 +206,10 @@ export class ScraperService {
       .orderBy("d.id", "ASC")
       .take(body.count || undefined)
       .getMany();
+    this.logger.log(`[retryIncompleteDeposits] found ${deposits.length} deposits`);
 
     for (const deposit of deposits) {
+      this.logger.log(`[retryIncompleteDeposits] publish deposit ${deposit.id} on BlockNumber queue`);
       await this.scraperQueuesService.publishMessage<BlockNumberQueueMessage>(ScraperQueue.BlockNumber, {
         depositId: deposit.id,
       });
