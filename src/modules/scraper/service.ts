@@ -200,9 +200,9 @@ export class ScraperService {
   public async retryIncompleteDeposits(body: RetryIncompleteDepositsBody) {
     const deposits = await this.depositRepository
       .createQueryBuilder("d")
-      .select("d.id, d.depositDate, d.tokenId, d.priceId")
-      .where("d.depositDate < NOW() - INTERVAL '1 hour'")
-      .andWhere("(d.depositDate is null or d.priceId is null or d.tokenId is null)")
+      .where("d.depositDate is null")
+      .orWhere("d.priceId is null")
+      .orWhere("d.tokenId is null")
       .orderBy("d.id", "ASC")
       .take(body.count || undefined)
       .getMany();
