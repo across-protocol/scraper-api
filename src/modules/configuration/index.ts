@@ -59,6 +59,8 @@ export const configValues = () => ({
       5: process.env.WEB3_NODE_URL_5,
       280: process.env.WEB3_NODE_URL_280,
       324: process.env.WEB3_NODE_URL_324,
+      8453: process.env.WEB3_NODE_URL_8453,
+      84531: process.env.WEB3_NODE_URL_84531,
     },
     spokePoolContracts: {
       [ChainIds.mainnet]: [
@@ -153,6 +155,22 @@ export const configValues = () => ({
         {
           address: "0xE0B015E54d54fc84a6cB9B666099c46adE9335FF",
           startBlockNumber: 10352565,
+          abi: JSON.stringify(EthereumSpokePool2_5Abi),
+          acrossVersion: "2.5",
+        },
+      ],
+      [ChainIds.base]: [
+        {
+          address: "0x09aea4b2242abC8bb4BB78D537A67a245A7bEC64",
+          startBlockNumber: 2164878,
+          abi: JSON.stringify(EthereumSpokePool2_5Abi),
+          acrossVersion: "2.5",
+        },
+      ],
+      [ChainIds.baseGoerli]: [
+        {
+          address: "0x1F5AA71C79ec6a11FC55789ed32dAE3B64d75791",
+          startBlockNumber: 7992905,
           abi: JSON.stringify(EthereumSpokePool2_5Abi),
           acrossVersion: "2.5",
         },

@@ -15,6 +15,8 @@ export const ChainIds = {
   polygonMumbai: 80001,
   zkSyncMainnet: 324,
   zkSyncTestnet: 280,
+  base: 8453,
+  baseGoerli: 84531,
 };
 
 export const ChainIdToName = Object.entries(ChainIds).reduce((idToName, entry) => {
