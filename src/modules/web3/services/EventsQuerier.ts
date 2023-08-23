@@ -48,7 +48,7 @@ export class EventsQuerier {
         if (this.isRequestTooLargeError(error) || this.isRequestTooLargeError(parsedError)) {
           // make sure the block range size wasn't modified by a parallel function call
           if (this.blockRangeSize === blockRangeSizeAtStart) {
-            const newBlockRangeSize = this.blockRangeSize ? this.blockRangeSize / 2 : DEFAULT_BLOCK_RANGE;
+            const newBlockRangeSize = this.blockRangeSize ? Math.trunc(this.blockRangeSize / 2) : DEFAULT_BLOCK_RANGE;
             this.logger.warn(`lowering block range size from ${this.blockRangeSize} to ${newBlockRangeSize}`);
             this.blockRangeSize = newBlockRangeSize;
           }
