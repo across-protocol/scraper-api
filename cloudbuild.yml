@@ -1,7 +1,7 @@
 steps:
   - name: "gcr.io/cloud-builders/docker"
-    args: ["build", "-t", "gcr.io/images-across-6363/across-api", "."]
+    args: ["build", "-t", "us-east1-docker.pkg.dev/images-across-6363/scraper-api/scraper-api", "."]
 options:
   machineType: "E2_HIGHCPU_8"
 timeout: 3600s
-images: ["gcr.io/images-across-6363/across-api"]
+images: ["us-east1-docker.pkg.dev/images-across-6363/scraper-api/scraper-api"]
