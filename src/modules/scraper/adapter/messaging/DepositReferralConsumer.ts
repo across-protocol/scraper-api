@@ -28,7 +28,10 @@ export class DepositReferralConsumer {
     const { depositId } = job.data;
     this.logger.debug(`depositId ${depositId}: start`);
     const deposit = await this.depositRepository.findOne({ where: { id: depositId } });
+
     if (!deposit) return;
+    if (!deposit.depositDate) throw new Error(`depositId ${deposit.id}: wait for deposit date`);
+
     const { depositTxHash, sourceChainId } = deposit;
     const transaction = await this.ethProvidersService.getCachedTransaction(sourceChainId, depositTxHash);
     const block = await this.ethProvidersService.getCachedBlock(sourceChainId, transaction.blockNumber);
@@ -68,7 +71,11 @@ export class DepositReferralConsumer {
         hasDepositsWithReferrals
       ) {
         this.logger.debug(`depositId ${depositId}: updateStickyReferralAddressesForDepositor`);
-        await this.depositRepository.query(updateStickyReferralAddressesForDepositor(), [deposit.depositorAddr]);
+        const minDate = deposit.depositDate.toISOString();
+        await this.depositRepository.query(updateStickyReferralAddressesForDepositor(), [
+          deposit.depositorAddr,
+          minDate,
+        ]);
       }
     }
 
