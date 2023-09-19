@@ -117,7 +117,8 @@ export const updateStickyReferralAddressesForDepositor = () => {
             order by d2."depositDate" desc
             limit 1
             ) d3 on d1."depositorAddr" = d3."depositorAddr"
-        where d1."depositorAddr" = $1
+        where d1."depositorAddr" = $1 
+          and d1."depositDate" >= $2
     ) d4
     where deposit.id = d4.id;
   `;
