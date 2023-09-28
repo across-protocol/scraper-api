@@ -30,6 +30,8 @@ export class DepositReferralConsumer {
     const deposit = await this.depositRepository.findOne({ where: { id: depositId } });
 
     if (!deposit) return;
+    // if depositDate field is missing, retry the message as this field is necessary to compute
+    // the sticky referral address.
     if (!deposit.depositDate) throw new Error(`depositId ${deposit.id}: wait for depositDate`);
 
     const { depositTxHash, sourceChainId } = deposit;
@@ -40,21 +42,25 @@ export class DepositReferralConsumer {
     if (!transaction) throw new Error("Transaction not found");
 
     const referralAddress = await this.extractReferralAddress({ blockTimestamp, depositId, transaction });
-    this.logger.debug(`depositId ${depositId}: update referralAddress and stickyReferralAddress`);
+    this.logger.debug(
+      `depositId ${depositId}: update referralAddress and stickyReferralAddress with ${referralAddress}`,
+    );
     await this.depositRepository.update(
       { id: deposit.id },
       { referralAddress: referralAddress || null, stickyReferralAddress: referralAddress || null },
     );
 
-    // If the deposit tx data doesn't contain a referral address,
-    // look for a referral address that was used in a previous deposit
+    // If the tx data contain a referral address, then the consumer execution is done.
     if (referralAddress) return;
 
+    // if the computation of sticky referral address is configured to be made using a different mechanism or
+    // it is disabled, then stop the execution of the consumer
     if (this.appConfig.values.stickyReferralAddressesMechanism !== StickyReferralAddressesMechanism.Queue) {
       return;
     }
 
-    const hasPreviousDepositsWithReferralAddress = await this.depositRepository.findOne({
+    // Check if the depositor made a deposit in the past using a referral address
+    const previousDepositWithReferralAddress = await this.depositRepository.findOne({
       where: {
         depositorAddr: deposit.depositorAddr,
         referralAddress: Not(IsNull()),
@@ -62,35 +68,62 @@ export class DepositReferralConsumer {
       },
     });
     this.logger.debug(
-      `depositId ${depositId}: hasPreviousDepositsWithReferralAddress ${!!hasPreviousDepositsWithReferralAddress}`,
+      `depositId ${depositId}: previousDepositWithReferralAddress ${!!previousDepositWithReferralAddress}`,
     );
-    if (!hasPreviousDepositsWithReferralAddress) return;
 
-    const deposits = await this.depositRepository.find({
-      where: {
-        depositorAddr: deposit.depositorAddr,
-        referralAddress: IsNull(),
-        depositDate: MoreThanOrEqual(deposit.depositDate),
-      },
-    });
+    // If the depositor didn't make a deposit in the past using a referral address, then there is no need to
+    // compute the sticky referral address and the consumer execution is stopped
+    if (!previousDepositWithReferralAddress) return;
 
-    for (const d of deposits) {
-      // for each deposit with no referral address, set the sticky referral address
-      const previousDepositWithReferralAddress = await this.depositRepository.findOne({
+    // Compute the sticky referral address for depositor's deposits that don't have a referral address
+    // in the tx calldata and made after this deposit
+    await this.computeStickyReferralAddress(deposit);
+    this.logger.debug(`depositId ${depositId}: done`);
+  }
+
+  private async computeStickyReferralAddress(deposit: Deposit) {
+    let page = 0;
+    const limit = 100;
+
+    while (true) {
+      // Make paginated SQL queries to get all deposits without a referral address and made after the processed deposit
+      const deposits = await this.depositRepository.find({
         where: {
           depositorAddr: deposit.depositorAddr,
-          referralAddress: Not(IsNull()),
-          depositDate: LessThanOrEqual(deposit.depositDate),
+          referralAddress: IsNull(),
+          depositDate: MoreThanOrEqual(deposit.depositDate),
         },
-        order: {
-          depositDate: "DESC",
-        },
+        take: limit,
+        skip: page * limit,
       });
-      d.stickyReferralAddress = previousDepositWithReferralAddress.referralAddress;
-      await this.depositRepository.save(d);
-    }
 
-    this.logger.debug(`depositId ${depositId}: done`);
+      for (const d of deposits) {
+        // for each deposit d with no referral address, find the last previous deposit with a referral address and set it
+        // as the sticky referral address of deposit d
+        const previousDepositWithReferralAddress = await this.depositRepository.findOne({
+          where: {
+            depositorAddr: deposit.depositorAddr,
+            referralAddress: Not(IsNull()),
+            depositDate: LessThanOrEqual(deposit.depositDate),
+          },
+          order: {
+            depositDate: "DESC",
+          },
+        });
+        await this.depositRepository.update(
+          { id: d.id },
+          { stickyReferralAddress: previousDepositWithReferralAddress.referralAddress },
+        );
+      }
+
+      // if the length of the returned deposits is lower than the limit, we processed all depositor's deposits,
+      // else go to the next page
+      if (deposits.length < limit) {
+        break;
+      } else {
+        page = page + 1;
+      }
+    }
   }
 
   private async extractReferralAddress({
