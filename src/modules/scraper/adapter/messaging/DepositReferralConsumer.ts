@@ -1,7 +1,7 @@
 import { OnQueueFailed, Process, Processor } from "@nestjs/bull";
 import { Logger } from "@nestjs/common";
 import { Job } from "bull";
-import { IsNull, Not, Repository } from "typeorm";
+import { IsNull, LessThanOrEqual, MoreThanOrEqual, Not, Repository } from "typeorm";
 import { InjectRepository } from "@nestjs/typeorm";
 import { DepositReferralQueueMessage, ScraperQueue } from ".";
 import { Deposit } from "../../../deposit/model/deposit.entity";
@@ -10,7 +10,7 @@ import { AppConfig } from "../../../configuration/configuration.service";
 import { ReferralService } from "../../../referral/services/service";
 import { ChainIds } from "../../../web3/model/ChainId";
 import { StickyReferralAddressesMechanism } from "../../../configuration";
-import { updateStickyReferralAddressesForDepositor } from "../../../referral/services/queries";
+import { Transaction } from "src/modules/web3/model/transaction.entity";
 
 @Processor(ScraperQueue.DepositReferral)
 export class DepositReferralConsumer {
@@ -30,7 +30,7 @@ export class DepositReferralConsumer {
     const deposit = await this.depositRepository.findOne({ where: { id: depositId } });
 
     if (!deposit) return;
-    if (!deposit.depositDate) throw new Error(`depositId ${deposit.id}: wait for deposit date`);
+    if (!deposit.depositDate) throw new Error(`depositId ${deposit.id}: wait for depositDate`);
 
     const { depositTxHash, sourceChainId } = deposit;
     const transaction = await this.ethProvidersService.getCachedTransaction(sourceChainId, depositTxHash);
@@ -39,6 +39,69 @@ export class DepositReferralConsumer {
 
     if (!transaction) throw new Error("Transaction not found");
 
+    const referralAddress = await this.extractReferralAddress({ blockTimestamp, depositId, transaction });
+    this.logger.debug(`depositId ${depositId}: update referralAddress and stickyReferralAddress`);
+    await this.depositRepository.update(
+      { id: deposit.id },
+      { referralAddress: referralAddress || null, stickyReferralAddress: referralAddress || null },
+    );
+
+    // If the deposit tx data doesn't contain a referral address,
+    // look for a referral address that was used in a previous deposit
+    if (referralAddress) return;
+
+    if (this.appConfig.values.stickyReferralAddressesMechanism !== StickyReferralAddressesMechanism.Queue) {
+      return;
+    }
+
+    const hasPreviousDepositsWithReferralAddress = await this.depositRepository.findOne({
+      where: {
+        depositorAddr: deposit.depositorAddr,
+        referralAddress: Not(IsNull()),
+        depositDate: LessThanOrEqual(deposit.depositDate),
+      },
+    });
+    this.logger.debug(
+      `depositId ${depositId}: hasPreviousDepositsWithReferralAddress ${!!hasPreviousDepositsWithReferralAddress}`,
+    );
+    if (!hasPreviousDepositsWithReferralAddress) return;
+
+    const deposits = await this.depositRepository.find({
+      where: {
+        depositorAddr: deposit.depositorAddr,
+        referralAddress: IsNull(),
+        depositDate: MoreThanOrEqual(deposit.depositDate),
+      },
+    });
+
+    for (const d of deposits) {
+      // for each deposit with no referral address, set the sticky referral address
+      const previousDepositWithReferralAddress = await this.depositRepository.findOne({
+        where: {
+          depositorAddr: deposit.depositorAddr,
+          referralAddress: Not(IsNull()),
+          depositDate: LessThanOrEqual(deposit.depositDate),
+        },
+        order: {
+          depositDate: "DESC",
+        },
+      });
+      d.stickyReferralAddress = previousDepositWithReferralAddress.referralAddress;
+      await this.depositRepository.save(d);
+    }
+
+    this.logger.debug(`depositId ${depositId}: done`);
+  }
+
+  private async extractReferralAddress({
+    blockTimestamp,
+    depositId,
+    transaction,
+  }: {
+    blockTimestamp: number;
+    depositId: number;
+    transaction: Transaction;
+  }) {
     const { referralDelimiterStartTimestamp } = this.appConfig.values.app;
     let referralAddress: string | undefined = undefined;
 
@@ -55,31 +118,7 @@ export class DepositReferralConsumer {
       }
     }
 
-    this.logger.debug(`depositId ${depositId}: update referralAddress and stickyReferralAddress`);
-    await this.depositRepository.update(
-      { id: deposit.id },
-      { referralAddress: referralAddress || null, stickyReferralAddress: referralAddress || null },
-    );
-
-    if (!referralAddress) {
-      const hasDepositsWithReferrals = await this.depositRepository.findOne({
-        where: { depositorAddr: deposit.depositorAddr, referralAddress: Not(IsNull()) },
-      });
-      this.logger.debug(`depositId ${depositId}: hasDepositsWithReferrals ${hasDepositsWithReferrals}`);
-      if (
-        this.appConfig.values.stickyReferralAddressesMechanism === StickyReferralAddressesMechanism.Queue &&
-        hasDepositsWithReferrals
-      ) {
-        this.logger.debug(`depositId ${depositId}: updateStickyReferralAddressesForDepositor`);
-        const minDate = deposit.depositDate.toISOString();
-        await this.depositRepository.query(updateStickyReferralAddressesForDepositor(), [
-          deposit.depositorAddr,
-          minDate,
-        ]);
-      }
-    }
-
-    this.logger.debug(`depositId ${depositId}: done`);
+    return referralAddress;
   }
 
   @OnQueueFailed()
