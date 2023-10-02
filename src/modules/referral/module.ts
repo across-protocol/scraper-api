@@ -19,7 +19,7 @@ export class ReferralModule {
         ...module,
         controllers: [...module.controllers, ReferralController],
         providers: [...module.providers, ReferralService],
-        imports: [...module.imports, TypeOrmModule.forFeature([Deposit, DepositsMv]), AppConfigModule],
+        imports: [...module.imports, TypeOrmModule.forFeature([Deposit, DepositsMv]), AppConfigModule, Web3Module],
         exports: [...module.exports, ReferralService],
       };
     }
