@@ -29,8 +29,6 @@ afterAll(async () => {
 
 // 1 - depositor A referralAddress B depositDate 1/9
 describe("Sticky referral address", () => {
-  beforeEach(async () => {});
-
   afterEach(async () => {
     await depositFixture.deleteAllDeposits();
   });
