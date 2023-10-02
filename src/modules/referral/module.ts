@@ -7,6 +7,7 @@ import { ReferralController } from "./entry-points/http/controller";
 import { ReferralCronService } from "./services/cron-service";
 import { ReferralService } from "./services/service";
 import { ModuleOptions, RunMode } from "../../dynamic-module";
+import { Web3Module } from "../web3/module";
 
 @Module({})
 export class ReferralModule {
@@ -18,7 +19,7 @@ export class ReferralModule {
         ...module,
         controllers: [...module.controllers, ReferralController],
         providers: [...module.providers, ReferralService],
-        imports: [...module.imports, TypeOrmModule.forFeature([Deposit, DepositsMv]), AppConfigModule],
+        imports: [...module.imports, TypeOrmModule.forFeature([Deposit, DepositsMv]), AppConfigModule, Web3Module],
         exports: [...module.exports, ReferralService],
       };
     }
@@ -27,7 +28,7 @@ export class ReferralModule {
       module = {
         ...module,
         providers: [...module.providers, ReferralCronService, ReferralService],
-        imports: [...module.imports, TypeOrmModule.forFeature([Deposit, DepositsMv]), AppConfigModule],
+        imports: [...module.imports, TypeOrmModule.forFeature([Deposit, DepositsMv]), AppConfigModule, Web3Module],
         exports: [...module.exports, ReferralService],
       };
     }

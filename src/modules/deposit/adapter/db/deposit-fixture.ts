@@ -14,8 +14,8 @@ export class DepositFixture {
     return this.depositRepository.save(deposit);
   }
 
-  public insertManyDeposits(deposits: Partial<Deposit>[]) {
-    const createdDeposits = this.depositRepository.create(deposits);
+  public insertManyDeposits(depositsArgs: Partial<Deposit>[]) {
+    const createdDeposits = this.depositRepository.create(depositsArgs.map((d) => mockDepositEntity(d)));
     return this.depositRepository.save(createdDeposits);
   }
 

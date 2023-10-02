@@ -1,6 +1,6 @@
 import { CACHE_MANAGER, Inject, Injectable, Logger } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
-import { DataSource, EntityManager, In, Repository } from "typeorm";
+import { DataSource, EntityManager, In, IsNull, LessThanOrEqual, MoreThanOrEqual, Not, Repository } from "typeorm";
 import BigNumber from "bignumber.js";
 import { performance } from "perf_hooks";
 import Bluebird from "bluebird";
@@ -25,6 +25,10 @@ import { DepositsFilteredReferrals } from "../model/DepositsFilteredReferrals.en
 import { DepositReferralStat } from "../../deposit/model/deposit-referral-stat.entity";
 import { splitArrayInChunks } from "../../../utils";
 import { Claim } from "../../airdrop/model/claim.entity";
+import { EthProvidersService } from "../../web3/services/EthProvidersService";
+import { ChainIds } from "../../web3/model/ChainId";
+import { StickyReferralAddressesMechanism } from "../../configuration";
+import { Transaction } from "../../web3/model/transaction.entity";
 
 const REFERRAL_ADDRESS_DELIMITER = "d00dfeeddeadbeef";
 const getReferralsSummaryCacheKey = (address: string) => `referrals:summary:${address}`;
@@ -34,8 +38,9 @@ export class ReferralService {
   private logger = new Logger(ReferralService.name);
 
   constructor(
-    @InjectRepository(Deposit) private depositRepository: Repository<Deposit>,
-    @InjectRepository(DepositsMv) private depositsMvRepository: Repository<DepositsMv>,
+    @InjectRepository(Deposit) readonly depositRepository: Repository<Deposit>,
+    @InjectRepository(DepositsMv) readonly depositsMvRepository: Repository<DepositsMv>,
+    private ethProvidersService: EthProvidersService,
     private appConfig: AppConfig,
     private dataSource: DataSource,
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
@@ -197,7 +202,7 @@ export class ReferralService {
     return undefined;
   }
 
-  public extractReferralAddress(data: string) {
+  public extractReferralAddressWithoutDelimiter(data: string) {
     const referralData = this.subtractFunctionArgsFromCallData(data);
     if (referralData.length === 40) {
       try {
@@ -288,6 +293,134 @@ export class ReferralService {
       const t2 = performance.now();
       this.logger.log(`cumputeReferralStats() took ${(t2 - t1) / 1000} seconds`);
     });
+  }
+
+  public async extractReferralAddressAndComputeStickyReferralAddresses(depositId: number) {
+    const deposit = await this.depositRepository.findOne({ where: { id: depositId } });
+
+    if (!deposit) return;
+    // if depositDate field is missing, throw an error to retry the message as this field is necessary to compute
+    // the sticky referral address.
+    if (!deposit.depositDate) throw new Error(`depositId ${deposit.id}: wait for depositDate`);
+
+    const { depositTxHash, sourceChainId } = deposit;
+    const transaction = await this.ethProvidersService.getCachedTransaction(sourceChainId, depositTxHash);
+    const block = await this.ethProvidersService.getCachedBlock(sourceChainId, transaction.blockNumber);
+    const blockTimestamp = parseInt((new Date(block.date).getTime() / 1000).toFixed(0));
+
+    if (!transaction) throw new Error("Transaction not found");
+
+    const referralAddress = await this.extractReferralAddress({ blockTimestamp, depositId, transaction });
+    this.logger.debug(
+      `depositId ${depositId}: update referralAddress and stickyReferralAddress with ${referralAddress}`,
+    );
+    await this.depositRepository.update(
+      { id: deposit.id },
+      { referralAddress: referralAddress || null, stickyReferralAddress: referralAddress || null },
+    );
+
+    // If the tx data contain a referral address, then the consumer execution is done.
+    if (referralAddress) return;
+
+    // if the computation of sticky referral address is configured to be made using a different mechanism or
+    // it is disabled, then stop the execution of the consumer
+    if (this.appConfig.values.stickyReferralAddressesMechanism !== StickyReferralAddressesMechanism.Queue) {
+      return;
+    }
+
+    // Compute the sticky referral address for depositor's deposits that don't have a referral address
+    // in the tx calldata and made after this deposit
+    await this.computeStickyReferralAddress(deposit);
+    this.logger.debug(`depositId ${depositId}: done`);
+  }
+
+  public async computeStickyReferralAddress(deposit: Deposit) {
+    // Check if the depositor made a deposit in the past using a referral address
+    const previousDepositWithReferralAddress = await this.depositRepository.findOne({
+      where: {
+        depositorAddr: deposit.depositorAddr,
+        referralAddress: Not(IsNull()),
+        depositDate: LessThanOrEqual(deposit.depositDate),
+      },
+    });
+    this.logger.debug(
+      `depositId ${deposit.id}: previousDepositWithReferralAddress ${!!previousDepositWithReferralAddress}`,
+    );
+
+    // If the depositor didn't make a deposit in the past using a referral address, then there is no need to
+    // compute the sticky referral address and the consumer execution is stopped
+    if (!previousDepositWithReferralAddress) return;
+
+    let page = 0;
+    const limit = 100;
+
+    while (true) {
+      // Make paginated SQL queries to get all deposits without a referral address and made after the processed deposit
+      const deposits = await this.depositRepository.find({
+        where: {
+          depositorAddr: deposit.depositorAddr,
+          referralAddress: IsNull(),
+          depositDate: MoreThanOrEqual(deposit.depositDate),
+        },
+        take: limit,
+        skip: page * limit,
+      });
+
+      for (const d of deposits) {
+        // for each deposit d with no referral address, find the last previous deposit with a referral address and set it
+        // as the sticky referral address of deposit d
+        const previousDepositWithReferralAddress = await this.depositRepository.findOne({
+          where: {
+            depositorAddr: deposit.depositorAddr,
+            referralAddress: Not(IsNull()),
+            depositDate: LessThanOrEqual(deposit.depositDate),
+          },
+          order: {
+            depositDate: "DESC",
+          },
+        });
+        await this.depositRepository.update(
+          { id: d.id },
+          { stickyReferralAddress: previousDepositWithReferralAddress.referralAddress },
+        );
+      }
+
+      // if the length of the returned deposits is lower than the limit, we processed all depositor's deposits,
+      // else go to the next page
+      if (deposits.length < limit) {
+        break;
+      } else {
+        page = page + 1;
+      }
+    }
+  }
+
+  private async extractReferralAddress({
+    blockTimestamp,
+    depositId,
+    transaction,
+  }: {
+    blockTimestamp: number;
+    depositId: number;
+    transaction: Transaction;
+  }) {
+    const { referralDelimiterStartTimestamp } = this.appConfig.values.app;
+    let referralAddress: string | undefined = undefined;
+
+    if (referralDelimiterStartTimestamp && blockTimestamp >= referralDelimiterStartTimestamp) {
+      this.logger.debug(`depositId ${depositId}: extractReferralAddressUsingDelimiter`);
+      referralAddress = this.extractReferralAddressUsingDelimiter(transaction.data);
+    } else {
+      this.logger.debug(`depositId ${depositId}: extractReferralAddress`);
+      referralAddress = this.extractReferralAddressWithoutDelimiter(transaction.data);
+
+      if (referralAddress) {
+        const nonce = await this.ethProvidersService.getProvider(ChainIds.mainnet).getTransactionCount(referralAddress);
+        if (nonce === 0) referralAddress = undefined;
+      }
+    }
+
+    return referralAddress;
   }
 
   private async computeStatsForReferralAddress(entityManager: EntityManager, referralAddress: string) {
