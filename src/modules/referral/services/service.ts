@@ -356,6 +356,7 @@ export class ReferralService {
 
     while (true) {
       // Make paginated SQL queries to get all deposits without a referral address and made after the processed deposit
+      this.logger.debug(`computeStickyReferralAddress: request page ${page} depositorAddr ${deposit.depositorAddr}`);
       const deposits = await this.depositRepository.find({
         where: {
           depositorAddr: deposit.depositorAddr,
@@ -365,10 +366,12 @@ export class ReferralService {
         take: limit,
         skip: page * limit,
       });
+      this.logger.debug(`computeStickyReferralAddress: fetched page ${page} depositorAddr ${deposit.depositorAddr}`);
 
       for (const d of deposits) {
         // for each deposit d with no referral address, find the last previous deposit with a referral address and set it
         // as the sticky referral address of deposit d
+        this.logger.debug(`computeStickyReferralAddress: request previousDepositWithReferralAddress`);
         const previousDepositWithReferralAddress = await this.depositRepository.findOne({
           where: {
             depositorAddr: deposit.depositorAddr,
@@ -379,6 +382,7 @@ export class ReferralService {
             depositDate: "DESC",
           },
         });
+        this.logger.debug(`computeStickyReferralAddress: fetched previousDepositWithReferralAddress`);
         await this.depositRepository.update(
           { id: d.id },
           { stickyReferralAddress: previousDepositWithReferralAddress.referralAddress },
