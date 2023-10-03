@@ -335,7 +335,11 @@ export class ReferralService {
   }
 
   public async computeStickyReferralAddress(deposit: Deposit) {
-    if (deposit.depositorAddr === "0x3a23F943181408EAC424116Af7b7790c94Cb97a5") return;
+    if (
+      deposit.depositorAddr === "0x3a23F943181408EAC424116Af7b7790c94Cb97a5" ||
+      deposit.depositorAddr === "0xaDdE7028e7ec226777e5dea5D53F6457C21ec7D6"
+    )
+      return;
 
     // Check if the depositor made a deposit in the past using a referral address
     const previousDepositWithReferralAddress = await this.depositRepository.findOne({
@@ -354,7 +358,7 @@ export class ReferralService {
     if (!previousDepositWithReferralAddress) return;
 
     let page = 0;
-    const limit = 100;
+    const limit = 1000;
 
     while (true) {
       // Make paginated SQL queries to get all deposits without a referral address and made after the processed deposit
