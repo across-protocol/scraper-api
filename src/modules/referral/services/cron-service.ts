@@ -19,7 +19,7 @@ export class ReferralCronService {
     private referralService: ReferralService,
   ) {}
 
-  @EnhancedCron("0 */10 * * * *")
+  @EnhancedCron("0 */30 * * * *")
   async startCrons() {
     try {
       if (this.semaphore) return;
