@@ -1,7 +1,7 @@
 import { DateTime } from "luxon";
 import { CACHE_MANAGER, Inject, Injectable } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
-import { DataSource, Repository } from "typeorm";
+import { Brackets, DataSource, Repository } from "typeorm";
 import { utils } from "ethers";
 import { Cache } from "cache-manager";
 import { Deposit } from "./model/deposit.entity";
@@ -59,7 +59,13 @@ export class DepositService {
         .createQueryBuilder("d")
         .where("d.status = :status", { status })
         .andWhere("d.depositDate is not null")
-        .andWhere("d.depositorAddr = :userAddress", { userAddress })
+        .andWhere(
+          new Brackets((qb) => {
+            qb.where("d.depositorAddr = :userAddress", {
+              userAddress,
+            }).orWhere("d.recipientAddr = :userAddress", { userAddress });
+          }),
+        )
         .orderBy("d.depositDate", "DESC")
         .take(limit)
         .skip(offset)
@@ -68,7 +74,13 @@ export class DepositService {
       [userDeposits, total] = await this.depositRepository
         .createQueryBuilder("d")
         .andWhere("d.depositDate is not null")
-        .andWhere("d.depositorAddr = :userAddress", { userAddress })
+        .andWhere(
+          new Brackets((qb) => {
+            qb.where("d.depositorAddr = :userAddress", {
+              userAddress,
+            }).orWhere("d.recipientAddr = :userAddress", { userAddress });
+          }),
+        )
         .orderBy("d.depositDate", "DESC")
         .take(limit)
         .skip(offset)
