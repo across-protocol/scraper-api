@@ -11,3 +11,27 @@ export class WindowAlreadySetException extends HttpException {
     );
   }
 }
+
+export class InvalidReferralRewardsWindowJobException extends HttpException {
+  constructor(message: string) {
+    super(
+      {
+        error: InvalidReferralRewardsWindowJobException.name,
+        message,
+      },
+      HttpStatus.BAD_REQUEST,
+    );
+  }
+}
+
+export class ReferralRewardsWindowJobNotFoundException extends HttpException {
+  constructor(id: number) {
+    super(
+      {
+        error: ReferralRewardsWindowJobNotFoundException.name,
+        message: `Job with id ${id} not found.`,
+      },
+      HttpStatus.NOT_FOUND,
+    );
+  }
+}
