@@ -130,12 +130,13 @@ export class ReferralService {
 
   public async createNewReferralRewardsWindowJob(windowIndex: number, maxDepositDate: Date) {
     return this.dataSource.transaction(async (entityManager) => {
-      const jobs = await entityManager
-        .createQueryBuilder(ReferralRewardsWindowJob, "job")
+      const query = entityManager
+        .createQueryBuilder()
+        .select("job")
+        .from(ReferralRewardsWindowJob, "job")
         .where("job.windowIndex = :windowIndex", { windowIndex })
-        .orderBy({ createdAt: "DESC" })
-        .getMany();
-
+        .orderBy("job.createdAt", "DESC");
+      const jobs = await query.getMany();
       if (jobs.length > 0 && jobs[0].status === ReferralRewardsWindowJobStatus.Initial) {
         throw new InvalidReferralRewardsWindowJobException(`Job already created for window ${windowIndex}`);
       }
@@ -143,12 +144,6 @@ export class ReferralService {
       if (jobs.length > 0 && jobs[0].status === ReferralRewardsWindowJobStatus.InProgress) {
         throw new InvalidReferralRewardsWindowJobException(
           `Job in progress for window ${windowIndex}. Please wait and try again.`,
-        );
-      }
-
-      if (jobs.length > 0 && jobs[0].status === ReferralRewardsWindowJobStatus.Done) {
-        throw new InvalidReferralRewardsWindowJobException(
-          `Job already exists for window ${windowIndex}. Please create a new window.`,
         );
       }
 
@@ -240,7 +235,7 @@ export class ReferralService {
         chainId: this.appConfig.values.web3.merkleDistributor.chainId,
         rewardToken: this.appConfig.values.web3.acx.address,
         windowIndex: job.windowIndex,
-        rewardsToDeposit: jobResults[0].totalRewardsAmount,
+        rewardsToDeposit: jobResults[0]?.totalRewardsAmount || null,
         recipients,
       },
     };
@@ -249,7 +244,9 @@ export class ReferralService {
   private computeReferralRewardsForWindow(jobId: number, windowIndex: number, maxDepositDate: Date) {
     return this.dataSource.transaction(async (entityManager) => {
       const depositWithSameWindowIndex = await entityManager
-        .createQueryBuilder(Deposit, "d")
+        .createQueryBuilder()
+        .select("d")
+        .from(Deposit, "d")
         .where("d.rewardsWindowIndex = :windowIndex", { windowIndex })
         .getOne();
 
@@ -263,7 +260,6 @@ export class ReferralService {
         .andWhere("deposit.depositDate <= :maxDepositDate", { maxDepositDate })
         .getMany();
       const { recipients, rewardsToDeposit } = this.calculateReferralRewards(deposits);
-
       for (const depositsChunk of splitArrayInChunks(deposits, 100)) {
         await entityManager
           .createQueryBuilder()
@@ -282,9 +278,9 @@ export class ReferralService {
             recipientsChunk.map((recipient) => ({
               jobId,
               windowIndex,
-              totalRewards: rewardsToDeposit,
+              totalRewardsAmount: rewardsToDeposit,
               address: recipient.account,
-              rewards: recipient.amount,
+              amount: recipient.amount,
             })),
           )
           .execute();

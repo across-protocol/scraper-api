@@ -15,6 +15,8 @@ import { HistoricMarketPrice } from "../src/modules/market-price/model/historic-
 import { Role } from "../src/modules/auth/entry-points/http/roles";
 import { configValues } from "../src/modules/configuration";
 import { RunMode } from "../src/dynamic-module";
+import { wait } from "../src/utils";
+import { ReferralRewardsWindowJobFixture } from "../src/modules/referral/adapter/db/referral-rewards-window-job-fi";
 
 const referrer = "0x9A8f92a830A5cB89a3816e3D267CB7791c16b04D";
 const depositor = "0xdf120Bf3AEE9892f213B1Ba95035a60682D637c3";
@@ -30,6 +32,7 @@ const dayInMS = 24 * 60 * 60 * 1000;
 let app: INestApplication;
 let depositFixture: DepositFixture;
 let claimFixture: ClaimFixture;
+let referralRewardsWindowJobFixture: ReferralRewardsWindowJobFixture;
 let priceFixture: HistoricMarketPriceFixture;
 let tokenFixture: TokenFixture;
 let referralService: ReferralService;
@@ -49,6 +52,7 @@ beforeAll(async () => {
   priceFixture = app.get(HistoricMarketPriceFixture);
   tokenFixture = app.get(TokenFixture);
   referralService = app.get(ReferralService);
+  referralRewardsWindowJobFixture = app.get(ReferralRewardsWindowJobFixture);
   adminJwt = app.get(JwtService).sign({ roles: [Role.Admin] }, { secret: configValues().auth.jwtSecret });
 
   await app.init();
@@ -72,7 +76,7 @@ describe("POST /referrals/merkle-distribution", () => {
 
   it("return 401", async () => {
     const response = await request(app.getHttpServer())
-      .post(`/referrals/merkle-distribution`)
+      .post(`/referral-rewards-window-job`)
       .send({
         windowIndex: 1,
         maxDepositDate: new Date(Date.now() + dayInMS),
@@ -99,30 +103,37 @@ describe("POST /referrals/merkle-distribution", () => {
     await referralService.refreshMaterializedView();
 
     const successResponse = await request(app.getHttpServer())
-      .post(`/referrals/merkle-distribution`)
+      .post(`/referral-rewards-window-job`)
       .set({ Authorization: `Bearer ${adminJwt}` })
       .send({
         windowIndex: 1,
         maxDepositDate: new Date(Date.now() + dayInMS),
       });
+    await wait(1);
     await referralService.cumputeReferralStats();
     await referralService.refreshMaterializedView();
     const duplicateWindowResponse = await request(app.getHttpServer())
-      .post(`/referrals/merkle-distribution`)
+      .post(`/referral-rewards-window-job`)
       .set({ Authorization: `Bearer ${adminJwt}` })
       .send({
         windowIndex: 1,
         maxDepositDate: new Date(Date.now() + dayInMS),
       });
+    await wait(1);
+    const jobResponse = await request(app.getHttpServer())
+      .get(`/referral-rewards-window-job/${duplicateWindowResponse.body.id}`)
+      .set({ Authorization: `Bearer ${adminJwt}` });
     expect(successResponse.status).toBe(201);
-    expect(successResponse.body.recipients.length).toBe(2);
-    expect(duplicateWindowResponse.status).toBe(400);
+    expect(successResponse.body.status).toBe("InProgress");
+    expect(duplicateWindowResponse.status).toBe(201);
+    expect(jobResponse.body.job.status).toBe("Failed");
   });
 });
 
 describe("DELETE /referrals/merkle-distribution", () => {
   afterEach(async () => {
     await depositFixture.deleteAllDeposits();
+    await referralRewardsWindowJobFixture.deleteAll();
   });
 
   it("return 401", async () => {
@@ -151,7 +162,7 @@ describe("DELETE /referrals/merkle-distribution", () => {
     await referralService.refreshMaterializedView();
 
     const firstPostResponse = await request(app.getHttpServer())
-      .post(`/referrals/merkle-distribution`)
+      .post(`/referral-rewards-window-job`)
       .set({ Authorization: `Bearer ${adminJwt}` })
       .send({
         windowIndex: 1,
@@ -168,16 +179,16 @@ describe("DELETE /referrals/merkle-distribution", () => {
     await referralService.cumputeReferralStats();
     await referralService.refreshMaterializedView();
     const secondPostResponse = await request(app.getHttpServer())
-      .post(`/referrals/merkle-distribution`)
+      .post(`/referral-rewards-window-job`)
       .set({ Authorization: `Bearer ${adminJwt}` })
       .send({
         windowIndex: 1,
         maxDepositDate: new Date(Date.now() + dayInMS),
       });
     expect(firstPostResponse.status).toBe(201);
-    expect(firstPostResponse.body.recipients.length).toBe(2);
+    expect(firstPostResponse.body.status).toBe("InProgress");
     expect(deleteResponse.status).toBe(200);
-    expect(secondPostResponse.body.recipients.length).toBe(2);
+    expect(secondPostResponse.body.status).toBe("InProgress");
   });
 });
 
