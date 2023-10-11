@@ -196,7 +196,7 @@ export class ReferralService {
     this.computeReferralRewardsForWindow(job.id, windowIndex, maxDepositDate)
       .then(() => {
         const stop = new Date().getTime();
-        this.updateReferralRewardsWindowJob(job.id, {
+        return this.updateReferralRewardsWindowJob(job.id, {
           status: ReferralRewardsWindowJobStatus.Done,
           executionTime: `${(stop - start) / 1000}`,
         });
