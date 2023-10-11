@@ -40,6 +40,11 @@ export class PostReferralsMerkleDistributionBody {
   windowIndex: string;
 }
 
+export class GetReferralRewardsWindowJobParams {
+  @IsNumberString()
+  id: number;
+}
+
 export class DeleteReferralsMerkleDistributionBody {
   @IsNumberString()
   @ApiProperty({ example: "0", required: true })

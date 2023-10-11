@@ -23,6 +23,8 @@ import { FundsDepositedEv } from "../web3/model/funds-deposited-ev.entity";
 import { FilledRelayEv } from "../web3/model/filled-relay-ev.entity";
 import { RequestedSpeedUpDepositEv } from "../web3/model/requested-speed-up-deposit-ev.entity";
 import { RefundRequestedEv } from "../web3/model/refund-requested-ev.entity";
+import { ReferralRewardsWindowJob } from "../referral/model/ReferralRewardsWindowJob.entity";
+import { ReferralRewardsWindowJobResult } from "../referral/model/ReferralRewardsWindowJobResult.entity";
 
 // TODO: Add db entities here
 const entities = [
@@ -48,6 +50,8 @@ const entities = [
   FilledRelayEv,
   RequestedSpeedUpDepositEv,
   RefundRequestedEv,
+  ReferralRewardsWindowJob,
+  ReferralRewardsWindowJobResult,
 ];
 
 @Injectable()
