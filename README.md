@@ -111,3 +111,18 @@ flowchart TD
 
     H --> |TokenPriceQueueMsg| M(TokenPriceQueue)
   ```
+
+
+## How referral rewards work
+
+### Overview
+
+1. The whole rewards implementation is based on the main `deposit` table which is mapped to the [Deposit entity](https://github.com/across-protocol/scraper-api/blob/master/src/modules/deposit/model/deposit.entity.ts)
+2. In the [ReferralCronService](https://github.com/across-protocol/scraper-api/blob/stage/src/modules/referral/services/cron-service.ts) these's a cron that computes the referral statistics for the deposits. [The logic from here](https://github.com/across-protocol/scraper-api/blob/stage/src/modules/referral/services/service.ts#L268) groups deposit by referral address and claimed referral rewards and it computes for each deposit the number of previous deposits using the same referral address and also the volume associated with them. This is useful for computing the [**referral tier**](https://github.com/across-protocol/scraper-api/blob/stage/src/modules/referral/services/service.ts#L156-L171) at each deposit time. All these numbers are finally stored in the `deposit_referral_stat` table mapped to the [DepositReferralStat](https://github.com/across-protocol/scraper-api/blob/stage/src/modules/deposit/model/deposit-referral-stat.entity.ts) entity.
+3. The same [ReferralCronService](https://github.com/across-protocol/scraper-api/blob/stage/src/modules/referral/services/cron-service.ts) [refreshes](https://github.com/across-protocol/scraper-api/blob/stage/src/modules/referral/services/cron-service.ts#L43C84-L43C95) the `deposits_mv` materialized view mapped to the entity from [here](https://github.com/across-protocol/scraper-api/blob/stage/src/modules/deposit/model/DepositsMv.entity.ts). This materialized view is used to populate the UI table that lists deposits elligible deposits for referral rewards and to serve all the data related to referral rewards.
+
+### How to create a new window for referral rewards
+
+1. Create a new job for computing referral rewards by calling `POST referral-rewards-window-job` endpoint. This triggers the start of an asynchronous job that computes the data associated with a distribution window. Keep in mind that this is an async job, so the results can be obtained by using the `GET referral-rewards-window-job/:id` endpoint. 
+This asynchronous job does to things: it populates the [ReferralRewardsWindowJobResult table](https://github.com/across-protocol/scraper-api/blob/master/src/modules/referral/model/ReferralRewardsWindowJobResult.entity.ts) with the results of the jobs if they didn't fail and also associates a `rewardsWindowIndex` to the elligible deposits by populating the column with the same name.
+2. The job results are used by the [merkle-distributor cli tool](https://github.com/across-protocol/merkle-distributor) for computing the Merkle Distributor claims (proofs) which are sent in the end to Scraper API db by running the `yarn publish-tree` command. Under the hood this calls the `POST /upload/merkle-distributor-recipients` endpoint which stores in the DB all the Merkle Distributor claims that can be later fetched and used in the FE to claim the rewards from the contract.
