@@ -111,4 +111,3 @@ flowchart TD
 
     H --> |TokenPriceQueueMsg| M(TokenPriceQueue)
   ```
-
