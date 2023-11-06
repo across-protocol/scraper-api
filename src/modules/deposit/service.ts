@@ -128,6 +128,31 @@ export class DepositService {
     };
   }
 
+  public async getPendingDeposits(limit = 10, offset = 0) {
+    // filter out pending deposits older than 1 day because the relayer will ignore such deposits using its fixed lookback
+    const [deposits, total] = await this.depositRepository
+      .createQueryBuilder("d")
+      .where("d.status = :status", { status: "pending" })
+      .andWhere("d.amount > 0")
+      .andWhere("d.depositDate > NOW() - INTERVAL '1 days'")
+      .andWhere(`d.depositRelayerFeePct * :multiplier >= d.suggestedRelayerFeePct`, {
+        multiplier: this.appConfig.values.suggestedFees.deviationBufferMultiplier,
+      })
+      .orderBy("d.depositDate", "DESC")
+      .take(limit)
+      .skip(offset)
+      .getManyAndCount();
+
+    return {
+      deposits: deposits.map(formatDeposit),
+      pagination: {
+        limit,
+        offset,
+        total,
+      },
+    };
+  }
+
   public async getDepositDetails(depositTxHash: string, sourceChainId: number) {
     const deposit = await this.depositRepository.findOne({ where: { depositTxHash, sourceChainId } });
 
