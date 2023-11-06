@@ -20,7 +20,7 @@ export class DepositController {
     return this.depositService.getDeposits(query.status, limit, offset);
   }
 
-  @Get("deposits-v2")
+  @Get("v2/deposits")
   getDepositsV2(@Query() query: GetDepositsV2Query) {
     return this.depositService.getDepositsV2(query);
   }
