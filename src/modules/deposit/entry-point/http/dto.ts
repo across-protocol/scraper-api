@@ -66,3 +66,21 @@ export class GetEtlReferralDepositsQuery {
   @IsDateString()
   date: string;
 }
+
+export class GetPendingDepositsQuery {
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  @Max(100)
+  @Type(() => Number)
+  @ApiProperty({ example: 10, required: false })
+  limit: string;
+
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  @Max(10_000_000)
+  @Type(() => Number)
+  @ApiProperty({ example: 0, required: false })
+  offset: string;
+}

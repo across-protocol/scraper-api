@@ -32,4 +32,12 @@ export class DepositController {
   getDepositsStats() {
     return this.depositService.getCachedGeneralStats();
   }
+
+  @Get("deposits/pending")
+  @ApiTags("deposits")
+  getPendingDeposits(@Query() query: GetDepositsQuery) {
+    const limit = parseInt(query.limit ?? "10");
+    const offset = parseInt(query.offset ?? "0");
+    return this.depositService.getPendingDeposits(limit, offset);
+  }
 }

@@ -33,7 +33,7 @@ export function mockDepositEntity(overrides: Partial<Deposit>) {
     depositorAddr: "0x",
     recipientAddr: "0x",
     status: "pending" as TransferStatus,
-    amount: "0",
+    amount: "10",
     filled: "0",
     realizedLpFeePct: "0",
     realizedLpFeePctCapped: "0",
