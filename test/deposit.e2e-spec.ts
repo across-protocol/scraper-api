@@ -271,6 +271,27 @@ describe("GET /deposits/pending", () => {
   });
 });
 
+describe("GET /deposits-v2", () => {
+  beforeAll(async () => {
+    depositFixture = app.get(DepositFixture);
+  });
+
+  beforeEach(async () => {
+    await depositFixture.insertManyDeposits([{ status: "pending" }, { status: "pending" }]);
+    await depositFixture.insertManyDeposits([{ status: "filled" }, { status: "filled" }]);
+  });
+
+  it("200", async () => {
+    const response = await request(app.getHttpServer()).get("/deposits-v2").query({ limit: 10 });
+    expect(response.status).toBe(200);
+    expect(response.body.deposits).toHaveLength(4);
+  });
+
+  afterEach(async () => {
+    await app.get(DepositFixture).deleteAllDeposits();
+  });
+});
+
 afterAll(async () => {
   await app.close();
 });
