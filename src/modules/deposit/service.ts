@@ -45,47 +45,30 @@ export class DepositService {
   }
 
   public async getUserDeposits(userAddress: string, status?: "filled" | "pending", limit = 10, offset = 0) {
-    let userDeposits: Deposit[] = [];
-    let total = 0;
-
     try {
       userAddress = utils.getAddress(userAddress);
     } catch (error) {
       throw new InvalidAddressException();
     }
 
+    let query = this.depositRepository.createQueryBuilder("d");
+    query = query.where("d.depositDate is not null");
+    query = query.andWhere(
+      new Brackets((qb) => {
+        qb.where("d.depositorAddr = :userAddress", {
+          userAddress,
+        }).orWhere("d.recipientAddr = :userAddress", { userAddress });
+      }),
+    );
+    query = query.orderBy("d.depositDate", "DESC");
+    query = query.take(limit);
+    query = query.skip(offset);
+
     if (status) {
-      [userDeposits, total] = await this.depositRepository
-        .createQueryBuilder("d")
-        .where("d.status = :status", { status })
-        .andWhere("d.depositDate is not null")
-        .andWhere(
-          new Brackets((qb) => {
-            qb.where("d.depositorAddr = :userAddress", {
-              userAddress,
-            }).orWhere("d.recipientAddr = :userAddress", { userAddress });
-          }),
-        )
-        .orderBy("d.depositDate", "DESC")
-        .take(limit)
-        .skip(offset)
-        .getManyAndCount();
-    } else {
-      [userDeposits, total] = await this.depositRepository
-        .createQueryBuilder("d")
-        .andWhere("d.depositDate is not null")
-        .andWhere(
-          new Brackets((qb) => {
-            qb.where("d.depositorAddr = :userAddress", {
-              userAddress,
-            }).orWhere("d.recipientAddr = :userAddress", { userAddress });
-          }),
-        )
-        .orderBy("d.depositDate", "DESC")
-        .take(limit)
-        .skip(offset)
-        .getManyAndCount();
+      query = query.andWhere("d.status = :status", { status });
     }
+
+    const [userDeposits, total] = await query.getManyAndCount();
 
     return {
       deposits: userDeposits.map(formatDeposit),
