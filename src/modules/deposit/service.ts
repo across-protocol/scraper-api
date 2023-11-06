@@ -60,13 +60,14 @@ export class DepositService {
         }).orWhere("d.recipientAddr = :userAddress", { userAddress });
       }),
     );
-    query = query.orderBy("d.depositDate", "DESC");
-    query = query.take(limit);
-    query = query.skip(offset);
 
     if (status) {
       query = query.andWhere("d.status = :status", { status });
     }
+
+    query = query.orderBy("d.depositDate", "DESC");
+    query = query.take(limit);
+    query = query.skip(offset);
 
     const [userDeposits, total] = await query.getManyAndCount();
 
