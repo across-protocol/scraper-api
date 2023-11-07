@@ -271,7 +271,7 @@ describe("GET /deposits/pending", () => {
   });
 });
 
-describe("GET /deposits-v2", () => {
+describe("GET /v2/deposits", () => {
   beforeAll(async () => {
     depositFixture = app.get(DepositFixture);
   });
@@ -282,7 +282,7 @@ describe("GET /deposits-v2", () => {
   });
 
   it("200", async () => {
-    const response = await request(app.getHttpServer()).get("/deposits-v2").query({ limit: 10 });
+    const response = await request(app.getHttpServer()).get("/v2/deposits").query({ limit: 10 });
     expect(response.status).toBe(200);
     expect(response.body.deposits).toHaveLength(4);
   });
