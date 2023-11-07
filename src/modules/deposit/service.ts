@@ -13,6 +13,7 @@ import {
 } from "./adapter/db/queries";
 import { AppConfig } from "../configuration/configuration.service";
 import { InvalidAddressException, DepositNotFoundException } from "./exceptions";
+import { GetDepositsV2Query } from "./entry-point/http/dto";
 
 export const DEPOSITS_STATS_CACHE_KEY = "deposits:stats";
 
@@ -117,6 +118,45 @@ export class DepositService {
         .skip(offset)
         .getManyAndCount();
     }
+
+    return {
+      deposits: deposits.map(formatDeposit),
+      pagination: {
+        limit,
+        offset,
+        total,
+      },
+    };
+  }
+
+  public async getDepositsV2(query: GetDepositsV2Query) {
+    const limit = parseInt(query.limit ?? "10");
+    const offset = parseInt(query.offset ?? "0");
+    let queryBuilder = this.depositRepository.createQueryBuilder("d");
+    queryBuilder = queryBuilder.where("d.depositDate is not null");
+
+    if (query.status) {
+      queryBuilder = queryBuilder.where("d.status = :status", { status: query.status });
+    }
+
+    if (query.originChainId) {
+      queryBuilder = queryBuilder.where("d.sourceChainId = :sourceChainId", { sourceChainId: query.originChainId });
+    }
+
+    if (query.destinationChainId) {
+      queryBuilder = queryBuilder.where("d.destinationChainId = :destinationChainId", {
+        destinationChainId: query.destinationChainId,
+      });
+    }
+
+    if (query.tokenAddress) {
+      queryBuilder = queryBuilder.where("d.tokenAddr = :tokenAddr", { tokenAddr: query.tokenAddress });
+    }
+
+    queryBuilder = queryBuilder.orderBy("d.depositDate", "DESC");
+    queryBuilder = queryBuilder.take(limit);
+    queryBuilder = queryBuilder.skip(offset);
+    const [deposits, total] = await queryBuilder.getManyAndCount();
 
     return {
       deposits: deposits.map(formatDeposit),

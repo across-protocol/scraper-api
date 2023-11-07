@@ -84,3 +84,52 @@ export class GetPendingDepositsQuery {
   @ApiProperty({ example: 0, required: false })
   offset: string;
 }
+
+export class GetDepositsV2Query {
+  @IsOptional()
+  @IsEnum(
+    {
+      FILLED: "filled",
+      PENDING: "pending",
+    },
+    {
+      message: "Must be one of: 'filled', 'pending'",
+    },
+  )
+  @ApiProperty({ example: "filled", required: false })
+  status: "filled" | "pending";
+
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  @Max(100)
+  @Type(() => Number)
+  @ApiProperty({ example: 10, required: false })
+  limit: string;
+
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  @Max(10_000_000)
+  @Type(() => Number)
+  @ApiProperty({ example: 0, required: false })
+  offset: string;
+
+  @IsOptional()
+  @IsInt()
+  @Type(() => Number)
+  @ApiProperty({ example: 0, required: false })
+  originChainId: string;
+
+  @IsOptional()
+  @IsInt()
+  @Type(() => Number)
+  @ApiProperty({ example: 0, required: false })
+  destinationChainId: string;
+
+  @IsOptional()
+  @IsString()
+  @Type(() => String)
+  @ApiProperty({ example: "0x", required: true })
+  tokenAddress: string;
+}

@@ -1,7 +1,7 @@
 import { Controller, Get, Query } from "@nestjs/common";
 import { ApiResponse, ApiTags } from "@nestjs/swagger";
 import { DepositService } from "../../service";
-import { GetDepositsQuery, GetDepositDetailsQuery, GetDepositsStatsResponse } from "./dto";
+import { GetDepositsQuery, GetDepositDetailsQuery, GetDepositsStatsResponse, GetDepositsV2Query } from "./dto";
 
 @Controller()
 export class DepositController {
@@ -18,6 +18,11 @@ export class DepositController {
     }
 
     return this.depositService.getDeposits(query.status, limit, offset);
+  }
+
+  @Get("v2/deposits")
+  getDepositsV2(@Query() query: GetDepositsV2Query) {
+    return this.depositService.getDepositsV2(query);
   }
 
   @Get("deposits/details")
