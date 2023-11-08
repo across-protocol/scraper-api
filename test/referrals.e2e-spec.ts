@@ -209,6 +209,15 @@ describe("GET /referrals/summary", () => {
     expect(response.body.tier).toBe(1);
   });
 
+  it("return only referral rate field", async () => {
+    const response = await request(app.getHttpServer()).get(
+      `/referrals/summary?address=${referrer}&fields[]=referralRate&fields[]=tier`,
+    );
+    expect(response.status).toBe(200);
+    expect(response.body.referralRate).toBe(0.4);
+    expect(Object.keys(response.body).length).toBe(2);
+  });
+
   it("return tier 2 by num transfers", async () => {
     await depositFixture.insertManyDeposits(
       Array.from(Array(3).keys()).map((i) =>
