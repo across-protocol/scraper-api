@@ -233,6 +233,9 @@ export function formatDeposit(deposit: Deposit) {
   return {
     depositId: deposit.depositId,
     depositTime: Math.round(DateTime.fromISO(deposit.depositDate.toISOString()).toSeconds()),
+    fillTime: deposit.filledDate
+      ? Math.round(DateTime.fromISO(deposit.filledDate.toISOString()).toSeconds())
+      : undefined,
     status: deposit.status,
     filled: deposit.filled,
     sourceChainId: deposit.sourceChainId,
