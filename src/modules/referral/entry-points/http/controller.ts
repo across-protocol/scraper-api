@@ -19,7 +19,7 @@ export class ReferralController {
   @Get("referrals/summary")
   @ApiTags("referrals")
   getReferralSummary(@Query() query: GetReferralsSummaryQuery) {
-    return this.referralService.getReferralSummary(query.address);
+    return this.referralService.getReferralSummaryHandler(query);
   }
 
   @Get("referrals/details")

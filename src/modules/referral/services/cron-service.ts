@@ -1,6 +1,7 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { Repository } from "typeorm";
 import { InjectRepository } from "@nestjs/typeorm";
+import { CronExpression } from "@nestjs/schedule";
 import { AppConfig } from "../../configuration/configuration.service";
 import { Deposit } from "../../deposit/model/deposit.entity";
 import { EnhancedCron } from "../../../utils";
@@ -19,7 +20,7 @@ export class ReferralCronService {
     private referralService: ReferralService,
   ) {}
 
-  @EnhancedCron("0 */30 * * * *")
+  @EnhancedCron(CronExpression.EVERY_6_HOURS)
   async startCrons() {
     try {
       if (this.semaphore) return;

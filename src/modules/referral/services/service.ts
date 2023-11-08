@@ -36,9 +36,11 @@ import { Transaction } from "../../web3/model/transaction.entity";
 import { ReferralRewardsWindowJob, ReferralRewardsWindowJobStatus } from "../model/ReferralRewardsWindowJob.entity";
 import { QueryDeepPartialEntity } from "typeorm/query-builder/QueryPartialEntity";
 import { ReferralRewardsWindowJobResult } from "../model/ReferralRewardsWindowJobResult.entity";
+import { GetReferralsSummaryQuery } from "../entry-points/http/dto";
 
 const REFERRAL_ADDRESS_DELIMITER = "d00dfeeddeadbeef";
 const getReferralsSummaryCacheKey = (address: string) => `referrals:summary:${address}`;
+const getReferralRateCacheKey = (address: string) => `referrals:rate:${address}`;
 
 @Injectable()
 export class ReferralService {
@@ -56,6 +58,16 @@ export class ReferralService {
     private dataSource: DataSource,
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
   ) {}
+
+  public async getReferralSummaryHandler(query: GetReferralsSummaryQuery) {
+    const { address, fields } = query;
+
+    if (fields && fields.length > 0 && fields.includes("referralRate")) {
+      return this.getReferralRate(address);
+    } else {
+      return this.getReferralSummary(address);
+    }
+  }
 
   public async getReferralSummary(address: string) {
     let data = await this.cacheManager.get(getReferralsSummaryCacheKey(address));
@@ -101,6 +113,38 @@ export class ReferralService {
     if (this.appConfig.values.app.cacheDuration.referralsSummary) {
       await this.cacheManager.set(
         getReferralsSummaryCacheKey(address),
+        data,
+        this.appConfig.values.app.cacheDuration.referralsSummary,
+      );
+    }
+
+    return data;
+  }
+
+  public async getReferralRate(address: string) {
+    let data = await this.cacheManager.get(getReferralRateCacheKey(address));
+
+    if (data) return data;
+
+    const referreeWalletsQuery = getReferreeWalletsQuery();
+    const referralVolumeQuery = getReferralVolumeQuery();
+    const [referreeWalletsResult, volumeResult] = await Promise.all([
+      this.depositRepository.query(referreeWalletsQuery, [address]),
+      this.depositRepository.query(referralVolumeQuery, [address]),
+    ]);
+
+    const referreeWallets = parseInt(referreeWalletsResult[0].count);
+    const volume = volumeResult[0].volume || 0;
+    const { referralRate, tier } = this.getTierLevelAndBonus(referreeWallets, volume);
+
+    data = {
+      referralRate,
+      tier,
+    };
+
+    if (this.appConfig.values.app.cacheDuration.referralsSummary) {
+      await this.cacheManager.set(
+        getReferralRateCacheKey(address),
         data,
         this.appConfig.values.app.cacheDuration.referralsSummary,
       );
