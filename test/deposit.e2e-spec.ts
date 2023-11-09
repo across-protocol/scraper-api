@@ -277,14 +277,24 @@ describe("GET /v2/deposits", () => {
   });
 
   beforeEach(async () => {
-    await depositFixture.insertManyDeposits([{ status: "pending" }, { status: "pending" }]);
-    await depositFixture.insertManyDeposits([{ status: "filled" }, { status: "filled" }]);
+    await depositFixture.insertManyDeposits([
+      { status: "pending" },
+      { status: "pending" },
+      { status: "filled" },
+      { status: "filled" },
+    ]);
   });
 
   it("200", async () => {
     const response = await request(app.getHttpServer()).get("/v2/deposits").query({ limit: 10 });
     expect(response.status).toBe(200);
     expect(response.body.deposits).toHaveLength(4);
+  });
+
+  it("200 for correct filter params", async () => {
+    const response = await request(app.getHttpServer()).get("/v2/deposits").query({ status: "filled" });
+    expect(response.status).toBe(200);
+    expect(response.body.deposits).toHaveLength(2);
   });
 
   afterEach(async () => {
