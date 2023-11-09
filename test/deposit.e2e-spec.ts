@@ -287,6 +287,12 @@ describe("GET /v2/deposits", () => {
     expect(response.body.deposits).toHaveLength(4);
   });
 
+  it("200 for correct filter params", async () => {
+    const response = await request(app.getHttpServer()).get("/v2/deposits").query({ status: "filled" });
+    expect(response.status).toBe(200);
+    expect(response.body.deposits).toHaveLength(1);
+  });
+
   afterEach(async () => {
     await app.get(DepositFixture).deleteAllDeposits();
   });

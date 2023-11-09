@@ -136,21 +136,21 @@ export class DepositService {
     queryBuilder = queryBuilder.where("d.depositDate is not null");
 
     if (query.status) {
-      queryBuilder = queryBuilder.where("d.status = :status", { status: query.status });
+      queryBuilder = queryBuilder.andWhere("d.status = :status", { status: query.status });
     }
 
     if (query.originChainId) {
-      queryBuilder = queryBuilder.where("d.sourceChainId = :sourceChainId", { sourceChainId: query.originChainId });
+      queryBuilder = queryBuilder.andWhere("d.sourceChainId = :sourceChainId", { sourceChainId: query.originChainId });
     }
 
     if (query.destinationChainId) {
-      queryBuilder = queryBuilder.where("d.destinationChainId = :destinationChainId", {
+      queryBuilder = queryBuilder.andWhere("d.destinationChainId = :destinationChainId", {
         destinationChainId: query.destinationChainId,
       });
     }
 
     if (query.tokenAddress) {
-      queryBuilder = queryBuilder.where("d.tokenAddr = :tokenAddr", { tokenAddr: query.tokenAddress });
+      queryBuilder = queryBuilder.andWhere("d.tokenAddr = :tokenAddr", { tokenAddr: query.tokenAddress });
     }
 
     queryBuilder = queryBuilder.orderBy("d.depositDate", "DESC");
