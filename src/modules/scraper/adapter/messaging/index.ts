@@ -13,6 +13,7 @@ export enum ScraperQueue {
   DepositAcxPrice = "DepositAcxPrice",
   SuggestedFees = "SuggestedFees",
   TrackFillEvent = "TrackFillEvent",
+  FeeBreakdown = "FeeBreakdown",
 }
 
 export type BlocksEventsQueueMessage = {
@@ -98,4 +99,8 @@ export type TrackFillEventQueueMessage = {
   depositId: number;
   fillTxHash: string;
   destinationToken: string;
+};
+
+export type FeeBreakdownQueueMessage = {
+  depositId: number;
 };

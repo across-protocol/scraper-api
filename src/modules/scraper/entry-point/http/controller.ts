@@ -14,6 +14,7 @@ import {
   TokenDetailsQueueMessage,
   DepositAcxPriceQueueMessage,
   SuggestedFeesQueueMessage,
+  FeeBreakdownQueueMessage,
 } from "../../adapter/messaging";
 import { ScraperService } from "../../service";
 import { ScraperQueuesService } from "../../service/ScraperQueuesService";
@@ -28,6 +29,7 @@ import {
   RetryFailedJobsBody,
   RetryIncompleteDepositsBody,
   SubmitReindexReferralAddressJobBody,
+  SubmitFeeBreakdownBody,
 } from "./dto";
 
 @Controller()
@@ -172,6 +174,21 @@ export class ScraperController {
 
     for (let depositId = fromDepositId; depositId <= toDepositId; depositId++) {
       await this.scraperQueuesService.publishMessage<SuggestedFeesQueueMessage>(ScraperQueue.SuggestedFees, {
+        depositId,
+      });
+    }
+  }
+
+  @Post("scraper/fee-breakdown")
+  @ApiTags("scraper")
+  @Roles(Role.Admin)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @ApiBearerAuth()
+  async submitFeeBreakdownJob(@Body() body: SubmitFeeBreakdownBody) {
+    const { fromDepositId, toDepositId } = body;
+
+    for (let depositId = fromDepositId; depositId <= toDepositId; depositId++) {
+      await this.scraperQueuesService.publishMessage<FeeBreakdownQueueMessage>(ScraperQueue.FeeBreakdown, {
         depositId,
       });
     }

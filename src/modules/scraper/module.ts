@@ -30,7 +30,9 @@ import { DepositAcxPriceConsumer } from "./adapter/messaging/DepositAcxPriceCons
 import { SuggestedFeesConsumer } from "./adapter/messaging/SuggestedFeesConsumer";
 import { SuggestedFeesService } from "./adapter/across-serverless-api/suggested-fees-service";
 import { TrackFillEventConsumer } from "./adapter/messaging/TrackFillEventConsumer";
+import { FeeBreakdownConsumer } from "./adapter/messaging/FeeBreakdownConsumer";
 import { TrackService } from "./adapter/amplitude/track-service";
+import { GasFeesService } from "./adapter/gas-fees/gas-fees-service";
 import { ModuleOptions } from "../../dynamic-module";
 import { DepositModule } from "../deposit/module";
 import { AirdropModule } from "../airdrop/module";
@@ -45,6 +47,7 @@ export class ScraperModule {
       ScraperQueuesService,
       SuggestedFeesService,
       TrackService,
+      GasFeesService,
       BlocksEventsConsumer,
       MerkleDistributorBlocksEventsConsumer,
       FillEventsConsumer,
@@ -59,6 +62,7 @@ export class ScraperModule {
       SuggestedFeesConsumer,
       TrackFillEventConsumer,
       RectifyStickyReferralConsumer,
+      FeeBreakdownConsumer,
     ];
 
     return {
@@ -141,6 +145,9 @@ export class ScraperModule {
         }),
         BullModule.registerQueue({
           name: ScraperQueue.RectifyStickyReferral,
+        }),
+        BullModule.registerQueue({
+          name: ScraperQueue.FeeBreakdown,
         }),
       ],
       exports: [ScraperQueuesService],

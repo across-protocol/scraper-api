@@ -24,6 +24,7 @@ export class ScraperQueuesService {
     @InjectQueue(ScraperQueue.SuggestedFees) private suggestedFeesQueue: Queue,
     @InjectQueue(ScraperQueue.TrackFillEvent) private trackFillEventsQueue: Queue,
     @InjectQueue(ScraperQueue.RectifyStickyReferral) private rectifyStickyReferralQueue: Queue,
+    @InjectQueue(ScraperQueue.FeeBreakdown) private feeBreakdownsQueue: Queue,
   ) {
     this.queuesMap = {
       [ScraperQueue.BlocksEvents]: this.blocksEventsQueue,
@@ -40,6 +41,7 @@ export class ScraperQueuesService {
       [ScraperQueue.SuggestedFees]: this.suggestedFeesQueue,
       [ScraperQueue.TrackFillEvent]: this.trackFillEventsQueue,
       [ScraperQueue.RectifyStickyReferral]: this.rectifyStickyReferralQueue,
+      [ScraperQueue.FeeBreakdown]: this.feeBreakdownsQueue,
     };
     this.initLogs();
   }
