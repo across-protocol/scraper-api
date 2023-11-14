@@ -153,7 +153,33 @@ export class DepositService {
       queryBuilder = queryBuilder.andWhere("d.tokenAddr = :tokenAddr", { tokenAddr: query.tokenAddress });
     }
 
-    queryBuilder = queryBuilder.orderBy("d.depositDate", "DESC");
+    // filter out pending deposits older than 1 day because the relayer will ignore such deposits using its fixed lookback
+    if (query.skipOldUnprofitable) {
+      queryBuilder = queryBuilder.andWhere(
+        `
+        CASE
+          WHEN d.status = 'filled' THEN true
+          WHEN d.status = 'pending'
+            AND d.depositDate <= NOW() - INTERVAL '1 days'
+              THEN false
+          WHEN d.status = 'pending'
+            AND d.depositRelayerFeePct * :multiplier < d.suggestedRelayerFeePct 
+              THEN false
+          ELSE true
+        END
+        `,
+        {
+          multiplier: this.appConfig.values.suggestedFees.deviationBufferMultiplier,
+        },
+      );
+    }
+
+    // show pending first
+    if (query.orderBy === "status") {
+      queryBuilder = queryBuilder.addOrderBy("d.status", "DESC");
+    }
+
+    queryBuilder = queryBuilder.addOrderBy("d.depositDate", "DESC");
     queryBuilder = queryBuilder.take(limit);
     queryBuilder = queryBuilder.skip(offset);
     const [deposits, total] = await queryBuilder.getManyAndCount();
