@@ -533,6 +533,9 @@ export class ReferralService {
           referralAddress: IsNull(),
           depositDate: MoreThanOrEqual(deposit.depositDate),
         },
+        order: {
+          depositDate: "ASC",
+        },
         take: limit,
         skip: page * limit,
       });
