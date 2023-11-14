@@ -510,9 +510,12 @@ export class ReferralService {
         referralAddress: Not(IsNull()),
         depositDate: LessThanOrEqual(deposit.depositDate),
       },
+      order: {
+        depositDate: "DESC",
+      },
     });
     this.logger.debug(
-      `depositId ${deposit.id}: previousDepositWithReferralAddress ${!!previousDepositWithReferralAddress}`,
+      `depositId ${deposit.id}: found previousDepositWithReferralAddress ${previousDepositWithReferralAddress?.id}`,
     );
 
     // If the depositor didn't make a deposit in the past using a referral address, then there is no need to
@@ -524,23 +527,23 @@ export class ReferralService {
 
     while (true) {
       // Make paginated SQL queries to get all deposits without a referral address and made after the processed deposit
-      this.logger.debug(`computeStickyReferralAddress: request page ${page} depositorAddr ${deposit.depositorAddr}`);
       const deposits = await this.depositRepository.find({
         where: {
           depositorAddr: deposit.depositorAddr,
           referralAddress: IsNull(),
           depositDate: MoreThanOrEqual(deposit.depositDate),
         },
+        order: {
+          depositDate: "ASC",
+        },
         take: limit,
         skip: page * limit,
       });
-      this.logger.debug(`computeStickyReferralAddress: fetched page ${page} depositorAddr ${deposit.depositorAddr}`);
 
       for (const d of deposits) {
         // for each deposit d with no referral address, find the last previous deposit with a referral address and set it
         // as the sticky referral address of deposit d
-        this.logger.debug(`computeStickyReferralAddress: request previousDepositWithReferralAddress`);
-        const previousDepositWithReferralAddress = await this.depositRepository.findOne({
+        const previousDepositWithReferralAddr = await this.depositRepository.findOne({
           where: {
             depositorAddr: deposit.depositorAddr,
             referralAddress: Not(IsNull()),
@@ -550,10 +553,12 @@ export class ReferralService {
             depositDate: "DESC",
           },
         });
-        this.logger.debug(`computeStickyReferralAddress: fetched previousDepositWithReferralAddress`);
+        this.logger.debug(
+          `computeStickyReferralAddress: update deposit id ${d.id} stickyReferralAddress: ${previousDepositWithReferralAddr.referralAddress}`,
+        );
         await this.depositRepository.update(
           { id: d.id },
-          { stickyReferralAddress: previousDepositWithReferralAddress.referralAddress },
+          { stickyReferralAddress: previousDepositWithReferralAddr.referralAddress },
         );
       }
 
