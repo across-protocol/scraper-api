@@ -82,6 +82,8 @@ export class ScraperQueuesService {
       } else {
         failedJobs = await q.getFailed();
       }
+      // from whatever reason, the list can contain null values :|
+      failedJobs = failedJobs.filter((job) => !!job);
 
       for (const failedJob of failedJobs) {
         await failedJob.retry().catch((error) => {
