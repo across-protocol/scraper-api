@@ -132,6 +132,14 @@ export class GetDepositsV2Query {
   @Type(() => String)
   @ApiProperty({ example: "0x", required: false })
   tokenAddress: string;
+}
+
+export class GetDepositsForTxPageQuery extends GetDepositsV2Query {
+  @IsOptional()
+  @IsString()
+  @Type(() => String)
+  @ApiProperty({ example: "0x", required: false })
+  userAddress: string;
 
   @IsOptional()
   @IsBoolean()
