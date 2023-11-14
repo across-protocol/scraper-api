@@ -84,7 +84,9 @@ export class ScraperQueuesService {
       }
 
       for (const failedJob of failedJobs) {
-        await failedJob.retry();
+        await failedJob.retry().catch((error) => {
+          this.logger.error(error);
+        });
       }
     } catch (error) {
       this.logger.error(error);
