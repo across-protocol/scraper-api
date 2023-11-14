@@ -547,7 +547,7 @@ export class ReferralService {
           where: {
             depositorAddr: deposit.depositorAddr,
             referralAddress: Not(IsNull()),
-            depositDate: LessThanOrEqual(deposit.depositDate),
+            depositDate: LessThanOrEqual(d.depositDate),
           },
           order: {
             depositDate: "DESC",
