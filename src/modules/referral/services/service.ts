@@ -515,7 +515,7 @@ export class ReferralService {
       },
     });
     this.logger.debug(
-      `depositId ${deposit.id}: found previousDepositWithReferralAddress ${previousDepositWithReferralAddress.id}`,
+      `depositId ${deposit.id}: found previousDepositWithReferralAddress ${previousDepositWithReferralAddress?.id}`,
     );
 
     // If the depositor didn't make a deposit in the past using a referral address, then there is no need to
