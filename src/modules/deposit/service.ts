@@ -153,7 +153,9 @@ export class DepositService {
       queryBuilder = queryBuilder.andWhere("d.tokenAddr = :tokenAddr", { tokenAddr: query.tokenAddress });
     }
 
-    // filter out pending deposits older than 1 day because the relayer will ignore such deposits using its fixed lookback
+    // If this flag is set to true, we will skip pending deposits that:
+    // - are older than 1 day because the relayer will ignore such deposits using its fixed lookback
+    // - or are unprofitable for the relayer
     if (query.skipOldUnprofitable) {
       queryBuilder = queryBuilder.andWhere(
         `
