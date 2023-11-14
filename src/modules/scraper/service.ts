@@ -203,6 +203,7 @@ export class ScraperService {
       .where("d.depositDate is null")
       .orWhere("d.priceId is null")
       .orWhere("d.tokenId is null")
+      .orWhere("d.acxUsdPrice is null")
       .orderBy("d.id", "ASC")
       .take(body.count || undefined)
       .getMany();
