@@ -11,11 +11,12 @@ import { ScraperQueuesService } from "./service/ScraperQueuesService";
 import {
   BlockNumberQueueMessage,
   BlocksEventsQueueMessage,
+  DepositReferralQueueMessage,
   MerkleDistributorBlocksEventsQueueMessage,
   ScraperQueue,
 } from "./adapter/messaging";
 import { wait } from "../../utils";
-import { RetryIncompleteDepositsBody } from "./entry-point/http/dto";
+import { RetryIncompleteDepositsBody, SubmitReindexReferralAddressJobBody } from "./entry-point/http/dto";
 import { Deposit } from "../deposit/model/deposit.entity";
 
 @Injectable()
@@ -213,6 +214,38 @@ export class ScraperService {
       await this.scraperQueuesService.publishMessage<BlockNumberQueueMessage>(ScraperQueue.BlockNumber, {
         depositId: deposit.id,
       });
+    }
+  }
+
+  public async reindexReferralAddress(data: SubmitReindexReferralAddressJobBody) {
+    const { fromDate, toDate } = data;
+    let page = 0;
+    const limit = 1000;
+    while (true) {
+      // Make paginated SQL queries to get all deposits without a referral address and made after the processed deposit
+      const deposits = await this.depositRepository
+        .createQueryBuilder("d")
+        .where("d.depositDate >= :fromDate", { fromDate })
+        .andWhere("d.depositDate <= :toDate", { toDate })
+        .orderBy("d.depositDate", "ASC")
+        .addOrderBy("d.id", "ASC")
+        .take(limit)
+        .skip(page * limit)
+        .getMany();
+
+      const messages = deposits.map((d) => ({ depositId: d.id }));
+      await this.scraperQueuesService.publishMessagesBulk<DepositReferralQueueMessage>(
+        ScraperQueue.DepositReferral,
+        messages,
+      );
+
+      // if the length of the returned deposits is lower than the limit, we processed all depositor's deposits,
+      // else go to the next page
+      if (deposits.length < limit) {
+        break;
+      } else {
+        page = page + 1;
+      }
     }
   }
 }

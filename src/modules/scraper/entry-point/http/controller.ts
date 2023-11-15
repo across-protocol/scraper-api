@@ -27,6 +27,7 @@ import {
   SubmitSuggestedFeesBody,
   RetryFailedJobsBody,
   RetryIncompleteDepositsBody,
+  SubmitReindexReferralAddressJobBody,
 } from "./dto";
 
 @Controller()
@@ -119,6 +120,15 @@ export class ScraperController {
         depositId,
       });
     }
+  }
+
+  @Post("scraper/referral-address-reindex")
+  @Roles(Role.Admin)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @ApiBearerAuth()
+  @ApiTags("scraper")
+  async submitReindexReferralAddressJob(@Body() body: SubmitReindexReferralAddressJobBody) {
+    await this.scraperService.reindexReferralAddress(body);
   }
 
   @Post("scraper/deposit-filled-date")
