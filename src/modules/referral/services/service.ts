@@ -489,11 +489,7 @@ export class ReferralService {
     }
 
     // Compute the sticky referral address
-    const stickyReferralAddress = await this.getStickyReferralAddress(deposit);
-    await this.depositRepository.update(
-      { id: deposit.id },
-      { referralAddress: null, stickyReferralAddress: stickyReferralAddress || null },
-    );
+    await this.getStickyReferralAddress(deposit);
   }
 
   public async getStickyReferralAddress(deposit: Deposit) {
@@ -508,8 +504,10 @@ export class ReferralService {
         depositDate: "DESC",
       },
     });
-
-    return previousDepositWithReferralAddress?.referralAddress;
+    await this.depositRepository.update(
+      { id: deposit.id },
+      { referralAddress: null, stickyReferralAddress: previousDepositWithReferralAddress?.referralAddress || null },
+    );
   }
 
   private async getReferralAddress({

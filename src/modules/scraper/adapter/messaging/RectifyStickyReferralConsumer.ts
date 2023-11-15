@@ -24,7 +24,7 @@ export class RectifyStickyReferralConsumer {
 
     if (!deposit) return;
 
-    // After extracting the referral address, all deposits with later deposit time must have 
+    // After extracting the referral address, all deposits with later deposit time must have
     // the sticky referral address updated
     const deposits = await this.depositRepository.find({
       where: {
