@@ -31,10 +31,11 @@ import { SuggestedFeesConsumer } from "./adapter/messaging/SuggestedFeesConsumer
 import { SuggestedFeesService } from "./adapter/across-serverless-api/suggested-fees-service";
 import { TrackFillEventConsumer } from "./adapter/messaging/TrackFillEventConsumer";
 import { TrackService } from "./adapter/amplitude/track-service";
-import { ModuleOptions, RunMode } from "../../dynamic-module";
+import { ModuleOptions } from "../../dynamic-module";
 import { DepositModule } from "../deposit/module";
 import { AirdropModule } from "../airdrop/module";
 import { RefundRequestedEv } from "../web3/model/refund-requested-ev.entity";
+import { RectifyStickyReferralConsumer } from "./adapter/messaging/RectifyStickyReferralConsumer";
 
 @Module({})
 export class ScraperModule {
@@ -57,6 +58,7 @@ export class ScraperModule {
       DepositAcxPriceConsumer,
       SuggestedFeesConsumer,
       TrackFillEventConsumer,
+      RectifyStickyReferralConsumer,
     ];
 
     return {
@@ -136,6 +138,9 @@ export class ScraperModule {
         }),
         BullModule.registerQueue({
           name: ScraperQueue.TrackFillEvent,
+        }),
+        BullModule.registerQueue({
+          name: ScraperQueue.RectifyStickyReferral,
         }),
       ],
       exports: [ScraperQueuesService],

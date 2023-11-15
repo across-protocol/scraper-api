@@ -463,31 +463,23 @@ export class ReferralService {
     });
   }
 
-  public async extractReferralAddressAndComputeStickyReferralAddresses(depositId: number) {
-    const deposit = await this.depositRepository.findOne({ where: { id: depositId } });
-
-    if (!deposit) return;
-    // if depositDate field is missing, throw an error to retry the message as this field is necessary to compute
-    // the sticky referral address.
-    if (!deposit.depositDate) throw new Error(`depositId ${deposit.id}: wait for depositDate`);
-
-    const { depositTxHash, sourceChainId } = deposit;
-    const transaction = await this.ethProvidersService.getCachedTransaction(sourceChainId, depositTxHash);
-    const block = await this.ethProvidersService.getCachedBlock(sourceChainId, transaction.blockNumber);
-    const blockTimestamp = parseInt((new Date(block.date).getTime() / 1000).toFixed(0));
-
-    if (!transaction) throw new Error("Transaction not found");
-
-    const referralAddress = await this.extractReferralAddress({ blockTimestamp, depositId, transaction });
-    this.logger.debug(
-      `depositId ${depositId}: update referralAddress and stickyReferralAddress with ${referralAddress}`,
-    );
+  public async extractReferralAddressOrComputeStickyReferralAddresses({
+    blockTimestamp,
+    deposit,
+    transactionData,
+  }: {
+    deposit: Deposit;
+    blockTimestamp: number;
+    transactionData: string;
+  }) {
+    const referralAddress = await this.getReferralAddress({ blockTimestamp, transactionData });
     await this.depositRepository.update(
       { id: deposit.id },
       { referralAddress: referralAddress || null, stickyReferralAddress: referralAddress || null },
     );
 
-    // If the tx data contain a referral address, then the consumer execution is done.
+    // If the tx data contains a referral address, then the consumer execution is done,
+    // else look for a sticky referral address
     if (referralAddress) return;
 
     // if the computation of sticky referral address is configured to be made using a different mechanism or
@@ -496,13 +488,15 @@ export class ReferralService {
       return;
     }
 
-    // Compute the sticky referral address for depositor's deposits that don't have a referral address
-    // in the tx calldata and made after this deposit
-    await this.computeStickyReferralAddress(deposit);
-    this.logger.debug(`depositId ${depositId}: done`);
+    // Compute the sticky referral address
+    const stickyReferralAddress = await this.getStickyReferralAddress(deposit);
+    await this.depositRepository.update(
+      { id: deposit.id },
+      { referralAddress: null, stickyReferralAddress: stickyReferralAddress || null },
+    );
   }
 
-  public async computeStickyReferralAddress(deposit: Deposit) {
+  public async getStickyReferralAddress(deposit: Deposit) {
     // Check if the depositor made a deposit in the past using a referral address
     const previousDepositWithReferralAddress = await this.depositRepository.findOne({
       where: {
@@ -514,82 +508,24 @@ export class ReferralService {
         depositDate: "DESC",
       },
     });
-    this.logger.debug(
-      `depositId ${deposit.id}: found previousDepositWithReferralAddress ${previousDepositWithReferralAddress?.id}`,
-    );
 
-    // If the depositor didn't make a deposit in the past using a referral address, then there is no need to
-    // compute the sticky referral address and the consumer execution is stopped
-    if (!previousDepositWithReferralAddress) return;
-
-    let page = 0;
-    const limit = 1000;
-
-    while (true) {
-      // Make paginated SQL queries to get all deposits without a referral address and made after the processed deposit
-      const deposits = await this.depositRepository.find({
-        where: {
-          depositorAddr: deposit.depositorAddr,
-          referralAddress: IsNull(),
-          depositDate: MoreThanOrEqual(deposit.depositDate),
-        },
-        order: {
-          depositDate: "ASC",
-        },
-        take: limit,
-        skip: page * limit,
-      });
-
-      for (const d of deposits) {
-        // for each deposit d with no referral address, find the last previous deposit with a referral address and set it
-        // as the sticky referral address of deposit d
-        const previousDepositWithReferralAddr = await this.depositRepository.findOne({
-          where: {
-            depositorAddr: deposit.depositorAddr,
-            referralAddress: Not(IsNull()),
-            depositDate: LessThanOrEqual(d.depositDate),
-          },
-          order: {
-            depositDate: "DESC",
-          },
-        });
-        this.logger.debug(
-          `computeStickyReferralAddress: update deposit id ${d.id} stickyReferralAddress: ${previousDepositWithReferralAddr.referralAddress}`,
-        );
-        await this.depositRepository.update(
-          { id: d.id },
-          { stickyReferralAddress: previousDepositWithReferralAddr.referralAddress },
-        );
-      }
-
-      // if the length of the returned deposits is lower than the limit, we processed all depositor's deposits,
-      // else go to the next page
-      if (deposits.length < limit) {
-        break;
-      } else {
-        page = page + 1;
-      }
-    }
+    return previousDepositWithReferralAddress?.referralAddress;
   }
 
-  private async extractReferralAddress({
+  private async getReferralAddress({
     blockTimestamp,
-    depositId,
-    transaction,
+    transactionData,
   }: {
     blockTimestamp: number;
-    depositId: number;
-    transaction: Transaction;
+    transactionData: string;
   }) {
     const { referralDelimiterStartTimestamp } = this.appConfig.values.app;
     let referralAddress: string | undefined = undefined;
 
     if (referralDelimiterStartTimestamp && blockTimestamp >= referralDelimiterStartTimestamp) {
-      this.logger.debug(`depositId ${depositId}: extractReferralAddressUsingDelimiter`);
-      referralAddress = this.extractReferralAddressUsingDelimiter(transaction.data);
+      referralAddress = this.extractReferralAddressUsingDelimiter(transactionData);
     } else {
-      this.logger.debug(`depositId ${depositId}: extractReferralAddress`);
-      referralAddress = this.extractReferralAddressWithoutDelimiter(transaction.data);
+      referralAddress = this.extractReferralAddressWithoutDelimiter(transactionData);
 
       if (referralAddress) {
         const nonce = await this.ethProvidersService.getProvider(ChainIds.mainnet).getTransactionCount(referralAddress);

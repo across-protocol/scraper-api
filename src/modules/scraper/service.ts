@@ -233,7 +233,10 @@ export class ScraperService {
         .skip(page * limit)
         .getMany();
 
-      const messages = deposits.map((d) => ({ depositId: d.id }));
+      const messages: DepositReferralQueueMessage[] = deposits.map((d) => ({
+        depositId: d.id,
+        rectifyStickyReferralAddress: false,
+      }));
       await this.scraperQueuesService.publishMessagesBulk<DepositReferralQueueMessage>(
         ScraperQueue.DepositReferral,
         messages,
