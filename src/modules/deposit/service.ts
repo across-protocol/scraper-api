@@ -115,6 +115,90 @@ export class DepositService {
     };
   }
 
+  public async getUserDeposits(userAddress: string, status?: "filled" | "pending", limit = 10, offset = 0) {
+    try {
+      userAddress = utils.getAddress(userAddress);
+    } catch (error) {
+      throw new InvalidAddressException();
+    }
+
+    let query = this.depositRepository.createQueryBuilder("d");
+    query = query.where("d.depositDate is not null");
+    query = query.andWhere(
+      new Brackets((qb) => {
+        qb.where("d.depositorAddr = :userAddress", {
+          userAddress,
+        }).orWhere("d.recipientAddr = :userAddress", { userAddress });
+      }),
+    );
+
+    if (status) {
+      query = query.andWhere("d.status = :status", { status });
+    }
+
+    query = query.orderBy("d.depositDate", "DESC");
+    query = query.take(limit);
+    query = query.skip(offset);
+
+    const [userDeposits, total] = await query.getManyAndCount();
+
+    return {
+      deposits: userDeposits.map(formatDeposit),
+      pagination: {
+        limit,
+        offset,
+        total,
+      },
+    };
+  }
+
+  public async getDeposits(status: "filled" | "pending", limit = 10, offset = 0) {
+    let deposits: Deposit[] = [];
+    let total = 0;
+
+    if (status === "filled") {
+      [deposits, total] = await this.depositRepository
+        .createQueryBuilder("d")
+        .where("d.status = :status", { status })
+        .andWhere("d.depositDate is not null")
+        .orderBy("d.depositDate", "DESC")
+        .take(limit)
+        .skip(offset)
+        .getManyAndCount();
+    } else if (status === "pending") {
+      // filter out pending deposits older than 1 day because the relayer will ignore such deposits using its fixed lookback
+      [deposits, total] = await this.depositRepository
+        .createQueryBuilder("d")
+        .where("d.status = :status", { status })
+        .andWhere("d.amount > 0")
+        .andWhere("d.depositDate > NOW() - INTERVAL '1 days'")
+        .andWhere(`d.depositRelayerFeePct * :multiplier >= d.suggestedRelayerFeePct`, {
+          multiplier: this.appConfig.values.suggestedFees.deviationBufferMultiplier,
+        })
+        .orderBy("d.depositDate", "DESC")
+        .take(limit)
+        .skip(offset)
+        .getManyAndCount();
+    } else {
+      [deposits, total] = await this.depositRepository
+        .createQueryBuilder("d")
+        .where("d.depositDate is not null")
+        .orderBy("d.depositDate", "DESC")
+        .take(limit)
+        .skip(offset)
+        .getManyAndCount();
+    }
+
+    return {
+      deposits: deposits.map(formatDeposit),
+      pagination: {
+        limit,
+        offset,
+        total,
+      },
+    };
+  }
+
   public async getDepositsV2(query: GetDepositsV2Query) {
     const limit = parseInt(query.limit ?? "10");
     const offset = parseInt(query.offset ?? "0");
@@ -123,6 +207,31 @@ export class DepositService {
     queryBuilder = this._getFilteredDepositsQuery(queryBuilder, query);
 
     const [deposits, total] = await queryBuilder.getManyAndCount();
+
+    return {
+      deposits: deposits.map(formatDeposit),
+      pagination: {
+        limit,
+        offset,
+        total,
+      },
+    };
+  }
+
+  public async getPendingDeposits(limit = 10, offset = 0) {
+    // filter out pending deposits older than 1 day because the relayer will ignore such deposits using its fixed lookback
+    const [deposits, total] = await this.depositRepository
+      .createQueryBuilder("d")
+      .where("d.status = :status", { status: "pending" })
+      .andWhere("d.amount > 0")
+      .andWhere("d.depositDate > NOW() - INTERVAL '1 days'")
+      .andWhere(`d.depositRelayerFeePct * :multiplier >= d.suggestedRelayerFeePct`, {
+        multiplier: this.appConfig.values.suggestedFees.deviationBufferMultiplier,
+      })
+      .orderBy("d.depositDate", "DESC")
+      .take(limit)
+      .skip(offset)
+      .getManyAndCount();
 
     return {
       deposits: deposits.map(formatDeposit),

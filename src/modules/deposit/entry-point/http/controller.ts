@@ -23,17 +23,27 @@ export class DepositController {
   @Get("deposits")
   @ApiTags("deposits")
   getDeposits(@Query() query: GetDepositsQuery) {
-    return this.depositService.getDepositsForTxPage({
-      userAddress: query.address || undefined,
-      status: query.status,
-      limit: query.limit,
-      offset: query.offset,
-    });
+    const limit = parseInt(query.limit ?? "10");
+    const offset = parseInt(query.offset ?? "0");
+
+    if (query.address) {
+      return this.depositService.getUserDeposits(query.address, query.status, limit, offset);
+    }
+
+    return this.depositService.getDeposits(query.status, limit, offset);
   }
 
   @Get("v2/deposits")
   getDepositsV2(@Query() query: GetDepositsV2Query) {
     return this.depositService.getDepositsV2(query);
+  }
+
+  @Get("deposits/pending")
+  @ApiTags("deposits")
+  getPendingDeposits(@Query() query: GetDepositsQuery) {
+    const limit = parseInt(query.limit ?? "10");
+    const offset = parseInt(query.offset ?? "0");
+    return this.depositService.getPendingDeposits(limit, offset);
   }
 
   @Get("deposits/details")
