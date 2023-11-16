@@ -38,14 +38,6 @@ export class DepositController {
     return this.depositService.getDepositsV2(query);
   }
 
-  @Get("deposits/pending")
-  @ApiTags("deposits")
-  getPendingDeposits(@Query() query: GetDepositsQuery) {
-    const limit = parseInt(query.limit ?? "10");
-    const offset = parseInt(query.offset ?? "0");
-    return this.depositService.getPendingDeposits(limit, offset);
-  }
-
   @Get("deposits/details")
   @ApiTags("deposits")
   getDepositsDetails(@Query() query: GetDepositDetailsQuery) {
@@ -57,5 +49,13 @@ export class DepositController {
   @ApiResponse({ type: GetDepositsStatsResponse })
   getDepositsStats() {
     return this.depositService.getCachedGeneralStats();
+  }
+
+  @Get("deposits/pending")
+  @ApiTags("deposits")
+  getPendingDeposits(@Query() query: GetDepositsQuery) {
+    const limit = parseInt(query.limit ?? "10");
+    const offset = parseInt(query.offset ?? "0");
+    return this.depositService.getPendingDeposits(limit, offset);
   }
 }

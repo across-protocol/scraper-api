@@ -234,6 +234,43 @@ describe("GET /etl/referral-deposits", () => {
   });
 });
 
+describe("GET /deposits/pending", () => {
+  beforeAll(async () => {
+    depositFixture = app.get(DepositFixture);
+  });
+
+  beforeEach(async () => {
+    await depositFixture.insertManyDeposits([
+      { status: "pending", depositRelayerFeePct: "0.1", suggestedRelayerFeePct: "0.1" },
+      { status: "pending", depositRelayerFeePct: "0.1", suggestedRelayerFeePct: "0.1" },
+    ]);
+    await depositFixture.insertManyDeposits([
+      { status: "filled", depositRelayerFeePct: "0.1", suggestedRelayerFeePct: "0.1" },
+      { status: "filled", depositRelayerFeePct: "0.1", suggestedRelayerFeePct: "0.1" },
+    ]);
+  });
+
+  it("should get pending deposits", async () => {
+    const response = await request(app.getHttpServer()).get("/deposits/pending");
+    expect(response.status).toBe(200);
+    expect(response.body.deposits).toHaveLength(2);
+    expect(response.body.pagination).toMatchObject({ limit: 10, offset: 0 });
+  });
+
+  it("400 for invalid offset", async () => {
+    const response = await request(app.getHttpServer()).get("/deposits/pending?offset=invalid");
+    expect(response.status).toBe(400);
+  });
+  it("400 for invalid limit", async () => {
+    const response = await request(app.getHttpServer()).get("/deposits/pending?limit=invalid");
+    expect(response.status).toBe(400);
+  });
+
+  afterEach(async () => {
+    await app.get(DepositFixture).deleteAllDeposits();
+  });
+});
+
 describe("GET /v2/deposits", () => {
   beforeAll(async () => {
     depositFixture = app.get(DepositFixture);
