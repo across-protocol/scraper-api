@@ -38,13 +38,13 @@ export class DepositReferralConsumer {
 
     if (!transaction) throw new Error("Transaction not found");
 
-    await this.referralService.extractReferralAddressOrComputeStickyReferralAddresses({
+    const { referralAddress } = await this.referralService.extractReferralAddressOrComputeStickyReferralAddresses({
       blockTimestamp,
       deposit,
       transactionData: transaction.data,
     });
 
-    if (rectifyStickyReferralAddress) {
+    if (rectifyStickyReferralAddress && referralAddress) {
       await this.scraperQueuesService.publishMessage<RectifyStickyReferralQueueMessage>(
         ScraperQueue.RectifyStickyReferral,
         {

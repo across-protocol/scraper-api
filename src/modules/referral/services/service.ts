@@ -480,16 +480,12 @@ export class ReferralService {
 
     // If the tx data contains a referral address, then the consumer execution is done,
     // else look for a sticky referral address
-    if (referralAddress) return;
-
-    // if the computation of sticky referral address is configured to be made using a different mechanism or
-    // it is disabled, then stop the execution of the consumer
-    if (this.appConfig.values.stickyReferralAddressesMechanism !== StickyReferralAddressesMechanism.Queue) {
-      return;
-    }
+    if (referralAddress) return { referralAddress, stickyReferralAddress: undefined };
 
     // Compute the sticky referral address
-    await this.getStickyReferralAddress(deposit);
+    const stickyReferralAddress = await this.getStickyReferralAddress(deposit);
+
+    return { referralAddress: undefined, stickyReferralAddress };
   }
 
   public async getStickyReferralAddress(deposit: Deposit) {
@@ -508,6 +504,8 @@ export class ReferralService {
       { id: deposit.id },
       { referralAddress: null, stickyReferralAddress: previousDepositWithReferralAddress?.referralAddress || null },
     );
+
+    return previousDepositWithReferralAddress?.referralAddress;
   }
 
   private async getReferralAddress({

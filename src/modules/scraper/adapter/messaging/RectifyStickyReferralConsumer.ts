@@ -31,6 +31,9 @@ export class RectifyStickyReferralConsumer {
         depositorAddr: deposit.depositorAddr,
         depositDate: MoreThan(deposit.depositDate),
       },
+      order: {
+        depositDate: "ASC",
+      },
     });
     for (const d of deposits) {
       await this.scraperQueuesService.publishMessage<DepositReferralQueueMessage>(ScraperQueue.DepositReferral, {
