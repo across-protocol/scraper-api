@@ -36,6 +36,7 @@ export class BlockNumberConsumer {
     });
     await this.scraperQueuesService.publishMessage<DepositReferralQueueMessage>(ScraperQueue.DepositReferral, {
       depositId: deposit.id,
+      rectifyStickyReferralAddress: true,
     });
     await this.scraperQueuesService.publishMessage<SuggestedFeesQueueMessage>(ScraperQueue.SuggestedFees, {
       depositId: deposit.id,
