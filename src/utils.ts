@@ -28,6 +28,16 @@ export const chainIdToInfo = {
     chainId: ChainIds.polygon,
     nativeSymbol: "matic",
   },
+  [ChainIds.base]: {
+    name: "Base",
+    chainId: ChainIds.base,
+    nativeSymbol: "eth",
+  },
+  [ChainIds.zkSyncMainnet]: {
+    name: "zkSync",
+    chainId: ChainIds.zkSyncMainnet,
+    nativeSymbol: "eth",
+  },
 };
 
 export const wait = (seconds = 1) =>
