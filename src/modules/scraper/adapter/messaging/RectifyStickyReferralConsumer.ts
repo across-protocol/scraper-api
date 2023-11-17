@@ -1,7 +1,7 @@
 import { OnQueueFailed, Process, Processor } from "@nestjs/bull";
 import { Logger } from "@nestjs/common";
 import { Job } from "bull";
-import { IsNull, MoreThan, Not, Repository } from "typeorm";
+import { MoreThan, Repository } from "typeorm";
 import { InjectRepository } from "@nestjs/typeorm";
 
 import { DepositReferralQueueMessage, RectifyStickyReferralQueueMessage, ScraperQueue } from ".";
