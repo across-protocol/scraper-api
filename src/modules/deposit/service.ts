@@ -69,7 +69,7 @@ export class DepositService {
       );
     }
 
-    queryBuilder = this._getFilteredDepositsQuery(queryBuilder, query);
+    queryBuilder = this.getFilteredDepositsQuery(queryBuilder, query);
 
     // If this flag is set to true, we will skip pending deposits that:
     // - are older than 1 day because the relayer will ignore such deposits using its fixed lookback
@@ -204,7 +204,11 @@ export class DepositService {
     const offset = parseInt(query.offset ?? "0");
 
     let queryBuilder = this.depositRepository.createQueryBuilder("d");
-    queryBuilder = this._getFilteredDepositsQuery(queryBuilder, query);
+    queryBuilder = this.getFilteredDepositsQuery(queryBuilder, query);
+
+    queryBuilder = queryBuilder.orderBy("d.depositDate", "DESC");
+    queryBuilder = queryBuilder.take(limit);
+    queryBuilder = queryBuilder.skip(offset);
 
     const [deposits, total] = await queryBuilder.getManyAndCount();
 
@@ -273,7 +277,7 @@ export class DepositService {
     }));
   }
 
-  private _getFilteredDepositsQuery(
+  private getFilteredDepositsQuery(
     queryBuilder: ReturnType<typeof this.depositRepository.createQueryBuilder>,
     filter: Partial<GetDepositsV2Query>,
   ) {
