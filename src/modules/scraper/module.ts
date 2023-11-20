@@ -38,6 +38,7 @@ import { DepositModule } from "../deposit/module";
 import { AirdropModule } from "../airdrop/module";
 import { RefundRequestedEv } from "../web3/model/refund-requested-ev.entity";
 import { RectifyStickyReferralConsumer } from "./adapter/messaging/RectifyStickyReferralConsumer";
+import { OpRebateRewardConsumer } from "./adapter/messaging/OpRebateRewardConsumer";
 
 @Module({})
 export class ScraperModule {
@@ -63,6 +64,7 @@ export class ScraperModule {
       TrackFillEventConsumer,
       RectifyStickyReferralConsumer,
       FeeBreakdownConsumer,
+      OpRebateRewardConsumer,
     ];
 
     return {
@@ -148,6 +150,9 @@ export class ScraperModule {
         }),
         BullModule.registerQueue({
           name: ScraperQueue.FeeBreakdown,
+        }),
+        BullModule.registerQueue({
+          name: ScraperQueue.OpRebateReward,
         }),
       ],
       exports: [ScraperQueuesService],
