@@ -21,10 +21,8 @@ export class DepositReferralConsumer {
     private scraperQueuesService: ScraperQueuesService,
   ) {}
 
-  @Process({ concurrency: 100 })
+  @Process({ concurrency: 10 })
   private async process(job: Job<DepositReferralQueueMessage>) {
-    // temporary disable consumer
-    return;
     const { depositId, rectifyStickyReferralAddress } = job.data;
     const deposit = await this.depositRepository.findOne({ where: { id: depositId } });
 
