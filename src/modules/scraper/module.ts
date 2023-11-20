@@ -7,6 +7,7 @@ import { AppConfigModule } from "../configuration/configuration.module";
 import { MarketPriceModule } from "../market-price/module";
 import { ReferralModule } from "../referral/module";
 import { Web3Module } from "../web3/module";
+import { RewardModule } from "../rewards/module";
 import { FilledRelayEv, FundsDepositedEv, RequestedSpeedUpDepositEv } from "../web3/model";
 import { ScraperQueue } from "./adapter/messaging";
 import { BlockNumberConsumer } from "./adapter/messaging/BlockNumberConsumer";
@@ -88,6 +89,7 @@ export class ScraperModule {
         DepositModule.forRoot(moduleOptions),
         AirdropModule.forRoot(moduleOptions),
         ReferralModule.forRoot(moduleOptions),
+        RewardModule,
         BullModule.registerQueue({
           name: ScraperQueue.BlockNumber,
         }),
