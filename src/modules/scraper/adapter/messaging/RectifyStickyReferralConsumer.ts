@@ -19,7 +19,8 @@ export class RectifyStickyReferralConsumer {
 
   @Process({ concurrency: 1 })
   private async process(job: Job<RectifyStickyReferralQueueMessage>) {
-    throw new Error("delay consumer");
+    // temporary disable consumer
+    return;
     const { depositId } = job.data;
     const deposit = await this.depositRepository.findOne({ where: { id: depositId } });
 
