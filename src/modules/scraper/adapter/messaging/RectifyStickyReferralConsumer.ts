@@ -23,7 +23,7 @@ export class RectifyStickyReferralConsumer {
     const deposit = await this.depositRepository.findOne({ where: { id: depositId } });
 
     if (!deposit) return;
-
+    this.logger.debug(`deposit id: ${deposit.id} start`);
     // After extracting the referral address, all deposits with later deposit time must have
     // the sticky referral address updated
     const deposits = await this.depositRepository.find({
@@ -35,6 +35,7 @@ export class RectifyStickyReferralConsumer {
         depositDate: "ASC",
       },
     });
+    this.logger.debug(`deposit id: ${deposit.id} found ${deposits.length} deposits`);
     for (const d of deposits) {
       await this.scraperQueuesService.publishMessage<DepositReferralQueueMessage>(ScraperQueue.DepositReferral, {
         depositId: d.id,
