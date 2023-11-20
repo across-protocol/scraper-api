@@ -5,11 +5,12 @@ import { TokenFixture } from "./adapters/db/token-fixture";
 import { Block } from "./model/block.entity";
 import { Token } from "./model/token.entity";
 import { Transaction } from "./model/transaction.entity";
+import { TransactionReceipt } from "./model/tx-receipt.entity";
 import { EthProvidersService } from "./services/EthProvidersService";
 
 @Module({
   providers: [EthProvidersService, TokenFixture],
   exports: [EthProvidersService],
-  imports: [AppConfigModule, TypeOrmModule.forFeature([Block, Token, Transaction])],
+  imports: [AppConfigModule, TypeOrmModule.forFeature([Block, Token, Transaction, TransactionReceipt])],
 })
 export class Web3Module {}

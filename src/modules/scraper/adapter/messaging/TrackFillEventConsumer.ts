@@ -10,23 +10,16 @@ import { DateTime } from "luxon";
 import { TrackFillEventQueueMessage, ScraperQueue } from ".";
 import { Deposit, DepositFillTx, DepositFillTx2 } from "../../../deposit/model/deposit.entity";
 import { TrackService } from "../amplitude/track-service";
-import {
-  deriveRelayerFeeComponents,
-  fixedPointAdjustment,
-  makeAmountValuesFormatter,
-  makeWeiPctValuesFormatter,
-} from "../amplitude/utils";
-import { EthProvidersService } from "../../../web3/services/EthProvidersService";
+import { GasFeesService } from "../gas-fees/gas-fees-service";
+import { deriveRelayerFeeComponents, makeAmountValuesFormatter, makePctValuesCalculator } from "../..//utils";
 import { chainIdToInfo } from "../../../../utils";
-import { MarketPriceService } from "../../../market-price/services/service";
 
 @Processor(ScraperQueue.TrackFillEvent)
 export class TrackFillEventConsumer {
   private logger = new Logger(TrackFillEventConsumer.name);
 
   constructor(
-    private providers: EthProvidersService,
-    private marketPriceService: MarketPriceService,
+    private gasFeesService: GasFeesService,
     private trackService: TrackService,
     @InjectRepository(Deposit) private depositRepository: Repository<Deposit>,
   ) {}
@@ -72,7 +65,7 @@ export class TrackFillEventConsumer {
     };
     const depositTokenPriceUsd = deposit.price.usd;
 
-    const { fee, feeUsd, fillTxBlockNumber } = await this.getFillTxNetworkFee(deposit.destinationChainId, fillTx.hash);
+    const { fee, feeUsd } = await this.gasFeesService.getFillTxNetworkFee(deposit.destinationChainId, fillTx.hash);
 
     const formatAmountValues = makeAmountValuesFormatter(deposit.token.decimals, depositTokenPriceUsd);
     const fromAmounts = formatAmountValues(deposit.amount);
@@ -80,20 +73,22 @@ export class TrackFillEventConsumer {
     const fillAmounts = formatAmountValues(fillTx.fillAmount);
     const totalFilledAmounts = formatAmountValues(fillTx.totalFilledAmount);
 
-    const formatWeiPctValues = makeWeiPctValuesFormatter(fromAmounts.formattedAmount, deposit.price.usd);
-    const formattedLpFeeValues = formatWeiPctValues(fillTx.realizedLpFeePct);
+    const calcPctValues = makePctValuesCalculator(
+      fromAmounts.formattedAmount,
+      deposit.price.usd,
+      deposit.token.decimals,
+    );
+    const lpFeePctValues = calcPctValues(fillTx.realizedLpFeePct);
     const fillRelayerFeePct = (fillTx as DepositFillTx).appliedRelayerFeePct
       ? (fillTx as DepositFillTx).appliedRelayerFeePct
       : (fillTx as DepositFillTx2).relayerFeePct;
-    const formattedRelayFeeValues = formatWeiPctValues(fillRelayerFeePct);
-    const formattedBridgeFeeValues = formatWeiPctValues(
-      new BigNumber(fillTx.realizedLpFeePct).plus(fillRelayerFeePct).toString(),
-    );
+    const relayFeePctValues = calcPctValues(fillRelayerFeePct);
+    const bridgeFeePctValues = calcPctValues(new BigNumber(fillTx.realizedLpFeePct).plus(fillRelayerFeePct).toString());
 
     const { gasFeePct, capitalFeeUsd, capitalFeePct } = deriveRelayerFeeComponents(
       feeUsd,
-      formattedRelayFeeValues.totalUsd,
-      formattedRelayFeeValues.pct,
+      relayFeePctValues.pctAmountUsd,
+      relayFeePctValues.pct.toString(),
     );
 
     this.trackService.trackDepositFilledEvent(deposit.depositorAddr, {
@@ -113,17 +108,17 @@ export class TrackFillEventConsumer {
       fromChainName: sourceChainInfo.name,
       fromTokenAddress: deposit.tokenAddr,
       isAmountTooLow: false,
-      lpFeePct: formattedLpFeeValues.pct,
-      lpFeeTotal: formattedLpFeeValues.total,
-      lpFeeTotalUsd: formattedLpFeeValues.totalUsd,
+      lpFeePct: lpFeePctValues.formattedPct,
+      lpFeeTotal: lpFeePctValues.formattedPctAmount,
+      lpFeeTotalUsd: lpFeePctValues.pctAmountUsd,
       networkFeeNative: fee,
       networkFeeNativeToken: destinationChainInfo.nativeSymbol.toUpperCase(),
       networkFeeUsd: feeUsd,
       recipient: deposit.recipientAddr,
       referralProgramAddress: deposit.referralAddress || "-",
-      relayFeePct: formattedRelayFeeValues.pct,
-      relayFeeTotal: formattedRelayFeeValues.total,
-      relayFeeTotalUsd: formattedRelayFeeValues.totalUsd,
+      relayFeePct: relayFeePctValues.formattedPct,
+      relayFeeTotal: relayFeePctValues.formattedPctAmount,
+      relayFeeTotalUsd: relayFeePctValues.pctAmountUsd,
       relayGasFeePct: gasFeePct,
       relayGasFeeTotal: new BigNumber(gasFeePct).dividedBy(100).multipliedBy(fromAmounts.formattedAmount).toFixed(),
       relayGasFeeTotalUsd: feeUsd,
@@ -131,17 +126,17 @@ export class TrackFillEventConsumer {
       routeChainNameFromTo: `${sourceChainInfo.name}-${destinationChainInfo.name}`,
       sender: deposit.depositorAddr,
       succeeded: true,
-      toAmount: new BigNumber(fromAmounts.formattedAmount).minus(formattedBridgeFeeValues.total).toFixed(),
+      toAmount: new BigNumber(fromAmounts.formattedAmount).minus(bridgeFeePctValues.formattedPctAmount).toFixed(),
       toAmountUsd: new BigNumber(fromAmounts.formattedAmountUsd)
-        .minus(formattedBridgeFeeValues.totalUsd)
+        .minus(bridgeFeePctValues.pctAmountUsd)
         .multipliedBy(depositTokenPriceUsd)
         .toFixed(),
       toChainId: String(deposit.destinationChainId),
       toChainName: destinationChainInfo.name,
       tokenSymbol: deposit.token.symbol.toUpperCase(),
-      totalBridgeFee: formattedBridgeFeeValues.total,
-      totalBridgeFeePct: formattedBridgeFeeValues.pct,
-      totalBridgeFeeUsd: formattedBridgeFeeValues.totalUsd,
+      totalBridgeFee: bridgeFeePctValues.formattedPctAmount,
+      totalBridgeFeePct: bridgeFeePctValues.formattedPct,
+      totalBridgeFeeUsd: bridgeFeePctValues.pctAmountUsd,
       totalFilledAmount: totalFilledAmounts.formattedAmount,
       totalFilledAmountUsd: totalFilledAmounts.formattedAmountUsd,
       // Old queued up redis jobs might not have the `destinationToken` field,
@@ -149,36 +144,6 @@ export class TrackFillEventConsumer {
       toTokenAddress: utils.getAddress(destinationToken || constants.AddressZero),
       transactionHash: fillTx.hash,
     });
-  }
-
-  private async getFillTxNetworkFee(destinationChainId: number, fillTxHash: string) {
-    const destinationChainProvider = this.providers.getProvider(destinationChainId);
-    const destinationChainInfo = chainIdToInfo[destinationChainId];
-
-    if (!destinationChainProvider || !destinationChainInfo) {
-      return {
-        fillTxBlockNumber: 0,
-        fee: "0",
-        feeUsd: "0",
-      };
-    }
-
-    const fillTxReceipt = await destinationChainProvider.getTransactionReceipt(fillTxHash);
-    // Some chains, e.g. Optimism, do not return the effective gas price in the receipt. We need to fetch it separately.
-    const gasPrice = fillTxReceipt.effectiveGasPrice || (await destinationChainProvider.getGasPrice());
-    const fillTxGasCostsWei = gasPrice.mul(fillTxReceipt.gasUsed).toString();
-    const fillTxBlock = await this.providers.getCachedBlock(destinationChainId, fillTxReceipt.blockNumber);
-    const nativeTokenPriceUsd = await this.marketPriceService.getCachedHistoricMarketPrice(
-      fillTxBlock.date,
-      destinationChainInfo.nativeSymbol.toLowerCase(),
-    );
-    const fee = new BigNumber(fillTxGasCostsWei).dividedBy(fixedPointAdjustment);
-
-    return {
-      fillTxBlockNumber: fillTxBlock.blockNumber,
-      fee: fee.toFixed(),
-      feeUsd: fee.multipliedBy(nativeTokenPriceUsd.usd).toFixed(),
-    };
   }
 
   @OnQueueFailed()

@@ -37,6 +37,23 @@ export type RequestedSpeedUpDepositTx = {
   updatedRecipient?: string;
   updatedMessage?: string;
 };
+export type FeeBreakdown = {
+  // lp fee
+  lpFeeUsd: string;
+  lpFeePct: string; // wei pct
+  lpFeeAmount: string;
+  // relayer fee
+  relayCapitalFeeUsd: string;
+  relayCapitalFeePct: string; // wei pct
+  relayCapitalFeeAmount: string;
+  relayGasFeeUsd: string;
+  relayGasFeePct: string; // wei pct
+  relayGasFeeAmount: string;
+  // total = lp fee + relayer fee
+  totalBridgeFeeUsd: string;
+  totalBridgeFeePct: string; // wei pct
+  totalBridgeFeeAmount: string;
+};
 
 @Entity()
 @Unique("UK_deposit_depositId_sourceChainId", ["depositId", "sourceChainId"])
@@ -128,6 +145,9 @@ export class Deposit {
 
   @Column({ type: "jsonb", default: [] })
   speedUps: RequestedSpeedUpDepositTx[];
+
+  @Column({ type: "jsonb", default: {} })
+  feeBreakdown: FeeBreakdown;
 
   @Column()
   blockNumber: number;

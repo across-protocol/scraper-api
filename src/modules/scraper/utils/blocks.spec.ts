@@ -1,4 +1,4 @@
-import { splitBlockRanges } from "./utils";
+import { splitBlockRanges } from "./blocks";
 
 describe("blocks", () => {
   it("[10, 20, 30] 2 10", () => {
