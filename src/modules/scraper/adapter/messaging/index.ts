@@ -14,6 +14,7 @@ export enum ScraperQueue {
   SuggestedFees = "SuggestedFees",
   TrackFillEvent = "TrackFillEvent",
   FeeBreakdown = "FeeBreakdown",
+  OpRebateReward = "OpRebateReward",
 }
 
 export type BlocksEventsQueueMessage = {
@@ -103,4 +104,8 @@ export type TrackFillEventQueueMessage = {
 
 export type FeeBreakdownQueueMessage = {
   depositId: number;
+};
+
+export type OpRebateRewardMessage = {
+  depositPrimaryKey: number;
 };

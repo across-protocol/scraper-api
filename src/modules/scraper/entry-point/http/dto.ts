@@ -96,6 +96,16 @@ export class SubmitFeeBreakdownBody {
   toDepositId: number;
 }
 
+export class OpRebateRewardBody {
+  @IsInt()
+  @ApiProperty({ example: 1 })
+  fromDepositId: number;
+
+  @IsInt()
+  @ApiProperty({ example: 2 })
+  toDepositId: number;
+}
+
 export class RetryFailedJobsBody {
   @IsString()
   @IsIn(Object.values(ScraperQueue))

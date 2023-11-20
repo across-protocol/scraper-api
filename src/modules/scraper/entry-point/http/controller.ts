@@ -15,6 +15,7 @@ import {
   DepositAcxPriceQueueMessage,
   SuggestedFeesQueueMessage,
   FeeBreakdownQueueMessage,
+  OpRebateRewardMessage,
 } from "../../adapter/messaging";
 import { ScraperService } from "../../service";
 import { ScraperQueuesService } from "../../service/ScraperQueuesService";
@@ -30,6 +31,7 @@ import {
   RetryIncompleteDepositsBody,
   SubmitReindexReferralAddressJobBody,
   SubmitFeeBreakdownBody,
+  OpRebateRewardBody,
 } from "./dto";
 
 @Controller()
@@ -190,6 +192,21 @@ export class ScraperController {
     for (let depositId = fromDepositId; depositId <= toDepositId; depositId++) {
       await this.scraperQueuesService.publishMessage<FeeBreakdownQueueMessage>(ScraperQueue.FeeBreakdown, {
         depositId,
+      });
+    }
+  }
+
+  @Post("scraper/op-rebate-reward")
+  @ApiTags("scraper")
+  @Roles(Role.Admin)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @ApiBearerAuth()
+  async submitOpRebateRewardJob(@Body() body: OpRebateRewardBody) {
+    const { fromDepositId, toDepositId } = body;
+
+    for (let depositId = fromDepositId; depositId <= toDepositId; depositId++) {
+      await this.scraperQueuesService.publishMessage<OpRebateRewardMessage>(ScraperQueue.OpRebateReward, {
+        depositPrimaryKey: depositId,
       });
     }
   }
