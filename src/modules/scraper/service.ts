@@ -229,7 +229,6 @@ export class ScraperService {
         .where("d.depositDate >= :fromDate", { fromDate })
         .andWhere("d.depositDate <= :toDate", { toDate })
         .orderBy("d.depositDate", "ASC")
-        .addOrderBy("d.id", "ASC")
         .take(limit)
         .skip(page * limit)
         .getMany();
@@ -238,6 +237,11 @@ export class ScraperService {
         depositId: d.id,
         rectifyStickyReferralAddress: false,
       }));
+      this.logger.debug(
+        `publish ${deposits.length} deposits from ${deposits[0].depositDate} to ${
+          deposits[deposits.length - 1]
+        } to DepositReferralQueue`,
+      );
       await this.scraperQueuesService.publishMessagesBulk<DepositReferralQueueMessage>(
         ScraperQueue.DepositReferral,
         messages,
