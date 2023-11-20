@@ -7,7 +7,7 @@ import { OpRebateService } from "../../services/op-rebate-service";
 import { GetRewardsQuery } from "./dto";
 
 @Controller()
-export class RewardsController {
+export class RewardController {
   public constructor(private opRebateService: OpRebateService, private referralsService: ReferralService) {}
 
   @Get("rewards/op-rebates/summary")

@@ -5,7 +5,7 @@ import { AppConfigModule } from "../configuration/configuration.module";
 import { Deposit } from "../deposit/model/deposit.entity";
 import { Web3Module } from "../web3/module";
 
-import { RewardsController } from "./entrypoints/http/controller";
+import { RewardController } from "./entrypoints/http/controller";
 import { OpRebateService } from "./services/op-rebate-service";
 import { Reward } from "./model/reward.entity";
 
@@ -14,7 +14,7 @@ export class RewardModule {
   static forRoot(): DynamicModule {
     const module: DynamicModule = {
       module: RewardModule,
-      controllers: [RewardsController],
+      controllers: [RewardController],
       providers: [OpRebateService],
       imports: [TypeOrmModule.forFeature([Deposit, Reward]), AppConfigModule, Web3Module],
       exports: [OpRebateService],
