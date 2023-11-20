@@ -40,6 +40,8 @@ import { AirdropModule } from "../airdrop/module";
 import { RefundRequestedEv } from "../web3/model/refund-requested-ev.entity";
 import { RectifyStickyReferralConsumer } from "./adapter/messaging/RectifyStickyReferralConsumer";
 import { OpRebateRewardConsumer } from "./adapter/messaging/OpRebateRewardConsumer";
+import { OpRebateService } from "../rewards/services/op-rebate-service";
+import { Reward } from "../rewards/model/reward.entity";
 
 @Module({})
 export class ScraperModule {
@@ -50,6 +52,7 @@ export class ScraperModule {
       SuggestedFeesService,
       TrackService,
       GasFeesService,
+      OpRebateService,
       BlocksEventsConsumer,
       MerkleDistributorBlocksEventsConsumer,
       FillEventsConsumer,
@@ -83,6 +86,7 @@ export class ScraperModule {
           FilledRelayEv,
           RequestedSpeedUpDepositEv,
           RefundRequestedEv,
+          Reward,
         ]),
         MarketPriceModule.forRoot(moduleOptions),
         HttpModule,
