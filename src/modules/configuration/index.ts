@@ -185,6 +185,13 @@ export const configValues = () => ({
     acx: {
       address: process.env.ACX_ADDRESS || "0x40153DdFAd90C49dbE3F5c9F96f2a5B25ec67461", // TODO: replace with mainnet,
     },
+    rewardTokens: {
+      "op-rebates": {
+        address: process.env.OP_REBATES_REWARD_TOKEN_ADDRESS || "0x4200000000000000000000000000000000000042",
+        chainId: Number(process.env.OP_REBATES_REWARD_TOKEN_CHAIN_ID || "10"),
+        cgId: process.env.OP_REBATES_REWARD_TOKEN_CG_ID || "op",
+      },
+    },
   },
   enableSpokePoolsEventsProcessing: process.env.ENABLE_SPOKE_POOLS_EVENTS_PROCESSING === "true",
   /**
@@ -219,6 +226,17 @@ export const configValues = () => ({
   },
   amplitude: {
     apiKey: process.env.AMPLITUDE_API_KEY,
+  },
+  rewardPrograms: {
+    "op-rebates": {
+      disabled: process.env.OP_REBATES_REWARD_PROGRAM_DISABLED === "true",
+      startTimestampSeconds: process.env.OP_REBATES_REWARD_PROGRAM_START_TIMESTAMP_SEC
+        ? Number(process.env.OP_REBATES_REWARD_PROGRAM_START_TIMESTAMP_SEC)
+        : 0,
+      endTimestampSeconds: process.env.OP_REBATES_REWARD_PROGRAM_END_TIMESTAMP_SEC
+        ? Number(process.env.OP_REBATES_REWARD_PROGRAM_END_TIMESTAMP_SEC)
+        : 0,
+    },
   },
 });
 
