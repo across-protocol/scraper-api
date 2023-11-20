@@ -23,6 +23,7 @@ export class ScraperQueuesService {
     @InjectQueue(ScraperQueue.DepositAcxPrice) private depositAcxPriceQueue: Queue,
     @InjectQueue(ScraperQueue.SuggestedFees) private suggestedFeesQueue: Queue,
     @InjectQueue(ScraperQueue.TrackFillEvent) private trackFillEventsQueue: Queue,
+    @InjectQueue(ScraperQueue.RectifyStickyReferral) private rectifyStickyReferralQueue: Queue,
   ) {
     this.queuesMap = {
       [ScraperQueue.BlocksEvents]: this.blocksEventsQueue,
@@ -38,6 +39,7 @@ export class ScraperQueuesService {
       [ScraperQueue.DepositAcxPrice]: this.depositAcxPriceQueue,
       [ScraperQueue.SuggestedFees]: this.suggestedFeesQueue,
       [ScraperQueue.TrackFillEvent]: this.trackFillEventsQueue,
+      [ScraperQueue.RectifyStickyReferral]: this.rectifyStickyReferralQueue,
     };
     this.initLogs();
   }
@@ -82,9 +84,13 @@ export class ScraperQueuesService {
       } else {
         failedJobs = await q.getFailed();
       }
+      // from whatever reason, the list can contain null values :|
+      failedJobs = failedJobs.filter((job) => !!job);
 
       for (const failedJob of failedJobs) {
-        await failedJob.retry();
+        await failedJob.retry().catch((error) => {
+          this.logger.error(error);
+        });
       }
     } catch (error) {
       this.logger.error(error);

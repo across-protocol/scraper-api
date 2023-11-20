@@ -1,5 +1,5 @@
 import { ApiProperty } from "@nestjs/swagger";
-import { IsIn, IsInt, IsOptional, IsString } from "class-validator";
+import { IsDateString, IsIn, IsInt, IsOptional, IsString } from "class-validator";
 import { ScraperQueue } from "../../adapter/messaging";
 
 export class ProcessBlocksBody {
@@ -34,6 +34,16 @@ export class SubmitReferralAddressJobBody {
   @IsInt()
   @ApiProperty({ example: 2 })
   toDepositId: number;
+}
+
+export class SubmitReindexReferralAddressJobBody {
+  @IsDateString()
+  @ApiProperty({ example: "2022-11-08T11:00:00.000Z", required: true })
+  fromDate: string;
+
+  @IsDateString()
+  @ApiProperty({ example: "2022-11-08T11:00:00.000Z", required: true })
+  toDate: string;
 }
 
 export class SubmitDepositFilledDateBody {

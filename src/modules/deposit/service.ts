@@ -13,7 +13,7 @@ import {
 } from "./adapter/db/queries";
 import { AppConfig } from "../configuration/configuration.service";
 import { InvalidAddressException, DepositNotFoundException } from "./exceptions";
-import { GetDepositsV2Query } from "./entry-point/http/dto";
+import { GetDepositsV2Query, GetDepositsForTxPageQuery } from "./entry-point/http/dto";
 
 export const DEPOSITS_STATS_CACHE_KEY = "deposits:stats";
 
@@ -43,6 +43,76 @@ export class DepositService {
       await this.cacheManager.set(DEPOSITS_STATS_CACHE_KEY, data, 60);
     }
     return data;
+  }
+
+  public async getDepositsForTxPage(query: Partial<GetDepositsForTxPageQuery>) {
+    const limit = parseInt(query.limit ?? "10");
+    const offset = parseInt(query.offset ?? "0");
+
+    let queryBuilder = this.depositRepository.createQueryBuilder("d");
+
+    if (query.userAddress) {
+      let userAddress = query.userAddress;
+
+      try {
+        userAddress = utils.getAddress(userAddress);
+      } catch (error) {
+        throw new InvalidAddressException();
+      }
+
+      queryBuilder = queryBuilder.andWhere(
+        new Brackets((qb) => {
+          qb.where("d.depositorAddr = :userAddress", {
+            userAddress,
+          }).orWhere("d.recipientAddr = :userAddress", { userAddress });
+        }),
+      );
+    }
+
+    queryBuilder = this.getFilteredDepositsQuery(queryBuilder, query);
+
+    // If this flag is set to true, we will skip pending deposits that:
+    // - are older than 1 day because the relayer will ignore such deposits using its fixed lookback
+    // - or are unprofitable for the relayer
+    if (query.skipOldUnprofitable) {
+      queryBuilder = queryBuilder.andWhere(
+        `
+        CASE
+          WHEN d.status = 'filled' THEN true
+          WHEN d.status = 'pending'
+            AND d.depositDate <= NOW() - INTERVAL '1 days'
+              THEN false
+          WHEN d.status = 'pending'
+            AND d.depositRelayerFeePct * :multiplier < d.suggestedRelayerFeePct 
+              THEN false
+          ELSE true
+        END
+        `,
+        {
+          multiplier: this.appConfig.values.suggestedFees.deviationBufferMultiplier,
+        },
+      );
+    }
+
+    // show pending first
+    if (query.orderBy === "status") {
+      queryBuilder = queryBuilder.addOrderBy("d.status", "DESC");
+    }
+
+    queryBuilder = queryBuilder.addOrderBy("d.depositDate", "DESC");
+    queryBuilder = queryBuilder.take(limit);
+    queryBuilder = queryBuilder.skip(offset);
+
+    const [deposits, total] = await queryBuilder.getManyAndCount();
+
+    return {
+      deposits: deposits.map(formatDeposit),
+      pagination: {
+        limit,
+        offset,
+        total,
+      },
+    };
   }
 
   public async getUserDeposits(userAddress: string, status?: "filled" | "pending", limit = 10, offset = 0) {
@@ -132,30 +202,14 @@ export class DepositService {
   public async getDepositsV2(query: GetDepositsV2Query) {
     const limit = parseInt(query.limit ?? "10");
     const offset = parseInt(query.offset ?? "0");
+
     let queryBuilder = this.depositRepository.createQueryBuilder("d");
-    queryBuilder = queryBuilder.where("d.depositDate is not null");
-
-    if (query.status) {
-      queryBuilder = queryBuilder.andWhere("d.status = :status", { status: query.status });
-    }
-
-    if (query.originChainId) {
-      queryBuilder = queryBuilder.andWhere("d.sourceChainId = :sourceChainId", { sourceChainId: query.originChainId });
-    }
-
-    if (query.destinationChainId) {
-      queryBuilder = queryBuilder.andWhere("d.destinationChainId = :destinationChainId", {
-        destinationChainId: query.destinationChainId,
-      });
-    }
-
-    if (query.tokenAddress) {
-      queryBuilder = queryBuilder.andWhere("d.tokenAddr = :tokenAddr", { tokenAddr: query.tokenAddress });
-    }
+    queryBuilder = this.getFilteredDepositsQuery(queryBuilder, query);
 
     queryBuilder = queryBuilder.orderBy("d.depositDate", "DESC");
     queryBuilder = queryBuilder.take(limit);
     queryBuilder = queryBuilder.skip(offset);
+
     const [deposits, total] = await queryBuilder.getManyAndCount();
 
     return {
@@ -221,6 +275,33 @@ export class DepositService {
       acx_rewards_amount_referrer: d.acxRewardsAmountReferrer,
       acx_rewards_amount_referee: d.acxRewardsAmountReferee,
     }));
+  }
+
+  private getFilteredDepositsQuery(
+    queryBuilder: ReturnType<typeof this.depositRepository.createQueryBuilder>,
+    filter: Partial<GetDepositsV2Query>,
+  ) {
+    queryBuilder = queryBuilder.andWhere("d.depositDate is not null");
+
+    if (filter.status) {
+      queryBuilder = queryBuilder.andWhere("d.status = :status", { status: filter.status });
+    }
+
+    if (filter.originChainId) {
+      queryBuilder = queryBuilder.andWhere("d.sourceChainId = :sourceChainId", { sourceChainId: filter.originChainId });
+    }
+
+    if (filter.destinationChainId) {
+      queryBuilder = queryBuilder.andWhere("d.destinationChainId = :destinationChainId", {
+        destinationChainId: filter.destinationChainId,
+      });
+    }
+
+    if (filter.tokenAddress) {
+      queryBuilder = queryBuilder.andWhere("d.tokenAddr = :tokenAddr", { tokenAddr: filter.tokenAddress });
+    }
+
+    return queryBuilder;
   }
 }
 

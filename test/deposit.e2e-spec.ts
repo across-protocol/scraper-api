@@ -278,23 +278,149 @@ describe("GET /v2/deposits", () => {
 
   beforeEach(async () => {
     await depositFixture.insertManyDeposits([
-      { status: "pending" },
-      { status: "pending" },
-      { status: "filled" },
-      { status: "filled" },
+      {
+        status: "pending",
+        sourceChainId: 1,
+        destinationChainId: 10,
+      },
+      {
+        status: "pending",
+        sourceChainId: 137,
+        destinationChainId: 42161,
+      },
+      {
+        depositId: 3,
+        status: "filled",
+        sourceChainId: 1,
+        destinationChainId: 10,
+        tokenAddr: usdc.address,
+      },
+      {
+        depositId: 4,
+        status: "filled",
+        sourceChainId: 137,
+        destinationChainId: 42161,
+      },
     ]);
   });
 
-  it("200", async () => {
-    const response = await request(app.getHttpServer()).get("/v2/deposits").query({ limit: 10 });
+  it("200 without query params", async () => {
+    const response = await request(app.getHttpServer()).get("/v2/deposits");
     expect(response.status).toBe(200);
     expect(response.body.deposits).toHaveLength(4);
   });
 
-  it("200 for correct filter params", async () => {
+  it("200 for 'status' query params", async () => {
     const response = await request(app.getHttpServer()).get("/v2/deposits").query({ status: "filled" });
     expect(response.status).toBe(200);
     expect(response.body.deposits).toHaveLength(2);
+  });
+
+  it("200 for 'originChainId' and 'destinationChainId' query params", async () => {
+    const response = await request(app.getHttpServer())
+      .get("/v2/deposits")
+      .query({ originChainId: 1, destinationChainId: 10 });
+    expect(response.status).toBe(200);
+    expect(response.body.deposits).toHaveLength(2);
+  });
+
+  it("200 for 'tokenAddress' query params", async () => {
+    const response = await request(app.getHttpServer()).get("/v2/deposits").query({ tokenAddress: usdc.address });
+    expect(response.status).toBe(200);
+    expect(response.body.deposits).toHaveLength(1);
+  });
+
+  afterEach(async () => {
+    await app.get(DepositFixture).deleteAllDeposits();
+  });
+});
+
+describe("GET /deposits/tx-page", () => {
+  beforeAll(async () => {
+    depositFixture = app.get(DepositFixture);
+  });
+
+  beforeEach(async () => {
+    await depositFixture.insertManyDeposits([
+      {
+        depositId: 1,
+        status: "pending",
+        sourceChainId: 1,
+        destinationChainId: 10,
+        // unprofitable deposit
+        depositDate: new Date("2021-01-01"),
+        depositRelayerFeePct: "0",
+        suggestedRelayerFeePct: "1",
+      },
+      {
+        depositId: 2,
+        status: "pending",
+        sourceChainId: 137,
+        destinationChainId: 42161,
+        depositDate: new Date(Date.now()),
+        depositRelayerFeePct: "2",
+        suggestedRelayerFeePct: "1",
+      },
+      {
+        depositId: 3,
+        status: "filled",
+        sourceChainId: 1,
+        destinationChainId: 10,
+        tokenAddr: usdc.address,
+        depositDate: new Date(Date.now() - 30_000),
+        depositRelayerFeePct: "2",
+        suggestedRelayerFeePct: "1",
+      },
+      {
+        depositId: 4,
+        status: "filled",
+        sourceChainId: 137,
+        destinationChainId: 42161,
+        depositDate: new Date(Date.now()),
+        depositRelayerFeePct: "2",
+        suggestedRelayerFeePct: "1",
+      },
+    ]);
+  });
+
+  it("200 without query params", async () => {
+    const response = await request(app.getHttpServer()).get("/deposits/tx-page");
+    expect(response.status).toBe(200);
+    expect(response.body.deposits).toHaveLength(4);
+  });
+
+  it("200 for 'status' query params", async () => {
+    const response = await request(app.getHttpServer()).get("/deposits/tx-page").query({ status: "filled" });
+    expect(response.status).toBe(200);
+    expect(response.body.deposits).toHaveLength(2);
+  });
+
+  it("200 for 'originChainId' and 'destinationChainId' query params", async () => {
+    const response = await request(app.getHttpServer())
+      .get("/deposits/tx-page")
+      .query({ originChainId: 1, destinationChainId: 10 });
+    expect(response.status).toBe(200);
+    expect(response.body.deposits).toHaveLength(2);
+  });
+
+  it("200 for 'tokenAddress' query params", async () => {
+    const response = await request(app.getHttpServer()).get("/deposits/tx-page").query({ tokenAddress: usdc.address });
+    expect(response.status).toBe(200);
+    expect(response.body.deposits).toHaveLength(1);
+  });
+
+  it("200 for 'skipOldUnprofitable' query params", async () => {
+    const response = await request(app.getHttpServer()).get("/deposits/tx-page").query({ skipOldUnprofitable: true });
+    expect(response.status).toBe(200);
+    expect(response.body.deposits).toHaveLength(3);
+  });
+
+  it("200 for 'orderBy' query params", async () => {
+    const response = await request(app.getHttpServer()).get("/deposits/tx-page").query({ orderBy: "status" });
+    expect(response.status).toBe(200);
+    expect(response.body.deposits).toHaveLength(4);
+    expect(response.body.deposits[0].depositId).toBe(2);
+    expect(response.body.deposits[2].depositId).toBe(4);
   });
 
   afterEach(async () => {

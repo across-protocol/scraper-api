@@ -1,12 +1,25 @@
 import { Controller, Get, Query } from "@nestjs/common";
 import { ApiResponse, ApiTags } from "@nestjs/swagger";
 import { DepositService } from "../../service";
-import { GetDepositsQuery, GetDepositDetailsQuery, GetDepositsStatsResponse, GetDepositsV2Query } from "./dto";
+import {
+  GetDepositsQuery,
+  GetDepositDetailsQuery,
+  GetDepositsStatsResponse,
+  GetDepositsV2Query,
+  GetDepositsForTxPageQuery,
+} from "./dto";
 
 @Controller()
 export class DepositController {
   public constructor(private depositService: DepositService) {}
 
+  @Get("deposits/tx-page")
+  @ApiTags("deposits")
+  getDepositsForTxPage(@Query() query: GetDepositsForTxPageQuery) {
+    return this.depositService.getDepositsForTxPage(query);
+  }
+
+  // TODO: Deprecate this endpoint if FE migrated to above `/deposits/tx-page` endpoint
   @Get("deposits")
   @ApiTags("deposits")
   getDeposits(@Query() query: GetDepositsQuery) {

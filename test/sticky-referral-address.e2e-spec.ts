@@ -46,7 +46,7 @@ describe("Sticky referral address", () => {
         depositDate: new Date("2023-09-02"),
       },
     ]);
-    await referralService.computeStickyReferralAddress(deposits[1]);
+    await referralService.getStickyReferralAddress(deposits[1]);
     let d = await referralService.depositRepository.findOne({ where: { id: deposits[0].id } });
     expect(d.referralAddress).toEqual("B");
     expect(d.stickyReferralAddress).toEqual("B");
@@ -72,7 +72,7 @@ describe("Sticky referral address", () => {
         depositDate: new Date("2023-09-03"),
       },
     ]);
-    await referralService.computeStickyReferralAddress(deposits[1]);
+    await referralService.getStickyReferralAddress(deposits[1]);
     let d = await referralService.depositRepository.findOne({ where: { id: deposits[0].id } });
     expect(d.referralAddress).toEqual("B");
     expect(d.stickyReferralAddress).toEqual("B");
@@ -101,8 +101,8 @@ describe("Sticky referral address", () => {
         depositDate: new Date("2023-09-04"),
       },
     ]);
-    await referralService.computeStickyReferralAddress(deposits[1]);
-    await referralService.computeStickyReferralAddress(deposits[0]);
+    await referralService.getStickyReferralAddress(deposits[1]);
+    await referralService.getStickyReferralAddress(deposits[2]);
     let d = await referralService.depositRepository.findOne({ where: { id: deposits[0].id } });
     expect(d.referralAddress).toEqual("B");
     expect(d.stickyReferralAddress).toEqual("B");
@@ -137,10 +137,8 @@ describe("Sticky referral address", () => {
         depositDate: new Date("2023-09-04"),
       },
     ]);
-    await referralService.computeStickyReferralAddress(deposits[0]);
-    await referralService.computeStickyReferralAddress(deposits[1]);
-    await referralService.computeStickyReferralAddress(deposits[2]);
-    await referralService.computeStickyReferralAddress(deposits[3]);
+    await referralService.getStickyReferralAddress(deposits[1]);
+    await referralService.getStickyReferralAddress(deposits[3]);
 
     let d = await referralService.depositRepository.findOne({ where: { id: deposits[0].id } });
     expect(d.referralAddress).toEqual("B");

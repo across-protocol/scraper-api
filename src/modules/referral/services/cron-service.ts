@@ -20,7 +20,7 @@ export class ReferralCronService {
     private referralService: ReferralService,
   ) {}
 
-  @EnhancedCron(CronExpression.EVERY_6_HOURS)
+  @EnhancedCron(CronExpression.EVERY_HOUR)
   async startCrons() {
     try {
       if (this.semaphore) return;
