@@ -47,6 +47,8 @@ export class RewardService {
 
       return {
         deposit,
+        // We assume that a deposit can only have one type of reward here. If this changes in the future for
+        // other types of rewards, we will need to change this logic.
         rewards: opRebate ? this.formatOpRebate(opRebate) : referral ? this.formatReferral(referral) : undefined,
       };
     });
