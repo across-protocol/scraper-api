@@ -132,6 +132,18 @@ export class GetDepositsV2Query {
   @Type(() => String)
   @ApiProperty({ example: "0x", required: false })
   tokenAddress: string;
+
+  @IsOptional()
+  @IsDateString()
+  @Type(() => String)
+  @ApiProperty({ example: "2022-11-08T11:00:00.000Z", required: false })
+  startDepositDate: string;
+
+  @IsOptional()
+  @IsDateString()
+  @Type(() => String)
+  @ApiProperty({ example: "2022-11-08T11:00:00.000Z", required: false })
+  endDepositDate: string;
 }
 
 export class GetDepositsForTxPageQuery extends GetDepositsV2Query {

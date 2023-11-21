@@ -205,6 +205,7 @@ export class DepositService {
 
     let queryBuilder = this.depositRepository.createQueryBuilder("d");
     queryBuilder = this.getFilteredDepositsQuery(queryBuilder, query);
+    queryBuilder = queryBuilder.leftJoinAndSelect("d.token", "t");
 
     queryBuilder = queryBuilder.orderBy("d.depositDate", "DESC");
     queryBuilder = queryBuilder.take(limit);
@@ -301,6 +302,18 @@ export class DepositService {
       queryBuilder = queryBuilder.andWhere("d.tokenAddr = :tokenAddr", { tokenAddr: filter.tokenAddress });
     }
 
+    if (filter.startDepositDate) {
+      queryBuilder = queryBuilder.andWhere("d.depositDate >= :startDepositDate", {
+        startDepositDate: new Date(filter.startDepositDate),
+      });
+    }
+
+    if (filter.endDepositDate) {
+      queryBuilder = queryBuilder.andWhere("d.depositDate <= :endDepositDate", {
+        endDepositDate: new Date(filter.endDepositDate),
+      });
+    }
+
     return queryBuilder;
   }
 }
@@ -322,6 +335,7 @@ export function formatDeposit(deposit: Deposit) {
     sourceChainId: deposit.sourceChainId,
     destinationChainId: deposit.destinationChainId,
     assetAddr: deposit.tokenAddr,
+    assetSymbol: deposit.token?.symbol,
     depositorAddr: deposit.depositorAddr,
     recipientAddr: deposit.recipientAddr,
     message: deposit.message,
