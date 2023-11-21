@@ -16,18 +16,21 @@ import { TokenFixture } from "../src/modules/web3/adapters/db/token-fixture";
 import { HistoricMarketPriceFixture } from "../src/modules/market-price/adapters/hmp-fixture";
 import { HistoricMarketPrice } from "../src/modules/market-price/model/historic-market-price.entity";
 import { Token } from "../src/modules/web3/model/token.entity";
+import { RewardFixture } from "../src/modules/rewards/adapter/db/reward-fixture";
 
 const usdc = {
   address: "0x1",
   symbol: "USDC",
   decimals: 6,
 };
+const depositorAddr = "0x9A8f92a830A5cB89a3816e3D267CB7791c16b04D";
 
 let app: INestApplication;
 let referralService: ReferralService;
 let priceFixture: HistoricMarketPriceFixture;
 let tokenFixture: TokenFixture;
 let depositFixture: DepositFixture;
+let rewardFixture: RewardFixture;
 
 let token: Token;
 let price: HistoricMarketPrice;
@@ -403,6 +406,16 @@ describe("GET /v2/deposits", () => {
 describe("GET /deposits/tx-page", () => {
   beforeAll(async () => {
     depositFixture = app.get(DepositFixture);
+    rewardFixture = app.get(RewardFixture);
+    referralService = app.get(ReferralService);
+
+    priceFixture = app.get(HistoricMarketPriceFixture);
+    tokenFixture = app.get(TokenFixture);
+
+    [token, price] = await Promise.all([
+      tokenFixture.insertToken({ ...usdc }),
+      priceFixture.insertPrice({ symbol: usdc.symbol, usd: "1" }),
+    ]);
   });
 
   beforeEach(async () => {
@@ -427,6 +440,7 @@ describe("GET /deposits/tx-page", () => {
         suggestedRelayerFeePct: "1",
       },
       {
+        id: 3,
         depositId: 3,
         status: "filled",
         sourceChainId: 1,
@@ -435,8 +449,15 @@ describe("GET /deposits/tx-page", () => {
         depositDate: new Date(Date.now() - 30_000),
         depositRelayerFeePct: "2",
         suggestedRelayerFeePct: "1",
+        bridgeFeePct: "10000000000000000", // 1%
+        referralAddress: depositorAddr,
+        stickyReferralAddress: depositorAddr,
+        depositorAddr,
+        priceId: price.id,
+        tokenId: token.id,
       },
       {
+        id: 4,
         depositId: 4,
         status: "filled",
         sourceChainId: 137,
@@ -444,6 +465,12 @@ describe("GET /deposits/tx-page", () => {
         depositDate: new Date(Date.now()),
         depositRelayerFeePct: "2",
         suggestedRelayerFeePct: "1",
+        bridgeFeePct: "10000000000000000", // 1%
+        referralAddress: depositorAddr,
+        stickyReferralAddress: depositorAddr,
+        depositorAddr,
+        priceId: price.id,
+        tokenId: token.id,
       },
     ]);
   });
@@ -488,8 +515,34 @@ describe("GET /deposits/tx-page", () => {
     expect(response.body.deposits[2].depositId).toBe(4);
   });
 
+  it("200 for 'include[]=rewards' query param", async () => {
+    await rewardFixture.insertReward({
+      depositPrimaryKey: 3,
+      recipient: depositorAddr,
+      type: "op-rebates",
+      metadata: { type: "op-rebates", rate: 0.95 },
+      amount: "1000000000000000000",
+      amountUsd: "1",
+      rewardTokenId: token.id,
+    });
+    await referralService.cumputeReferralStats();
+    await referralService.refreshMaterializedView();
+
+    const response = await request(app.getHttpServer()).get("/deposits/tx-page").query("include[]=rewards").query({
+      depositorOrRecipientAddress: depositorAddr,
+    });
+    expect(response.status).toBe(200);
+    expect(response.body.deposits).toHaveLength(2);
+    expect(response.body.deposits[0].rewards.type).toBe("referrals");
+    expect(response.body.deposits[1].rewards.type).toBe("op-rebates");
+  });
+
   afterEach(async () => {
-    await app.get(DepositFixture).deleteAllDeposits();
+    await Promise.all([rewardFixture.deleteAllRewards(), depositFixture.deleteAllDeposits()]);
+  });
+
+  afterAll(async () => {
+    await Promise.all([tokenFixture.deleteAllTokens(), priceFixture.deleteAllPrices()]);
   });
 });
 

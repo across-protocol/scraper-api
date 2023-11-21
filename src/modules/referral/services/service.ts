@@ -31,8 +31,6 @@ import { splitArrayInChunks } from "../../../utils";
 import { Claim } from "../../airdrop/model/claim.entity";
 import { EthProvidersService } from "../../web3/services/EthProvidersService";
 import { ChainIds } from "../../web3/model/ChainId";
-import { StickyReferralAddressesMechanism } from "../../configuration";
-import { Transaction } from "../../web3/model/transaction.entity";
 import { ReferralRewardsWindowJob, ReferralRewardsWindowJobStatus } from "../model/ReferralRewardsWindowJob.entity";
 import { QueryDeepPartialEntity } from "typeorm/query-builder/QueryPartialEntity";
 import { ReferralRewardsWindowJobResult } from "../model/ReferralRewardsWindowJobResult.entity";
@@ -170,6 +168,33 @@ export class ReferralService {
         total,
       },
     };
+  }
+
+  public async getReferralsForDepositsAndUserAddress(depositPrimaryKeys: number[], userAddress: string) {
+    const referrals = await this.depositsMvRepository
+      .createQueryBuilder("d")
+      .where("d.id IN (:...keys)", { keys: depositPrimaryKeys })
+      .getMany();
+
+    return referrals.map((item) => {
+      const appliedRate = new BigNumber(
+        item.depositorAddr === userAddress && item.referralAddress === userAddress
+          ? 1
+          : item.depositorAddr === userAddress
+          ? 0.25
+          : 0.75,
+      )
+        .multipliedBy(item.referralRate)
+        .multipliedBy(item.multiplier);
+      const acxRewards = new BigNumber(item.bridgeFeeUsd)
+        .dividedBy(new BigNumber(item.acxUsdPrice).dividedBy(new BigNumber(10).pow(18)))
+        .multipliedBy(appliedRate);
+      return {
+        ...item,
+        appliedRate: Number(appliedRate.toFixed()),
+        acxRewards: acxRewards.toFixed(0),
+      };
+    });
   }
 
   public async createNewReferralRewardsWindowJob(windowIndex: number, maxDepositDate: Date) {
@@ -334,6 +359,22 @@ export class ReferralService {
 
   public async revertReferralsMerkleDistribution(windowIndex: number) {
     await this.depositRepository.update({ rewardsWindowIndex: windowIndex }, { rewardsWindowIndex: null });
+  }
+
+  public getTierLevelByRate(referralRate: number) {
+    if (referralRate === 0.8) {
+      return 5;
+    }
+    if (referralRate === 0.7) {
+      return 4;
+    }
+    if (referralRate === 0.6) {
+      return 3;
+    }
+    if (referralRate === 0.5) {
+      return 2;
+    }
+    return 1;
   }
 
   private getTierLevelAndBonus(transfersCount: number, transfersVolumeUsd: number) {

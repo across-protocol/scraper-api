@@ -27,6 +27,16 @@ export class OpRebateService {
     private appConfig: AppConfig,
   ) {}
 
+  public async getOpRebateRewardsForDepositPrimaryKeys(depositPrimaryKeys: number[]) {
+    const rewardsQuery = this.rewardRepository
+      .createQueryBuilder("r")
+      .where("r.type = :type", { type: "op-rebates" })
+      .andWhere("r.depositPrimaryKey IN (:...depositPrimaryKeys)", { depositPrimaryKeys })
+      .leftJoinAndSelect("r.rewardToken", "rewardToken");
+    const rewards = await rewardsQuery.getMany();
+    return rewards;
+  }
+
   public async createOpRebatesForDeposit(depositPrimaryKey: number) {
     if (!this.appConfig.values.rewardPrograms["op-rebates"].enabled) {
       this.logger.verbose(`OP rebate rewards are disabled. Skipping...`);

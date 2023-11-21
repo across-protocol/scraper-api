@@ -45,8 +45,8 @@ export class AppModule {
       AuthModule.forRoot(moduleOptions),
       UserModule.forRoot(moduleOptions),
       AirdropModule.forRoot(moduleOptions),
+      RewardModule.forRoot(moduleOptions),
       CacheModule.register({ isGlobal: true }),
-      RewardModule,
     ];
 
     if (moduleOptions.runModes.includes(RunMode.Scraper)) {
