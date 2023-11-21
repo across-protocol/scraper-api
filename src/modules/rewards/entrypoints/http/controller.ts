@@ -1,10 +1,9 @@
-import { Controller, Get, Query } from "@nestjs/common";
+import { Controller, Get } from "@nestjs/common";
 import { ApiTags } from "@nestjs/swagger";
 
 import { ReferralService } from "../../../referral/services/service";
 
 import { OpRebateService } from "../../services/op-rebate-service";
-import { GetRewardsQuery } from "./dto";
 
 @Controller()
 export class RewardController {
@@ -19,8 +18,9 @@ export class RewardController {
 
   @Get("rewards/op-rebates")
   @ApiTags("rewards")
-  getOpRebates(@Query() query: GetRewardsQuery) {
-    return this.opRebateService.getOpRebateRewards(query);
+  getOpRebates() {
+    // TODO: implement
+    return;
   }
 
   @Get("rewards/referrals/summary")

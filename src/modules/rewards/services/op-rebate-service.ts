@@ -1,4 +1,4 @@
-import { HttpException, Injectable, Logger } from "@nestjs/common";
+import { Injectable, Logger } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
 import BigNumber from "bignumber.js";
@@ -14,7 +14,6 @@ import { makePctValuesCalculator } from "../../scraper/utils";
 import { MarketPriceService } from "../../market-price/services/service";
 
 import { Reward } from "../model/reward.entity";
-import { GetRewardsQuery } from "../entrypoints/http/dto";
 
 const OP_REBATE_RATE = 0.95;
 
@@ -29,49 +28,6 @@ export class OpRebateService {
     private ethProvidersService: EthProvidersService,
     private appConfig: AppConfig,
   ) {}
-
-  public async getOpRebateRewards(query: GetRewardsQuery) {
-    const limit = parseInt(query.limit ?? "10");
-    const offset = parseInt(query.offset ?? "0");
-    let userAddress = query.userAddress;
-
-    try {
-      userAddress = ethers.utils.getAddress(userAddress);
-    } catch (error) {
-      throw new HttpException("Invalid userAddress", 400);
-    }
-
-    const rewardsQuery = this.rewardRepository
-      .createQueryBuilder("r")
-      .where("r.type = :type", { type: "op-rebates" })
-      .andWhere("r.recipient = :recipient", { recipient: userAddress })
-      .leftJoinAndSelect("r.rewardToken", "rewardToken")
-      .leftJoinAndSelect("r.deposit", "deposit")
-      .orderBy("deposit.depositDate", "DESC")
-      .limit(limit)
-      .offset(offset);
-    const [rewards, total] = await rewardsQuery.getManyAndCount();
-
-    return {
-      rewards: rewards.map((reward) => this.formatReward(reward)),
-      pagination: {
-        limit,
-        offset,
-        total,
-      },
-    };
-  }
-
-  public async getOpRebateRewardsForDepositPrimaryKeys(depositPrimaryKeys: number[]) {
-    const rewardsQuery = this.rewardRepository
-      .createQueryBuilder("r")
-      .where("r.type = :type", { type: "op-rebates" })
-      .andWhere("r.depositPrimaryKey IN (:...depositPrimaryKeys)", { depositPrimaryKeys })
-      .leftJoinAndSelect("r.rewardToken", "rewardToken");
-    const rewards = await rewardsQuery.getMany();
-
-    return rewards.map((reward) => this.formatReward(reward));
-  }
 
   public async createOpRebatesForDeposit(depositPrimaryKey: number) {
     if (this.appConfig.values.rewardPrograms["op-rebates"].disabled) {
