@@ -274,6 +274,8 @@ describe("GET /deposits/pending", () => {
 describe("GET /v2/deposits", () => {
   beforeAll(async () => {
     depositFixture = app.get(DepositFixture);
+    tokenFixture = app.get(TokenFixture);
+    token = await tokenFixture.insertToken({ ...usdc });
   });
 
   beforeEach(async () => {
@@ -282,11 +284,13 @@ describe("GET /v2/deposits", () => {
         status: "pending",
         sourceChainId: 1,
         destinationChainId: 10,
+        tokenId: token.id,
       },
       {
         status: "pending",
         sourceChainId: 137,
         destinationChainId: 42161,
+        tokenId: token.id,
       },
       {
         depositId: 3,
@@ -294,12 +298,16 @@ describe("GET /v2/deposits", () => {
         sourceChainId: 1,
         destinationChainId: 10,
         tokenAddr: usdc.address,
+        depositDate: new Date("2023-01-01"),
+        tokenId: token.id,
       },
       {
         depositId: 4,
         status: "filled",
         sourceChainId: 137,
         destinationChainId: 42161,
+        depositDate: new Date("2023-02-01"),
+        tokenId: token.id,
       },
     ]);
   });
@@ -330,8 +338,35 @@ describe("GET /v2/deposits", () => {
     expect(response.body.deposits).toHaveLength(1);
   });
 
+  it("200 for 'startDepositDate' and 'endDepositDate' query params", async () => {
+    const [response1, response2, response3] = await Promise.all([
+      request(app.getHttpServer())
+        .get("/v2/deposits")
+        .query({ startDepositDate: "2023-01-01", endDepositDate: "2023-02-01" }),
+      request(app.getHttpServer()).get("/v2/deposits").query({ startDepositDate: "2023-02-01" }),
+      request(app.getHttpServer()).get("/v2/deposits").query({ endDepositDate: "2023-01-01" }),
+    ]);
+
+    expect(response1.body.deposits).toHaveLength(2);
+    expect(response2.body.deposits).toHaveLength(3);
+    expect(response3.body.deposits).toHaveLength(1);
+  });
+
+  it("400 for invalid 'startDepositDate' and 'endDepositDate' query params", async () => {
+    const [response1, response2] = await Promise.all([
+      request(app.getHttpServer()).get("/v2/deposits").query({ startDepositDate: "invalid" }),
+      request(app.getHttpServer()).get("/v2/deposits").query({ endDepositDate: "invalid" }),
+    ]);
+    expect(response1.status).toBe(400);
+    expect(response2.status).toBe(400);
+  });
+
   afterEach(async () => {
     await app.get(DepositFixture).deleteAllDeposits();
+  });
+
+  afterAll(async () => {
+    await tokenFixture.deleteAllTokens();
   });
 });
 
