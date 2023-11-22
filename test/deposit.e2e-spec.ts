@@ -342,10 +342,15 @@ describe("GET /v2/deposits", () => {
     expect(response.body.deposits).toHaveLength(1);
   });
 
-  it("200 for 'userAddress' query params", async () => {
-    const response = await request(app.getHttpServer()).get("/v2/deposits").query({ userAddress: depositorAddress });
-    expect(response.status).toBe(200);
-    expect(response.body.deposits).toHaveLength(2);
+  it("200 for 'depositorOrRecipientAddress', 'depositorAddress' and 'recipientAddress' query params", async () => {
+    const [response1, response2, response3] = await Promise.all([
+      request(app.getHttpServer()).get("/v2/deposits").query({ depositorOrRecipientAddress: depositorAddress }),
+      request(app.getHttpServer()).get("/v2/deposits").query({ depositorAddress }),
+      request(app.getHttpServer()).get("/v2/deposits").query({ recipientAddress: depositorAddress }),
+    ]);
+    expect(response1.body.deposits).toHaveLength(2);
+    expect(response2.body.deposits).toHaveLength(1);
+    expect(response3.body.deposits).toHaveLength(1);
   });
 
   it("200 for 'startDepositDate' and 'endDepositDate' query params", async () => {

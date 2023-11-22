@@ -283,22 +283,25 @@ export class DepositService {
       queryBuilder = queryBuilder.andWhere("d.tokenAddr = :tokenAddr", { tokenAddr: filter.tokenAddress });
     }
 
-    if (filter.userAddress) {
-      let userAddress = filter.userAddress;
-
-      try {
-        userAddress = utils.getAddress(userAddress);
-      } catch (error) {
-        throw new InvalidAddressException();
-      }
-
+    if (filter.depositorOrRecipientAddress) {
+      const depositorOrRecipientAddress = this.assertValidAddress(filter.depositorOrRecipientAddress);
       queryBuilder = queryBuilder.andWhere(
         new Brackets((qb) => {
           qb.where("d.depositorAddr = :userAddress", {
-            userAddress,
-          }).orWhere("d.recipientAddr = :userAddress", { userAddress });
+            depositorOrRecipientAddress,
+          }).orWhere("d.recipientAddr = :userAddress", { depositorOrRecipientAddress });
         }),
       );
+    } else {
+      if (filter.depositorAddress) {
+        const depositorAddress = this.assertValidAddress(filter.depositorAddress);
+        queryBuilder = queryBuilder.andWhere("d.depositorAddr = :depositorAddr", { depositorAddr: depositorAddress });
+      }
+
+      if (filter.recipientAddress) {
+        const recipientAddress = this.assertValidAddress(filter.recipientAddress);
+        queryBuilder = queryBuilder.andWhere("d.recipientAddr = :recipientAddr", { recipientAddr: recipientAddress });
+      }
     }
 
     if (filter.startDepositDate) {
@@ -314,6 +317,15 @@ export class DepositService {
     }
 
     return queryBuilder;
+  }
+
+  private assertValidAddress(address: string) {
+    try {
+      const validAddress = utils.getAddress(address);
+      return validAddress;
+    } catch (error) {
+      throw new InvalidAddressException();
+    }
   }
 }
 

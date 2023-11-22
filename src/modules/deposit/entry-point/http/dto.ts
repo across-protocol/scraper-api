@@ -137,7 +137,19 @@ export class GetDepositsV2Query {
   @IsString()
   @Type(() => String)
   @ApiProperty({ example: "0x", required: false })
-  userAddress: string;
+  depositorOrRecipientAddress: string;
+
+  @IsOptional()
+  @IsString()
+  @Type(() => String)
+  @ApiProperty({ example: "0x", required: false })
+  depositorAddress: string;
+
+  @IsOptional()
+  @IsString()
+  @Type(() => String)
+  @ApiProperty({ example: "0x", required: false })
+  recipientAddress: string;
 
   @IsOptional()
   @IsDateString()
