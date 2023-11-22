@@ -50,25 +50,6 @@ export class DepositService {
     const offset = parseInt(query.offset ?? "0");
 
     let queryBuilder = this.depositRepository.createQueryBuilder("d");
-
-    if (query.userAddress) {
-      let userAddress = query.userAddress;
-
-      try {
-        userAddress = utils.getAddress(userAddress);
-      } catch (error) {
-        throw new InvalidAddressException();
-      }
-
-      queryBuilder = queryBuilder.andWhere(
-        new Brackets((qb) => {
-          qb.where("d.depositorAddr = :userAddress", {
-            userAddress,
-          }).orWhere("d.recipientAddr = :userAddress", { userAddress });
-        }),
-      );
-    }
-
     queryBuilder = this.getFilteredDepositsQuery(queryBuilder, query);
 
     // If this flag is set to true, we will skip pending deposits that:
@@ -300,6 +281,24 @@ export class DepositService {
 
     if (filter.tokenAddress) {
       queryBuilder = queryBuilder.andWhere("d.tokenAddr = :tokenAddr", { tokenAddr: filter.tokenAddress });
+    }
+
+    if (filter.userAddress) {
+      let userAddress = filter.userAddress;
+
+      try {
+        userAddress = utils.getAddress(userAddress);
+      } catch (error) {
+        throw new InvalidAddressException();
+      }
+
+      queryBuilder = queryBuilder.andWhere(
+        new Brackets((qb) => {
+          qb.where("d.depositorAddr = :userAddress", {
+            userAddress,
+          }).orWhere("d.recipientAddr = :userAddress", { userAddress });
+        }),
+      );
     }
 
     if (filter.startDepositDate) {
