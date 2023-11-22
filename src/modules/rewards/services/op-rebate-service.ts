@@ -6,11 +6,9 @@ import { ethers } from "ethers";
 import { DateTime } from "luxon";
 
 import { Deposit } from "../../deposit/model/deposit.entity";
-import { formatDeposit } from "../../deposit/service";
 import { AppConfig } from "../../configuration/configuration.service";
 import { EthProvidersService } from "../../web3/services/EthProvidersService";
 import { ChainIds } from "../../web3/model/ChainId";
-import { makePctValuesCalculator } from "../../scraper/utils";
 import { MarketPriceService } from "../../market-price/services/service";
 
 import { Reward } from "../model/reward.entity";
@@ -30,7 +28,7 @@ export class OpRebateService {
   ) {}
 
   public async createOpRebatesForDeposit(depositPrimaryKey: number) {
-    if (this.appConfig.values.rewardPrograms["op-rebates"].disabled) {
+    if (!this.appConfig.values.rewardPrograms["op-rebates"].enabled) {
       this.logger.verbose(`OP rebate rewards are disabled. Skipping...`);
       return;
     }
@@ -52,14 +50,14 @@ export class OpRebateService {
       return;
     }
 
-    this.assertDepositKeys(deposit, ["price", "token", "depositDate"]);
+    this.assertDepositKeys(deposit, ["price", "token", "depositDate", "feeBreakdown"]);
 
     if (!this.isDepositTimeAfterStart(deposit)) {
       this.logger.verbose(`Deposit with id ${depositPrimaryKey} was made before the start of the program. Skipping...`);
       return;
     }
 
-    if (!this.isDepositTimeAfterEnd(deposit)) {
+    if (!this.isDepositTimeBeforeEnd(deposit)) {
       this.logger.verbose(`Deposit with id ${depositPrimaryKey} was made after the end of the program. Skipping...`);
       return;
     }
@@ -70,18 +68,7 @@ export class OpRebateService {
     const depositTransaction = await provider.getTransaction(deposit.depositTxHash);
     const rewardReceiver = depositTransaction.from;
 
-    const existingReward = await this.rewardRepository.findOne({
-      where: { depositPrimaryKey: depositPrimaryKey, recipient: rewardReceiver, type: "op-rebates" },
-    });
-
-    if (existingReward) {
-      this.logger.verbose(`Reward for deposit with id ${depositPrimaryKey} already exists. Skipping...`);
-      return;
-    }
-
-    const { rewardToken, rewardsUsd, rewardsAmount, historicRewardTokenPrice } = await this.calcOpRebateRewards(
-      deposit,
-    );
+    const { rewardToken, rewardsUsd, rewardsAmount } = await this.calcOpRebateRewards(deposit);
 
     const reward = this.rewardRepository.create({
       depositPrimaryKey: depositPrimaryKey,
@@ -94,24 +81,21 @@ export class OpRebateService {
       amount: rewardsAmount.toString(),
       amountUsd: rewardsUsd,
       rewardTokenId: rewardToken.id,
-      rewardTokenPriceId: historicRewardTokenPrice.id,
     });
     await this.rewardRepository.save(reward);
   }
 
   private async calcOpRebateRewards(deposit: Deposit) {
-    const calcPctValues = makePctValuesCalculator(deposit.amount, deposit.price.usd, deposit.token.decimals);
-    const bridgeFeePctValues = calcPctValues(deposit.bridgeFeePct);
     // lp fee + relayer capital fee + relayer destination gas fee
-    const bridgeFeeUsd = bridgeFeePctValues.pctAmountUsd;
+    const bridgeFeeUsd = deposit.feeBreakdown.totalBridgeFeeUsd;
 
     const rewardToken = await this.ethProvidersService.getCachedToken(
-      this.appConfig.values.web3.rewardTokens["op-rebates"].chainId,
-      this.appConfig.values.web3.rewardTokens["op-rebates"].address,
+      this.appConfig.values.rewardPrograms["op-rebates"].rewardToken.chainId,
+      this.appConfig.values.rewardPrograms["op-rebates"].rewardToken.address,
     );
     const historicRewardTokenPrice = await this.marketPriceService.getCachedHistoricMarketPrice(
       DateTime.fromJSDate(deposit.depositDate).minus({ days: 1 }).toJSDate(),
-      this.appConfig.values.web3.rewardTokens["op-rebates"].cgId,
+      this.appConfig.values.rewardPrograms["op-rebates"].rewardToken.symbol.toLowerCase(),
     );
     const rewardsUsd = new BigNumber(bridgeFeeUsd).multipliedBy(OP_REBATE_RATE).toFixed();
     const rewardsAmount = ethers.utils.parseEther(
@@ -127,25 +111,25 @@ export class OpRebateService {
   }
 
   private isDepositTimeAfterStart(deposit: Deposit) {
-    const start = this.appConfig.values.rewardPrograms["op-rebates"].startTimestampSeconds;
+    const start = this.appConfig.values.rewardPrograms["op-rebates"].startDate;
 
     // If no start time is set, then the program is active for any deposit
     if (!start) {
       return true;
     }
 
-    return DateTime.fromJSDate(deposit.depositDate).toSeconds() > start;
+    return deposit.depositDate >= start;
   }
 
-  private isDepositTimeAfterEnd(deposit: Deposit) {
-    const end = this.appConfig.values.rewardPrograms["op-rebates"].endTimestampSeconds;
+  private isDepositTimeBeforeEnd(deposit: Deposit) {
+    const end = this.appConfig.values.rewardPrograms["op-rebates"].endDate;
 
     // If no end time is set, then the program is active for any deposit
     if (!end) {
       return true;
     }
 
-    return DateTime.fromJSDate(deposit.depositDate).toSeconds() < end;
+    return deposit.depositDate < end;
   }
 
   private assertDepositKeys(deposit: Deposit, requiredKeys: string[]) {
@@ -154,21 +138,5 @@ export class OpRebateService {
         throw new Error(`Deposit with id ${deposit.id} is missing '${key}'`);
       }
     }
-  }
-
-  /**
-   * Format raw rewards in a way that is easily consumable by the frontend.
-   */
-  private formatReward(reward: Reward) {
-    const formattedDeposit = formatDeposit(reward.deposit);
-    return {
-      ...formattedDeposit,
-      reward: {
-        type: "op-rebates",
-        rate: reward.metadata.rate,
-        amount: reward.amount,
-        usd: reward.amountUsd,
-      },
-    };
   }
 }

@@ -10,7 +10,6 @@ import {
   Unique,
   UpdateDateColumn,
 } from "typeorm";
-import { HistoricMarketPrice } from "../../market-price/model/historic-market-price.entity";
 import { Deposit } from "../../deposit/model/deposit.entity";
 
 export type RewardType = "referrals" | "op-rebates";
@@ -60,13 +59,6 @@ export class Reward {
   @ManyToOne(() => Token)
   @JoinColumn([{ name: "rewardTokenId", referencedColumnName: "id" }])
   rewardToken: Token;
-
-  @Column()
-  rewardTokenPriceId: number;
-
-  @ManyToOne(() => HistoricMarketPrice)
-  @JoinColumn([{ name: "rewardTokenPriceId", referencedColumnName: "id" }])
-  rewardTokenPrice: HistoricMarketPrice;
 
   @CreateDateColumn()
   createdAt: Date;

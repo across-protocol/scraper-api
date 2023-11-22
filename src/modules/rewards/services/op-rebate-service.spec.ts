@@ -22,6 +22,20 @@ const VALID_DEPOSIT: Deposit = {
   depositDate: new Date(Date.now()),
   amount: "1000000",
   bridgeFeePct: "10000000000000000", // 1%
+  feeBreakdown: {
+    lpFeeUsd: "0",
+    lpFeeAmount: "0",
+    lpFeePct: "0",
+    relayCapitalFeeUsd: "0",
+    relayCapitalFeeAmount: "0",
+    relayCapitalFeePct: "0",
+    relayGasFeeUsd: "0",
+    relayGasFeeAmount: "0",
+    relayGasFeePct: "0",
+    totalBridgeFeeUsd: "0",
+    totalBridgeFeePct: "10000000000000000",
+    totalBridgeFeeAmount: "0",
+  },
   price: {
     ...new HistoricMarketPrice(),
     usd: "1",
@@ -85,17 +99,14 @@ describe("OpRebateService", () => {
         {
           provide: config.KEY,
           useValue: {
-            web3: {
-              rewardTokens: {
-                "op-rebates": {
-                  chainId: ChainIds.optimism,
-                  address: "0x4200000000000000000000000000000000000042",
-                },
-              },
-            },
             rewardPrograms: {
               "op-rebates": {
-                disabled: false,
+                rewardToken: {
+                  chainId: ChainIds.optimism,
+                  address: "0x4200000000000000000000000000000000000042",
+                  symbol: "op",
+                },
+                enabled: true,
               },
             },
           },
@@ -119,9 +130,8 @@ describe("OpRebateService", () => {
         ...appConfig.values,
         rewardPrograms: {
           "op-rebates": {
-            disabled: true,
-            startTimestampSeconds: 0,
-            endTimestampSeconds: 0,
+            ...appConfig.values.rewardPrograms["op-rebates"],
+            enabled: false,
           },
         },
       });
@@ -178,7 +188,7 @@ describe("OpRebateService", () => {
         rewardPrograms: {
           "op-rebates": {
             ...appConfig.values.rewardPrograms["op-rebates"],
-            startTimestampSeconds: new Date(Date.now() + 10_000).getTime() / 1000,
+            startDate: new Date(Date.now() + 10_000),
           },
         },
       });
@@ -194,7 +204,7 @@ describe("OpRebateService", () => {
         rewardPrograms: {
           "op-rebates": {
             ...appConfig.values.rewardPrograms["op-rebates"],
-            endTimestampSeconds: new Date(Date.now() - 10_000).getTime() / 1000,
+            endDate: new Date(Date.now() - 10_000),
           },
         },
       });
