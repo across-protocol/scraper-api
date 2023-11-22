@@ -287,9 +287,9 @@ export class DepositService {
       const depositorOrRecipientAddress = this.assertValidAddress(filter.depositorOrRecipientAddress);
       queryBuilder = queryBuilder.andWhere(
         new Brackets((qb) => {
-          qb.where("d.depositorAddr = :userAddress", {
+          qb.where("d.depositorAddr = :depositorOrRecipientAddress", {
             depositorOrRecipientAddress,
-          }).orWhere("d.recipientAddr = :userAddress", { depositorOrRecipientAddress });
+          }).orWhere("d.recipientAddr = :depositorOrRecipientAddress", { depositorOrRecipientAddress });
         }),
       );
     } else {
