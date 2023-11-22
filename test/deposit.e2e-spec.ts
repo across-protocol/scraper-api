@@ -272,6 +272,8 @@ describe("GET /deposits/pending", () => {
 });
 
 describe("GET /v2/deposits", () => {
+  const depositorAddress = "0x9A8f92a830A5cB89a3816e3D267CB7791c16b04D";
+
   beforeAll(async () => {
     depositFixture = app.get(DepositFixture);
     tokenFixture = app.get(TokenFixture);
@@ -285,12 +287,14 @@ describe("GET /v2/deposits", () => {
         sourceChainId: 1,
         destinationChainId: 10,
         tokenId: token.id,
+        depositorAddr: depositorAddress,
       },
       {
         status: "pending",
         sourceChainId: 137,
         destinationChainId: 42161,
         tokenId: token.id,
+        recipientAddr: depositorAddress,
       },
       {
         depositId: 3,
@@ -336,6 +340,17 @@ describe("GET /v2/deposits", () => {
     const response = await request(app.getHttpServer()).get("/v2/deposits").query({ tokenAddress: usdc.address });
     expect(response.status).toBe(200);
     expect(response.body.deposits).toHaveLength(1);
+  });
+
+  it("200 for 'depositorOrRecipientAddress', 'depositorAddress' and 'recipientAddress' query params", async () => {
+    const [response1, response2, response3] = await Promise.all([
+      request(app.getHttpServer()).get("/v2/deposits").query({ depositorOrRecipientAddress: depositorAddress }),
+      request(app.getHttpServer()).get("/v2/deposits").query({ depositorAddress }),
+      request(app.getHttpServer()).get("/v2/deposits").query({ recipientAddress: depositorAddress }),
+    ]);
+    expect(response1.body.deposits).toHaveLength(2);
+    expect(response2.body.deposits).toHaveLength(1);
+    expect(response3.body.deposits).toHaveLength(1);
   });
 
   it("200 for 'startDepositDate' and 'endDepositDate' query params", async () => {
