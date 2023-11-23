@@ -347,6 +347,7 @@ export function formatDeposit(deposit: Deposit) {
     destinationChainId: deposit.destinationChainId,
     assetAddr: deposit.tokenAddr,
     assetSymbol: deposit.token?.symbol,
+    assetDecimals: deposit.token?.decimals,
     depositorAddr: deposit.depositorAddr,
     recipientAddr: deposit.recipientAddr,
     message: deposit.message,
