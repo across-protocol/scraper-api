@@ -19,7 +19,6 @@ export function formatDeposit(deposit: Deposit) {
     sourceChainId: deposit.sourceChainId,
     destinationChainId: deposit.destinationChainId,
     assetAddr: deposit.tokenAddr,
-    assetSymbol: deposit.token?.symbol,
     depositorAddr: deposit.depositorAddr,
     recipientAddr: deposit.recipientAddr,
     message: deposit.message,
@@ -31,5 +30,12 @@ export function formatDeposit(deposit: Deposit) {
     initialRelayerFeePct: deposit.initialRelayerFeePct,
     suggestedRelayerFeePct: deposit.suggestedRelayerFeePct,
     feeBreakdown: deposit.feeBreakdown,
+    token: deposit.token
+      ? {
+          address: deposit.token.address,
+          chainId: deposit.token.chainId,
+          symbol: deposit.token.symbol,
+        }
+      : undefined,
   };
 }
