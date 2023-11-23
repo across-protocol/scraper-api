@@ -35,6 +35,7 @@ export function formatDeposit(deposit: Deposit) {
           address: deposit.token.address,
           chainId: deposit.token.chainId,
           symbol: deposit.token.symbol,
+          decimals: deposit.token.decimals,
         }
       : undefined,
   };
