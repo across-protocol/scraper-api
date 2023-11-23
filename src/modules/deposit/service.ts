@@ -50,25 +50,6 @@ export class DepositService {
     const offset = parseInt(query.offset ?? "0");
 
     let queryBuilder = this.depositRepository.createQueryBuilder("d");
-
-    if (query.userAddress) {
-      let userAddress = query.userAddress;
-
-      try {
-        userAddress = utils.getAddress(userAddress);
-      } catch (error) {
-        throw new InvalidAddressException();
-      }
-
-      queryBuilder = queryBuilder.andWhere(
-        new Brackets((qb) => {
-          qb.where("d.depositorAddr = :userAddress", {
-            userAddress,
-          }).orWhere("d.recipientAddr = :userAddress", { userAddress });
-        }),
-      );
-    }
-
     queryBuilder = this.getFilteredDepositsQuery(queryBuilder, query);
 
     // If this flag is set to true, we will skip pending deposits that:
@@ -205,6 +186,7 @@ export class DepositService {
 
     let queryBuilder = this.depositRepository.createQueryBuilder("d");
     queryBuilder = this.getFilteredDepositsQuery(queryBuilder, query);
+    queryBuilder = this.getJoinedDepositsQuery(queryBuilder, query);
 
     queryBuilder = queryBuilder.orderBy("d.depositDate", "DESC");
     queryBuilder = queryBuilder.take(limit);
@@ -301,7 +283,64 @@ export class DepositService {
       queryBuilder = queryBuilder.andWhere("d.tokenAddr = :tokenAddr", { tokenAddr: filter.tokenAddress });
     }
 
+    if (filter.depositorOrRecipientAddress) {
+      const depositorOrRecipientAddress = this.assertValidAddress(filter.depositorOrRecipientAddress);
+      queryBuilder = queryBuilder.andWhere(
+        new Brackets((qb) => {
+          qb.where("d.depositorAddr = :depositorOrRecipientAddress", {
+            depositorOrRecipientAddress,
+          }).orWhere("d.recipientAddr = :depositorOrRecipientAddress", { depositorOrRecipientAddress });
+        }),
+      );
+    } else {
+      if (filter.depositorAddress) {
+        const depositorAddress = this.assertValidAddress(filter.depositorAddress);
+        queryBuilder = queryBuilder.andWhere("d.depositorAddr = :depositorAddr", { depositorAddr: depositorAddress });
+      }
+
+      if (filter.recipientAddress) {
+        const recipientAddress = this.assertValidAddress(filter.recipientAddress);
+        queryBuilder = queryBuilder.andWhere("d.recipientAddr = :recipientAddr", { recipientAddr: recipientAddress });
+      }
+    }
+
+    if (filter.startDepositDate) {
+      queryBuilder = queryBuilder.andWhere("d.depositDate >= :startDepositDate", {
+        startDepositDate: new Date(filter.startDepositDate),
+      });
+    }
+
+    if (filter.endDepositDate) {
+      queryBuilder = queryBuilder.andWhere("d.depositDate <= :endDepositDate", {
+        endDepositDate: new Date(filter.endDepositDate),
+      });
+    }
+
     return queryBuilder;
+  }
+
+  private getJoinedDepositsQuery(
+    queryBuilder: ReturnType<typeof this.depositRepository.createQueryBuilder>,
+    filter: Partial<GetDepositsV2Query>,
+  ) {
+    if (!filter.include) {
+      return queryBuilder;
+    }
+
+    if (filter.include.includes("token")) {
+      queryBuilder = queryBuilder.leftJoinAndSelect("d.token", "token");
+    }
+
+    return queryBuilder;
+  }
+
+  private assertValidAddress(address: string) {
+    try {
+      const validAddress = utils.getAddress(address);
+      return validAddress;
+    } catch (error) {
+      throw new InvalidAddressException();
+    }
   }
 }
 
@@ -322,6 +361,14 @@ export function formatDeposit(deposit: Deposit) {
     sourceChainId: deposit.sourceChainId,
     destinationChainId: deposit.destinationChainId,
     assetAddr: deposit.tokenAddr,
+    token: deposit.token
+      ? {
+          address: deposit.token.address,
+          symbol: deposit.token.symbol,
+          decimals: deposit.token.decimals,
+          chainId: deposit.token.chainId,
+        }
+      : undefined,
     depositorAddr: deposit.depositorAddr,
     recipientAddr: deposit.recipientAddr,
     message: deposit.message,

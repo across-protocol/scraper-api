@@ -1,6 +1,18 @@
 import { ApiProperty } from "@nestjs/swagger";
 import { Type } from "class-transformer";
-import { IsDateString, IsEnum, IsInt, IsOptional, IsString, Max, Min, IsPositive, IsBoolean } from "class-validator";
+import {
+  IsDateString,
+  IsEnum,
+  IsInt,
+  IsOptional,
+  IsString,
+  Max,
+  Min,
+  IsPositive,
+  IsBoolean,
+  IsArray,
+  ArrayMaxSize,
+} from "class-validator";
 
 export class GetDepositsQuery {
   @IsOptional()
@@ -100,6 +112,18 @@ export class GetDepositsV2Query {
   status: "filled" | "pending";
 
   @IsOptional()
+  @IsArray()
+  @IsEnum(
+    {
+      TOKEN: "token",
+    },
+    { each: true, message: "Must be one of: 'token'" },
+  )
+  @ArrayMaxSize(1)
+  @ApiProperty({ example: ["token"], required: false })
+  include: Array<"token">;
+
+  @IsOptional()
   @IsInt()
   @Min(1)
   @Max(100)
@@ -132,15 +156,39 @@ export class GetDepositsV2Query {
   @Type(() => String)
   @ApiProperty({ example: "0x", required: false })
   tokenAddress: string;
-}
 
-export class GetDepositsForTxPageQuery extends GetDepositsV2Query {
   @IsOptional()
   @IsString()
   @Type(() => String)
   @ApiProperty({ example: "0x", required: false })
-  userAddress: string;
+  depositorOrRecipientAddress: string;
 
+  @IsOptional()
+  @IsString()
+  @Type(() => String)
+  @ApiProperty({ example: "0x", required: false })
+  depositorAddress: string;
+
+  @IsOptional()
+  @IsString()
+  @Type(() => String)
+  @ApiProperty({ example: "0x", required: false })
+  recipientAddress: string;
+
+  @IsOptional()
+  @IsDateString()
+  @Type(() => String)
+  @ApiProperty({ example: "2022-11-08T11:00:00.000Z", required: false })
+  startDepositDate: string;
+
+  @IsOptional()
+  @IsDateString()
+  @Type(() => String)
+  @ApiProperty({ example: "2022-11-08T11:00:00.000Z", required: false })
+  endDepositDate: string;
+}
+
+export class GetDepositsForTxPageQuery extends GetDepositsV2Query {
   @IsOptional()
   @IsBoolean()
   @Type(() => Boolean)
