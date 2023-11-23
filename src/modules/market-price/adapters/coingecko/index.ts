@@ -18,6 +18,7 @@ const symbolIdMap = {
   snx: "havven",
   pool: "pooltogether",
   usdbc: "bridged-usd-coin-base",
+  op: "op",
 };
 
 @Injectable()

@@ -25,6 +25,7 @@ import { RequestedSpeedUpDepositEv } from "../web3/model/requested-speed-up-depo
 import { RefundRequestedEv } from "../web3/model/refund-requested-ev.entity";
 import { ReferralRewardsWindowJob } from "../referral/model/ReferralRewardsWindowJob.entity";
 import { ReferralRewardsWindowJobResult } from "../referral/model/ReferralRewardsWindowJobResult.entity";
+import { Reward } from "../rewards/model/reward.entity";
 import { TransactionReceipt } from "../web3/model/tx-receipt.entity";
 
 // TODO: Add db entities here
@@ -53,6 +54,7 @@ const entities = [
   RefundRequestedEv,
   ReferralRewardsWindowJob,
   ReferralRewardsWindowJobResult,
+  Reward,
   TransactionReceipt,
 ];
 

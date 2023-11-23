@@ -7,6 +7,7 @@ import { AppConfigModule } from "../configuration/configuration.module";
 import { MarketPriceModule } from "../market-price/module";
 import { ReferralModule } from "../referral/module";
 import { Web3Module } from "../web3/module";
+import { RewardModule } from "../rewards/module";
 import { FilledRelayEv, FundsDepositedEv, RequestedSpeedUpDepositEv } from "../web3/model";
 import { ScraperQueue } from "./adapter/messaging";
 import { BlockNumberConsumer } from "./adapter/messaging/BlockNumberConsumer";
@@ -38,6 +39,9 @@ import { DepositModule } from "../deposit/module";
 import { AirdropModule } from "../airdrop/module";
 import { RefundRequestedEv } from "../web3/model/refund-requested-ev.entity";
 import { RectifyStickyReferralConsumer } from "./adapter/messaging/RectifyStickyReferralConsumer";
+import { OpRebateRewardConsumer } from "./adapter/messaging/OpRebateRewardConsumer";
+import { OpRebateService } from "../rewards/services/op-rebate-service";
+import { Reward } from "../rewards/model/reward.entity";
 
 @Module({})
 export class ScraperModule {
@@ -48,6 +52,7 @@ export class ScraperModule {
       SuggestedFeesService,
       TrackService,
       GasFeesService,
+      OpRebateService,
       BlocksEventsConsumer,
       MerkleDistributorBlocksEventsConsumer,
       FillEventsConsumer,
@@ -63,6 +68,7 @@ export class ScraperModule {
       TrackFillEventConsumer,
       RectifyStickyReferralConsumer,
       FeeBreakdownConsumer,
+      OpRebateRewardConsumer,
     ];
 
     return {
@@ -80,12 +86,14 @@ export class ScraperModule {
           FilledRelayEv,
           RequestedSpeedUpDepositEv,
           RefundRequestedEv,
+          Reward,
         ]),
         MarketPriceModule.forRoot(moduleOptions),
         HttpModule,
         DepositModule.forRoot(moduleOptions),
         AirdropModule.forRoot(moduleOptions),
         ReferralModule.forRoot(moduleOptions),
+        RewardModule,
         BullModule.registerQueue({
           name: ScraperQueue.BlockNumber,
         }),
@@ -148,6 +156,9 @@ export class ScraperModule {
         }),
         BullModule.registerQueue({
           name: ScraperQueue.FeeBreakdown,
+        }),
+        BullModule.registerQueue({
+          name: ScraperQueue.OpRebateReward,
         }),
       ],
       exports: [ScraperQueuesService],
