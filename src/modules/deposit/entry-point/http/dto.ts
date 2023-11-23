@@ -218,7 +218,7 @@ export class GetDepositsForTxPageQuery extends GetDepositsBaseQuery {
     },
     { each: true, message: "Must be one of: 'token', 'rewards'" },
   )
-  @ArrayMaxSize(1)
+  @ArrayMaxSize(2)
   @ApiProperty({ example: ["token"], required: false })
   include: Array<"token" | "rewards">;
 }

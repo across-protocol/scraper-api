@@ -60,6 +60,9 @@ export class Reward {
   @JoinColumn([{ name: "rewardTokenId", referencedColumnName: "id" }])
   rewardToken: Token;
 
+  @Column({ default: -1 })
+  claimedWindowIndex: number;
+
   @CreateDateColumn()
   createdAt: Date;
 

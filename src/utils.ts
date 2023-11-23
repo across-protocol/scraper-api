@@ -1,6 +1,19 @@
-import { applyDecorators } from "@nestjs/common";
+import { HttpException, HttpStatus, applyDecorators } from "@nestjs/common";
 import { Cron } from "@nestjs/schedule";
+import { ethers } from "ethers";
 import { ChainIds } from "./modules/web3/model/ChainId";
+
+export class InvalidAddressException extends HttpException {
+  constructor() {
+    super(
+      {
+        error: InvalidAddressException.name,
+        message: "Invalid address",
+      },
+      HttpStatus.BAD_REQUEST,
+    );
+  }
+}
 
 export const chainIdToInfo = {
   [ChainIds.mainnet]: {
@@ -62,3 +75,12 @@ export const splitArrayInChunks = <T>(array: T[], chunk_size: number) =>
     .fill(0)
     .map((_, index) => index * chunk_size)
     .map((begin) => array.slice(begin, begin + chunk_size));
+
+export function assertValidAddress(address: string) {
+  try {
+    const validAddress = ethers.utils.getAddress(address);
+    return validAddress;
+  } catch (error) {
+    throw new InvalidAddressException();
+  }
+}

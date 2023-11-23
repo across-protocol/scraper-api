@@ -6,10 +6,12 @@ import { ethers } from "ethers";
 
 import { Deposit } from "../../deposit/model/deposit.entity";
 import { DepositsMv } from "../../deposit/model/DepositsMv.entity";
+import { formatDeposit } from "../../deposit/utils";
 import { ReferralService } from "../../referral/services/service";
 
 import { OpRebateService } from "./op-rebate-service";
 import { Reward } from "../model/reward.entity";
+import { GetRewardsQuery, GetSummaryQuery, GetReferralRewardsSummaryQuery } from "../entrypoints/http/dto";
 
 type Referral = DepositsMv & { appliedRate: number; acxRewards: string };
 
@@ -21,6 +23,43 @@ export class RewardService {
     private referralService: ReferralService,
     private opRebateService: OpRebateService,
   ) {}
+
+  public async getOpRebateRewardDeposits(query: GetRewardsQuery) {
+    const { rewards, pagination } = await this.opRebateService.getOpRebateRewards(query);
+    return {
+      deposits: rewards.map((reward) => ({
+        ...formatDeposit(reward.deposit),
+        rewards: this.formatOpRebate(reward),
+      })),
+      pagination,
+    };
+  }
+
+  public async getOpRebatesSummary(query: GetSummaryQuery) {
+    return this.opRebateService.getOpRebatesSummary(query.userAddress);
+  }
+
+  public async getReferralRewardDeposits(query: GetRewardsQuery) {
+    const { referrals, pagination } = await this.referralService.getReferralsWithJoinedDeposit(
+      query.userAddress,
+      parseInt(query.limit || "10"),
+      parseInt(query.offset || "0"),
+    );
+    return {
+      deposits: referrals.map((referral) => ({
+        ...formatDeposit(referral.deposit),
+        rewards: this.formatReferral(referral),
+      })),
+      pagination,
+    };
+  }
+
+  public async getReferralRewardsSummary(query: GetReferralRewardsSummaryQuery) {
+    return this.referralService.getReferralSummaryHandler({
+      ...query,
+      address: query.userAddress,
+    });
+  }
 
   public async getRewardsForDepositsAndUserAddress(deposits: Deposit[], userAddress: string) {
     const depositPrimaryKeys = deposits.map((deposit) => deposit.id);

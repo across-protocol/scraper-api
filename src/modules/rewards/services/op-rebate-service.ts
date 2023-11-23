@@ -10,8 +10,10 @@ import { AppConfig } from "../../configuration/configuration.service";
 import { EthProvidersService } from "../../web3/services/EthProvidersService";
 import { ChainIds } from "../../web3/model/ChainId";
 import { MarketPriceService } from "../../market-price/services/service";
+import { assertValidAddress } from "../../../utils";
 
 import { Reward } from "../model/reward.entity";
+import { GetRewardsQuery } from "../entrypoints/http/dto";
 
 const OP_REBATE_RATE = 0.95;
 
@@ -26,6 +28,69 @@ export class OpRebateService {
     private ethProvidersService: EthProvidersService,
     private appConfig: AppConfig,
   ) {}
+
+  public async getOpRebatesSummary(userAddress: string) {
+    userAddress = assertValidAddress(userAddress);
+
+    const baseQuery = this.rewardRepository
+      .createQueryBuilder("r")
+      .where("r.type = :type", { type: "op-rebates" })
+      .andWhere("r.recipient = :recipient", { recipient: userAddress });
+
+    const [{ depositsCount }, { unclaimedRewards }, { volumeUsd }] = await Promise.all([
+      baseQuery.select("COUNT(DISTINCT r.depositPrimaryKey)", "depositsCount").getRawOne<{
+        depositsCount: string;
+      }>(),
+      baseQuery
+        .select("SUM(CAST(r.amount as DECIMAL))", "unclaimedRewards")
+        .andWhere("r.claimedWindowIndex = :claimedWindowIndex", { claimedWindowIndex: -1 })
+        .getRawOne<{
+          unclaimedRewards: number;
+        }>(),
+      baseQuery
+        .leftJoinAndSelect("r.deposit", "d")
+        .leftJoinAndSelect("d.token", "t")
+        .leftJoinAndSelect("d.price", "p")
+        .select(`COALESCE(SUM(d.amount / power(10, t.decimals) * p.usd), 0)`, "volumeUsd")
+        .getRawOne<{
+          volumeUsd: number;
+        }>(),
+      // TODO: add claimable rewards
+    ]);
+
+    return {
+      depositsCount: parseInt(depositsCount),
+      unclaimedRewards,
+      volumeUsd,
+      claimableRewards: "0",
+    };
+  }
+
+  public async getOpRebateRewards(query: GetRewardsQuery) {
+    const limit = parseInt(query.limit ?? "10");
+    const offset = parseInt(query.offset ?? "0");
+    const userAddress = assertValidAddress(query.userAddress);
+
+    const rewardsQuery = this.rewardRepository
+      .createQueryBuilder("r")
+      .where("r.type = :type", { type: "op-rebates" })
+      .andWhere("r.recipient = :recipient", { recipient: userAddress })
+      .leftJoinAndSelect("r.rewardToken", "rewardToken")
+      .leftJoinAndSelect("r.deposit", "deposit")
+      .orderBy("deposit.depositDate", "DESC")
+      .limit(limit)
+      .offset(offset);
+    const [rewards, total] = await rewardsQuery.getManyAndCount();
+
+    return {
+      rewards,
+      pagination: {
+        limit,
+        offset,
+        total,
+      },
+    };
+  }
 
   public async getOpRebateRewardsForDepositPrimaryKeys(depositPrimaryKeys: number[]) {
     const rewardsQuery = this.rewardRepository

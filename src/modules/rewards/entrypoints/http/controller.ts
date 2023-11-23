@@ -1,39 +1,34 @@
-import { Controller, Get } from "@nestjs/common";
+import { Controller, Get, Query } from "@nestjs/common";
 import { ApiTags } from "@nestjs/swagger";
 
-import { ReferralService } from "../../../referral/services/service";
-
-import { OpRebateService } from "../../services/op-rebate-service";
+import { GetRewardsQuery, GetSummaryQuery, GetReferralRewardsSummaryQuery } from "./dto";
+import { RewardService } from "../../services/reward-service";
 
 @Controller()
 export class RewardController {
-  public constructor(private opRebateService: OpRebateService, private referralsService: ReferralService) {}
+  public constructor(private rewardService: RewardService) {}
 
   @Get("rewards/op-rebates/summary")
   @ApiTags("rewards")
-  getOpRebatesSummary() {
-    // TODO: implement
-    return;
+  getOpRebatesSummary(@Query() query: GetSummaryQuery) {
+    return this.rewardService.getOpRebatesSummary(query);
   }
 
   @Get("rewards/op-rebates")
   @ApiTags("rewards")
-  getOpRebates() {
-    // TODO: implement
-    return;
+  getOpRebates(@Query() query: GetRewardsQuery) {
+    return this.rewardService.getOpRebateRewardDeposits(query);
   }
 
   @Get("rewards/referrals/summary")
   @ApiTags("rewards")
-  getReferralsSummary() {
-    // TODO: implement
-    return;
+  getReferralsSummary(@Query() query: GetReferralRewardsSummaryQuery) {
+    return this.rewardService.getReferralRewardsSummary(query);
   }
 
   @Get("rewards/referrals")
   @ApiTags("rewards")
-  getReferralRewards() {
-    // TODO: implement
-    return;
+  getReferralRewards(@Query() query: GetRewardsQuery) {
+    return this.rewardService.getReferralRewardDeposits(query);
   }
 }
