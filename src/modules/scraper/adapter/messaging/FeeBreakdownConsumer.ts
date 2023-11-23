@@ -6,7 +6,8 @@ import { Repository } from "typeorm";
 import BigNumber from "bignumber.js";
 
 import { GasFeesService } from "../gas-fees/gas-fees-service";
-import { FeeBreakdownQueueMessage, ScraperQueue } from ".";
+import { ScraperQueuesService } from "../../service/ScraperQueuesService";
+import { FeeBreakdownQueueMessage, OpRebateRewardMessage, ScraperQueue } from ".";
 import { Deposit, DepositFillTx, DepositFillTx2 } from "../../../deposit/model/deposit.entity";
 import { deriveRelayerFeeComponents, makePctValuesCalculator, toWeiPct } from "../../utils";
 
@@ -17,6 +18,7 @@ export class FeeBreakdownConsumer {
   constructor(
     private gasFeesService: GasFeesService,
     @InjectRepository(Deposit) private depositRepository: Repository<Deposit>,
+    private scraperQueuesService: ScraperQueuesService,
   ) {}
 
   @Process()
@@ -49,6 +51,10 @@ export class FeeBreakdownConsumer {
     );
     deposit.feeBreakdown = feeBreakdown;
     await this.depositRepository.save(deposit);
+
+    this.scraperQueuesService.publishMessage<OpRebateRewardMessage>(ScraperQueue.OpRebateReward, {
+      depositPrimaryKey: deposit.id,
+    });
   }
 
   private async getFeeBreakdownForFillTx(

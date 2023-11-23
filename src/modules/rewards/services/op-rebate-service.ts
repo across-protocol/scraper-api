@@ -70,10 +70,24 @@ export class OpRebateService {
 
     const { rewardToken, rewardsUsd, rewardsAmount } = await this.calcOpRebateRewards(deposit);
 
-    const reward = this.rewardRepository.create({
-      depositPrimaryKey: depositPrimaryKey,
-      recipient: rewardReceiver,
-      type: "op-rebates",
+    let reward = await this.rewardRepository.findOne({
+      where: {
+        depositPrimaryKey: depositPrimaryKey,
+        recipient: rewardReceiver,
+        type: "op-rebates",
+      },
+    });
+
+    if (!reward) {
+      reward = this.rewardRepository.create({
+        depositPrimaryKey: depositPrimaryKey,
+        recipient: rewardReceiver,
+        type: "op-rebates",
+      });
+    }
+
+    await this.rewardRepository.save({
+      ...reward,
       metadata: {
         type: "op-rebates",
         rate: OP_REBATE_RATE,
@@ -82,7 +96,6 @@ export class OpRebateService {
       amountUsd: rewardsUsd,
       rewardTokenId: rewardToken.id,
     });
-    await this.rewardRepository.save(reward);
   }
 
   private async calcOpRebateRewards(deposit: Deposit) {
@@ -95,7 +108,7 @@ export class OpRebateService {
     );
     const historicRewardTokenPrice = await this.marketPriceService.getCachedHistoricMarketPrice(
       DateTime.fromJSDate(deposit.depositDate).minus({ days: 1 }).toJSDate(),
-      this.appConfig.values.rewardPrograms["op-rebates"].rewardToken.symbol.toLowerCase(),
+      rewardToken.symbol.toLowerCase(),
     );
     const rewardsUsd = new BigNumber(bridgeFeeUsd).multipliedBy(OP_REBATE_RATE).toFixed();
     const rewardsAmount = ethers.utils.parseEther(

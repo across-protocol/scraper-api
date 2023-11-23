@@ -225,7 +225,6 @@ export const configValues = () => ({
       rewardToken: {
         address: process.env.OP_REBATES_REWARD_TOKEN_ADDRESS || "0x4200000000000000000000000000000000000042",
         chainId: Number(process.env.OP_REBATES_REWARD_TOKEN_CHAIN_ID || "10"),
-        symbol: process.env.OP_REBATES_REWARD_TOKEN_CG_ID || "op",
       },
       enabled: process.env.OP_REBATES_REWARD_PROGRAM_ENABLED === "true",
       startDate: process.env.OP_REBATES_REWARD_PROGRAM_START_DATE
