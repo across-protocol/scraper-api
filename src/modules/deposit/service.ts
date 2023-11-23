@@ -186,7 +186,7 @@ export class DepositService {
 
     let queryBuilder = this.depositRepository.createQueryBuilder("d");
     queryBuilder = this.getFilteredDepositsQuery(queryBuilder, query);
-    queryBuilder = queryBuilder.leftJoinAndSelect("d.token", "t");
+    queryBuilder = this.getJoinedDepositsQuery(queryBuilder, query);
 
     queryBuilder = queryBuilder.orderBy("d.depositDate", "DESC");
     queryBuilder = queryBuilder.take(limit);
@@ -319,6 +319,21 @@ export class DepositService {
     return queryBuilder;
   }
 
+  private getJoinedDepositsQuery(
+    queryBuilder: ReturnType<typeof this.depositRepository.createQueryBuilder>,
+    filter: Partial<GetDepositsV2Query>,
+  ) {
+    if (!filter.include) {
+      return queryBuilder;
+    }
+
+    if (filter.include.includes("token")) {
+      queryBuilder = queryBuilder.leftJoinAndSelect("d.token", "token");
+    }
+
+    return queryBuilder;
+  }
+
   private assertValidAddress(address: string) {
     try {
       const validAddress = utils.getAddress(address);
@@ -346,8 +361,14 @@ export function formatDeposit(deposit: Deposit) {
     sourceChainId: deposit.sourceChainId,
     destinationChainId: deposit.destinationChainId,
     assetAddr: deposit.tokenAddr,
-    assetSymbol: deposit.token?.symbol,
-    assetDecimals: deposit.token?.decimals,
+    token: deposit.token
+      ? {
+          address: deposit.token.address,
+          symbol: deposit.token.symbol,
+          decimals: deposit.token.decimals,
+          chainId: deposit.token.chainId,
+        }
+      : undefined,
     depositorAddr: deposit.depositorAddr,
     recipientAddr: deposit.recipientAddr,
     message: deposit.message,

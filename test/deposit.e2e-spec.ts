@@ -310,6 +310,7 @@ describe("GET /v2/deposits", () => {
         status: "filled",
         sourceChainId: 137,
         destinationChainId: 42161,
+        tokenAddr: usdc.address,
         depositDate: new Date("2023-02-01"),
         tokenId: token.id,
       },
@@ -339,7 +340,7 @@ describe("GET /v2/deposits", () => {
   it("200 for 'tokenAddress' query params", async () => {
     const response = await request(app.getHttpServer()).get("/v2/deposits").query({ tokenAddress: usdc.address });
     expect(response.status).toBe(200);
-    expect(response.body.deposits).toHaveLength(1);
+    expect(response.body.deposits).toHaveLength(2);
   });
 
   it("200 for 'depositorOrRecipientAddress', 'depositorAddress' and 'recipientAddress' query params", async () => {
@@ -374,6 +375,20 @@ describe("GET /v2/deposits", () => {
     ]);
     expect(response1.status).toBe(400);
     expect(response2.status).toBe(400);
+  });
+
+  it("200 for 'include[]=token' query param", async () => {
+    const response = await request(app.getHttpServer())
+      .get("/v2/deposits")
+      .query("include[]=token")
+      .query({ tokenAddress: token.address });
+    expect(response.status).toBe(200);
+    expect(response.body.deposits).toHaveLength(2);
+    expect(response.body.deposits[0].token).toMatchObject({
+      address: token.address,
+      symbol: token.symbol,
+      decimals: token.decimals,
+    });
   });
 
   afterEach(async () => {
