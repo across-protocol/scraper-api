@@ -130,9 +130,9 @@ export class RewardService {
     return {
       type: "referrals",
       tier: this.referralService.getTierLevelByRate(referral.referralRate),
-      rate: userRate * referral.referralRate * referral.multiplier,
+      rate: new BigNumber(userRate).multipliedBy(referral.referralRate).multipliedBy(referral.multiplier).toNumber(),
       userRate,
-      referralRate: referral.referralRate,
+      referralRate: Number(referral.referralRate),
       multiplier: referral.multiplier,
       amount: referral.acxRewards,
       usd: new BigNumber(referral.acxUsdPrice)
