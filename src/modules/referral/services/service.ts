@@ -17,9 +17,10 @@ import {
   getReferreeWalletsQuery,
   getTotalReferralRewardsQuery,
   getRefreshMaterializedView,
+  getReferralsByDepositIdsQuery,
 } from "./queries";
 import { AppConfig } from "../../configuration/configuration.service";
-import { DepositsMv } from "../../deposit/model/DepositsMv.entity";
+import { DepositsMv, DepositsMvWithRewards } from "../../deposit/model/DepositsMv.entity";
 import {
   InvalidReferralRewardsWindowJobException,
   ReferralRewardsWindowJobNotFoundException,
@@ -171,30 +172,12 @@ export class ReferralService {
   }
 
   public async getReferralsForDepositsAndUserAddress(depositPrimaryKeys: number[], userAddress: string) {
-    const referrals = await this.depositsMvRepository
-      .createQueryBuilder("d")
-      .where("d.id IN (:...keys)", { keys: depositPrimaryKeys })
-      .getMany();
+    const referrals: DepositsMvWithRewards[] = await this.depositsMvRepository.query(getReferralsByDepositIdsQuery(), [
+      userAddress,
+      depositPrimaryKeys,
+    ]);
 
-    return referrals.map((item) => {
-      const appliedRate = new BigNumber(
-        item.depositorAddr === userAddress && item.referralAddress === userAddress
-          ? 1
-          : item.depositorAddr === userAddress
-          ? 0.25
-          : 0.75,
-      )
-        .multipliedBy(item.referralRate)
-        .multipliedBy(item.multiplier);
-      const acxRewards = new BigNumber(item.bridgeFeeUsd)
-        .dividedBy(new BigNumber(item.acxUsdPrice).dividedBy(new BigNumber(10).pow(18)))
-        .multipliedBy(appliedRate);
-      return {
-        ...item,
-        appliedRate: Number(appliedRate.toFixed()),
-        acxRewards: acxRewards.toFixed(0),
-      };
-    });
+    return referrals;
   }
 
   public async createNewReferralRewardsWindowJob(windowIndex: number, maxDepositDate: Date) {

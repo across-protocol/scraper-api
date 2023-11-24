@@ -108,3 +108,7 @@ export class DepositsMv {
   @ViewColumn()
   acxUsdPrice: string;
 }
+
+export class DepositsMvWithRewards extends DepositsMv {
+  acxRewards: string;
+}
