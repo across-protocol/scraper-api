@@ -1,6 +1,6 @@
 import { CACHE_MANAGER, Inject, Injectable, Logger } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
-import { Brackets, DataSource, EntityManager, In, IsNull, LessThanOrEqual, Not, Repository } from "typeorm";
+import { DataSource, EntityManager, In, IsNull, LessThanOrEqual, Not, Repository } from "typeorm";
 import BigNumber from "bignumber.js";
 import { performance } from "perf_hooks";
 import Bluebird from "bluebird";
@@ -188,39 +188,21 @@ export class ReferralService {
   }
 
   public async getReferralsWithJoinedDeposit(address: string, limit = 10, offset = 0) {
-    const referralDepositsQuery = this.depositsMvRepository
-      .createQueryBuilder("d")
-      .select("d.*")
-      .where("d.referralAddress = :address", { address })
-      .orWhere(
-        new Brackets((qb) => {
-          qb.where("d.depositorAddr = :address", { address }).andWhere("d.referralAddress IS NOT NULL");
-        }),
-      )
-      .leftJoinAndMapOne("d.id", Deposit, "deposit", "deposit.id = d.id")
-      .orderBy("d.depositDate", "DESC")
-      .limit(limit)
-      .offset(offset);
-    const [referrals, total] = await Promise.all([
-      this.depositRepository.manager.query(referralDepositsQuery.getSql(), [address, address]),
+    const [referrals, total]: [DepositsMvWithRewards[], number] = await Promise.all([
+      this.depositRepository.query(getReferralsQuery(), [address, limit, offset]),
       this.depositRepository.query(getReferralsTotalQuery(), [address]),
     ]);
 
+    const depositPrimaryKeys = referrals.map((referral) => referral.depositId);
+    const deposits = await this.depositRepository.find({
+      where: { id: In(depositPrimaryKeys) },
+    });
+
     return {
-      referrals: referrals.map((item: DepositsMv) => {
-        const appliedRate = Number(this.getAppliedRate(item, address).toFixed());
-        return {
-          ...item,
-          deposit: Object.keys(item).reduce((acc, key) => {
-            if (key.startsWith("deposit_")) {
-              acc[key.replace("deposit_", "")] = item[key];
-            }
-            return acc;
-          }, {}) as Deposit,
-          acxRewards: this.getAcxRewards(item, appliedRate).toFixed(0),
-          appliedRate,
-        };
-      }),
+      referrals: referrals.map((referral) => ({
+        ...referral,
+        deposit: deposits.find((deposit) => deposit.id === referral.depositId),
+      })),
       pagination: {
         limit,
         offset,
@@ -235,24 +217,6 @@ export class ReferralService {
       depositPrimaryKeys,
     ]);
     return referrals;
-  }
-
-  public getAppliedRate(referral: DepositsMv, userAddress: string) {
-    return new BigNumber(
-      referral.depositorAddr === userAddress && referral.referralAddress === userAddress
-        ? 1
-        : referral.depositorAddr === userAddress
-        ? 0.25
-        : 0.75,
-    )
-      .multipliedBy(referral.referralRate)
-      .multipliedBy(referral.multiplier);
-  }
-
-  public getAcxRewards(referral: DepositsMv, appliedRate: number) {
-    return new BigNumber(referral.bridgeFeeUsd)
-      .dividedBy(new BigNumber(referral.acxUsdPrice).dividedBy(new BigNumber(10).pow(18)))
-      .multipliedBy(appliedRate);
   }
 
   public async createNewReferralRewardsWindowJob(windowIndex: number, maxDepositDate: Date) {
