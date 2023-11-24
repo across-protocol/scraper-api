@@ -5,15 +5,13 @@ import BigNumber from "bignumber.js";
 import { ethers } from "ethers";
 
 import { Deposit } from "../../deposit/model/deposit.entity";
-import { DepositsMv } from "../../deposit/model/DepositsMv.entity";
 import { formatDeposit } from "../../deposit/utils";
+import { DepositsMvWithRewards } from "../../deposit/model/DepositsMv.entity";
 import { ReferralService } from "../../referral/services/service";
 
 import { OpRebateService } from "./op-rebate-service";
 import { Reward } from "../model/reward.entity";
 import { GetRewardsQuery, GetSummaryQuery, GetReferralRewardsSummaryQuery } from "../entrypoints/http/dto";
-
-type Referral = DepositsMv & { appliedRate: number; acxRewards: string };
 
 @Injectable()
 export class RewardService {
@@ -87,10 +85,11 @@ export class RewardService {
   }
 
   public enrichDepositsWithRewards(
+    userAddress: string,
     deposits: Deposit[],
     rewards: {
       "op-rebates": Reward[];
-      referrals: Referral[];
+      referrals: DepositsMvWithRewards[];
     },
   ) {
     return deposits.map((deposit) => {
@@ -101,7 +100,11 @@ export class RewardService {
         deposit,
         // We assume that a deposit can only have one type of reward here. If this changes in the future for
         // other types of rewards, we will need to change this logic.
-        rewards: opRebate ? this.formatOpRebate(opRebate) : referral ? this.formatReferral(referral) : undefined,
+        rewards: opRebate
+          ? this.formatOpRebate(opRebate)
+          : referral
+          ? this.formatReferral(referral, userAddress)
+          : undefined,
       };
     });
   }
@@ -115,11 +118,18 @@ export class RewardService {
     };
   }
 
-  public formatReferral(referral: Referral) {
+  public formatReferral(referral: DepositsMvWithRewards, userAddress: string) {
+    const userRate =
+      referral.depositorAddr === userAddress && referral.referralAddress === userAddress
+        ? 1
+        : referral.depositorAddr === userAddress
+        ? 0.25
+        : 0.75;
     return {
       type: "referrals",
       tier: this.referralService.getTierLevelByRate(referral.referralRate),
-      rate: referral.appliedRate,
+      rate: userRate * referral.referralRate * referral.multiplier,
+      userRate,
       referralRate: referral.referralRate,
       multiplier: referral.multiplier,
       amount: referral.acxRewards,

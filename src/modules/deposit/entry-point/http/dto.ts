@@ -174,9 +174,7 @@ export class GetDepositsBaseQuery {
   @Type(() => String)
   @ApiProperty({ example: "2022-11-08T11:00:00.000Z", required: false })
   endDepositDate: string;
-}
 
-export class GetDepositsV2Query extends GetDepositsBaseQuery {
   @IsOptional()
   @IsArray()
   @IsEnum(
@@ -189,6 +187,8 @@ export class GetDepositsV2Query extends GetDepositsBaseQuery {
   @ApiProperty({ example: ["token"], required: false })
   include: Array<"token">;
 }
+
+export class GetDepositsV2Query extends GetDepositsBaseQuery {}
 
 export class GetDepositsForTxPageQuery extends GetDepositsBaseQuery {
   @IsOptional()
@@ -208,17 +208,4 @@ export class GetDepositsForTxPageQuery extends GetDepositsBaseQuery {
   )
   @ApiProperty({ example: "status", required: false })
   orderBy: "status";
-
-  @IsOptional()
-  @IsArray()
-  @IsEnum(
-    {
-      TOKEN: "token",
-      REWARDS: "rewards",
-    },
-    { each: true, message: "Must be one of: 'token', 'rewards'" },
-  )
-  @ArrayMaxSize(2)
-  @ApiProperty({ example: ["token"], required: false })
-  include: Array<"token" | "rewards">;
 }

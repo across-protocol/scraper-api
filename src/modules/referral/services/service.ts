@@ -17,9 +17,10 @@ import {
   getReferreeWalletsQuery,
   getTotalReferralRewardsQuery,
   getRefreshMaterializedView,
+  getReferralsByDepositIdsQuery,
 } from "./queries";
 import { AppConfig } from "../../configuration/configuration.service";
-import { DepositsMv } from "../../deposit/model/DepositsMv.entity";
+import { DepositsMv, DepositsMvWithRewards } from "../../deposit/model/DepositsMv.entity";
 import {
   InvalidReferralRewardsWindowJobException,
   ReferralRewardsWindowJobNotFoundException,
@@ -229,20 +230,11 @@ export class ReferralService {
   }
 
   public async getReferralsForDepositsAndUserAddress(depositPrimaryKeys: number[], userAddress: string) {
-    const referrals = await this.depositsMvRepository
-      .createQueryBuilder("d")
-      .where("d.id IN (:...keys)", { keys: depositPrimaryKeys })
-      .getMany();
-
-    return referrals.map((item) => {
-      const appliedRate = this.getAppliedRate(item, userAddress);
-      const acxRewards = this.getAcxRewards(item, appliedRate.toNumber());
-      return {
-        ...item,
-        appliedRate: Number(appliedRate.toFixed()),
-        acxRewards: acxRewards.toFixed(0),
-      };
-    });
+    const referrals: DepositsMvWithRewards[] = await this.depositsMvRepository.query(getReferralsByDepositIdsQuery(), [
+      userAddress,
+      depositPrimaryKeys,
+    ]);
+    return referrals;
   }
 
   public getAppliedRate(referral: DepositsMv, userAddress: string) {

@@ -481,6 +481,28 @@ describe("GET /deposits/tx-page", () => {
     expect(response.body.deposits).toHaveLength(4);
   });
 
+  it("200 for 'depositorOrRecipientAddress' query param", async () => {
+    await rewardFixture.insertReward({
+      depositPrimaryKey: 3,
+      recipient: depositorAddr,
+      type: "op-rebates",
+      metadata: { type: "op-rebates", rate: 0.95 },
+      amount: "1000000000000000000",
+      amountUsd: "1",
+      rewardTokenId: token.id,
+    });
+    await referralService.cumputeReferralStats();
+    await referralService.refreshMaterializedView();
+
+    const response = await request(app.getHttpServer()).get("/deposits/tx-page").query({
+      depositorOrRecipientAddress: depositorAddr,
+    });
+    expect(response.status).toBe(200);
+    expect(response.body.deposits).toHaveLength(2);
+    expect(response.body.deposits[0].rewards.type).toBe("referrals");
+    expect(response.body.deposits[1].rewards.type).toBe("op-rebates");
+  });
+
   it("200 for 'status' query params", async () => {
     const response = await request(app.getHttpServer()).get("/deposits/tx-page").query({ status: "filled" });
     expect(response.status).toBe(200);
@@ -513,28 +535,6 @@ describe("GET /deposits/tx-page", () => {
     expect(response.body.deposits).toHaveLength(4);
     expect(response.body.deposits[0].depositId).toBe(2);
     expect(response.body.deposits[2].depositId).toBe(4);
-  });
-
-  it("200 for 'include[]=rewards' query param", async () => {
-    await rewardFixture.insertReward({
-      depositPrimaryKey: 3,
-      recipient: depositorAddr,
-      type: "op-rebates",
-      metadata: { type: "op-rebates", rate: 0.95 },
-      amount: "1000000000000000000",
-      amountUsd: "1",
-      rewardTokenId: token.id,
-    });
-    await referralService.cumputeReferralStats();
-    await referralService.refreshMaterializedView();
-
-    const response = await request(app.getHttpServer()).get("/deposits/tx-page").query("include[]=rewards").query({
-      depositorOrRecipientAddress: depositorAddr,
-    });
-    expect(response.status).toBe(200);
-    expect(response.body.deposits).toHaveLength(2);
-    expect(response.body.deposits[0].rewards.type).toBe("referrals");
-    expect(response.body.deposits[1].rewards.type).toBe("op-rebates");
   });
 
   afterEach(async () => {

@@ -91,10 +91,10 @@ export class DepositService {
     const [deposits, total] = await queryBuilder.getManyAndCount();
 
     // Only include rewards if a user address is provided
-    if (query.include && query.depositorOrRecipientAddress && query.include.includes("rewards")) {
+    if (query.depositorOrRecipientAddress) {
       const userAddress = this.assertValidAddress(query.depositorOrRecipientAddress);
       const rewards = await this.rewardService.getRewardsForDepositsAndUserAddress(deposits, userAddress);
-      const enrichedDeposits = this.rewardService.enrichDepositsWithRewards(deposits, rewards);
+      const enrichedDeposits = this.rewardService.enrichDepositsWithRewards(userAddress, deposits, rewards);
       return {
         deposits: enrichedDeposits.map(({ deposit, rewards }) => {
           return {
