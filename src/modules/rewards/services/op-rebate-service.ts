@@ -29,14 +29,22 @@ export class OpRebateService {
     private appConfig: AppConfig,
   ) {}
 
+  public async getEarnedRewards(userAddress: string) {
+    userAddress = assertValidAddress(userAddress);
+
+    const baseQuery = this.buildBaseQuery(this.rewardRepository.createQueryBuilder("r"), userAddress);
+    const { opRewards } = await baseQuery
+      .select("SUM(CAST(r.amount as DECIMAL))", "opRewards")
+      .andWhere("r.claimedWindowIndex = :claimedWindowIndex", { claimedWindowIndex: -1 })
+      .getRawOne<{ opRewards: string }>();
+
+    return opRewards;
+  }
+
   public async getOpRebatesSummary(userAddress: string) {
     userAddress = assertValidAddress(userAddress);
 
-    const baseQuery = this.rewardRepository
-      .createQueryBuilder("r")
-      .where("r.type = :type", { type: "op-rebates" })
-      .andWhere("r.recipient = :recipient", { recipient: userAddress });
-
+    const baseQuery = this.buildBaseQuery(this.rewardRepository.createQueryBuilder("r"), userAddress);
     const [{ depositsCount }, { unclaimedRewards }, { volumeUsd }] = await Promise.all([
       baseQuery.select("COUNT(DISTINCT r.depositPrimaryKey)", "depositsCount").getRawOne<{
         depositsCount: string;
@@ -71,10 +79,9 @@ export class OpRebateService {
     const offset = parseInt(query.offset ?? "0");
     const userAddress = assertValidAddress(query.userAddress);
 
-    const rewardsQuery = this.rewardRepository
-      .createQueryBuilder("r")
-      .where("r.type = :type", { type: "op-rebates" })
-      .andWhere("r.recipient = :recipient", { recipient: userAddress })
+    const baseQuery = this.buildBaseQuery(this.rewardRepository.createQueryBuilder("r"), userAddress);
+
+    const rewardsQuery = baseQuery
       .leftJoinAndSelect("r.rewardToken", "rewardToken")
       .leftJoinAndSelect("r.deposit", "deposit")
       .orderBy("deposit.depositDate", "DESC")
@@ -226,5 +233,11 @@ export class OpRebateService {
         throw new Error(`Deposit with id ${deposit.id} is missing '${key}'`);
       }
     }
+  }
+
+  private buildBaseQuery(qb: ReturnType<typeof this.rewardRepository.createQueryBuilder>, recipientAddress: string) {
+    return qb
+      .where("r.type = :type", { type: "op-rebates" })
+      .andWhere("r.recipient = :recipient", { recipient: recipientAddress });
   }
 }

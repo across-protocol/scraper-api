@@ -161,6 +161,12 @@ export class ReferralService {
     return data;
   }
 
+  public async getEarnedRewards(address: string) {
+    const query = getTotalReferralRewardsQuery();
+    const result = await this.depositRepository.query(query, [address]);
+    return result[0].acxRewards;
+  }
+
   public async getReferrals(address: string, limit = 10, offset = 0) {
     const query = getReferralsQuery();
     const totalQuery = getReferralsTotalQuery();

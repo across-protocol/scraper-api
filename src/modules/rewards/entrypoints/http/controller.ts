@@ -8,6 +8,12 @@ import { RewardService } from "../../services/reward-service";
 export class RewardController {
   public constructor(private rewardService: RewardService) {}
 
+  @Get("rewards/earned")
+  @ApiTags("rewards")
+  getSummary(@Query() query: GetSummaryQuery) {
+    return this.rewardService.getEarnedRewards(query);
+  }
+
   @Get("rewards/op-rebates/summary")
   @ApiTags("rewards")
   getOpRebatesSummary(@Query() query: GetSummaryQuery) {

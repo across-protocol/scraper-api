@@ -24,6 +24,19 @@ export class RewardService {
     private opRebateService: OpRebateService,
   ) {}
 
+  public async getEarnedRewards(query: GetSummaryQuery) {
+    const { userAddress } = query;
+    const [opRewards, referralRewards] = await Promise.all([
+      this.opRebateService.getEarnedRewards(userAddress),
+      this.referralService.getEarnedRewards(userAddress),
+    ]);
+
+    return {
+      "op-rebates": opRewards,
+      referrals: referralRewards,
+    };
+  }
+
   public async getOpRebateRewardDeposits(query: GetRewardsQuery) {
     const { rewards, pagination } = await this.opRebateService.getOpRebateRewards(query);
     return {
