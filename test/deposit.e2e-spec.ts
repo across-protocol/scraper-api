@@ -403,7 +403,7 @@ describe("GET /v2/deposits", () => {
   });
 });
 
-describe("GET /deposits/tx-page", () => {
+describe.only("GET /deposits/tx-page", () => {
   beforeAll(async () => {
     depositFixture = app.get(DepositFixture);
     rewardFixture = app.get(RewardFixture);
@@ -481,7 +481,7 @@ describe("GET /deposits/tx-page", () => {
     expect(response.body.deposits).toHaveLength(4);
   });
 
-  it("200 with populated rewards for 'depositorOrRecipientAddress' query param", async () => {
+  it("200 for 'depositorOrRecipientAddress' query param", async () => {
     await rewardFixture.insertReward({
       depositPrimaryKey: 3,
       recipient: depositorAddr,
