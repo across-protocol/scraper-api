@@ -8,6 +8,7 @@ import { Deposit } from "../../deposit/model/deposit.entity";
 import { formatDeposit } from "../../deposit/utils";
 import { DepositsMvWithRewards } from "../../deposit/model/DepositsMv.entity";
 import { ReferralService } from "../../referral/services/service";
+import { assertValidAddress } from "../../../utils";
 
 import { OpRebateService } from "./op-rebate-service";
 import { Reward } from "../model/reward.entity";
@@ -59,7 +60,7 @@ export class RewardService {
     return {
       deposits: referrals.map((referral) => ({
         ...formatDeposit(referral.deposit),
-        rewards: this.formatReferral(referral),
+        rewards: this.formatReferral(referral, query.userAddress),
       })),
       pagination,
     };
@@ -119,6 +120,7 @@ export class RewardService {
   }
 
   public formatReferral(referral: DepositsMvWithRewards, userAddress: string) {
+    userAddress = assertValidAddress(userAddress);
     const userRate =
       referral.depositorAddr === userAddress && referral.referralAddress === userAddress
         ? 1

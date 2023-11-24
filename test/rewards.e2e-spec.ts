@@ -299,9 +299,21 @@ describe("GET /rewards/referrals", () => {
     });
     expect(response.status).toBe(200);
     expect(response.body.deposits).toHaveLength(3);
-    expect(response.body.deposits[0].rewards.rate).toBe(0.3); // 0.75 * 0.4 because userAddress is referrer
-    expect(response.body.deposits[1].rewards.rate).toBe(0.1); // 0.25 * 0.4 because userAddress is depositor
-    expect(response.body.deposits[2].rewards.rate).toBe(0.4); // 1 * 0.4 because userAddress is both referrer and depositor
+
+    // userAddress is referrer
+    expect(response.body.deposits[0].rewards.userRate).toBe(0.75);
+    expect(response.body.deposits[0].rewards.referrerRate).toBe(0.4);
+    expect(response.body.deposits[0].rewards.rate).toBe(0.3); // 0.75 * 0.4
+
+    // userAddress is depositor
+    expect(response.body.deposits[1].rewards.userRate).toBe(0.25);
+    expect(response.body.deposits[1].rewards.referrerRate).toBe(0.4);
+    expect(response.body.deposits[1].rewards.rate).toBe(0.1); // 0.25 * 0.4
+
+    // userAddress is both referrer and depositor
+    expect(response.body.deposits[2].rewards.userRate).toBe(1);
+    expect(response.body.deposits[2].rewards.referrerRate).toBe(0.4);
+    expect(response.body.deposits[2].rewards.rate).toBe(0.4); // 1 * 0.4
   });
 
   it("400 without params 'userAddress'", async () => {
