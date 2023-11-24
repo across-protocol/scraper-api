@@ -18,6 +18,22 @@ export const getReferralsQuery = () => {
   `;
 };
 
+export const getReferralsByDepositIdsQuery = () => {
+  return `
+    select
+      *,
+      case
+        when d."depositorAddr" = $1 and d."referralAddress" = $1
+          then trunc(cast(d."bridgeFeeUsd" * d."referralRate" / d."acxUsdPrice" * power(10, 18) * d.multiplier as decimal))
+        when d."depositorAddr" = $1
+        then trunc(cast(d."bridgeFeeUsd" * d."referralRate" / d."acxUsdPrice" * 0.25 * power(10, 18) * d.multiplier as decimal))
+        else trunc(cast(d."bridgeFeeUsd" * d."referralRate" / d."acxUsdPrice" * 0.75 * power(10, 18) * d.multiplier as decimal))
+      end as "acxRewards"
+    from deposits_mv as d
+    where d.id = ANY($2);
+  `;
+};
+
 export const getReferralsTotalQuery = () => {
   return `
     select count(*)

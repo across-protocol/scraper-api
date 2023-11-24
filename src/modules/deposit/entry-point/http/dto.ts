@@ -97,7 +97,7 @@ export class GetPendingDepositsQuery {
   offset: string;
 }
 
-export class GetDepositsV2Query {
+export class GetDepositsBaseQuery {
   @IsOptional()
   @IsEnum(
     {
@@ -110,18 +110,6 @@ export class GetDepositsV2Query {
   )
   @ApiProperty({ example: "filled", required: false })
   status: "filled" | "pending";
-
-  @IsOptional()
-  @IsArray()
-  @IsEnum(
-    {
-      TOKEN: "token",
-    },
-    { each: true, message: "Must be one of: 'token'" },
-  )
-  @ArrayMaxSize(1)
-  @ApiProperty({ example: ["token"], required: false })
-  include: Array<"token">;
 
   @IsOptional()
   @IsInt()
@@ -186,9 +174,23 @@ export class GetDepositsV2Query {
   @Type(() => String)
   @ApiProperty({ example: "2022-11-08T11:00:00.000Z", required: false })
   endDepositDate: string;
+
+  @IsOptional()
+  @IsArray()
+  @IsEnum(
+    {
+      TOKEN: "token",
+    },
+    { each: true, message: "Must be one of: 'token'" },
+  )
+  @ArrayMaxSize(1)
+  @ApiProperty({ example: ["token"], required: false })
+  include: Array<"token">;
 }
 
-export class GetDepositsForTxPageQuery extends GetDepositsV2Query {
+export class GetDepositsV2Query extends GetDepositsBaseQuery {}
+
+export class GetDepositsForTxPageQuery extends GetDepositsBaseQuery {
   @IsOptional()
   @IsBoolean()
   @Type(() => Boolean)

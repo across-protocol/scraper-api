@@ -17,9 +17,10 @@ import {
   getReferreeWalletsQuery,
   getTotalReferralRewardsQuery,
   getRefreshMaterializedView,
+  getReferralsByDepositIdsQuery,
 } from "./queries";
 import { AppConfig } from "../../configuration/configuration.service";
-import { DepositsMv } from "../../deposit/model/DepositsMv.entity";
+import { DepositsMv, DepositsMvWithRewards } from "../../deposit/model/DepositsMv.entity";
 import {
   InvalidReferralRewardsWindowJobException,
   ReferralRewardsWindowJobNotFoundException,
@@ -31,8 +32,6 @@ import { splitArrayInChunks } from "../../../utils";
 import { Claim } from "../../airdrop/model/claim.entity";
 import { EthProvidersService } from "../../web3/services/EthProvidersService";
 import { ChainIds } from "../../web3/model/ChainId";
-import { StickyReferralAddressesMechanism } from "../../configuration";
-import { Transaction } from "../../web3/model/transaction.entity";
 import { ReferralRewardsWindowJob, ReferralRewardsWindowJobStatus } from "../model/ReferralRewardsWindowJob.entity";
 import { QueryDeepPartialEntity } from "typeorm/query-builder/QueryPartialEntity";
 import { ReferralRewardsWindowJobResult } from "../model/ReferralRewardsWindowJobResult.entity";
@@ -170,6 +169,15 @@ export class ReferralService {
         total,
       },
     };
+  }
+
+  public async getReferralsForDepositsAndUserAddress(depositPrimaryKeys: number[], userAddress: string) {
+    const referrals: DepositsMvWithRewards[] = await this.depositsMvRepository.query(getReferralsByDepositIdsQuery(), [
+      userAddress,
+      depositPrimaryKeys,
+    ]);
+
+    return referrals;
   }
 
   public async createNewReferralRewardsWindowJob(windowIndex: number, maxDepositDate: Date) {
@@ -334,6 +342,22 @@ export class ReferralService {
 
   public async revertReferralsMerkleDistribution(windowIndex: number) {
     await this.depositRepository.update({ rewardsWindowIndex: windowIndex }, { rewardsWindowIndex: null });
+  }
+
+  public getTierLevelByRate(referralRate: number) {
+    if (referralRate === 0.8) {
+      return 5;
+    }
+    if (referralRate === 0.7) {
+      return 4;
+    }
+    if (referralRate === 0.6) {
+      return 3;
+    }
+    if (referralRate === 0.5) {
+      return 2;
+    }
+    return 1;
   }
 
   private getTierLevelAndBonus(transfersCount: number, transfersVolumeUsd: number) {

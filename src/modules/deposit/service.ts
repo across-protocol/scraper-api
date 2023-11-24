@@ -1,9 +1,9 @@
-import { DateTime } from "luxon";
 import { CACHE_MANAGER, Inject, Injectable } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Brackets, DataSource, Repository } from "typeorm";
 import { utils } from "ethers";
 import { Cache } from "cache-manager";
+
 import { Deposit } from "./model/deposit.entity";
 import {
   getAvgFillTimeQuery,
@@ -13,7 +13,9 @@ import {
 } from "./adapter/db/queries";
 import { AppConfig } from "../configuration/configuration.service";
 import { InvalidAddressException, DepositNotFoundException } from "./exceptions";
-import { GetDepositsV2Query, GetDepositsForTxPageQuery } from "./entry-point/http/dto";
+import { GetDepositsV2Query, GetDepositsForTxPageQuery, GetDepositsBaseQuery } from "./entry-point/http/dto";
+import { formatDeposit } from "./utils";
+import { RewardService } from "../rewards/services/reward-service";
 
 export const DEPOSITS_STATS_CACHE_KEY = "deposits:stats";
 
@@ -24,6 +26,7 @@ export class DepositService {
     @InjectRepository(Deposit) private depositRepository: Repository<Deposit>,
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
     private dataSource: DataSource,
+    private rewardService: RewardService,
   ) {}
 
   public async getCachedGeneralStats() {
@@ -51,6 +54,7 @@ export class DepositService {
 
     let queryBuilder = this.depositRepository.createQueryBuilder("d");
     queryBuilder = this.getFilteredDepositsQuery(queryBuilder, query);
+    queryBuilder = this.getJoinedDepositsQuery(queryBuilder, query);
 
     // If this flag is set to true, we will skip pending deposits that:
     // - are older than 1 day because the relayer will ignore such deposits using its fixed lookback
@@ -85,6 +89,26 @@ export class DepositService {
     queryBuilder = queryBuilder.skip(offset);
 
     const [deposits, total] = await queryBuilder.getManyAndCount();
+
+    // Only include rewards if a user address is provided
+    if (query.depositorOrRecipientAddress) {
+      const userAddress = this.assertValidAddress(query.depositorOrRecipientAddress);
+      const rewards = await this.rewardService.getRewardsForDepositsAndUserAddress(deposits, userAddress);
+      const enrichedDeposits = this.rewardService.enrichDepositsWithRewards(userAddress, deposits, rewards);
+      return {
+        deposits: enrichedDeposits.map(({ deposit, rewards }) => {
+          return {
+            ...formatDeposit(deposit),
+            rewards,
+          };
+        }),
+        pagination: {
+          limit,
+          offset,
+          total,
+        },
+      };
+    }
 
     return {
       deposits: deposits.map(formatDeposit),
@@ -261,7 +285,7 @@ export class DepositService {
 
   private getFilteredDepositsQuery(
     queryBuilder: ReturnType<typeof this.depositRepository.createQueryBuilder>,
-    filter: Partial<GetDepositsV2Query>,
+    filter: Partial<GetDepositsBaseQuery>,
   ) {
     queryBuilder = queryBuilder.andWhere("d.depositDate is not null");
 
@@ -321,7 +345,7 @@ export class DepositService {
 
   private getJoinedDepositsQuery(
     queryBuilder: ReturnType<typeof this.depositRepository.createQueryBuilder>,
-    filter: Partial<GetDepositsV2Query>,
+    filter: Partial<GetDepositsV2Query | GetDepositsForTxPageQuery>,
   ) {
     if (!filter.include) {
       return queryBuilder;
@@ -342,43 +366,4 @@ export class DepositService {
       throw new InvalidAddressException();
     }
   }
-}
-
-/**
- * Format deposit to entity to match `Transfer` structure from sdk.
- * @param deposit - Deposit entity from db.
- * @returns Formatted deposit entity that matches `Transfer` struct.
- */
-export function formatDeposit(deposit: Deposit) {
-  return {
-    depositId: deposit.depositId,
-    depositTime: Math.round(DateTime.fromISO(deposit.depositDate.toISOString()).toSeconds()),
-    fillTime: deposit.filledDate
-      ? Math.round(DateTime.fromISO(deposit.filledDate.toISOString()).toSeconds())
-      : undefined,
-    status: deposit.status,
-    filled: deposit.filled,
-    sourceChainId: deposit.sourceChainId,
-    destinationChainId: deposit.destinationChainId,
-    assetAddr: deposit.tokenAddr,
-    token: deposit.token
-      ? {
-          address: deposit.token.address,
-          symbol: deposit.token.symbol,
-          decimals: deposit.token.decimals,
-          chainId: deposit.token.chainId,
-        }
-      : undefined,
-    depositorAddr: deposit.depositorAddr,
-    recipientAddr: deposit.recipientAddr,
-    message: deposit.message,
-    amount: deposit.amount,
-    depositTxHash: deposit.depositTxHash,
-    fillTxs: deposit.fillTxs.map(({ hash }) => hash),
-    speedUps: deposit.speedUps,
-    depositRelayerFeePct: deposit.depositRelayerFeePct,
-    initialRelayerFeePct: deposit.initialRelayerFeePct,
-    suggestedRelayerFeePct: deposit.suggestedRelayerFeePct,
-    feeBreakdown: deposit.feeBreakdown,
-  };
 }

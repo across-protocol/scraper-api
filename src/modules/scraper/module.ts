@@ -93,7 +93,7 @@ export class ScraperModule {
         DepositModule.forRoot(moduleOptions),
         AirdropModule.forRoot(moduleOptions),
         ReferralModule.forRoot(moduleOptions),
-        RewardModule,
+        RewardModule.forRoot(moduleOptions),
         BullModule.registerQueue({
           name: ScraperQueue.BlockNumber,
         }),
