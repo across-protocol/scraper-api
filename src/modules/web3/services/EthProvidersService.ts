@@ -135,7 +135,7 @@ export class EthProvidersService {
         blockHash,
         blockNumber,
       });
-      cachedReceipt = await this.transactionRepository.save(cachedReceipt);
+      cachedReceipt = await this.txReceiptRepository.save(cachedReceipt);
     }
 
     return cachedReceipt;
