@@ -403,7 +403,7 @@ describe("GET /v2/deposits", () => {
   });
 });
 
-describe.only("GET /deposits/tx-page", () => {
+describe("GET /deposits/tx-page", () => {
   beforeAll(async () => {
     depositFixture = app.get(DepositFixture);
     rewardFixture = app.get(RewardFixture);
