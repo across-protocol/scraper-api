@@ -1,6 +1,6 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
-import { Repository } from "typeorm";
+import { In, Repository } from "typeorm";
 import BigNumber from "bignumber.js";
 import { ethers } from "ethers";
 import { DateTime } from "luxon";
@@ -35,7 +35,6 @@ export class OpRebateService {
     const baseQuery = this.buildBaseQuery(this.rewardRepository.createQueryBuilder("r"), userAddress);
     const { opRewards } = await baseQuery
       .select("SUM(CAST(r.amount as DECIMAL))", "opRewards")
-      .andWhere("r.claimedWindowIndex = :claimedWindowIndex", { claimedWindowIndex: -1 })
       .getRawOne<{ opRewards: string }>();
 
     return opRewards;
@@ -49,12 +48,9 @@ export class OpRebateService {
       baseQuery.select("COUNT(DISTINCT r.depositPrimaryKey)", "depositsCount").getRawOne<{
         depositsCount: string;
       }>(),
-      baseQuery
-        .select("SUM(CAST(r.amount as DECIMAL))", "unclaimedRewards")
-        .andWhere("r.claimedWindowIndex = :claimedWindowIndex", { claimedWindowIndex: -1 })
-        .getRawOne<{
-          unclaimedRewards: number;
-        }>(),
+      baseQuery.select("SUM(CAST(r.amount as DECIMAL))", "unclaimedRewards").getRawOne<{
+        unclaimedRewards: number;
+      }>(),
       baseQuery
         .leftJoinAndSelect("r.deposit", "d")
         .leftJoinAndSelect("d.token", "t")
@@ -83,14 +79,21 @@ export class OpRebateService {
 
     const rewardsQuery = baseQuery
       .leftJoinAndSelect("r.rewardToken", "rewardToken")
-      .leftJoinAndSelect("r.deposit", "deposit")
-      .orderBy("deposit.depositDate", "DESC")
+      .orderBy("r.depositDate", "DESC")
       .limit(limit)
       .offset(offset);
     const [rewards, total] = await rewardsQuery.getManyAndCount();
 
+    const depositPrimaryKeys = rewards.map((reward) => reward.depositPrimaryKey);
+    const deposits = await this.depositRepository.find({
+      where: { id: In(depositPrimaryKeys) },
+    });
+
     return {
-      rewards,
+      rewards: rewards.map((reward) => ({
+        ...reward,
+        deposit: deposits.find((deposit) => deposit.id === reward.depositPrimaryKey),
+      })),
       pagination: {
         limit,
         offset,
@@ -165,6 +168,7 @@ export class OpRebateService {
         depositPrimaryKey: depositPrimaryKey,
         recipient: rewardReceiver,
         type: "op-rebates",
+        depositDate: deposit.depositDate,
       });
     }
 

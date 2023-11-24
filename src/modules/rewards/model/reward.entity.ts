@@ -39,6 +39,9 @@ export class Reward {
   deposit: Deposit;
 
   @Column()
+  depositDate: Date;
+
+  @Column()
   recipient: string;
 
   @Column()
@@ -59,9 +62,6 @@ export class Reward {
   @ManyToOne(() => Token)
   @JoinColumn([{ name: "rewardTokenId", referencedColumnName: "id" }])
   rewardToken: Token;
-
-  @Column({ default: -1 })
-  claimedWindowIndex: number;
 
   @CreateDateColumn()
   createdAt: Date;
