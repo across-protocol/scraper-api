@@ -12,10 +12,10 @@ export class TransactionReceipt {
   @Column()
   from: string;
 
-  @Column()
+  @Column({ nullable: true })
   to: string;
 
-  @Column()
+  @Column({ nullable: true })
   contractAddress: string;
 
   @Column()

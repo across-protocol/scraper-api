@@ -63,7 +63,7 @@ export class FeeBreakdownConsumer {
     decimals: number,
     destinationChainId: number,
   ) {
-    const calcPctValues = makePctValuesCalculator(fillTx.fillAmount, priceUsd, decimals);
+    const calcPctValues = makePctValuesCalculator(fillTx.totalFilledAmount, priceUsd, decimals);
     const { feeUsd } = await this.gasFeesService.getFillTxNetworkFee(destinationChainId, fillTx.hash);
 
     const lpFeePctValues = calcPctValues(fillTx.realizedLpFeePct);

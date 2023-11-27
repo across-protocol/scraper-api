@@ -47,9 +47,12 @@ export function deriveRelayerFeeComponents(
   relayerFeeUsd: string,
   relayerFeePct: BigNumber | number | string,
 ) {
-  const gasFeePct = new BigNumber(gasFeeUsd).dividedBy(relayerFeeUsd).multipliedBy(relayerFeePct);
-  const capitalFeeUsd = new BigNumber(relayerFeeUsd).minus(gasFeeUsd);
-  const capitalFeePct = new BigNumber(relayerFeePct).minus(gasFeePct);
+  const isRelayerFeeZero = new BigNumber(relayerFeeUsd).isZero();
+  const gasFeePct = isRelayerFeeZero
+    ? 0
+    : new BigNumber(gasFeeUsd).dividedBy(relayerFeeUsd).multipliedBy(relayerFeePct);
+  const capitalFeeUsd = isRelayerFeeZero ? 0 : new BigNumber(relayerFeeUsd).minus(gasFeeUsd);
+  const capitalFeePct = isRelayerFeeZero ? 0 : new BigNumber(relayerFeePct).minus(gasFeePct);
   return {
     gasFeeUsd,
     gasFeePct: gasFeePct.toFixed(),
