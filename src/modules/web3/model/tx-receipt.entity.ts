@@ -12,11 +12,11 @@ export class TransactionReceipt {
   @Column()
   from: string;
 
-  @Column()
-  to: string;
+  @Column({ nullable: true })
+  to?: string;
 
-  @Column()
-  contractAddress: string;
+  @Column({ nullable: true })
+  contractAddress?: string;
 
   @Column()
   transactionIndex: number;

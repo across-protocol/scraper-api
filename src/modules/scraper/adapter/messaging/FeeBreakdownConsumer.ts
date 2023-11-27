@@ -63,7 +63,7 @@ export class FeeBreakdownConsumer {
     decimals: number,
     destinationChainId: number,
   ) {
-    const calcPctValues = makePctValuesCalculator(fillTx.fillAmount, priceUsd, decimals);
+    const calcPctValues = makePctValuesCalculator(fillTx.totalFilledAmount, priceUsd, decimals);
     const { feeUsd } = await this.gasFeesService.getFillTxNetworkFee(destinationChainId, fillTx.hash);
 
     const lpFeePctValues = calcPctValues(fillTx.realizedLpFeePct);
@@ -73,7 +73,7 @@ export class FeeBreakdownConsumer {
     const relayFeePctValues = calcPctValues(fillRelayerFeePct);
     const bridgeFeePctValues = calcPctValues(new BigNumber(fillTx.realizedLpFeePct).plus(fillRelayerFeePct).toString());
 
-    const { gasFeePct, capitalFeePct, capitalFeeUsd } = deriveRelayerFeeComponents(
+    const { gasFeeUsd, gasFeePct, capitalFeePct, capitalFeeUsd } = deriveRelayerFeeComponents(
       feeUsd,
       relayFeePctValues.pctAmountUsd,
       relayFeePctValues.pct,
@@ -86,7 +86,7 @@ export class FeeBreakdownConsumer {
       relayCapitalFeeUsd: capitalFeeUsd,
       relayCapitalFeePct: toWeiPct(capitalFeePct),
       relayCapitalFeeAmount: new BigNumber(fillTx.fillAmount).multipliedBy(capitalFeePct).toFixed(0),
-      relayGasFeeUsd: feeUsd,
+      relayGasFeeUsd: gasFeeUsd,
       relayGasFeePct: toWeiPct(gasFeePct),
       relayGasFeeAmount: new BigNumber(fillTx.fillAmount).multipliedBy(gasFeePct).toFixed(0),
       totalBridgeFeeUsd: bridgeFeePctValues.pctAmountUsd,
