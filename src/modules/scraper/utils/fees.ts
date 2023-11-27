@@ -54,7 +54,7 @@ export function deriveRelayerFeeComponents(
   const capitalFeeUsd = isRelayerFeeZero ? 0 : new BigNumber(relayerFeeUsd).minus(gasFeeUsd);
   const capitalFeePct = isRelayerFeeZero ? 0 : new BigNumber(relayerFeePct).minus(gasFeePct);
   return {
-    gasFeeUsd,
+    gasFeeUsd: isRelayerFeeZero ? "0" : gasFeeUsd,
     gasFeePct: gasFeePct.toFixed(),
     capitalFeeUsd: capitalFeeUsd.toFixed(),
     capitalFeePct: capitalFeePct.toFixed(),
