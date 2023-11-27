@@ -1,6 +1,6 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
-import { Repository } from "typeorm";
+import { In, Repository } from "typeorm";
 import BigNumber from "bignumber.js";
 import { ethers } from "ethers";
 import { DateTime } from "luxon";
@@ -10,8 +10,10 @@ import { AppConfig } from "../../configuration/configuration.service";
 import { EthProvidersService } from "../../web3/services/EthProvidersService";
 import { ChainIds } from "../../web3/model/ChainId";
 import { MarketPriceService } from "../../market-price/services/service";
+import { assertValidAddress } from "../../../utils";
 
 import { Reward } from "../model/reward.entity";
+import { GetRewardsQuery } from "../entrypoints/http/dto";
 
 const OP_REBATE_RATE = 0.95;
 
@@ -26,6 +28,79 @@ export class OpRebateService {
     private ethProvidersService: EthProvidersService,
     private appConfig: AppConfig,
   ) {}
+
+  public async getEarnedRewards(userAddress: string) {
+    userAddress = assertValidAddress(userAddress);
+
+    const baseQuery = this.buildBaseQuery(this.rewardRepository.createQueryBuilder("r"), userAddress);
+    const { opRewards } = await baseQuery
+      .select("SUM(CAST(r.amount as DECIMAL))", "opRewards")
+      .getRawOne<{ opRewards: string }>();
+
+    return opRewards;
+  }
+
+  public async getOpRebatesSummary(userAddress: string) {
+    userAddress = assertValidAddress(userAddress);
+
+    const baseQuery = this.buildBaseQuery(this.rewardRepository.createQueryBuilder("r"), userAddress);
+    const [{ depositsCount }, { unclaimedRewards }, { volumeUsd }] = await Promise.all([
+      baseQuery.select("COUNT(DISTINCT r.depositPrimaryKey)", "depositsCount").getRawOne<{
+        depositsCount: string;
+      }>(),
+      baseQuery.select("SUM(CAST(r.amount as DECIMAL))", "unclaimedRewards").getRawOne<{
+        unclaimedRewards: number;
+      }>(),
+      baseQuery
+        .leftJoinAndSelect("r.deposit", "d")
+        .leftJoinAndSelect("d.token", "t")
+        .leftJoinAndSelect("d.price", "p")
+        .select(`COALESCE(SUM(d.amount / power(10, t.decimals) * p.usd), 0)`, "volumeUsd")
+        .getRawOne<{
+          volumeUsd: number;
+        }>(),
+      // TODO: add claimable rewards
+    ]);
+
+    return {
+      depositsCount: parseInt(depositsCount),
+      unclaimedRewards,
+      volumeUsd,
+      claimableRewards: "0",
+    };
+  }
+
+  public async getOpRebateRewards(query: GetRewardsQuery) {
+    const limit = parseInt(query.limit ?? "10");
+    const offset = parseInt(query.offset ?? "0");
+    const userAddress = assertValidAddress(query.userAddress);
+
+    const baseQuery = this.buildBaseQuery(this.rewardRepository.createQueryBuilder("r"), userAddress);
+
+    const rewardsQuery = baseQuery
+      .leftJoinAndSelect("r.rewardToken", "rewardToken")
+      .orderBy("r.depositDate", "DESC")
+      .limit(limit)
+      .offset(offset);
+    const [rewards, total] = await rewardsQuery.getManyAndCount();
+
+    const depositPrimaryKeys = rewards.map((reward) => reward.depositPrimaryKey);
+    const deposits = await this.depositRepository.find({
+      where: { id: In(depositPrimaryKeys) },
+    });
+
+    return {
+      rewards: rewards.map((reward) => ({
+        ...reward,
+        deposit: deposits.find((deposit) => deposit.id === reward.depositPrimaryKey),
+      })),
+      pagination: {
+        limit,
+        offset,
+        total,
+      },
+    };
+  }
 
   public async getOpRebateRewardsForDepositPrimaryKeys(depositPrimaryKeys: number[]) {
     const rewardsQuery = this.rewardRepository
@@ -93,6 +168,7 @@ export class OpRebateService {
         depositPrimaryKey: depositPrimaryKey,
         recipient: rewardReceiver,
         type: "op-rebates",
+        depositDate: deposit.depositDate,
       });
     }
 
@@ -161,5 +237,11 @@ export class OpRebateService {
         throw new Error(`Deposit with id ${deposit.id} is missing '${key}'`);
       }
     }
+  }
+
+  private buildBaseQuery(qb: ReturnType<typeof this.rewardRepository.createQueryBuilder>, recipientAddress: string) {
+    return qb
+      .where("r.type = :type", { type: "op-rebates" })
+      .andWhere("r.recipient = :recipient", { recipient: recipientAddress });
   }
 }

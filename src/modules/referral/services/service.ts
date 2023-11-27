@@ -41,6 +41,16 @@ const REFERRAL_ADDRESS_DELIMITER = "d00dfeeddeadbeef";
 const getReferralsSummaryCacheKey = (address: string) => `referrals:summary:${address}`;
 const getReferralRateCacheKey = (address: string) => `referrals:rate:${address}`;
 
+type ReferralsSummary = {
+  referreeWallets: number;
+  transfers: number;
+  volume: number;
+  referralRate: number;
+  rewardsAmount: number;
+  tier: number;
+  activeRefereesCount: number;
+};
+
 @Injectable()
 export class ReferralService {
   private logger = new Logger(ReferralService.name);
@@ -68,8 +78,8 @@ export class ReferralService {
     }
   }
 
-  public async getReferralSummary(address: string) {
-    let data = await this.cacheManager.get(getReferralsSummaryCacheKey(address));
+  public async getReferralSummary(address: string): Promise<ReferralsSummary> {
+    let data = await this.cacheManager.get<ReferralsSummary>(getReferralsSummaryCacheKey(address));
 
     if (data) return data;
 
@@ -152,6 +162,12 @@ export class ReferralService {
     return data;
   }
 
+  public async getEarnedRewards(address: string) {
+    const query = getTotalReferralRewardsQuery();
+    const result = await this.depositRepository.query(query, [address]);
+    return result[0].acxRewards;
+  }
+
   public async getReferrals(address: string, limit = 10, offset = 0) {
     const query = getReferralsQuery();
     const totalQuery = getReferralsTotalQuery();
@@ -171,12 +187,35 @@ export class ReferralService {
     };
   }
 
+  public async getReferralsWithJoinedDeposit(address: string, limit = 10, offset = 0) {
+    const [referrals, total]: [DepositsMvWithRewards[], number] = await Promise.all([
+      this.depositRepository.query(getReferralsQuery(), [address, limit, offset]),
+      this.depositRepository.query(getReferralsTotalQuery(), [address]),
+    ]);
+
+    const depositPrimaryKeys = referrals.map((referral) => referral.depositId);
+    const deposits = await this.depositRepository.find({
+      where: { id: In(depositPrimaryKeys) },
+    });
+
+    return {
+      referrals: referrals.map((referral) => ({
+        ...referral,
+        deposit: deposits.find((deposit) => deposit.id === referral.depositId),
+      })),
+      pagination: {
+        limit,
+        offset,
+        total,
+      },
+    };
+  }
+
   public async getReferralsForDepositsAndUserAddress(depositPrimaryKeys: number[], userAddress: string) {
     const referrals: DepositsMvWithRewards[] = await this.depositsMvRepository.query(getReferralsByDepositIdsQuery(), [
       userAddress,
       depositPrimaryKeys,
     ]);
-
     return referrals;
   }
 

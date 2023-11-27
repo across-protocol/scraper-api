@@ -29,6 +29,7 @@ export function mockRewardEntity(overrides: Partial<Reward>) {
     amountUsd: "1",
     rewardTokenId: 1,
     rewardTokenPriceId: 1,
+    depositDate: new Date(),
     ...overrides,
   };
 }

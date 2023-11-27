@@ -5,11 +5,14 @@ import BigNumber from "bignumber.js";
 import { ethers } from "ethers";
 
 import { Deposit } from "../../deposit/model/deposit.entity";
+import { formatDeposit } from "../../deposit/utils";
 import { DepositsMvWithRewards } from "../../deposit/model/DepositsMv.entity";
 import { ReferralService } from "../../referral/services/service";
+import { assertValidAddress } from "../../../utils";
 
 import { OpRebateService } from "./op-rebate-service";
 import { Reward } from "../model/reward.entity";
+import { GetRewardsQuery, GetSummaryQuery, GetReferralRewardsSummaryQuery } from "../entrypoints/http/dto";
 
 @Injectable()
 export class RewardService {
@@ -19,6 +22,56 @@ export class RewardService {
     private referralService: ReferralService,
     private opRebateService: OpRebateService,
   ) {}
+
+  public async getEarnedRewards(query: GetSummaryQuery) {
+    const { userAddress } = query;
+    const [opRewards, referralRewards] = await Promise.all([
+      this.opRebateService.getEarnedRewards(userAddress),
+      this.referralService.getEarnedRewards(userAddress),
+    ]);
+
+    return {
+      "op-rebates": opRewards,
+      referrals: referralRewards,
+    };
+  }
+
+  public async getOpRebateRewardDeposits(query: GetRewardsQuery) {
+    const { rewards, pagination } = await this.opRebateService.getOpRebateRewards(query);
+    return {
+      deposits: rewards.map((reward) => ({
+        ...formatDeposit(reward.deposit),
+        rewards: this.formatOpRebate(reward),
+      })),
+      pagination,
+    };
+  }
+
+  public async getOpRebatesSummary(query: GetSummaryQuery) {
+    return this.opRebateService.getOpRebatesSummary(query.userAddress);
+  }
+
+  public async getReferralRewardDeposits(query: GetRewardsQuery) {
+    const { referrals, pagination } = await this.referralService.getReferralsWithJoinedDeposit(
+      query.userAddress,
+      parseInt(query.limit || "10"),
+      parseInt(query.offset || "0"),
+    );
+    return {
+      deposits: referrals.map((referral) => ({
+        ...formatDeposit(referral.deposit),
+        rewards: this.formatReferral(referral, query.userAddress),
+      })),
+      pagination,
+    };
+  }
+
+  public async getReferralRewardsSummary(query: GetReferralRewardsSummaryQuery) {
+    return this.referralService.getReferralSummaryHandler({
+      ...query,
+      address: query.userAddress,
+    });
+  }
 
   public async getRewardsForDepositsAndUserAddress(deposits: Deposit[], userAddress: string) {
     const depositPrimaryKeys = deposits.map((deposit) => deposit.id);
@@ -67,6 +120,7 @@ export class RewardService {
   }
 
   public formatReferral(referral: DepositsMvWithRewards, userAddress: string) {
+    userAddress = assertValidAddress(userAddress);
     const userRate =
       referral.depositorAddr === userAddress && referral.referralAddress === userAddress
         ? 1
@@ -76,9 +130,9 @@ export class RewardService {
     return {
       type: "referrals",
       tier: this.referralService.getTierLevelByRate(referral.referralRate),
-      rate: userRate * referral.referralRate * referral.multiplier,
+      rate: new BigNumber(userRate).multipliedBy(referral.referralRate).multipliedBy(referral.multiplier).toNumber(),
       userRate,
-      referralRate: referral.referralRate,
+      referralRate: Number(referral.referralRate),
       multiplier: referral.multiplier,
       amount: referral.acxRewards,
       usd: new BigNumber(referral.acxUsdPrice)

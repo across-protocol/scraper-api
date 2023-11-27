@@ -39,6 +39,9 @@ export class Reward {
   deposit: Deposit;
 
   @Column()
+  depositDate: Date;
+
+  @Column()
   recipient: string;
 
   @Column()
