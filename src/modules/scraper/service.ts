@@ -12,11 +12,16 @@ import {
   BlockNumberQueueMessage,
   BlocksEventsQueueMessage,
   DepositReferralQueueMessage,
+  FeeBreakdownQueueMessage,
   MerkleDistributorBlocksEventsQueueMessage,
   ScraperQueue,
 } from "./adapter/messaging";
 import { wait } from "../../utils";
-import { RetryIncompleteDepositsBody, SubmitReindexReferralAddressJobBody } from "./entry-point/http/dto";
+import {
+  BackfillFeeBreakdownBody,
+  RetryIncompleteDepositsBody,
+  SubmitReindexReferralAddressJobBody,
+} from "./entry-point/http/dto";
 import { Deposit } from "../deposit/model/deposit.entity";
 
 @Injectable()
@@ -254,6 +259,26 @@ export class ScraperService {
       } else {
         page = page + 1;
       }
+    }
+  }
+
+  public async backfillFeeBreakdown(body: BackfillFeeBreakdownBody) {
+    const deposits = await this.depositRepository
+      .createQueryBuilder("d")
+      .where("d.feeBreakdown::text='{}'")
+      .andWhere("d.priceId is not null")
+      .andWhere("d.tokenId is not null")
+      .andWhere("d.depositDate is not null")
+      .orderBy("d.id", "ASC")
+      .take(body.count || undefined)
+      .getMany();
+    this.logger.debug(`[backfillFeeBreakdown] found ${deposits.length} deposits`);
+
+    for (const deposit of deposits) {
+      this.logger.debug(`[backfillFeeBreakdown] get fee breakdown for ${deposit.id}`);
+      await this.scraperQueuesService.publishMessage<FeeBreakdownQueueMessage>(ScraperQueue.FeeBreakdown, {
+        depositId: deposit.id,
+      });
     }
   }
 }
