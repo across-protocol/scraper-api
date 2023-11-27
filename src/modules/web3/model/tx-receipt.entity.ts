@@ -13,7 +13,7 @@ export class TransactionReceipt {
   from: string;
 
   @Column({ nullable: true })
-  to: string;
+  to?: string;
 
   @Column({ nullable: true })
   contractAddress: string;
