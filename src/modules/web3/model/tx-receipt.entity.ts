@@ -16,7 +16,7 @@ export class TransactionReceipt {
   to?: string;
 
   @Column({ nullable: true })
-  contractAddress: string;
+  contractAddress?: string;
 
   @Column()
   transactionIndex: number;
