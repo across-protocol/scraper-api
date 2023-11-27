@@ -188,7 +188,7 @@ export class ReferralService {
   }
 
   public async getReferralsWithJoinedDeposit(address: string, limit = 10, offset = 0) {
-    const [referrals, total]: [DepositsMvWithRewards[], number] = await Promise.all([
+    const [referrals, [{ count }]]: [DepositsMvWithRewards[], [{ count: string }]] = await Promise.all([
       this.depositRepository.query(getReferralsQuery(), [address, limit, offset]),
       this.depositRepository.query(getReferralsTotalQuery(), [address]),
     ]);
@@ -206,7 +206,7 @@ export class ReferralService {
       pagination: {
         limit,
         offset,
-        total,
+        total: parseInt(count),
       },
     };
   }
