@@ -129,7 +129,7 @@ export class RewardService {
         : 0.75;
     return {
       type: "referrals",
-      tier: this.referralService.getTierLevelByRate(referral.referralRate),
+      tier: this.referralService.getTierLevelByRate(Number(referral.referralRate)),
       rate: new BigNumber(userRate).multipliedBy(referral.referralRate).multipliedBy(referral.multiplier).toNumber(),
       userRate,
       referralRate: Number(referral.referralRate),
