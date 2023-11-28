@@ -27,8 +27,9 @@ export class MerkleDistributorWindowFixture {
   ): Partial<MerkleDistributorWindow> {
     return {
       chainId: 1,
-      rewardToken: "0x",
       windowIndex: 0,
+      contractAddress: "0x",
+      rewardToken: "0x",
       rewardsToDeposit: "10",
       merkleRoot: "0x",
       ...overrides,

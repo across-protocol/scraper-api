@@ -38,6 +38,9 @@ export class Claim {
   @Column()
   claimedAt: Date;
 
+  @Column()
+  merkleDistributorWindowId: number;
+
   @ManyToOne(() => MerkleDistributorWindow, (window) => window.claims)
   merkleDistributorWindow: MerkleDistributorWindow;
 
