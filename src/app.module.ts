@@ -18,6 +18,7 @@ import { DepositModule } from "./modules/deposit/module";
 import { AuthModule } from "./modules/auth/auth.module";
 import { UserModule } from "./modules/user/module";
 import { AirdropModule } from "./modules/airdrop/module";
+import { RewardModule } from "./modules/rewards/module";
 import { ModuleOptions, RunMode } from "./dynamic-module";
 
 @Module({})
@@ -44,6 +45,7 @@ export class AppModule {
       AuthModule.forRoot(moduleOptions),
       UserModule.forRoot(moduleOptions),
       AirdropModule.forRoot(moduleOptions),
+      RewardModule.forRoot(moduleOptions),
       CacheModule.register({ isGlobal: true }),
     ];
 

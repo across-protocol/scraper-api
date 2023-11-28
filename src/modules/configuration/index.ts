@@ -220,6 +220,21 @@ export const configValues = () => ({
   amplitude: {
     apiKey: process.env.AMPLITUDE_API_KEY,
   },
+  rewardPrograms: {
+    "op-rebates": {
+      rewardToken: {
+        address: process.env.OP_REBATES_REWARD_TOKEN_ADDRESS || "0x4200000000000000000000000000000000000042",
+        chainId: Number(process.env.OP_REBATES_REWARD_TOKEN_CHAIN_ID || "10"),
+      },
+      enabled: process.env.OP_REBATES_REWARD_PROGRAM_ENABLED === "true",
+      startDate: process.env.OP_REBATES_REWARD_PROGRAM_START_DATE
+        ? new Date(process.env.OP_REBATES_REWARD_PROGRAM_START_DATE)
+        : undefined,
+      endDate: process.env.OP_REBATES_REWARD_PROGRAM_END_DATE
+        ? new Date(process.env.OP_REBATES_REWARD_PROGRAM_END_DATE)
+        : undefined,
+    },
+  },
 });
 
 export default registerAs("config", () => configValues());

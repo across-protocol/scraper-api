@@ -14,6 +14,8 @@ import {
   TokenDetailsQueueMessage,
   DepositAcxPriceQueueMessage,
   SuggestedFeesQueueMessage,
+  FeeBreakdownQueueMessage,
+  OpRebateRewardMessage,
 } from "../../adapter/messaging";
 import { ScraperService } from "../../service";
 import { ScraperQueuesService } from "../../service/ScraperQueuesService";
@@ -28,6 +30,9 @@ import {
   RetryFailedJobsBody,
   RetryIncompleteDepositsBody,
   SubmitReindexReferralAddressJobBody,
+  SubmitFeeBreakdownBody,
+  OpRebateRewardBody,
+  BackfillFeeBreakdownBody,
 } from "./dto";
 
 @Controller()
@@ -177,6 +182,36 @@ export class ScraperController {
     }
   }
 
+  @Post("scraper/fee-breakdown")
+  @ApiTags("scraper")
+  @Roles(Role.Admin)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @ApiBearerAuth()
+  async submitFeeBreakdownJob(@Body() body: SubmitFeeBreakdownBody) {
+    const { fromDepositId, toDepositId } = body;
+
+    for (let depositId = fromDepositId; depositId <= toDepositId; depositId++) {
+      await this.scraperQueuesService.publishMessage<FeeBreakdownQueueMessage>(ScraperQueue.FeeBreakdown, {
+        depositId,
+      });
+    }
+  }
+
+  @Post("scraper/op-rebate-reward")
+  @ApiTags("scraper")
+  @Roles(Role.Admin)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @ApiBearerAuth()
+  async submitOpRebateRewardJob(@Body() body: OpRebateRewardBody) {
+    const { fromDepositId, toDepositId } = body;
+
+    for (let depositId = fromDepositId; depositId <= toDepositId; depositId++) {
+      await this.scraperQueuesService.publishMessage<OpRebateRewardMessage>(ScraperQueue.OpRebateReward, {
+        depositPrimaryKey: depositId,
+      });
+    }
+  }
+
   @Post("scraper/failed-jobs/retry")
   @ApiTags("scraper")
   @Roles(Role.Admin)
@@ -193,5 +228,14 @@ export class ScraperController {
   @ApiBearerAuth()
   async retryIncompleteDeposits(@Body() body: RetryIncompleteDepositsBody) {
     await this.scraperService.retryIncompleteDeposits(body);
+  }
+
+  @Post("scraper/fee-breakdown/backfill")
+  @ApiTags("scraper")
+  @Roles(Role.Admin)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @ApiBearerAuth()
+  async backfillFeeBreakdown(@Body() body: BackfillFeeBreakdownBody) {
+    await this.scraperService.backfillFeeBreakdown(body);
   }
 }

@@ -86,6 +86,26 @@ export class SubmitSuggestedFeesBody {
   toDepositId: number;
 }
 
+export class SubmitFeeBreakdownBody {
+  @IsInt()
+  @ApiProperty({ example: 1 })
+  fromDepositId: number;
+
+  @IsInt()
+  @ApiProperty({ example: 2 })
+  toDepositId: number;
+}
+
+export class OpRebateRewardBody {
+  @IsInt()
+  @ApiProperty({ example: 1 })
+  fromDepositId: number;
+
+  @IsInt()
+  @ApiProperty({ example: 2 })
+  toDepositId: number;
+}
+
 export class RetryFailedJobsBody {
   @IsString()
   @IsIn(Object.values(ScraperQueue))
@@ -99,6 +119,13 @@ export class RetryFailedJobsBody {
 }
 
 export class RetryIncompleteDepositsBody {
+  @IsOptional()
+  @IsInt()
+  @ApiProperty({ example: 0 })
+  count?: number;
+}
+
+export class BackfillFeeBreakdownBody {
   @IsOptional()
   @IsInt()
   @ApiProperty({ example: 0 })

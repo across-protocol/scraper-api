@@ -1,16 +1,6 @@
 import { HttpException, HttpStatus } from "@nestjs/common";
 
-export class InvalidAddressException extends HttpException {
-  constructor() {
-    super(
-      {
-        error: InvalidAddressException.name,
-        message: "Invalid address",
-      },
-      HttpStatus.BAD_REQUEST,
-    );
-  }
-}
+export { InvalidAddressException } from "../../utils";
 
 export class DepositNotFoundException extends HttpException {
   constructor() {

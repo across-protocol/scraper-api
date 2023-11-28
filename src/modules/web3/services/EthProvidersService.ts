@@ -10,6 +10,7 @@ import { Token } from "../model/token.entity";
 import { SpokePoolEventsQuerier } from "./SpokePoolEventsQuerier";
 import { MerkleDistributorEventsQuerier } from "./MerkleDistributorEventsQuerier";
 import { Transaction } from "../model/transaction.entity";
+import { TransactionReceipt } from "../model/tx-receipt.entity";
 
 @Injectable()
 export class EthProvidersService {
@@ -22,6 +23,7 @@ export class EthProvidersService {
     @InjectRepository(Block) private blockRepository: Repository<Block>,
     @InjectRepository(Token) private tokenRepository: Repository<Token>,
     @InjectRepository(Transaction) private transactionRepository: Repository<Transaction>,
+    @InjectRepository(TransactionReceipt) private txReceiptRepository: Repository<TransactionReceipt>,
   ) {
     this.setProviders();
     this.setSpokePoolEventQueriers();
@@ -103,6 +105,40 @@ export class EthProvidersService {
     }
 
     return transaction;
+  }
+
+  public async getCachedTransactionReceipt(chainId: number, hash: string) {
+    let cachedReceipt = await this.txReceiptRepository.findOne({ where: { chainId, hash } });
+
+    if (!cachedReceipt) {
+      const receipt = await this.getProvider(chainId).getTransactionReceipt(hash);
+      const {
+        from,
+        to,
+        transactionHash,
+        blockNumber,
+        transactionIndex,
+        contractAddress,
+        gasUsed,
+        effectiveGasPrice,
+        blockHash,
+      } = receipt;
+      cachedReceipt = this.txReceiptRepository.create({
+        from,
+        to,
+        hash: transactionHash,
+        transactionIndex,
+        contractAddress,
+        gasUsed: gasUsed.toString(),
+        effectiveGasPrice: effectiveGasPrice.toString(),
+        chainId,
+        blockHash,
+        blockNumber,
+      });
+      cachedReceipt = await this.txReceiptRepository.save(cachedReceipt);
+    }
+
+    return cachedReceipt;
   }
 
   private setProviders() {

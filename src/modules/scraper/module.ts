@@ -7,6 +7,7 @@ import { AppConfigModule } from "../configuration/configuration.module";
 import { MarketPriceModule } from "../market-price/module";
 import { ReferralModule } from "../referral/module";
 import { Web3Module } from "../web3/module";
+import { RewardModule } from "../rewards/module";
 import { FilledRelayEv, FundsDepositedEv, RequestedSpeedUpDepositEv } from "../web3/model";
 import { ScraperQueue } from "./adapter/messaging";
 import { BlockNumberConsumer } from "./adapter/messaging/BlockNumberConsumer";
@@ -30,12 +31,17 @@ import { DepositAcxPriceConsumer } from "./adapter/messaging/DepositAcxPriceCons
 import { SuggestedFeesConsumer } from "./adapter/messaging/SuggestedFeesConsumer";
 import { SuggestedFeesService } from "./adapter/across-serverless-api/suggested-fees-service";
 import { TrackFillEventConsumer } from "./adapter/messaging/TrackFillEventConsumer";
+import { FeeBreakdownConsumer } from "./adapter/messaging/FeeBreakdownConsumer";
 import { TrackService } from "./adapter/amplitude/track-service";
+import { GasFeesService } from "./adapter/gas-fees/gas-fees-service";
 import { ModuleOptions } from "../../dynamic-module";
 import { DepositModule } from "../deposit/module";
 import { AirdropModule } from "../airdrop/module";
 import { RefundRequestedEv } from "../web3/model/refund-requested-ev.entity";
 import { RectifyStickyReferralConsumer } from "./adapter/messaging/RectifyStickyReferralConsumer";
+import { OpRebateRewardConsumer } from "./adapter/messaging/OpRebateRewardConsumer";
+import { OpRebateService } from "../rewards/services/op-rebate-service";
+import { Reward } from "../rewards/model/reward.entity";
 
 @Module({})
 export class ScraperModule {
@@ -45,6 +51,8 @@ export class ScraperModule {
       ScraperQueuesService,
       SuggestedFeesService,
       TrackService,
+      GasFeesService,
+      OpRebateService,
       BlocksEventsConsumer,
       MerkleDistributorBlocksEventsConsumer,
       FillEventsConsumer,
@@ -59,6 +67,8 @@ export class ScraperModule {
       SuggestedFeesConsumer,
       TrackFillEventConsumer,
       RectifyStickyReferralConsumer,
+      FeeBreakdownConsumer,
+      OpRebateRewardConsumer,
     ];
 
     return {
@@ -76,12 +86,14 @@ export class ScraperModule {
           FilledRelayEv,
           RequestedSpeedUpDepositEv,
           RefundRequestedEv,
+          Reward,
         ]),
         MarketPriceModule.forRoot(moduleOptions),
         HttpModule,
         DepositModule.forRoot(moduleOptions),
         AirdropModule.forRoot(moduleOptions),
         ReferralModule.forRoot(moduleOptions),
+        RewardModule.forRoot(moduleOptions),
         BullModule.registerQueue({
           name: ScraperQueue.BlockNumber,
         }),
@@ -141,6 +153,12 @@ export class ScraperModule {
         }),
         BullModule.registerQueue({
           name: ScraperQueue.RectifyStickyReferral,
+        }),
+        BullModule.registerQueue({
+          name: ScraperQueue.FeeBreakdown,
+        }),
+        BullModule.registerQueue({
+          name: ScraperQueue.OpRebateReward,
         }),
       ],
       exports: [ScraperQueuesService],
