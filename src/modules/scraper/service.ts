@@ -265,12 +265,12 @@ export class ScraperService {
   public async backfillFeeBreakdown(body: BackfillFeeBreakdownBody) {
     const deposits = await this.depositRepository
       .createQueryBuilder("d")
-      .where("d.feeBreakdown::text='{}'")
+      .where(`d."feeBreakdown"::text='{}'`)
       .andWhere("d.priceId is not null")
       .andWhere("d.tokenId is not null")
       .andWhere("d.depositDate is not null")
-      .orderBy("d.id", "ASC")
-      .take(body.count || undefined)
+      .orderBy("d.id", "DESC")
+      .take(body.count || 1000)
       .getMany();
     this.logger.debug(`[backfillFeeBreakdown] found ${deposits.length} deposits`);
 
