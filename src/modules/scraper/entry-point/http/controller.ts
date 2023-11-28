@@ -32,6 +32,7 @@ import {
   SubmitReindexReferralAddressJobBody,
   SubmitFeeBreakdownBody,
   OpRebateRewardBody,
+  BackfillFeeBreakdownBody,
 } from "./dto";
 
 @Controller()
@@ -227,5 +228,14 @@ export class ScraperController {
   @ApiBearerAuth()
   async retryIncompleteDeposits(@Body() body: RetryIncompleteDepositsBody) {
     await this.scraperService.retryIncompleteDeposits(body);
+  }
+
+  @Post("scraper/fee-breakdown/backfill")
+  @ApiTags("scraper")
+  @Roles(Role.Admin)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @ApiBearerAuth()
+  async backfillFeeBreakdown(@Body() body: BackfillFeeBreakdownBody) {
+    await this.scraperService.backfillFeeBreakdown(body);
   }
 }

@@ -124,3 +124,10 @@ export class RetryIncompleteDepositsBody {
   @ApiProperty({ example: 0 })
   count?: number;
 }
+
+export class BackfillFeeBreakdownBody {
+  @IsOptional()
+  @IsInt()
+  @ApiProperty({ example: 0 })
+  count?: number;
+}
