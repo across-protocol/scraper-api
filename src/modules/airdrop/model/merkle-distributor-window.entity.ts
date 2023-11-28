@@ -4,7 +4,7 @@ import { Claim } from "./claim.entity";
 
 @Entity()
 // Don't allow duplicates of the window index
-@Unique("UK_merkle_distributor_window_windowIndex", ["windowIndex"])
+@Unique("UK_mdw_chainId_contractAddress_windowIndex", ["chainId", "contractAddress", "windowIndex"])
 export class MerkleDistributorWindow {
   @PrimaryGeneratedColumn()
   id: number;
@@ -13,10 +13,13 @@ export class MerkleDistributorWindow {
   chainId: number;
 
   @Column()
-  rewardToken: string;
+  contractAddress: string;
 
   @Column()
   windowIndex: number;
+
+  @Column()
+  rewardToken: string;
 
   @Column({ type: "decimal" })
   rewardsToDeposit: string;

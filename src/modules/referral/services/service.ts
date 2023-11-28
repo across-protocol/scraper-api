@@ -323,9 +323,10 @@ export class ReferralService {
     return {
       job,
       result: {
-        chainId: this.appConfig.values.web3.merkleDistributor.chainId,
-        rewardToken: this.appConfig.values.web3.acx.address,
+        chainId: this.appConfig.values.web3.merkleDistributorContracts.referralRewards.chainId,
+        contractAddress: this.appConfig.values.web3.merkleDistributorContracts.referralRewards.address,
         windowIndex: job.windowIndex,
+        rewardToken: this.appConfig.values.web3.acx.address,
         rewardsToDeposit: jobResults[0]?.totalRewardsAmount || null,
         recipients,
       },
