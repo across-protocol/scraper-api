@@ -201,7 +201,7 @@ export class ReferralService {
     return {
       referrals: referrals.map((referral) => ({
         ...referral,
-        deposit: deposits.find((deposit) => deposit.id === referral.depositId),
+        deposit: deposits.find((deposit) => deposit.id === referral.id),
       })),
       pagination: {
         limit,
