@@ -193,7 +193,7 @@ export class ReferralService {
       this.depositRepository.query(getReferralsTotalQuery(), [address]),
     ]);
 
-    const depositPrimaryKeys = referrals.map((referral) => referral.depositId);
+    const depositPrimaryKeys = referrals.map((referral) => referral.id);
     const deposits = await this.depositRepository.find({
       where: { id: In(depositPrimaryKeys) },
     });
