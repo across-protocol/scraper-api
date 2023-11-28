@@ -32,7 +32,7 @@ const VALID_DEPOSIT: Deposit = {
     relayGasFeeUsd: "0",
     relayGasFeeAmount: "0",
     relayGasFeePct: "0",
-    totalBridgeFeeUsd: "0",
+    totalBridgeFeeUsd: "0.5224309639404370051689220114924",
     totalBridgeFeePct: "10000000000000000",
     totalBridgeFeeAmount: "0",
   },
