@@ -31,7 +31,7 @@ export const getReferralsByDepositIdsQuery = () => {
       end as "acxRewards"
     from deposits_mv as d
     where d.id = ANY($2)
-    and (d."referralAddress" = $1 or (d."depositorAddr" = $1 and d."referralAddress" is not null))
+    and (d."referralAddress" = $1 or (d."depositorAddr" = $1 and d."referralAddress" is not null));
   `;
 };
 
