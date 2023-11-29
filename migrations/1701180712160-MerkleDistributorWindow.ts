@@ -5,7 +5,7 @@ export class MerkleDistributorWindow1701180712160 implements MigrationInterface 
 
   public async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(`
-      ALTER TABLE "merkle_distributor_window" ADD "contractAddress" character varying NOT NULL
+      ALTER TABLE "merkle_distributor_window" ADD "contractAddress" character varying
     `);
     await queryRunner.query(`
       ALTER TABLE "merkle_distributor_window" 
