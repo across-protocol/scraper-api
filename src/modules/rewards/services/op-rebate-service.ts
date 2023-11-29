@@ -103,6 +103,9 @@ export class OpRebateService {
   }
 
   public async getOpRebateRewardsForDepositPrimaryKeys(depositPrimaryKeys: number[]) {
+    if (!depositPrimaryKeys.length) {
+      return [];
+    }
     const rewardsQuery = this.rewardRepository
       .createQueryBuilder("r")
       .where("r.type = :type", { type: "op-rebates" })
