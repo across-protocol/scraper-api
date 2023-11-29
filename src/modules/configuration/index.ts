@@ -176,13 +176,11 @@ export const configValues = () => ({
         },
       ],
     },
-    merkleDistributorContracts: {
-      referralRewards: {
-        address:
-          process.env.REFERRAL_REWARDS_MERKLE_DISTRIBUTOR_ADDRESS || "0xF633b72A4C2Fb73b77A379bf72864A825aD35b6D",
-        chainId: Number(process.env.REFERRAL_REWARDS_MERKLE_DISTRIBUTOR_CHAIN_ID || "5"),
-        startBlockNumber: Number(process.env.REFERRAL_REWARDS_MERKLE_DISTRIBUTOR_START_BLOCK || 7884371),
-      },
+    merkleDistributor: {
+      address: process.env.MERKLE_DISTRIBUTOR_ADDRESS || "0xF633b72A4C2Fb73b77A379bf72864A825aD35b6D", // TODO: replace with mainnet
+      chainId: Number(process.env.MERKLE_DISTRIBUTOR_CHAIN_ID || "5"),
+      referralsStartWindowIndex: Number(process.env.REFERRALS_START_WINDOW_INDEX || "1"),
+      startBlockNumber: Number(process.env.MERKLE_DISTRIBUTOR_START_BLOCK || 7884371),
     },
     acx: {
       address: process.env.ACX_ADDRESS || "0x40153DdFAd90C49dbE3F5c9F96f2a5B25ec67461", // TODO: replace with mainnet,
