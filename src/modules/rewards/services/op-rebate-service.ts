@@ -103,7 +103,7 @@ export class OpRebateService {
   }
 
   public async getOpRebateRewardsForDepositPrimaryKeys(depositPrimaryKeys: number[]) {
-    if (!depositPrimaryKeys.length) {
+    if (depositPrimaryKeys.length === 0) {
       return [];
     }
     const rewardsQuery = this.rewardRepository
