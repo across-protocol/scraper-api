@@ -12,8 +12,8 @@ export class MerkleDistributorWindow {
   @Column()
   chainId: number;
 
-  @Column()
-  contractAddress: string;
+  @Column({ nullable: true })
+  contractAddress?: string;
 
   @Column()
   windowIndex: number;
