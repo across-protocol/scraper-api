@@ -503,6 +503,16 @@ describe("GET /deposits/tx-page", () => {
     expect(response.body.deposits[1].rewards.type).toBe("op-rebates");
   });
 
+  it("200 for 'depositorOrRecipientAddress' query param and no deposits", async () => {
+    await Promise.all([rewardFixture.deleteAllRewards(), depositFixture.deleteAllDeposits()]);
+
+    const response = await request(app.getHttpServer()).get("/deposits/tx-page").query({
+      depositorOrRecipientAddress: depositorAddr,
+    });
+    expect(response.status).toBe(200);
+    expect(response.body.deposits).toHaveLength(0);
+  });
+
   it("200 for 'status' query params", async () => {
     const response = await request(app.getHttpServer()).get("/deposits/tx-page").query({ status: "filled" });
     expect(response.status).toBe(200);
