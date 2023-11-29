@@ -95,10 +95,9 @@ export class ScraperService {
   public async publishMerkleDistributorBlocks(interval: number) {
     while (true) {
       try {
-        const chainId = this.appConfig.values.web3.merkleDistributorContracts.referralRewards.chainId;
+        const chainId = this.appConfig.values.web3.merkleDistributor.chainId;
         const blockNumber = await this.providers.getProvider(chainId).getBlockNumber();
-        const configStartBlockNumber =
-          this.appConfig.values.web3.merkleDistributorContracts.referralRewards.startBlockNumber;
+        const configStartBlockNumber = this.appConfig.values.web3.merkleDistributor.startBlockNumber;
         const range = await this.determineBlockRange(
           chainId,
           blockNumber,
