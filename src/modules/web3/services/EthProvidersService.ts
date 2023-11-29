@@ -165,10 +165,10 @@ export class EthProvidersService {
   }
 
   private setMerkleDistributorEventQuerier() {
-    const provider = this.getProvider(this.appConfig.values.web3.merkleDistributorContracts.referralRewards.chainId);
+    const provider = this.getProvider(this.appConfig.values.web3.merkleDistributor.chainId);
     if (provider) {
       const merkleDistributor = AcrossMerkleDistributor__factory.connect(
-        this.appConfig.values.web3.merkleDistributorContracts.referralRewards.address,
+        this.appConfig.values.web3.merkleDistributor.address,
         provider,
       );
       this.merkleDistributorEventQuerier = new MerkleDistributorEventsQuerier(merkleDistributor);
