@@ -25,8 +25,7 @@ import { ViewEntity, ViewColumn } from "typeorm";
       AND status = 'filled'
       AND d."acxUsdPrice" is not null
       AND (
-        d."depositDate" < '2023-11-30 21:30:00' 
-        OR (d."depositDate" >= '2023-11-30 21:30:00' AND d."destinationChainId" != 10)
+        d."destinationChainId" != 10 OR d."depositDate" < '2023-11-30 21:30:00'
       );
   `,
 })
