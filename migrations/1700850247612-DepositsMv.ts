@@ -30,8 +30,8 @@ export class DepositsMv1700850247612 implements MigrationInterface {
         AND status = 'filled'
         AND d."acxUsdPrice" is not null
         AND (
-          d."depositDate" < '2023-11-30 20:00:00' 
-          OR (d."depositDate" >= '2023-11-30 20:00:00' AND d."destinationChainId" != 10)
+          d."depositDate" < '2023-11-30 21:30:00' 
+          OR (d."depositDate" >= '2023-11-30 21:30:00' AND d."destinationChainId" != 10)
         );
     `);
     await queryRunner.query(`CREATE MATERIALIZED VIEW "deposits_mv" AS 
