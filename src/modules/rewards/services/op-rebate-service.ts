@@ -140,6 +140,10 @@ export class OpRebateService {
 
     this.assertDepositKeys(deposit, ["price", "token", "depositDate", "feeBreakdown"]);
 
+    if (Object.keys(deposit.feeBreakdown).length === 0) {
+      throw new Error(`Deposit with id ${depositPrimaryKey} is missing fee breakdown`);
+    }
+
     if (!this.isDepositTimeAfterStart(deposit)) {
       this.logger.verbose(`Deposit with id ${depositPrimaryKey} was made before the start of the program. Skipping...`);
       return;

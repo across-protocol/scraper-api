@@ -182,6 +182,15 @@ describe("OpRebateService", () => {
       });
     });
 
+    it(`should throw if key 'feeBreakdown' is empty object`, async () => {
+      jest.spyOn(depositRepository, "findOne").mockResolvedValue({
+        ...VALID_DEPOSIT,
+        feeBreakdown: {} as any,
+      });
+
+      await expect(opRebateService.createOpRebatesForDeposit(1)).rejects.toThrow(/is missing fee breakdown/);
+    });
+
     it("should return void if deposit date is before start of program", async () => {
       jest.spyOn(appConfig, "values", "get").mockReturnValue({
         ...appConfig.values,
