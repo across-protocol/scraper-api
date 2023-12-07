@@ -148,6 +148,6 @@ export class TrackFillEventConsumer {
 
   @OnQueueFailed()
   private onQueueFailed(job: Job, error: Error) {
-    // this.logger.error(`${ScraperQueue.TrackFillEvent} ${JSON.stringify(job.data)} failed: ${error}`);
+    this.logger.error(`${ScraperQueue.TrackFillEvent} ${JSON.stringify(job.data)} failed: ${error}`);
   }
 }
