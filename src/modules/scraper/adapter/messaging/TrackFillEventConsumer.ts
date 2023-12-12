@@ -32,6 +32,7 @@ export class TrackFillEventConsumer {
     }
 
     const { depositId, fillTxHash, destinationToken } = job.data;
+    this.logger.verbose(`depositId ${depositId}: start`);
     const deposit = await this.depositRepository.findOne({ where: { id: depositId }, relations: ["token", "price"] });
 
     if (!deposit) {
@@ -66,7 +67,9 @@ export class TrackFillEventConsumer {
     const depositTokenPriceUsd = deposit.price.usd;
 
     const { fee, feeUsd } = await this.gasFeesService.getFillTxNetworkFee(deposit.destinationChainId, fillTx.hash);
-
+    this.logger.verbose(
+      `depositId ${depositId}: ${{ sourceChainInfo, destinationChainInfo, depositTokenPriceUsd, fee, feeUsd }}`,
+    );
     const formatAmountValues = makeAmountValuesFormatter(deposit.token.decimals, depositTokenPriceUsd);
     const fromAmounts = formatAmountValues(deposit.amount);
 
