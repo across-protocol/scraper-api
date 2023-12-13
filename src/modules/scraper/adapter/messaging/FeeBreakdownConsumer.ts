@@ -31,8 +31,16 @@ export class FeeBreakdownConsumer {
       return;
     }
 
-    if (!deposit.token || !deposit.price || !deposit.depositDate) {
-      throw new Error("Can not get fee breakdown without token, price or deposit date");
+    if (!deposit.token) {
+      throw new Error("Token not populated");
+    }
+
+    if (!deposit.price) {
+      throw new Error("Price not populated");
+    }
+
+    if (deposit.status !== "filled") {
+      throw new Error("Deposit is not filled");
     }
 
     const fillTx = deposit.fillTxs.find((fillTx) => fillTx.totalFilledAmount === deposit.amount);
