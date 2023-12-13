@@ -21,7 +21,7 @@ export class GasFeesService {
     const fillTxGasCostWei = new BigNumber(fillTxReceipt.effectiveGasPrice).multipliedBy(fillTxReceipt.gasUsed);
     const fillTxBlock = await this.providers.getCachedBlock(destinationChainId, fillTxReceipt.blockNumber);
     const nativeTokenPriceUsd = await this.marketPriceService.getCachedHistoricMarketPrice(
-      new Date(fillTxBlock.date),
+      fillTxBlock.date,
       destinationChainInfo.nativeSymbol.toLowerCase(),
     );
     const fee = fillTxGasCostWei.dividedBy(fixedPointAdjustment);
