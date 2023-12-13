@@ -19,7 +19,7 @@ export class FillEventsConsumer {
 
   @Process()
   private async process(job: Job<FillEventsQueueMessage>) {
-    const { depositId, originChainId, destinationToken, transactionHash } = job.data;
+    const { depositId, originChainId } = job.data;
     const deposit = await this.depositRepository.findOne({ where: { sourceChainId: originChainId, depositId } });
 
     if (!deposit) {
@@ -35,11 +35,6 @@ export class FillEventsConsumer {
 
     this.scraperQueuesService.publishMessage<DepositFilledDateQueueMessage>(ScraperQueue.DepositFilledDate, {
       depositId: deposit.id,
-    });
-    this.scraperQueuesService.publishMessage<TrackFillEventQueueMessage>(ScraperQueue.TrackFillEvent, {
-      depositId: deposit.id,
-      destinationToken,
-      fillTxHash: transactionHash,
     });
   }
 
