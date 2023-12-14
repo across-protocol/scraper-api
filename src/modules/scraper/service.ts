@@ -11,6 +11,7 @@ import { ScraperQueuesService } from "./service/ScraperQueuesService";
 import {
   BlockNumberQueueMessage,
   BlocksEventsQueueMessage,
+  DepositFilledDateQueueMessage,
   DepositReferralQueueMessage,
   FeeBreakdownQueueMessage,
   MerkleDistributorBlocksEventsQueueMessage,
@@ -19,6 +20,7 @@ import {
 import { wait } from "../../utils";
 import {
   BackfillFeeBreakdownBody,
+  BackfillFilledDateBody,
   RetryIncompleteDepositsBody,
   SubmitReindexReferralAddressJobBody,
 } from "./entry-point/http/dto";
@@ -277,6 +279,25 @@ export class ScraperService {
     for (const deposit of deposits) {
       this.logger.debug(`[backfillFeeBreakdown] get fee breakdown for ${deposit.id}`);
       await this.scraperQueuesService.publishMessage<FeeBreakdownQueueMessage>(ScraperQueue.FeeBreakdown, {
+        depositId: deposit.id,
+      });
+    }
+  }
+
+  public async backfillFilledDate(body: BackfillFilledDateBody) {
+    const deposits = await this.depositRepository
+      .createQueryBuilder("d")
+      .andWhere("d.filledDate is null")
+      .andWhere("d.status='filled'")
+      .andWhere("d.depositDate is not null")
+      .orderBy("d.id", "DESC")
+      .take(body.count || 1000)
+      .getMany();
+    this.logger.debug(`[backfillFilledDate] found ${deposits.length} deposits`);
+
+    for (const deposit of deposits) {
+      this.logger.debug(`[backfillFilledDate] get filled date for ${deposit.id}`);
+      await this.scraperQueuesService.publishMessage<DepositFilledDateQueueMessage>(ScraperQueue.DepositFilledDate, {
         depositId: deposit.id,
       });
     }
