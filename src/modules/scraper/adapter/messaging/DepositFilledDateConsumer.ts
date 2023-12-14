@@ -5,8 +5,9 @@ import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
 import { DateTime } from "luxon";
 import { EthProvidersService } from "../../../web3/services/EthProvidersService";
-import { DepositFilledDateQueueMessage, ScraperQueue } from ".";
+import { DepositFilledDateQueueMessage, ScraperQueue, TrackFillEventQueueMessage } from ".";
 import { Deposit, DepositFillTx, DepositFillTx2 } from "../../../deposit/model/deposit.entity";
+import { ScraperQueuesService } from "../../service/ScraperQueuesService";
 
 @Processor(ScraperQueue.DepositFilledDate)
 export class DepositFilledDateConsumer {
@@ -15,6 +16,7 @@ export class DepositFilledDateConsumer {
   constructor(
     private providers: EthProvidersService,
     @InjectRepository(Deposit) private depositRepository: Repository<Deposit>,
+    private scraperQueuesService: ScraperQueuesService,
   ) {}
 
   @Process()
@@ -50,6 +52,12 @@ export class DepositFilledDateConsumer {
 
     deposit.filledDate = filledDate;
     await this.depositRepository.save(deposit);
+
+    this.scraperQueuesService.publishMessage<TrackFillEventQueueMessage>(ScraperQueue.TrackFillEvent, {
+      depositId: deposit.id,
+      destinationToken: deposit.tokenAddr,
+      fillTxHash: deposit.fillTxs[0].hash,
+    });
   }
 
   private async fillDateForFillTx(chainId: number, fillTx: DepositFillTx | DepositFillTx2) {
