@@ -33,6 +33,7 @@ import {
   SubmitFeeBreakdownBody,
   OpRebateRewardBody,
   BackfillFeeBreakdownBody,
+  BackfillFilledDateBody,
 } from "./dto";
 
 @Controller()
@@ -237,5 +238,14 @@ export class ScraperController {
   @ApiBearerAuth()
   async backfillFeeBreakdown(@Body() body: BackfillFeeBreakdownBody) {
     await this.scraperService.backfillFeeBreakdown(body);
+  }
+
+  @Post("scraper/deposit-filled-date/backfill")
+  @ApiTags("scraper")
+  @Roles(Role.Admin)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @ApiBearerAuth()
+  async backfillFilledDate(@Body() body: BackfillFilledDateBody) {
+    await this.scraperService.backfillFilledDate(body);
   }
 }

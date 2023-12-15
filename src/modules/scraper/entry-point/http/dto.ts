@@ -131,3 +131,10 @@ export class BackfillFeeBreakdownBody {
   @ApiProperty({ example: 0 })
   count?: number;
 }
+
+export class BackfillFilledDateBody {
+  @IsOptional()
+  @IsInt()
+  @ApiProperty({ example: 0 })
+  count?: number;
+}
