@@ -296,7 +296,6 @@ export class ScraperService {
     this.logger.debug(`[backfillFilledDate] found ${deposits.length} deposits`);
 
     for (const deposit of deposits) {
-      this.logger.debug(`[backfillFilledDate] get filled date for ${deposit.id}`);
       await this.scraperQueuesService.publishMessage<DepositFilledDateQueueMessage>(ScraperQueue.DepositFilledDate, {
         depositId: deposit.id,
       });
