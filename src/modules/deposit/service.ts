@@ -52,7 +52,7 @@ export class DepositService {
     const limit = parseInt(query.limit ?? "10");
     const offset = parseInt(query.offset ?? "0");
 
-    if (offset >= 2500) {
+    if (offset >= 1500) {
       throw new BadRequestException({
         error: "BadRequestException",
         message: "Currently the offset is temporarily limited to 2500",
