@@ -1,4 +1,4 @@
-import { CACHE_MANAGER, Inject, Injectable } from "@nestjs/common";
+import { BadRequestException, CACHE_MANAGER, Inject, Injectable } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Brackets, DataSource, Repository } from "typeorm";
 import { utils } from "ethers";
@@ -51,6 +51,13 @@ export class DepositService {
   public async getDepositsForTxPage(query: Partial<GetDepositsForTxPageQuery>) {
     const limit = parseInt(query.limit ?? "10");
     const offset = parseInt(query.offset ?? "0");
+
+    if (offset >= 2500) {
+      throw new BadRequestException({
+        error: "BadRequestException",
+        message: "Currently the offset is temporarily limited to 2500",
+      });
+    }
 
     let queryBuilder = this.depositRepository.createQueryBuilder("d");
     queryBuilder = this.getFilteredDepositsQuery(queryBuilder, query);
