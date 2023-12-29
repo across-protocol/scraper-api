@@ -1,6 +1,6 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { SlackService } from "../adapter/slack/service";
-import { AppConfig } from "src/modules/configuration/configuration.service";
+import { AppConfig } from "../../configuration/configuration.service";
 
 @Injectable()
 export class MonitoringService {

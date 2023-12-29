@@ -1,13 +1,12 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { CronExpression } from "@nestjs/schedule";
-import { JobCounts } from "bull";
 import { DateTime } from "luxon";
 
 import { EnhancedCron } from "../../../utils";
 import { InjectRepository } from "@nestjs/typeorm";
 import { QueueJobCount } from "../model/QueueJobCount.entity";
 import { Repository } from "typeorm";
-import { MonitoringService } from "src/modules/monitoring/service";
+import { MonitoringService } from "../../monitoring/service";
 
 @Injectable()
 export class SlackReportingCron {

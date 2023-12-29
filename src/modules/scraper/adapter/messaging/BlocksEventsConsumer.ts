@@ -305,7 +305,7 @@ export class BlocksEventsConsumer {
 
   private async insertRawFillEvents(chainId: number, events: Event[]) {
     const dbEvents = events.map((event) => {
-      const { blockNumber, blockHash, transactionIndex, address, transactionHash, logIndex, args } = event;
+      const { blockNumber, blockHash, transactionIndex, address, transactionHash, logIndex } = event;
       const { acrossVersion } = this.appConfig.values.web3.spokePoolContracts[chainId].filter(
         (contract) => contract.address === address,
       )[0];
