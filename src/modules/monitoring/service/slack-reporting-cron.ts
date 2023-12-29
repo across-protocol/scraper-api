@@ -19,7 +19,7 @@ export class SlackReportingCron {
     private monitoringService: MonitoringService,
   ) {}
 
-  @EnhancedCron(CronExpression.EVERY_10_SECONDS)
+  @EnhancedCron(CronExpression.EVERY_10_MINUTES)
   async startCron() {
     try {
       if (this.semaphore) return;
