@@ -271,13 +271,13 @@ export class ScraperService {
       .andWhere("d.priceId is not null")
       .andWhere("d.tokenId is not null")
       .andWhere("d.depositDate is not null")
+      .andWhere("d.status = :status", { status: "filled" })
       .orderBy("d.id", "DESC")
       .take(body.count || 1000)
       .getMany();
     this.logger.debug(`[backfillFeeBreakdown] found ${deposits.length} deposits`);
 
     for (const deposit of deposits) {
-      this.logger.debug(`[backfillFeeBreakdown] get fee breakdown for ${deposit.id}`);
       await this.scraperQueuesService.publishMessage<FeeBreakdownQueueMessage>(ScraperQueue.FeeBreakdown, {
         depositId: deposit.id,
       });
