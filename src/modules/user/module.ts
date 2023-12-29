@@ -1,4 +1,4 @@
-import { Module, Provider, DynamicModule } from "@nestjs/common";
+import { Module, DynamicModule } from "@nestjs/common";
 import { TypeOrmModule } from "@nestjs/typeorm";
 import { UserController } from "./entry-points/http/user.controller";
 import { User } from "./model/user.entity";

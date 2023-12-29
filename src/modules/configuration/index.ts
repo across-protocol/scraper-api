@@ -235,6 +235,10 @@ export const configValues = () => ({
         : undefined,
     },
   },
+  slack: {
+    enabled: process.env.ENABLE_SLACK_BOT === "true",
+    webhookUrl: process.env.SLACK_WEBHOOK_URL,
+  },
 });
 
 export default registerAs("config", () => configValues());

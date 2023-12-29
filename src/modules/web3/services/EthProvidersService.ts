@@ -1,4 +1,4 @@
-import { ERC20__factory, AcrossMerkleDistributor__factory, SpokePool__factory } from "@across-protocol/contracts-v2";
+import { ERC20__factory, AcrossMerkleDistributor__factory } from "@across-protocol/contracts-v2";
 import { Injectable } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { ethers } from "ethers";

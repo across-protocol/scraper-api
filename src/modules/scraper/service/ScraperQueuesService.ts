@@ -1,6 +1,6 @@
 import { InjectQueue } from "@nestjs/bull";
 import { Injectable, Logger } from "@nestjs/common";
-import { Job, JobOptions, Queue } from "bull";
+import { Job, JobCounts, JobOptions, Queue } from "bull";
 import { ScraperQueue } from "../adapter/messaging";
 import { RetryFailedJobsBody } from "../entry-point/http/dto";
 
@@ -45,7 +45,6 @@ export class ScraperQueuesService {
       [ScraperQueue.FeeBreakdown]: this.feeBreakdownsQueue,
       [ScraperQueue.OpRebateReward]: this.opRebateRewardsQueue,
     };
-    this.initLogs();
   }
 
   public async publishMessage<T>(queue: ScraperQueue, message: T, options: JobOptions = {}) {
@@ -64,16 +63,16 @@ export class ScraperQueuesService {
     }
   }
 
-  private initLogs() {
-    setInterval(() => {
-      for (const queueName of Object.keys(this.queuesMap)) {
-        const queue = this.queuesMap[queueName] as Queue;
-        queue
-          .getJobCounts()
-          .then((data) => this.logger.log(`${queueName} ${JSON.stringify(data)}`))
-          .catch((data) => this.logger.error(`${queueName} ${JSON.stringify(data)}`));
-      }
-    }, 1000 * 60);
+  async getJobCounts() {
+    const result = {};
+
+    for (const queueName of Object.keys(this.queuesMap)) {
+      const queue = this.queuesMap[queueName] as Queue;
+      const jobCounts = await queue.getJobCounts();
+      result[queueName] = jobCounts;
+    }
+
+    return result as Record<ScraperQueue, JobCounts>;
   }
 
   public async retryFailedJobs(body: RetryFailedJobsBody) {

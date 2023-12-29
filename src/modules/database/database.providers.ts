@@ -27,6 +27,7 @@ import { ReferralRewardsWindowJob } from "../referral/model/ReferralRewardsWindo
 import { ReferralRewardsWindowJobResult } from "../referral/model/ReferralRewardsWindowJobResult.entity";
 import { Reward } from "../rewards/model/reward.entity";
 import { TransactionReceipt } from "../web3/model/tx-receipt.entity";
+import { QueueJobCount } from "../monitoring/model/QueueJobCount.entity";
 
 // TODO: Add db entities here
 const entities = [
@@ -56,6 +57,7 @@ const entities = [
   ReferralRewardsWindowJobResult,
   Reward,
   TransactionReceipt,
+  QueueJobCount,
 ];
 
 @Injectable()

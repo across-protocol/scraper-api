@@ -42,6 +42,8 @@ import { RectifyStickyReferralConsumer } from "./adapter/messaging/RectifySticky
 import { OpRebateRewardConsumer } from "./adapter/messaging/OpRebateRewardConsumer";
 import { OpRebateService } from "../rewards/services/op-rebate-service";
 import { Reward } from "../rewards/model/reward.entity";
+import { QueuesMonitoringCron } from "./service/queues-monitoring-cron";
+import { QueueJobCount } from "../monitoring/model/QueueJobCount.entity";
 
 @Module({})
 export class ScraperModule {
@@ -49,6 +51,7 @@ export class ScraperModule {
     const providers: Provider<any>[] = [
       ScraperService,
       ScraperQueuesService,
+      QueuesMonitoringCron,
       SuggestedFeesService,
       TrackService,
       GasFeesService,
@@ -87,6 +90,7 @@ export class ScraperModule {
           RequestedSpeedUpDepositEv,
           RefundRequestedEv,
           Reward,
+          QueueJobCount,
         ]),
         MarketPriceModule.forRoot(moduleOptions),
         HttpModule,
