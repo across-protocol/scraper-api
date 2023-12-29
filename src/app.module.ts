@@ -4,7 +4,7 @@ import { ConfigModule } from "@nestjs/config";
 import { ScheduleModule } from "@nestjs/schedule";
 import { TypeOrmModule } from "@nestjs/typeorm";
 import { LogsMiddleware } from "./logging.interceptor";
-import configuration, { configValues } from "./modules/configuration";
+import configuration from "./modules/configuration";
 import { DatabaseModule } from "./modules/database/database.module";
 import { TypeOrmDefaultConfigService } from "./modules/database/database.providers";
 import { HealthModule } from "./modules/health/health.module";
@@ -20,6 +20,7 @@ import { UserModule } from "./modules/user/module";
 import { AirdropModule } from "./modules/airdrop/module";
 import { RewardModule } from "./modules/rewards/module";
 import { ModuleOptions, RunMode } from "./dynamic-module";
+import { MonitoringModule } from "./modules/monitoring/module";
 
 @Module({})
 export class AppModule {
@@ -56,6 +57,7 @@ export class AppModule {
           imports: [MessagingModule],
           useExisting: BullConfigService,
         }),
+        MonitoringModule.forRoot(moduleOptions),
       );
     }
 
