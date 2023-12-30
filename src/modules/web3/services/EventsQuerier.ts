@@ -69,7 +69,8 @@ export class EventsQuerier {
       (error as Web3Error).error?.code === Web3ErrorCode.BLOCK_RANGE_TOO_LARGE ||
       (error as Web3Error).error?.code === Web3ErrorCode.EXCEEDED_MAXIMUM_BLOCK_RANGE ||
       (error as Web3Error).error?.code === Web3ErrorCode.LOG_RESPONSE_SIZE_EXCEEDED ||
-      (error as Web3Error).error?.code === Web3ErrorCode.LOG_RESPONSE_SIZE_EXCEEDED_2
+      (error as Web3Error).error?.code === Web3ErrorCode.LOG_RESPONSE_SIZE_EXCEEDED_2 ||
+      (error as Web3Error).error?.code === Web3ErrorCode.ZKSYNC_BLOCK_RANGE_TOO_LARGE
     );
   }
   /**
