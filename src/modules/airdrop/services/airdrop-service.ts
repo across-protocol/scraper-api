@@ -185,6 +185,7 @@ export class AirdropService {
           .insert()
           .into(MerkleDistributorWindow)
           .values({
+            contractAddress: recipientsJson["contractAddress"],
             chainId: recipientsJson["chainId"],
             rewardToken: recipientsJson["rewardToken"],
             windowIndex: recipientsJson["windowIndex"],
@@ -223,8 +224,10 @@ export class AirdropService {
       });
     } catch (error) {
       if (
-        error instanceof QueryFailedError &&
-        (error as QueryFailedError).driverError.constraint === "UK_merkle_distributor_window_windowIndex"
+        (error instanceof QueryFailedError &&
+          (error as QueryFailedError).driverError.constraint === "UK_merkle_distributor_window_windowIndex") ||
+        (error instanceof QueryFailedError &&
+          (error as QueryFailedError).driverError.constraint === "UK_mdw_chainId_contractAddress_windowIndex")
       ) {
         throw new DuplicatedMerkleDistributorWindowException();
       }
