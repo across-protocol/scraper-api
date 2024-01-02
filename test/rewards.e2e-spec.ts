@@ -84,11 +84,10 @@ describe("GET /rewards/earned", () => {
         acxUsdPrice: "1",
       },
     ]);
-    await rewardFixture.insertReward({
+    await rewardFixture.insertOpReward({
       depositPrimaryKey: 1,
       recipient: userAddress,
-      type: "op-rebates",
-      metadata: { type: "op-rebates", rate: 0.95 },
+      metadata: { rate: 0.95 },
       amount: "123000",
       amountUsd: "0.123",
       rewardTokenId: token.id,
@@ -143,11 +142,10 @@ describe("GET /rewards/op-rebates", () => {
         tokenId: token.id,
       },
     ]);
-    await rewardFixture.insertReward({
+    await rewardFixture.insertOpReward({
       depositPrimaryKey: 1,
       recipient: userAddress,
-      type: "op-rebates",
-      metadata: { type: "op-rebates", rate: 0.95 },
+      metadata: { rate: 0.95 },
       amount: "1000000000000000000",
       amountUsd: "1",
       rewardTokenId: token.id,
@@ -201,11 +199,10 @@ describe("GET /rewards/op-rebates/summary", () => {
         priceId: price.id,
       },
     ]);
-    await rewardFixture.insertReward({
+    await rewardFixture.insertOpReward({
       depositPrimaryKey: 1,
       recipient: userAddress,
-      type: "op-rebates",
-      metadata: { type: "op-rebates", rate: 0.95 },
+      metadata: { rate: 0.95 },
       amount: "1000000000000000000",
       amountUsd: "1",
       rewardTokenId: token.id,

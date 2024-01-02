@@ -9,7 +9,7 @@ import { EthProvidersService } from "../../web3/services/EthProvidersService";
 import { AppConfig } from "../../configuration/configuration.service";
 import config from "../../configuration/index";
 import { Deposit } from "../../deposit/model/deposit.entity";
-import { Reward } from "../model/reward.entity";
+import { OpReward } from "../model/reward.entity";
 import { ChainIds } from "../../web3/model/ChainId";
 import { HistoricMarketPrice } from "../../market-price/model/historic-market-price.entity";
 import { Token } from "../../web3/model/token.entity";
@@ -51,7 +51,7 @@ describe("OpRebateService", () => {
   let opRebateService: OpRebateService;
   let appConfig: AppConfig;
   let depositRepository: Repository<Deposit>;
-  let rewardRepository: Repository<Reward>;
+  let rewardRepository: Repository<OpReward>;
 
   beforeEach(async () => {
     jest.clearAllMocks();
@@ -65,10 +65,10 @@ describe("OpRebateService", () => {
           },
         },
         {
-          provide: getRepositoryToken(Reward),
+          provide: getRepositoryToken(OpReward),
           useValue: {
             findOne: jest.fn().mockResolvedValue(undefined),
-            create: jest.fn().mockReturnValue(new Reward()),
+            create: jest.fn().mockReturnValue(new OpReward()),
             save: jest.fn(),
           },
         },
@@ -120,7 +120,7 @@ describe("OpRebateService", () => {
 
     opRebateService = moduleRef.get(OpRebateService);
     depositRepository = moduleRef.get(getRepositoryToken(Deposit));
-    rewardRepository = moduleRef.get(getRepositoryToken(Reward));
+    rewardRepository = moduleRef.get(getRepositoryToken(OpReward));
     appConfig = moduleRef.get(AppConfig);
   });
 
@@ -225,7 +225,7 @@ describe("OpRebateService", () => {
 
     it("should return void if reward already existent", async () => {
       jest.spyOn(rewardRepository, "findOne").mockResolvedValue({
-        ...new Reward(),
+        ...new OpReward(),
         recipient: REWARDS_RECIPIENT,
       });
 

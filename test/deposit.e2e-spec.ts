@@ -482,11 +482,10 @@ describe("GET /deposits/tx-page", () => {
   });
 
   it("200 for 'depositorOrRecipientAddress' query param", async () => {
-    await rewardFixture.insertReward({
+    await rewardFixture.insertOpReward({
       depositPrimaryKey: 3,
       recipient: depositorAddr,
-      type: "op-rebates",
-      metadata: { type: "op-rebates", rate: 0.95 },
+      metadata: { rate: 0.95 },
       amount: "1000000000000000000",
       amountUsd: "1",
       rewardTokenId: token.id,
@@ -504,7 +503,7 @@ describe("GET /deposits/tx-page", () => {
   });
 
   it("200 for 'depositorOrRecipientAddress' query param and no deposits", async () => {
-    await Promise.all([rewardFixture.deleteAllRewards(), depositFixture.deleteAllDeposits()]);
+    await Promise.all([rewardFixture.deleteAllOpRewards(), depositFixture.deleteAllDeposits()]);
 
     const response = await request(app.getHttpServer()).get("/deposits/tx-page").query({
       depositorOrRecipientAddress: depositorAddr,
@@ -548,7 +547,7 @@ describe("GET /deposits/tx-page", () => {
   });
 
   afterEach(async () => {
-    await Promise.all([rewardFixture.deleteAllRewards(), depositFixture.deleteAllDeposits()]);
+    await Promise.all([rewardFixture.deleteAllOpRewards(), depositFixture.deleteAllDeposits()]);
   });
 
   afterAll(async () => {
