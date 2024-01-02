@@ -11,7 +11,7 @@ import { ReferralService } from "../../referral/services/service";
 import { assertValidAddress } from "../../../utils";
 
 import { OpRebateService } from "./op-rebate-service";
-import { OpReward } from "../model/reward.entity";
+import { OpReward } from "../model/op-reward.entity";
 import { GetRewardsQuery, GetSummaryQuery, GetReferralRewardsSummaryQuery } from "../entrypoints/http/dto";
 
 @Injectable()

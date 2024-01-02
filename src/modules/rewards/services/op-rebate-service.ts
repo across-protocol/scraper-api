@@ -12,7 +12,7 @@ import { ChainIds } from "../../web3/model/ChainId";
 import { MarketPriceService } from "../../market-price/services/service";
 import { assertValidAddress } from "../../../utils";
 
-import { OpReward } from "../model/reward.entity";
+import { OpReward } from "../model/op-reward.entity";
 import { GetRewardsQuery } from "../entrypoints/http/dto";
 
 const OP_REBATE_RATE = 0.95;

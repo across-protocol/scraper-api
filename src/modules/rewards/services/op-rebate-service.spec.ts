@@ -9,7 +9,7 @@ import { EthProvidersService } from "../../web3/services/EthProvidersService";
 import { AppConfig } from "../../configuration/configuration.service";
 import config from "../../configuration/index";
 import { Deposit } from "../../deposit/model/deposit.entity";
-import { OpReward } from "../model/reward.entity";
+import { OpReward } from "../model/op-reward.entity";
 import { ChainIds } from "../../web3/model/ChainId";
 import { HistoricMarketPrice } from "../../market-price/model/historic-market-price.entity";
 import { Token } from "../../web3/model/token.entity";

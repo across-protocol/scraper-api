@@ -2,7 +2,7 @@ import { Injectable } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
 
-import { OpReward, RewardMetadata } from "../../model/reward.entity";
+import { OpReward, RewardMetadata } from "../../model/op-reward.entity";
 import { getRandomInt } from "../../../../utils";
 
 @Injectable()

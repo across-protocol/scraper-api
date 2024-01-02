@@ -8,7 +8,7 @@ import { DepositService } from "./service";
 import { DepositFixture } from "./adapter/db/deposit-fixture";
 import { EtlController } from "./entry-point/http/etl-controller";
 import { RewardModule } from "../rewards/module";
-import { OpReward } from "../rewards/model/reward.entity";
+import { OpReward } from "../rewards/model/op-reward.entity";
 
 @Module({})
 export class DepositModule {

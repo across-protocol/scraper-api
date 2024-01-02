@@ -25,7 +25,7 @@ import { RequestedSpeedUpDepositEv } from "../web3/model/requested-speed-up-depo
 import { RefundRequestedEv } from "../web3/model/refund-requested-ev.entity";
 import { ReferralRewardsWindowJob } from "../referral/model/ReferralRewardsWindowJob.entity";
 import { ReferralRewardsWindowJobResult } from "../referral/model/ReferralRewardsWindowJobResult.entity";
-import { OpReward } from "../rewards/model/reward.entity";
+import { OpReward } from "../rewards/model/op-reward.entity";
 import { TransactionReceipt } from "../web3/model/tx-receipt.entity";
 import { QueueJobCount } from "../monitoring/model/QueueJobCount.entity";
 
