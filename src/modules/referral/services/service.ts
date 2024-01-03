@@ -32,7 +32,7 @@ import { splitArrayInChunks } from "../../../utils";
 import { Claim } from "../../airdrop/model/claim.entity";
 import { EthProvidersService } from "../../web3/services/EthProvidersService";
 import { ChainIds } from "../../web3/model/ChainId";
-import { ReferralRewardsWindowJob, ReferralRewardsWindowJobStatus } from "../model/ReferralRewardsWindowJob.entity";
+import { RewardsWindowJob, RewardsWindowJobStatus } from "../model/ReferralRewardsWindowJob.entity";
 import { QueryDeepPartialEntity } from "typeorm/query-builder/QueryPartialEntity";
 import { ReferralRewardsWindowJobResult } from "../model/ReferralRewardsWindowJobResult.entity";
 import { GetReferralsSummaryQuery } from "../entry-points/http/dto";
@@ -57,8 +57,8 @@ export class ReferralService {
 
   constructor(
     @InjectRepository(Deposit) readonly depositRepository: Repository<Deposit>,
-    @InjectRepository(ReferralRewardsWindowJob)
-    readonly referralRewardsWindowJobRepository: Repository<ReferralRewardsWindowJob>,
+    @InjectRepository(RewardsWindowJob)
+    readonly referralRewardsWindowJobRepository: Repository<RewardsWindowJob>,
     @InjectRepository(ReferralRewardsWindowJobResult)
     readonly referralRewardsWindowJobResultRepository: Repository<ReferralRewardsWindowJobResult>,
     @InjectRepository(DepositsMv) readonly depositsMvRepository: Repository<DepositsMv>,
@@ -224,15 +224,15 @@ export class ReferralService {
       const query = entityManager
         .createQueryBuilder()
         .select("job")
-        .from(ReferralRewardsWindowJob, "job")
+        .from(RewardsWindowJob, "job")
         .where("job.windowIndex = :windowIndex", { windowIndex })
         .orderBy("job.createdAt", "DESC");
       const jobs = await query.getMany();
-      if (jobs.length > 0 && jobs[0].status === ReferralRewardsWindowJobStatus.Initial) {
+      if (jobs.length > 0 && jobs[0].status === RewardsWindowJobStatus.Initial) {
         throw new InvalidReferralRewardsWindowJobException(`Job already created for window ${windowIndex}`);
       }
 
-      if (jobs.length > 0 && jobs[0].status === ReferralRewardsWindowJobStatus.InProgress) {
+      if (jobs.length > 0 && jobs[0].status === RewardsWindowJobStatus.InProgress) {
         throw new InvalidReferralRewardsWindowJobException(
           `Job in progress for window ${windowIndex}. Please wait and try again.`,
         );
@@ -242,10 +242,10 @@ export class ReferralService {
       const insertJobResult = await entityManager
         .createQueryBuilder()
         .insert()
-        .into(ReferralRewardsWindowJob)
+        .into(RewardsWindowJob)
         .values({
           windowIndex,
-          status: ReferralRewardsWindowJobStatus.Initial,
+          status: RewardsWindowJobStatus.Initial,
           config: { maxDepositDate: maxDepositDate.toISOString() },
         })
         .execute();
@@ -253,7 +253,7 @@ export class ReferralService {
       const job = await entityManager
         .createQueryBuilder()
         .select("job")
-        .from(ReferralRewardsWindowJob, "job")
+        .from(RewardsWindowJob, "job")
         .where("job.id = :id", { id: jobId })
         .getOne();
 
@@ -261,18 +261,13 @@ export class ReferralService {
     });
   }
 
-  public async updateReferralRewardsWindowJob(id: number, values: QueryDeepPartialEntity<ReferralRewardsWindowJob>) {
-    await this.dataSource
-      .createQueryBuilder()
-      .update(ReferralRewardsWindowJob)
-      .set(values)
-      .where("id = :id", { id })
-      .execute();
+  public async updateReferralRewardsWindowJob(id: number, values: QueryDeepPartialEntity<RewardsWindowJob>) {
+    await this.dataSource.createQueryBuilder().update(RewardsWindowJob).set(values).where("id = :id", { id }).execute();
 
     const job = await this.dataSource
       .createQueryBuilder()
       .select("job")
-      .from(ReferralRewardsWindowJob, "job")
+      .from(RewardsWindowJob, "job")
       .where("job.id = :id", { id })
       .getOne();
 
@@ -281,21 +276,21 @@ export class ReferralService {
 
   public async createReferralRewardsWindowJob(windowIndex: number, maxDepositDate: Date) {
     let job = await this.createNewReferralRewardsWindowJob(windowIndex, maxDepositDate);
-    job = await this.updateReferralRewardsWindowJob(job.id, { status: ReferralRewardsWindowJobStatus.InProgress });
+    job = await this.updateReferralRewardsWindowJob(job.id, { status: RewardsWindowJobStatus.InProgress });
 
     const start = new Date().getTime();
     this.computeReferralRewardsForWindow(job.id, windowIndex, maxDepositDate)
       .then(() => {
         const stop = new Date().getTime();
         return this.updateReferralRewardsWindowJob(job.id, {
-          status: ReferralRewardsWindowJobStatus.Done,
+          status: RewardsWindowJobStatus.Done,
           executionTime: `${(stop - start) / 1000}`,
         });
       })
       .catch((error) => {
         const stop = new Date().getTime();
         this.updateReferralRewardsWindowJob(job.id, {
-          status: ReferralRewardsWindowJobStatus.Failed,
+          status: RewardsWindowJobStatus.Failed,
           error: JSON.stringify(error),
           executionTime: `${(stop - start) / 1000}`,
         });

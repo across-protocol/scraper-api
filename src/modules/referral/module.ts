@@ -8,7 +8,7 @@ import { ReferralCronService } from "./services/cron-service";
 import { ReferralService } from "./services/service";
 import { ModuleOptions, RunMode } from "../../dynamic-module";
 import { Web3Module } from "../web3/module";
-import { ReferralRewardsWindowJob } from "./model/ReferralRewardsWindowJob.entity";
+import { RewardsWindowJob } from "./model/ReferralRewardsWindowJob.entity";
 import { ReferralRewardsWindowJobResult } from "./model/ReferralRewardsWindowJobResult.entity";
 import { ReferralRewardsWindowJobFixture } from "./adapter/db/referral-rewards-window-job-fi";
 
@@ -24,7 +24,7 @@ export class ReferralModule {
         providers: [...module.providers, ReferralService, ReferralRewardsWindowJobFixture],
         imports: [
           ...module.imports,
-          TypeOrmModule.forFeature([Deposit, DepositsMv, ReferralRewardsWindowJob, ReferralRewardsWindowJobResult]),
+          TypeOrmModule.forFeature([Deposit, DepositsMv, RewardsWindowJob, ReferralRewardsWindowJobResult]),
           AppConfigModule,
           Web3Module,
         ],
@@ -38,7 +38,7 @@ export class ReferralModule {
         providers: [...module.providers, ReferralCronService, ReferralService, ReferralRewardsWindowJobFixture],
         imports: [
           ...module.imports,
-          TypeOrmModule.forFeature([Deposit, DepositsMv, ReferralRewardsWindowJob, ReferralRewardsWindowJobResult]),
+          TypeOrmModule.forFeature([Deposit, DepositsMv, RewardsWindowJob, ReferralRewardsWindowJobResult]),
           AppConfigModule,
           Web3Module,
         ],

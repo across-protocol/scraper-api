@@ -1,21 +1,21 @@
 import { Injectable } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
-import { ReferralRewardsWindowJob, ReferralRewardsWindowJobStatus } from "../../model/ReferralRewardsWindowJob.entity";
+import { RewardsWindowJob, RewardsWindowJobStatus } from "../../model/ReferralRewardsWindowJob.entity";
 
 @Injectable()
 export class ReferralRewardsWindowJobFixture {
   public constructor(
-    @InjectRepository(ReferralRewardsWindowJob)
-    private referralRewardsWindowJobRepository: Repository<ReferralRewardsWindowJob>,
+    @InjectRepository(RewardsWindowJob)
+    private referralRewardsWindowJobRepository: Repository<RewardsWindowJob>,
   ) {}
 
-  public insert(depositArgs: Partial<ReferralRewardsWindowJob>) {
+  public insert(depositArgs: Partial<RewardsWindowJob>) {
     const job = this.referralRewardsWindowJobRepository.create(this.mockClaimEntity(depositArgs));
     return this.referralRewardsWindowJobRepository.save(job);
   }
 
-  public insertMany(args: Partial<ReferralRewardsWindowJob>[]) {
+  public insertMany(args: Partial<RewardsWindowJob>[]) {
     const createdJobs = this.referralRewardsWindowJobRepository.create(args);
     return this.referralRewardsWindowJobRepository.save(createdJobs);
   }
@@ -26,10 +26,10 @@ export class ReferralRewardsWindowJobFixture {
     );
   }
 
-  public mockClaimEntity(overrides: Partial<ReferralRewardsWindowJob>): Partial<ReferralRewardsWindowJob> {
+  public mockClaimEntity(overrides: Partial<RewardsWindowJob>): Partial<RewardsWindowJob> {
     return {
       windowIndex: 1,
-      status: ReferralRewardsWindowJobStatus.Initial,
+      status: RewardsWindowJobStatus.Initial,
       config: { maxDepositDate: new Date().toISOString() },
       ...overrides,
     };
