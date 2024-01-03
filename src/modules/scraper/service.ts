@@ -81,7 +81,7 @@ export class ScraperService {
           await this.scraperQueuesService.publishMessage<BlocksEventsQueueMessage>(
             ScraperQueue.BlocksEvents,
             queueMsg,
-            { delay: 1000 * 60 },
+            { delay: 5000 * 60 },
           );
           this.logger.log(`publish chainId: ${chainId} from: ${range.from} to: ${range.to}`);
         }
