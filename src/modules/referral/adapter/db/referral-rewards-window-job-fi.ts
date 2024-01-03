@@ -21,9 +21,7 @@ export class ReferralRewardsWindowJobFixture {
   }
 
   public deleteAll() {
-    return this.referralRewardsWindowJobRepository.query(
-      `truncate table referral_rewards_window_job restart identity cascade`,
-    );
+    return this.referralRewardsWindowJobRepository.query(`truncate table rewards_window_job restart identity cascade`);
   }
 
   public mockClaimEntity(overrides: Partial<RewardsWindowJob>): Partial<RewardsWindowJob> {
