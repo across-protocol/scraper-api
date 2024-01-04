@@ -41,7 +41,7 @@ import { RefundRequestedEv } from "../web3/model/refund-requested-ev.entity";
 import { RectifyStickyReferralConsumer } from "./adapter/messaging/RectifyStickyReferralConsumer";
 import { OpRebateRewardConsumer } from "./adapter/messaging/OpRebateRewardConsumer";
 import { OpRebateService } from "../rewards/services/op-rebate-service";
-import { Reward } from "../rewards/model/reward.entity";
+import { OpReward } from "../rewards/model/op-reward.entity";
 import { QueuesMonitoringCron } from "./service/queues-monitoring-cron";
 import { QueueJobCount } from "../monitoring/model/QueueJobCount.entity";
 
@@ -89,7 +89,7 @@ export class ScraperModule {
           FilledRelayEv,
           RequestedSpeedUpDepositEv,
           RefundRequestedEv,
-          Reward,
+          OpReward,
           QueueJobCount,
         ]),
         MarketPriceModule.forRoot(moduleOptions),

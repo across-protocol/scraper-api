@@ -12,7 +12,7 @@ import { ChainIds } from "../../web3/model/ChainId";
 import { MarketPriceService } from "../../market-price/services/service";
 import { assertValidAddress } from "../../../utils";
 
-import { Reward } from "../model/reward.entity";
+import { OpReward } from "../model/op-reward.entity";
 import { GetRewardsQuery } from "../entrypoints/http/dto";
 
 const OP_REBATE_RATE = 0.95;
@@ -23,7 +23,7 @@ export class OpRebateService {
 
   constructor(
     @InjectRepository(Deposit) readonly depositRepository: Repository<Deposit>,
-    @InjectRepository(Reward) readonly rewardRepository: Repository<Reward>,
+    @InjectRepository(OpReward) readonly rewardRepository: Repository<OpReward>,
     private marketPriceService: MarketPriceService,
     private ethProvidersService: EthProvidersService,
     private appConfig: AppConfig,
@@ -108,8 +108,7 @@ export class OpRebateService {
     }
     const rewardsQuery = this.rewardRepository
       .createQueryBuilder("r")
-      .where("r.type = :type", { type: "op-rebates" })
-      .andWhere("r.depositPrimaryKey IN (:...depositPrimaryKeys)", { depositPrimaryKeys })
+      .where("r.depositPrimaryKey IN (:...depositPrimaryKeys)", { depositPrimaryKeys })
       .leftJoinAndSelect("r.rewardToken", "rewardToken");
     const rewards = await rewardsQuery.getMany();
     return rewards;
@@ -166,7 +165,6 @@ export class OpRebateService {
       where: {
         depositPrimaryKey: depositPrimaryKey,
         recipient: rewardReceiver,
-        type: "op-rebates",
       },
     });
 
@@ -174,7 +172,6 @@ export class OpRebateService {
       reward = this.rewardRepository.create({
         depositPrimaryKey: depositPrimaryKey,
         recipient: rewardReceiver,
-        type: "op-rebates",
         depositDate: deposit.depositDate,
       });
     }
@@ -182,7 +179,6 @@ export class OpRebateService {
     await this.rewardRepository.save({
       ...reward,
       metadata: {
-        type: "op-rebates",
         rate: OP_REBATE_RATE,
       },
       amount: rewardsAmount.toString(),
@@ -247,8 +243,6 @@ export class OpRebateService {
   }
 
   private buildBaseQuery(qb: ReturnType<typeof this.rewardRepository.createQueryBuilder>, recipientAddress: string) {
-    return qb
-      .where("r.type = :type", { type: "op-rebates" })
-      .andWhere("r.recipient = :recipient", { recipient: recipientAddress });
+    return qb.where("r.recipient = :recipient", { recipient: recipientAddress });
   }
 }

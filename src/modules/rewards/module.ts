@@ -10,7 +10,7 @@ import { OpRebateService } from "./services/op-rebate-service";
 import { RewardService } from "./services/reward-service";
 import { ReferralService } from "../referral/services/service";
 import { ReferralModule } from "../referral/module";
-import { Reward } from "./model/reward.entity";
+import { OpReward } from "./model/op-reward.entity";
 import { DepositsMv } from "../deposit/model/DepositsMv.entity";
 import { ReferralRewardsWindowJob } from "../referral/model/ReferralRewardsWindowJob.entity";
 import { ReferralRewardsWindowJobResult } from "../referral/model/ReferralRewardsWindowJobResult.entity";
@@ -28,7 +28,7 @@ export class RewardModule {
       imports: [
         TypeOrmModule.forFeature([
           Deposit,
-          Reward,
+          OpReward,
           DepositsMv,
           ReferralRewardsWindowJob,
           ReferralRewardsWindowJobResult,

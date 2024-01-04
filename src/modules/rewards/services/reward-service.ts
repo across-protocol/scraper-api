@@ -11,14 +11,14 @@ import { ReferralService } from "../../referral/services/service";
 import { assertValidAddress } from "../../../utils";
 
 import { OpRebateService } from "./op-rebate-service";
-import { Reward } from "../model/reward.entity";
+import { OpReward } from "../model/op-reward.entity";
 import { GetRewardsQuery, GetSummaryQuery, GetReferralRewardsSummaryQuery } from "../entrypoints/http/dto";
 
 @Injectable()
 export class RewardService {
   constructor(
     @InjectRepository(Deposit) readonly depositRepository: Repository<Deposit>,
-    @InjectRepository(Reward) readonly rewardRepository: Repository<Reward>,
+    @InjectRepository(OpReward) readonly opRewardRepository: Repository<OpReward>,
     private referralService: ReferralService,
     private opRebateService: OpRebateService,
   ) {}
@@ -89,7 +89,7 @@ export class RewardService {
     userAddress: string,
     deposits: Deposit[],
     rewards: {
-      "op-rebates": Reward[];
+      "op-rebates": OpReward[];
       referrals: DepositsMvWithRewards[];
     },
   ) {
@@ -110,7 +110,7 @@ export class RewardService {
     });
   }
 
-  public formatOpRebate(reward: Reward) {
+  public formatOpRebate(reward: OpReward) {
     return {
       type: "op-rebates",
       rate: reward.metadata.rate,

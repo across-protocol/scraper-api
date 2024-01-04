@@ -12,22 +12,14 @@ import {
 } from "typeorm";
 import { Deposit } from "../../deposit/model/deposit.entity";
 
-export type RewardType = "referrals" | "op-rebates";
-export type RewardMetadata =
-  | {
-      type: "referrals";
-      tier: number;
-      rate: number;
-    }
-  | {
-      type: "op-rebates";
-      rate: number;
-    };
+export type RewardMetadata = {
+  rate: number;
+};
 
 @Entity()
-@Unique("UK_reward_recipient_type_depositPk", ["recipient", "type", "depositPrimaryKey"])
-@Index("IX_reward_recipient_type", ["recipient", "type"])
-export class Reward {
+@Unique("UK_op_reward_recipient_depositPk", ["recipient", "depositPrimaryKey"])
+@Index("IX_op_reward_recipient", ["recipient"])
+export class OpReward {
   @PrimaryGeneratedColumn()
   id: number;
 
@@ -35,7 +27,9 @@ export class Reward {
   depositPrimaryKey: number;
 
   @ManyToOne(() => Deposit)
-  @JoinColumn([{ name: "depositPrimaryKey", referencedColumnName: "id" }])
+  @JoinColumn([
+    { name: "depositPrimaryKey", referencedColumnName: "id", foreignKeyConstraintName: "FK_op_reward_deposit" },
+  ])
   deposit: Deposit;
 
   @Column()
@@ -43,9 +37,6 @@ export class Reward {
 
   @Column()
   recipient: string;
-
-  @Column()
-  type: RewardType;
 
   @Column({ type: "jsonb" })
   metadata: RewardMetadata;
@@ -60,7 +51,7 @@ export class Reward {
   rewardTokenId: number;
 
   @ManyToOne(() => Token)
-  @JoinColumn([{ name: "rewardTokenId", referencedColumnName: "id" }])
+  @JoinColumn([{ name: "rewardTokenId", referencedColumnName: "id", foreignKeyConstraintName: "FK_op_reward_token" }])
   rewardToken: Token;
 
   @CreateDateColumn()
