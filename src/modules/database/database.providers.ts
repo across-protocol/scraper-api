@@ -23,7 +23,7 @@ import { FundsDepositedEv } from "../web3/model/funds-deposited-ev.entity";
 import { FilledRelayEv } from "../web3/model/filled-relay-ev.entity";
 import { RequestedSpeedUpDepositEv } from "../web3/model/requested-speed-up-deposit-ev.entity";
 import { RefundRequestedEv } from "../web3/model/refund-requested-ev.entity";
-import { ReferralRewardsWindowJob } from "../referral/model/ReferralRewardsWindowJob.entity";
+import { RewardsWindowJob } from "../referral/model/ReferralRewardsWindowJob.entity";
 import { ReferralRewardsWindowJobResult } from "../referral/model/ReferralRewardsWindowJobResult.entity";
 import { OpReward } from "../rewards/model/op-reward.entity";
 import { TransactionReceipt } from "../web3/model/tx-receipt.entity";
@@ -53,7 +53,7 @@ const entities = [
   FilledRelayEv,
   RequestedSpeedUpDepositEv,
   RefundRequestedEv,
-  ReferralRewardsWindowJob,
+  RewardsWindowJob,
   ReferralRewardsWindowJobResult,
   OpReward,
   TransactionReceipt,

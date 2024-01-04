@@ -1,6 +1,6 @@
 import { Column, CreateDateColumn, Entity, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
 
-export enum ReferralRewardsWindowJobStatus {
+export enum RewardsWindowJobStatus {
   Initial = "Initial",
   InProgress = "InProgress",
   Done = "Done",
@@ -15,15 +15,15 @@ export type ReferralRewardsWindowJobConfig = {
  * @description This class represents a job for creating referral rewards windows
  */
 @Entity()
-export class ReferralRewardsWindowJob {
+export class RewardsWindowJob {
   @PrimaryGeneratedColumn()
   id: number;
 
   @Column()
   windowIndex: number;
 
-  @Column({ default: ReferralRewardsWindowJobStatus.Initial })
-  status: ReferralRewardsWindowJobStatus;
+  @Column({ default: RewardsWindowJobStatus.Initial })
+  status: RewardsWindowJobStatus;
 
   @Column({ type: "jsonb" })
   config: ReferralRewardsWindowJobConfig;

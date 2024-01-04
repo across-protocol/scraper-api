@@ -12,7 +12,7 @@ import { ReferralService } from "../referral/services/service";
 import { ReferralModule } from "../referral/module";
 import { OpReward } from "./model/op-reward.entity";
 import { DepositsMv } from "../deposit/model/DepositsMv.entity";
-import { ReferralRewardsWindowJob } from "../referral/model/ReferralRewardsWindowJob.entity";
+import { RewardsWindowJob } from "../referral/model/ReferralRewardsWindowJob.entity";
 import { ReferralRewardsWindowJobResult } from "../referral/model/ReferralRewardsWindowJobResult.entity";
 import { MarketPriceModule } from "../market-price/module";
 import { ModuleOptions, RunMode } from "../../dynamic-module";
@@ -26,13 +26,7 @@ export class RewardModule {
       controllers: [RewardController],
       providers: [RewardService, OpRebateService, ReferralService],
       imports: [
-        TypeOrmModule.forFeature([
-          Deposit,
-          OpReward,
-          DepositsMv,
-          ReferralRewardsWindowJob,
-          ReferralRewardsWindowJobResult,
-        ]),
+        TypeOrmModule.forFeature([Deposit, OpReward, DepositsMv, RewardsWindowJob, ReferralRewardsWindowJobResult]),
         AppConfigModule,
         Web3Module,
         ReferralModule.forRoot(moduleOptions),
