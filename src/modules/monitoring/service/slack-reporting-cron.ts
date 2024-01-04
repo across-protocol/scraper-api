@@ -42,6 +42,16 @@ export class SlackReportingCron {
     if (!maxDate) return;
 
     const jobCounts = await this.queueJobCountRepository.find({ where: { date: maxDate }, order: { id: "ASC" } });
+    let postToSlack = false;
+
+    for (const jobCount of jobCounts) {
+      const { active, completed, delayed, failed, paused, waiting } = jobCount;
+      const aboveThreshold = [active, completed, delayed, failed, paused, waiting].some((count) => count >= 100);
+      if (aboveThreshold) postToSlack = true;
+    }
+
+    if (!postToSlack) return;
+
     const message = this.formatSlackMessage(maxDate, jobCounts);
     await this.monitoringService.postSlackMessage(message);
   }
@@ -60,11 +70,13 @@ export class SlackReportingCron {
 
     for (const jobCount of jobCounts) {
       const { active, completed, delayed, failed, waiting, paused, queueName } = jobCount;
-      text += `*${queueName}* \n waiting: ${this.formatJobCount(waiting)} active: ${this.formatJobCount(
-        active,
-      )} failed: ${this.formatJobCount(failed)} delayed: ${this.formatJobCount(
-        delayed,
-      )} completed: ${this.formatJobCount(completed)} paused: ${this.formatJobCount(paused)} \n\n`;
+      text += `*${queueName}* \n :hourglass_flowing_sand: ${this.formatJobCount(
+        waiting,
+      )}\t :rocket: ${this.formatJobCount(active)}\t :x: ${this.formatJobCount(
+        failed,
+      )}\t :clock3: ${this.formatJobCount(delayed)}\t :white_check_mark: ${this.formatJobCount(
+        completed,
+      )}\t :double_vertical_bar: ${this.formatJobCount(paused)} \n\n`;
     }
 
     const payload = {
@@ -82,6 +94,13 @@ export class SlackReportingCron {
           text: {
             type: "mrkdwn",
             text: "_:warning: This messages was posted because some queues contains many messages and they require attention. See the stats below :point_down:_",
+          },
+        },
+        {
+          type: "section",
+          text: {
+            type: "mrkdwn",
+            text: "_Legend:_\n_:hourglass_flowing_sand: waiting :rocket: active :x: failed :clock3: delayed :white_check_mark: completed :double_vertical_bar: paused_",
           },
         },
         {
