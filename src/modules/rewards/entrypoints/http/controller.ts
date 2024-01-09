@@ -1,8 +1,16 @@
-import { Controller, Get, Query } from "@nestjs/common";
-import { ApiTags } from "@nestjs/swagger";
+import { Body, Controller, Get, Param, Post, Query, UseGuards } from "@nestjs/common";
+import { ApiBearerAuth, ApiTags } from "@nestjs/swagger";
 
-import { GetRewardsQuery, GetSummaryQuery, GetReferralRewardsSummaryQuery } from "./dto";
+import {
+  GetRewardsQuery,
+  GetSummaryQuery,
+  GetReferralRewardsSummaryQuery,
+  CreateRewardsWindowJobBody,
+  GetRewardsWindowJobParams,
+} from "./dto";
 import { RewardService } from "../../services/reward-service";
+import { Role, Roles, RolesGuard } from "../../../auth/entry-points/http/roles";
+import { JwtAuthGuard } from "../../../auth/entry-points/http/jwt.guard";
 
 @Controller()
 export class RewardController {
@@ -36,5 +44,24 @@ export class RewardController {
   @ApiTags("rewards")
   getReferralRewards(@Query() query: GetRewardsQuery) {
     return this.rewardService.getReferralRewardDeposits(query);
+  }
+
+  @Post("rewards-window-job")
+  @Roles(Role.Admin)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @ApiBearerAuth()
+  @ApiTags("rewards")
+  createRewardsWindowJob(@Body() body: CreateRewardsWindowJobBody) {
+    return this.rewardService.createRewardsWindowJob(body);
+  }
+
+  @Get("rewards-window-job/:id")
+  @Roles(Role.Admin)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @ApiBearerAuth()
+  @ApiTags("rewards")
+  getRewardsWindowJob(@Param() params: GetRewardsWindowJobParams) {
+    const { id } = params;
+    return this.rewardService.getRewardsWindowJob(id);
   }
 }

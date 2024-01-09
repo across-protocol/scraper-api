@@ -1,6 +1,6 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
-import { In, Repository } from "typeorm";
+import { DataSource, In, Repository } from "typeorm";
 import BigNumber from "bignumber.js";
 import { ethers } from "ethers";
 import { DateTime } from "luxon";
@@ -10,10 +10,12 @@ import { AppConfig } from "../../configuration/configuration.service";
 import { EthProvidersService } from "../../web3/services/EthProvidersService";
 import { ChainIds } from "../../web3/model/ChainId";
 import { MarketPriceService } from "../../market-price/services/service";
-import { assertValidAddress } from "../../../utils";
+import { assertValidAddress, splitArrayInChunks } from "../../../utils";
 
 import { OpReward } from "../model/op-reward.entity";
 import { GetRewardsQuery } from "../entrypoints/http/dto";
+import { WindowAlreadySetException } from "./exceptions";
+import { ReferralRewardsWindowJobResult } from "../model/RewardsWindowJobResult.entity";
 
 const OP_REBATE_RATE = 0.95;
 
@@ -27,6 +29,7 @@ export class OpRebateService {
     private marketPriceService: MarketPriceService,
     private ethProvidersService: EthProvidersService,
     private appConfig: AppConfig,
+    private dataSource: DataSource,
   ) {}
 
   public async getEarnedRewards(userAddress: string) {
@@ -186,6 +189,85 @@ export class OpRebateService {
       rewardTokenId: rewardToken.id,
     });
   }
+
+  public setWindowForOpRewards(jobId: number, windowIndex: number, maxDepositDate: Date) {
+    return this.dataSource.transaction(async (entityManager) => {
+      const opRewardsWithSameWindowIndex = await entityManager
+        .createQueryBuilder()
+        .select("r")
+        .from(OpReward, "r")
+        .where("d.windowIndex = :windowIndex", { windowIndex })
+        .getOne();
+
+      if (opRewardsWithSameWindowIndex) {
+        throw new WindowAlreadySetException();
+      }
+
+      await entityManager
+        .createQueryBuilder()
+        .update(OpReward)
+        .set({ windowIndex })
+        .where("r.windowIndex IS NULL")
+        .andWhere("r.depositDate <= :maxDepositDate", { maxDepositDate })
+        .execute();
+      const rewards = await entityManager
+        .createQueryBuilder()
+        .select("r")
+        .from(OpReward, "r")
+        .where("r.windowIndex = :windowIndex", { windowIndex })
+        .getMany();
+      const { recipients, totalRewardsAmount } = this.aggregateOpRewards(rewards);
+
+      for (const recipientsChunk of splitArrayInChunks(recipients, 100)) {
+        await entityManager
+          .createQueryBuilder()
+          .insert()
+          .into(ReferralRewardsWindowJobResult)
+          .values(
+            recipientsChunk.map((recipient) => ({
+              jobId,
+              windowIndex,
+              totalRewardsAmount,
+              address: recipient.account,
+              amount: recipient.amount,
+            })),
+          )
+          .execute();
+      }
+    });
+  }
+
+  public aggregateOpRewards(rewards: OpReward[]) {
+    // Map an address to considered deposits for referral rewards
+    const recipientOpRewardsMap = rewards.reduce((acc, r) => {
+      acc[r.recipient] = [...(acc[r.recipient] || []), r];
+      return acc;
+    }, {} as Record<string, OpReward[]>);
+
+    let totalRewardsAmount: BigNumber = new BigNumber(0);
+    const recipients: {
+      account: string;
+      amount: string;
+    }[] = [];
+
+    for (const [address, opRewards] of Object.entries(recipientOpRewardsMap)) {
+      const rewardsAmount = opRewards.reduce((sum, opReward) => {
+        return sum.plus(opReward.amount);
+      }, new BigNumber(0));
+
+      totalRewardsAmount = totalRewardsAmount.plus(rewardsAmount);
+      recipients.push({
+        account: address,
+        amount: totalRewardsAmount.toFixed(),
+      });
+    }
+
+    return { totalRewardsAmount: totalRewardsAmount.toFixed(), recipients };
+  }
+
+  /**
+   * PRIVATE METHODS
+   */
 
   private async calcOpRebateRewards(deposit: Deposit) {
     // lp fee + relayer capital fee + relayer destination gas fee

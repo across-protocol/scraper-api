@@ -8,9 +8,10 @@ import { ReferralCronService } from "./services/cron-service";
 import { ReferralService } from "./services/service";
 import { ModuleOptions, RunMode } from "../../dynamic-module";
 import { Web3Module } from "../web3/module";
-import { RewardsWindowJob } from "./model/ReferralRewardsWindowJob.entity";
-import { ReferralRewardsWindowJobResult } from "./model/ReferralRewardsWindowJobResult.entity";
-import { ReferralRewardsWindowJobFixture } from "./adapter/db/referral-rewards-window-job-fi";
+import { RewardsWindowJob } from "../rewards/model/RewardsWindowJob.entity";
+import { ReferralRewardsWindowJobResult } from "../rewards/model/RewardsWindowJobResult.entity";
+import { DepositReferralStatFixture } from "./adapter/db/DepositReferralStatFixture";
+import { DepositReferralStat } from "../deposit/model/deposit-referral-stat.entity";
 
 @Module({})
 export class ReferralModule {
@@ -21,10 +22,16 @@ export class ReferralModule {
       module = {
         ...module,
         controllers: [...module.controllers, ReferralController],
-        providers: [...module.providers, ReferralService, ReferralRewardsWindowJobFixture],
+        providers: [...module.providers, ReferralService],
         imports: [
           ...module.imports,
-          TypeOrmModule.forFeature([Deposit, DepositsMv, RewardsWindowJob, ReferralRewardsWindowJobResult]),
+          TypeOrmModule.forFeature([
+            Deposit,
+            DepositsMv,
+            RewardsWindowJob,
+            ReferralRewardsWindowJobResult,
+            DepositReferralStat,
+          ]),
           AppConfigModule,
           Web3Module,
         ],
@@ -35,14 +42,27 @@ export class ReferralModule {
     if (moduleOptions.runModes.includes(RunMode.Scraper)) {
       module = {
         ...module,
-        providers: [...module.providers, ReferralCronService, ReferralService, ReferralRewardsWindowJobFixture],
+        providers: [...module.providers, ReferralCronService, ReferralService],
         imports: [
           ...module.imports,
-          TypeOrmModule.forFeature([Deposit, DepositsMv, RewardsWindowJob, ReferralRewardsWindowJobResult]),
+          TypeOrmModule.forFeature([
+            Deposit,
+            DepositsMv,
+            RewardsWindowJob,
+            ReferralRewardsWindowJobResult,
+            DepositReferralStat,
+          ]),
           AppConfigModule,
           Web3Module,
         ],
         exports: [...module.exports, ReferralService],
+      };
+    }
+
+    if (moduleOptions.runModes.includes(RunMode.Test)) {
+      module = {
+        ...module,
+        providers: [...module.providers, DepositReferralStatFixture],
       };
     }
 

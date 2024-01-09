@@ -1,6 +1,6 @@
 import { ApiProperty } from "@nestjs/swagger";
 import { Type } from "class-transformer";
-import { IsArray, IsDateString, IsInt, IsNumberString, IsOptional, IsString, Length, Max, Min } from "class-validator";
+import { IsArray, IsInt, IsNumberString, IsOptional, IsString, Length, Max, Min } from "class-validator";
 
 export class GetReferralsSummaryQuery {
   @IsString()
@@ -34,21 +34,6 @@ export class GetReferralsQuery {
   @Type(() => Number)
   @ApiProperty({ example: 0, required: true })
   offset: string;
-}
-
-export class PostReferralsMerkleDistributionBody {
-  @IsDateString()
-  @ApiProperty({ example: "2022-11-08T11:00:00.000Z", required: true })
-  maxDepositDate: string;
-
-  @IsNumberString()
-  @ApiProperty({ example: "0", required: true })
-  windowIndex: string;
-}
-
-export class GetReferralRewardsWindowJobParams {
-  @IsNumberString()
-  id: number;
 }
 
 export class DeleteReferralsMerkleDistributionBody {

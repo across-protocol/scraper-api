@@ -54,6 +54,15 @@ export class OpReward {
   @JoinColumn([{ name: "rewardTokenId", referencedColumnName: "id", foreignKeyConstraintName: "FK_op_reward_token" }])
   rewardToken: Token;
 
+  /**
+   * The window index set in the MerkleDistributor contract
+   */
+  @Column({ nullable: true })
+  windowIndex: number;
+
+  @Column({ default: false })
+  isClaimed: boolean;
+
   @CreateDateColumn()
   createdAt: Date;
 

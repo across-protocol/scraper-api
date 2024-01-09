@@ -1,6 +1,7 @@
 import { ApiProperty } from "@nestjs/swagger";
 import { Type } from "class-transformer";
-import { IsInt, IsOptional, Max, Min, IsString, IsArray, IsEnum } from "class-validator";
+import { IsInt, IsOptional, Max, Min, IsString, IsArray, IsEnum, IsDateString, IsNumberString } from "class-validator";
+import { RewardsType } from "../../model/RewardsWindowJob.entity";
 
 export class GetSummaryQuery {
   @IsString()
@@ -43,4 +44,23 @@ export class GetRewardsQuery {
   @Type(() => String)
   @ApiProperty({ example: "0x", required: true })
   userAddress: string;
+}
+
+export class CreateRewardsWindowJobBody {
+  @IsDateString()
+  @ApiProperty({ example: "2022-11-08T11:00:00.000Z", required: true })
+  maxDepositDate: string;
+
+  @IsInt()
+  @ApiProperty({ example: 0, required: true })
+  windowIndex: number;
+
+  @IsEnum(RewardsType)
+  @ApiProperty({ example: "referrals", required: true, enum: RewardsType })
+  rewardsType: RewardsType;
+}
+
+export class GetRewardsWindowJobParams {
+  @IsNumberString()
+  id: number;
 }
