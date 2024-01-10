@@ -7,8 +7,8 @@ import { Repository } from "typeorm";
 import { MerkleDistributorClaimQueueMessage, ScraperQueue } from ".";
 import { MerkleDistributorClaim } from "../../../airdrop/model/merkle-distributor-claim.entity";
 import { AppConfig } from "../../../configuration/configuration.service";
-import { MerkleDistributorWindow } from "src/modules/airdrop/model/merkle-distributor-window.entity";
-import { OpReward } from "src/modules/rewards/model/op-reward.entity";
+import { MerkleDistributorWindow } from "../../../airdrop/model/merkle-distributor-window.entity";
+import { OpReward } from "../../../rewards/model/op-reward.entity";
 
 @Processor(ScraperQueue.MerkleDistributorClaim)
 export class MerkleDistributorClaimConsumer {

@@ -10,7 +10,7 @@ import { MerkleDistributorBlocksEventsQueueMessage, MerkleDistributorClaimQueueM
 import { ClaimedEvent } from "@across-protocol/contracts-v2/dist/typechain/MerkleDistributor";
 import { MerkleDistributorClaim } from "../../../airdrop/model/merkle-distributor-claim.entity";
 import { AppConfig } from "../../../configuration/configuration.service";
-import { MerkleDistributorWindow } from "src/modules/airdrop/model/merkle-distributor-window.entity";
+import { MerkleDistributorWindow } from "../../../airdrop/model/merkle-distributor-window.entity";
 import { ScraperQueuesService } from "../../service/ScraperQueuesService";
 
 @Processor(ScraperQueue.MerkleDistributorBlocksEventsV2)

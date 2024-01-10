@@ -37,7 +37,7 @@ export class GetReferralsQuery {
 }
 
 export class DeleteReferralsMerkleDistributionBody {
-  @IsNumberString()
-  @ApiProperty({ example: "0", required: true })
-  windowIndex: string;
+  @IsInt()
+  @ApiProperty({ example: 0, required: true })
+  windowIndex: number;
 }

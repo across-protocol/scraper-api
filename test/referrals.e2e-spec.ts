@@ -108,7 +108,7 @@ describe("DELETE /referrals/merkle-distribution", () => {
     await referralService.refreshMaterializedView();
 
     const firstPostResponse = await request(app.getHttpServer())
-      .post(`/referral-rewards-window-job`)
+      .post(`/rewards-window-job`)
       .set({ Authorization: `Bearer ${adminJwt}` })
       .send({
         windowIndex: 1,
@@ -127,11 +127,12 @@ describe("DELETE /referrals/merkle-distribution", () => {
     await referralService.cumputeReferralStats();
     await referralService.refreshMaterializedView();
     const secondPostResponse = await request(app.getHttpServer())
-      .post(`/referral-rewards-window-job`)
+      .post(`/rewards-window-job`)
       .set({ Authorization: `Bearer ${adminJwt}` })
       .send({
         windowIndex: 1,
         maxDepositDate: new Date(Date.now() + dayInMS),
+        rewardsType: RewardsType.ReferralRewards,
       });
     expect(firstPostResponse.status).toBe(201);
     expect(firstPostResponse.body.status).toBe("InProgress");

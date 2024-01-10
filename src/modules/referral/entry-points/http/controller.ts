@@ -31,6 +31,6 @@ export class ReferralController {
   @ApiTags("referrals")
   deleteReferralsMerkleDistribution(@Body() body: DeleteReferralsMerkleDistributionBody) {
     const { windowIndex } = body;
-    return this.referralService.revertReferralsMerkleDistribution(parseInt(windowIndex));
+    return this.referralService.revertReferralsMerkleDistribution(windowIndex);
   }
 }
