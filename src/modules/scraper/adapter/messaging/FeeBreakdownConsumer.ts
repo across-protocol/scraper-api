@@ -9,7 +9,7 @@ import { GasFeesService } from "../gas-fees/gas-fees-service";
 import { ScraperQueuesService } from "../../service/ScraperQueuesService";
 import { FeeBreakdownQueueMessage, OpRebateRewardMessage, ScraperQueue } from ".";
 import { Deposit, DepositFillTx, DepositFillTx2 } from "../../../deposit/model/deposit.entity";
-import { deriveRelayerFeeComponents, makePctValuesCalculator, toWeiPct } from "../../utils";
+import { deriveRelayerFeeComponents, makePctValuesCalculator, toWeiPct } from "../../utils/fees";
 
 @Processor(ScraperQueue.FeeBreakdown)
 export class FeeBreakdownConsumer {
