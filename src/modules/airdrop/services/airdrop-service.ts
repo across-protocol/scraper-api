@@ -17,11 +17,17 @@ import {
   ProcessCommunityRewardsFileException,
   ProcessWalletRewardsFileException,
 } from "./exceptions";
-import { EditWalletRewardsBody, GetEtlMerkleDistributorRecipientsQuery } from "../entry-points/http/dto";
+import {
+  EditWalletRewardsBody,
+  GetEtlMerkleDistributorRecipientsQuery,
+  GetMerkleDistributorProofQuery,
+  GetMerkleDistributorProofsQuery,
+} from "../entry-points/http/dto";
 import { AppConfig } from "../../configuration/configuration.service";
 import { MerkleDistributorWindow } from "../model/merkle-distributor-window.entity";
 import { MerkleDistributorRecipient } from "../model/merkle-distributor-recipient.entity";
 import { UserWallet } from "../../user/model/user-wallet.entity";
+import { RewardsType } from "src/modules/rewards/model/RewardsWindowJob.entity";
 
 const getMerkleDistributorProofCacheKey = (address: string, windowIndex: number) =>
   `distributor:proof:${address}:${windowIndex}`;
@@ -236,19 +242,32 @@ export class AirdropService {
     }
   }
 
-  public async getMerkleDistributorProof(address: string, windowIndex: number, includeDiscord: boolean) {
+  public async getMerkleDistributorProof(query: GetMerkleDistributorProofQuery) {
+    const { address, windowIndex } = query;
+    const rewardsType = query.rewardsType || RewardsType.ReferralRewards;
+    let contractAddress: string | undefined = undefined;
+
+    if (rewardsType === RewardsType.ReferralRewards) {
+      contractAddress = this.appConfig.values.web3.merkleDistributor.address;
+    } else if (rewardsType === RewardsType.OpRewards) {
+      contractAddress = this.appConfig.values.web3.merkleDistributorContracts.opRewards.address;
+    }
+
+    const includeDiscord = query.includeDiscord === "true";
     const checksumAddress = ethers.utils.getAddress(address);
     const cacheKey = getMerkleDistributorProofCacheKey(checksumAddress, windowIndex);
     let data = await this.cacheManager.get(cacheKey);
 
     if (data) return data;
 
-    const query = this.dataSource
+    const dbQuery = this.dataSource
       .createQueryBuilder(MerkleDistributorRecipient, "recipient")
       .innerJoinAndSelect("recipient.merkleDistributorWindow", "window")
       .where("recipient.address = :address", { address: checksumAddress })
-      .andWhere("window.windowIndex = :windowIndex", { windowIndex });
-    const recipient = await query.getOne();
+      .andWhere("window.windowIndex = :windowIndex", { windowIndex })
+      .andWhere("window.contractAddress = :contractAddress", { contractAddress });
+
+    const recipient = await dbQuery.getOne();
 
     if (!recipient) return {};
 
@@ -284,19 +303,32 @@ export class AirdropService {
     return data;
   }
 
-  public async getMerkleDistributorProofs(address: string, startWindowIndex = 0) {
+  public async getMerkleDistributorProofs(query: GetMerkleDistributorProofsQuery) {
+    const { address } = query;
+    const startWindowIndex = query.startWindowIndex || 0;
+    const rewardsType = query.rewardsType || RewardsType.ReferralRewards;
     const checksumAddress = ethers.utils.getAddress(address);
+
+    let contractAddress: string | undefined = undefined;
+
+    if (rewardsType === RewardsType.ReferralRewards) {
+      contractAddress = this.appConfig.values.web3.merkleDistributor.address;
+    } else if (rewardsType === RewardsType.OpRewards) {
+      contractAddress = this.appConfig.values.web3.merkleDistributorContracts.opRewards.address;
+    }
+
     const cacheKey = getMerkleDistributorProofsCacheKey(checksumAddress, startWindowIndex);
     let data = await this.cacheManager.get(cacheKey);
 
     if (data) return data;
 
-    const query = this.dataSource
+    const dbQuery = this.dataSource
       .createQueryBuilder(MerkleDistributorRecipient, "recipient")
       .innerJoinAndSelect("recipient.merkleDistributorWindow", "window")
       .where("recipient.address = :address", { address: checksumAddress })
-      .andWhere("window.windowIndex >= :startWindowIndex", { startWindowIndex });
-    const recipients = await query.getMany();
+      .andWhere("window.windowIndex >= :startWindowIndex", { startWindowIndex })
+      .andWhere("window.contractAddress = :contractAddress", { contractAddress });
+    const recipients = await dbQuery.getMany();
 
     if (!recipients) return [];
 

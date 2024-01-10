@@ -1,5 +1,6 @@
 import { ApiProperty } from "@nestjs/swagger";
 import { IsEnum, IsEthereumAddress, IsNumberString, IsOptional, IsString, Length } from "class-validator";
+import { RewardsType } from "../../../rewards/model/RewardsWindowJob.entity";
 
 export class GetAirdropRewardsQuery {
   @IsString()
@@ -70,6 +71,11 @@ export class GetMerkleDistributorProofQuery {
   @IsEnum(IncludeDiscordQueryValues)
   @IsOptional()
   includeDiscord: typeof IncludeDiscordQueryValues[number];
+
+  @IsEnum(RewardsType)
+  @IsOptional()
+  @ApiProperty({ example: "referrals", required: false, enum: RewardsType })
+  rewardsType?: RewardsType;
 }
 
 export class GetMerkleDistributorProofsQuery {
@@ -81,6 +87,11 @@ export class GetMerkleDistributorProofsQuery {
   @ApiProperty()
   @IsEthereumAddress()
   address: string;
+
+  @IsEnum(RewardsType)
+  @IsOptional()
+  @ApiProperty({ example: "referrals", required: false, enum: RewardsType })
+  rewardsType?: RewardsType;
 }
 
 export class GetEtlMerkleDistributorRecipientsQuery {
