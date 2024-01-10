@@ -61,6 +61,7 @@ export class CreateRewardsWindowJobBody {
 }
 
 export class GetRewardsWindowJobParams {
+  @ApiProperty()
   @IsNumberString()
   id: number;
 }

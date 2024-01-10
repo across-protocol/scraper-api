@@ -61,6 +61,7 @@ export const configValues = () => ({
       324: process.env.WEB3_NODE_URL_324,
       8453: process.env.WEB3_NODE_URL_8453,
       84531: process.env.WEB3_NODE_URL_84531,
+      11155420: process.env.WEB3_NODE_URL_11155420,
     },
     spokePoolContracts: {
       [ChainIds.mainnet]: [
@@ -181,6 +182,13 @@ export const configValues = () => ({
       chainId: Number(process.env.MERKLE_DISTRIBUTOR_CHAIN_ID || "5"),
       referralsStartWindowIndex: Number(process.env.REFERRALS_START_WINDOW_INDEX || "1"),
       startBlockNumber: Number(process.env.MERKLE_DISTRIBUTOR_START_BLOCK || 7884371),
+    },
+    merkleDistributorContracts: {
+      opRewards: {
+        chainId: Number(process.env.OP_REWARDS_MERKLE_DISTRIBUTOR_CHAIN_ID),
+        address: process.env.OP_REWARDS_MERKLE_DISTRIBUTOR_ADDRESS,
+        blockNumber: Number(process.env.OP_REWARDS_MERKLE_DISTRIBUTOR_BLOCK_NUMBER),
+      },
     },
     acx: {
       address: process.env.ACX_ADDRESS || "0x40153DdFAd90C49dbE3F5c9F96f2a5B25ec67461", // TODO: replace with mainnet,

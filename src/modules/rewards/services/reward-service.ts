@@ -261,23 +261,45 @@ export class RewardService {
     if (!job) throw new RewardsWindowJobNotFoundException(job.id);
 
     const jobResults = await this.referralRewardsWindowJobResultRepository.find({ where: { jobId: job.id } });
+    let metadataAmountBreakdownKeyName = undefined;
+
+    if (job.rewardsType === RewardsType.ReferralRewards) {
+      metadataAmountBreakdownKeyName = "referralRewards";
+    } else if (job.rewardsType === RewardsType.OpRewards) {
+      metadataAmountBreakdownKeyName = "opRewards";
+    }
+
     const recipients = jobResults.map((result) => ({
       account: result.address,
       amount: result.amount,
       metadata: {
         amountBreakdown: {
-          referralRewards: result.amount,
+          [metadataAmountBreakdownKeyName]: result.amount,
         },
       },
     }));
 
+    let chainId = undefined;
+    let contractAddress = undefined;
+    let rewardToken = undefined;
+
+    if (job.rewardsType === RewardsType.ReferralRewards) {
+      chainId = this.appConfig.values.web3.merkleDistributor.chainId;
+      contractAddress = this.appConfig.values.web3.merkleDistributor.address;
+      rewardToken = this.appConfig.values.web3.acx.address;
+    } else if (job.rewardsType === RewardsType.OpRewards) {
+      chainId = this.appConfig.values.web3.merkleDistributorContracts.opRewards.chainId;
+      contractAddress = this.appConfig.values.web3.merkleDistributorContracts.opRewards.address;
+      rewardToken = this.appConfig.values.rewardPrograms["op-rebates"].rewardToken.address;
+    }
+
     return {
       job,
       result: {
-        chainId: "TODO",
-        contractAddress: "TODO",
+        chainId,
+        contractAddress,
         windowIndex: job.windowIndex,
-        rewardToken: "TODO",
+        rewardToken,
         rewardsToDeposit: jobResults[0]?.totalRewardsAmount || null,
         recipients,
       },

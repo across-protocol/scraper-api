@@ -196,7 +196,7 @@ export class OpRebateService {
         .createQueryBuilder()
         .select("r")
         .from(OpReward, "r")
-        .where("d.windowIndex = :windowIndex", { windowIndex })
+        .where("r.windowIndex = :windowIndex", { windowIndex })
         .getOne();
 
       if (opRewardsWithSameWindowIndex) {
@@ -207,8 +207,8 @@ export class OpRebateService {
         .createQueryBuilder()
         .update(OpReward)
         .set({ windowIndex })
-        .where("r.windowIndex IS NULL")
-        .andWhere("r.depositDate <= :maxDepositDate", { maxDepositDate })
+        .where("windowIndex IS NULL")
+        .andWhere("depositDate <= :maxDepositDate", { maxDepositDate })
         .execute();
       const rewards = await entityManager
         .createQueryBuilder()
@@ -258,7 +258,7 @@ export class OpRebateService {
       totalRewardsAmount = totalRewardsAmount.plus(rewardsAmount);
       recipients.push({
         account: address,
-        amount: totalRewardsAmount.toFixed(),
+        amount: rewardsAmount.toFixed(),
       });
     }
 
