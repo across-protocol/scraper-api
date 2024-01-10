@@ -180,10 +180,13 @@ export class EthProvidersService {
     chainId = this.appConfig.values.web3.merkleDistributorContracts.opRewards.chainId;
     provider = this.getProvider(chainId);
     address = this.appConfig.values.web3.merkleDistributorContracts.opRewards.address;
-    contract = AcrossMerkleDistributor__factory.connect(address, provider);
-    this.merkleDistributorEventQueriers[chainId] = {
-      ...(this.merkleDistributorEventQueriers[chainId] || {}),
-      [address]: new MerkleDistributorEventsQuerier(contract),
-    };
+
+    if (address) {
+      contract = AcrossMerkleDistributor__factory.connect(address, provider);
+      this.merkleDistributorEventQueriers[chainId] = {
+        ...(this.merkleDistributorEventQueriers[chainId] || {}),
+        [address]: new MerkleDistributorEventsQuerier(contract),
+      };
+    }
   }
 }
