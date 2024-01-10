@@ -27,7 +27,7 @@ import { AppConfig } from "../../configuration/configuration.service";
 import { MerkleDistributorWindow } from "../model/merkle-distributor-window.entity";
 import { MerkleDistributorRecipient } from "../model/merkle-distributor-recipient.entity";
 import { UserWallet } from "../../user/model/user-wallet.entity";
-import { RewardsType } from "src/modules/rewards/model/RewardsWindowJob.entity";
+import { RewardsType } from "../../rewards/model/RewardsWindowJob.entity";
 
 const getMerkleDistributorProofCacheKey = (address: string, windowIndex: number) =>
   `distributor:proof:${address}:${windowIndex}`;
