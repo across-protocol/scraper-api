@@ -13,6 +13,7 @@ import { ScraperQueue } from "./adapter/messaging";
 import { BlockNumberConsumer } from "./adapter/messaging/BlockNumberConsumer";
 import { BlocksEventsConsumer } from "./adapter/messaging/BlocksEventsConsumer";
 import { MerkleDistributorBlocksEventsConsumer } from "./adapter/messaging/MerkleDistributorBlocksEventsConsumer";
+import { MerkleDistributorBlocksEventsConsumerV2 } from "./adapter/messaging/MerkleDistributorBlocksEventsConsumerV2";
 import { DepositFilledDateConsumer } from "./adapter/messaging/DepositFilledDateConsumer";
 import { DepositReferralConsumer } from "./adapter/messaging/DepositReferralConsumer";
 import { FillEventsConsumer } from "./adapter/messaging/FillEventsConsumer";
@@ -20,6 +21,7 @@ import { FillEventsConsumer2 } from "./adapter/messaging/FillEventsConsumer2";
 import { SpeedUpEventsConsumer } from "./adapter/messaging/SpeedUpEventsConsumer";
 import { TokenDetailsConsumer } from "./adapter/messaging/TokenDetailsConsumer";
 import { TokenPriceConsumer } from "./adapter/messaging/TokenPriceConsumer";
+import { MerkleDistributorClaimConsumer } from "./adapter/messaging/MerkleDistributorClaimConsumer";
 import { ScraperController } from "./entry-point/http/controller";
 import { Deposit } from "../deposit/model/deposit.entity";
 import { Claim } from "../airdrop/model/claim.entity";
@@ -44,6 +46,8 @@ import { OpRebateService } from "../rewards/services/op-rebate-service";
 import { OpReward } from "../rewards/model/op-reward.entity";
 import { QueuesMonitoringCron } from "./service/queues-monitoring-cron";
 import { QueueJobCount } from "../monitoring/model/QueueJobCount.entity";
+import { MerkleDistributorClaim } from "../airdrop/model/merkle-distributor-claim.entity";
+import { MerkleDistributorWindow } from "../airdrop/model/merkle-distributor-window.entity";
 
 @Module({})
 export class ScraperModule {
@@ -58,6 +62,7 @@ export class ScraperModule {
       OpRebateService,
       BlocksEventsConsumer,
       MerkleDistributorBlocksEventsConsumer,
+      MerkleDistributorBlocksEventsConsumerV2,
       FillEventsConsumer,
       FillEventsConsumer2,
       SpeedUpEventsConsumer,
@@ -72,6 +77,7 @@ export class ScraperModule {
       RectifyStickyReferralConsumer,
       FeeBreakdownConsumer,
       OpRebateRewardConsumer,
+      MerkleDistributorClaimConsumer,
     ];
 
     return {
@@ -91,6 +97,8 @@ export class ScraperModule {
           RefundRequestedEv,
           OpReward,
           QueueJobCount,
+          MerkleDistributorClaim,
+          MerkleDistributorWindow,
         ]),
         MarketPriceModule.forRoot(moduleOptions),
         HttpModule,
@@ -106,6 +114,9 @@ export class ScraperModule {
         }),
         BullModule.registerQueue({
           name: ScraperQueue.MerkleDistributorBlocksEvents,
+        }),
+        BullModule.registerQueue({
+          name: ScraperQueue.MerkleDistributorBlocksEventsV2,
         }),
         BullModule.registerQueue({
           name: ScraperQueue.TokenDetails,
@@ -163,6 +174,9 @@ export class ScraperModule {
         }),
         BullModule.registerQueue({
           name: ScraperQueue.OpRebateReward,
+        }),
+        BullModule.registerQueue({
+          name: ScraperQueue.MerkleDistributorClaim,
         }),
       ],
       exports: [ScraperQueuesService],

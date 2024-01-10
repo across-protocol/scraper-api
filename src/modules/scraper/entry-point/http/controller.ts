@@ -71,6 +71,23 @@ export class ScraperController {
     );
   }
 
+  @Post("scraper/blocks/merkle-distributor-v2")
+  @ApiTags("scraper")
+  @Roles(Role.Admin)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @ApiBearerAuth()
+  async processMerkleDistributorBlocksV2(@Body() body: ProcessBlocksBody) {
+    const { chainId, from, to } = body;
+    await this.scraperQueuesService.publishMessage<MerkleDistributorBlocksEventsQueueMessage>(
+      ScraperQueue.MerkleDistributorBlocksEventsV2,
+      {
+        chainId,
+        from,
+        to,
+      },
+    );
+  }
+
   @Post("scraper/block-number")
   @ApiTags("scraper")
   @Roles(Role.Admin)

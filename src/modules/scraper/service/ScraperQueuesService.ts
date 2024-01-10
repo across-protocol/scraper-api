@@ -12,6 +12,7 @@ export class ScraperQueuesService {
   public constructor(
     @InjectQueue(ScraperQueue.BlocksEvents) private blocksEventsQueue: Queue,
     @InjectQueue(ScraperQueue.MerkleDistributorBlocksEvents) private merkleDistributorBlocksEventsQueue: Queue,
+    @InjectQueue(ScraperQueue.MerkleDistributorBlocksEventsV2) private merkleDistributorBlocksEventsV2Queue: Queue,
     @InjectQueue(ScraperQueue.FillEvents) private fillEventsQueue: Queue,
     @InjectQueue(ScraperQueue.FillEvents2) private fillEventsQueue2: Queue,
     @InjectQueue(ScraperQueue.SpeedUpEvents) private speedUpEventsQueue: Queue,
@@ -26,10 +27,12 @@ export class ScraperQueuesService {
     @InjectQueue(ScraperQueue.RectifyStickyReferral) private rectifyStickyReferralQueue: Queue,
     @InjectQueue(ScraperQueue.FeeBreakdown) private feeBreakdownsQueue: Queue,
     @InjectQueue(ScraperQueue.OpRebateReward) private opRebateRewardsQueue: Queue,
+    @InjectQueue(ScraperQueue.MerkleDistributorClaim) private merkleDistributorClaimQueue: Queue,
   ) {
     this.queuesMap = {
       [ScraperQueue.BlocksEvents]: this.blocksEventsQueue,
       [ScraperQueue.MerkleDistributorBlocksEvents]: this.merkleDistributorBlocksEventsQueue,
+      [ScraperQueue.MerkleDistributorBlocksEventsV2]: this.merkleDistributorBlocksEventsV2Queue,
       [ScraperQueue.FillEvents]: this.fillEventsQueue,
       [ScraperQueue.FillEvents2]: this.fillEventsQueue2,
       [ScraperQueue.SpeedUpEvents]: this.speedUpEventsQueue,
@@ -44,6 +47,7 @@ export class ScraperQueuesService {
       [ScraperQueue.RectifyStickyReferral]: this.rectifyStickyReferralQueue,
       [ScraperQueue.FeeBreakdown]: this.feeBreakdownsQueue,
       [ScraperQueue.OpRebateReward]: this.opRebateRewardsQueue,
+      [ScraperQueue.MerkleDistributorClaim]: this.merkleDistributorClaimQueue,
     };
   }
 

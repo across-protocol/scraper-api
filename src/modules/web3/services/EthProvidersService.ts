@@ -16,7 +16,7 @@ import { TransactionReceipt } from "../model/tx-receipt.entity";
 export class EthProvidersService {
   private providers: Record<string, ethers.providers.JsonRpcProvider> = {};
   private spokePoolEventQueriers: Record<string, Record<string, SpokePoolEventsQuerier>> = {};
-  private merkleDistributorEventQuerier: MerkleDistributorEventsQuerier;
+  private merkleDistributorEventQueriers: Record<string, Record<string, MerkleDistributorEventsQuerier>> = {};
 
   public constructor(
     private appConfig: AppConfig,
@@ -27,7 +27,7 @@ export class EthProvidersService {
   ) {
     this.setProviders();
     this.setSpokePoolEventQueriers();
-    this.setMerkleDistributorEventQuerier();
+    this.setMerkleDistributorEventQueriers();
   }
 
   public getProvider(chainId: ChainId): ethers.providers.JsonRpcProvider | undefined {
@@ -46,8 +46,12 @@ export class EthProvidersService {
     return this.spokePoolEventQueriers;
   }
 
-  public getMerkleDistributorQuerier(): MerkleDistributorEventsQuerier | undefined {
-    return this.merkleDistributorEventQuerier;
+  public getMerkleDistributorQueriers() {
+    return this.merkleDistributorEventQueriers;
+  }
+
+  public getMerkleDistributorQuerier(chainId: ChainId, address: string) {
+    return this.merkleDistributorEventQueriers[chainId][address];
   }
 
   public async getCachedBlock(chainId: number, blockNumber: number) {
@@ -164,14 +168,22 @@ export class EthProvidersService {
     }
   }
 
-  private setMerkleDistributorEventQuerier() {
-    const provider = this.getProvider(this.appConfig.values.web3.merkleDistributor.chainId);
-    if (provider) {
-      const merkleDistributor = AcrossMerkleDistributor__factory.connect(
-        this.appConfig.values.web3.merkleDistributor.address,
-        provider,
-      );
-      this.merkleDistributorEventQuerier = new MerkleDistributorEventsQuerier(merkleDistributor);
-    }
+  private setMerkleDistributorEventQueriers() {
+    let chainId = this.appConfig.values.web3.merkleDistributor.chainId;
+    let provider = this.getProvider(chainId);
+    let address = this.appConfig.values.web3.merkleDistributor.address;
+    let contract = AcrossMerkleDistributor__factory.connect(address, provider);
+    this.merkleDistributorEventQueriers[chainId] = {
+      [address]: new MerkleDistributorEventsQuerier(contract),
+    };
+
+    chainId = this.appConfig.values.web3.merkleDistributorContracts.opRewards.chainId;
+    provider = this.getProvider(chainId);
+    address = this.appConfig.values.web3.merkleDistributorContracts.opRewards.address;
+    contract = AcrossMerkleDistributor__factory.connect(address, provider);
+    this.merkleDistributorEventQueriers[chainId] = {
+      ...(this.merkleDistributorEventQueriers[chainId] || {}),
+      [address]: new MerkleDistributorEventsQuerier(contract),
+    };
   }
 }

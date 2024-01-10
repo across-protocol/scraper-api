@@ -28,6 +28,7 @@ import { ReferralRewardsWindowJobResult } from "../rewards/model/RewardsWindowJo
 import { OpReward } from "../rewards/model/op-reward.entity";
 import { TransactionReceipt } from "../web3/model/tx-receipt.entity";
 import { QueueJobCount } from "../monitoring/model/QueueJobCount.entity";
+import { MerkleDistributorClaim } from "../airdrop/model/merkle-distributor-claim.entity";
 
 // TODO: Add db entities here
 const entities = [
@@ -58,6 +59,7 @@ const entities = [
   OpReward,
   TransactionReceipt,
   QueueJobCount,
+  MerkleDistributorClaim,
 ];
 
 @Injectable()
