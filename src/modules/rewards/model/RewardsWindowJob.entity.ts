@@ -11,6 +11,10 @@ export type ReferralRewardsWindowJobConfig = {
   maxDepositDate: string;
 };
 
+export enum RewardsType {
+  ReferralRewards = "referral-rewards",
+  OpRewards = "op-rewards",
+}
 /**
  * @description This class represents a job for creating referral rewards windows
  */
@@ -24,6 +28,9 @@ export class RewardsWindowJob {
 
   @Column({ default: RewardsWindowJobStatus.Initial })
   status: RewardsWindowJobStatus;
+
+  @Column({ default: RewardsType.ReferralRewards })
+  rewardsType: RewardsType;
 
   @Column({ type: "jsonb" })
   config: ReferralRewardsWindowJobConfig;

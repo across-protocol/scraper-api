@@ -12,11 +12,13 @@ import { ReferralService } from "../referral/services/service";
 import { ReferralModule } from "../referral/module";
 import { OpReward } from "./model/op-reward.entity";
 import { DepositsMv } from "../deposit/model/DepositsMv.entity";
-import { RewardsWindowJob } from "../referral/model/ReferralRewardsWindowJob.entity";
-import { ReferralRewardsWindowJobResult } from "../referral/model/ReferralRewardsWindowJobResult.entity";
+import { RewardsWindowJob } from "./model/RewardsWindowJob.entity";
+import { ReferralRewardsWindowJobResult } from "./model/RewardsWindowJobResult.entity";
 import { MarketPriceModule } from "../market-price/module";
 import { ModuleOptions, RunMode } from "../../dynamic-module";
 import { RewardFixture } from "./adapter/db/reward-fixture";
+import { ReferralRewardsService } from "./services/referral-rewards-service";
+import { RewardsWindowJobFixture } from "./adapter/db/rewards-window-job-fixture";
 
 @Module({})
 export class RewardModule {
@@ -24,7 +26,7 @@ export class RewardModule {
     const module: DynamicModule = {
       module: RewardModule,
       controllers: [RewardController],
-      providers: [RewardService, OpRebateService, ReferralService],
+      providers: [RewardService, OpRebateService, ReferralService, ReferralRewardsService],
       imports: [
         TypeOrmModule.forFeature([Deposit, OpReward, DepositsMv, RewardsWindowJob, ReferralRewardsWindowJobResult]),
         AppConfigModule,
@@ -36,7 +38,7 @@ export class RewardModule {
     };
 
     if (moduleOptions.runModes.includes(RunMode.Test)) {
-      module.providers = [...module.providers, RewardFixture];
+      module.providers = [...module.providers, RewardFixture, RewardsWindowJobFixture];
     }
 
     return module;

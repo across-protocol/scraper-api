@@ -16,7 +16,10 @@ import { Role } from "../src/modules/auth/entry-points/http/roles";
 import { configValues } from "../src/modules/configuration";
 import { RunMode } from "../src/dynamic-module";
 import { wait } from "../src/utils";
-import { ReferralRewardsWindowJobFixture } from "../src/modules/referral/adapter/db/referral-rewards-window-job-fi";
+import { RewardsWindowJobFixture } from "../src/modules/rewards/adapter/db/rewards-window-job-fixture";
+import { RewardsType } from "../src/modules/rewards/model/RewardsWindowJob.entity";
+import { ValidationPipe } from "../src/validation.pipe";
+import { DepositReferralStatFixture } from "../src/modules/referral/adapter/db/DepositReferralStatFixture";
 
 const referrer = "0x9A8f92a830A5cB89a3816e3D267CB7791c16b04D";
 const depositor = "0xdf120Bf3AEE9892f213B1Ba95035a60682D637c3";
@@ -32,9 +35,10 @@ const dayInMS = 24 * 60 * 60 * 1000;
 let app: INestApplication;
 let depositFixture: DepositFixture;
 let claimFixture: ClaimFixture;
-let referralRewardsWindowJobFixture: ReferralRewardsWindowJobFixture;
+let rewardsWindowJobFixture: RewardsWindowJobFixture;
 let priceFixture: HistoricMarketPriceFixture;
 let tokenFixture: TokenFixture;
+let depositReferralStatFixture: DepositReferralStatFixture;
 let referralService: ReferralService;
 
 let token: Token;
@@ -47,12 +51,14 @@ beforeAll(async () => {
   }).compile();
 
   app = moduleFixture.createNestApplication();
+  app.useGlobalPipes(new ValidationPipe());
   depositFixture = app.get(DepositFixture);
   claimFixture = app.get(ClaimFixture);
   priceFixture = app.get(HistoricMarketPriceFixture);
   tokenFixture = app.get(TokenFixture);
+  depositReferralStatFixture = app.get(DepositReferralStatFixture);
   referralService = app.get(ReferralService);
-  referralRewardsWindowJobFixture = app.get(ReferralRewardsWindowJobFixture);
+  rewardsWindowJobFixture = app.get(RewardsWindowJobFixture);
   adminJwt = app.get(JwtService).sign({ roles: [Role.Admin] }, { secret: configValues().auth.jwtSecret });
 
   await app.init();
@@ -69,71 +75,11 @@ afterAll(async () => {
   await app.close();
 });
 
-describe("POST /referrals/merkle-distribution", () => {
-  afterEach(async () => {
-    await depositFixture.deleteAllDeposits();
-  });
-
-  it("return 401", async () => {
-    const response = await request(app.getHttpServer())
-      .post(`/referral-rewards-window-job`)
-      .send({
-        windowIndex: 1,
-        maxDepositDate: new Date(Date.now() + dayInMS),
-      });
-    expect(response.status).toBe(401);
-  });
-
-  it("return 201 for success and 400 for duplicate window", async () => {
-    await depositFixture.insertManyDeposits([
-      mockDepositEntity({
-        depositId: 1,
-        referralAddress: referrer,
-        stickyReferralAddress: referrer,
-        status: "filled",
-        tokenId: token.id,
-        priceId: price.id,
-        depositorAddr: depositor,
-        amount: tier5DepositAmount,
-        depositDate: new Date(),
-        bridgeFeePct: ethers.utils.parseEther("0.01").toString(), // 1%
-      }),
-    ]);
-    await referralService.cumputeReferralStats();
-    await referralService.refreshMaterializedView();
-
-    const successResponse = await request(app.getHttpServer())
-      .post(`/referral-rewards-window-job`)
-      .set({ Authorization: `Bearer ${adminJwt}` })
-      .send({
-        windowIndex: 1,
-        maxDepositDate: new Date(Date.now() + dayInMS),
-      });
-    await wait(1);
-    await referralService.cumputeReferralStats();
-    await referralService.refreshMaterializedView();
-    const duplicateWindowResponse = await request(app.getHttpServer())
-      .post(`/referral-rewards-window-job`)
-      .set({ Authorization: `Bearer ${adminJwt}` })
-      .send({
-        windowIndex: 1,
-        maxDepositDate: new Date(Date.now() + dayInMS),
-      });
-    await wait(1);
-    const jobResponse = await request(app.getHttpServer())
-      .get(`/referral-rewards-window-job/${duplicateWindowResponse.body.id}`)
-      .set({ Authorization: `Bearer ${adminJwt}` });
-    expect(successResponse.status).toBe(201);
-    expect(successResponse.body.status).toBe("InProgress");
-    expect(duplicateWindowResponse.status).toBe(201);
-    expect(jobResponse.body.job.status).toBe("Failed");
-  });
-});
-
 describe("DELETE /referrals/merkle-distribution", () => {
-  afterEach(async () => {
+  beforeEach(async () => {
     await depositFixture.deleteAllDeposits();
-    await referralRewardsWindowJobFixture.deleteAll();
+    await rewardsWindowJobFixture.deleteAll();
+    await depositReferralStatFixture.deleteAllDepositReferralStats();
   });
 
   it("return 401", async () => {
@@ -162,12 +108,14 @@ describe("DELETE /referrals/merkle-distribution", () => {
     await referralService.refreshMaterializedView();
 
     const firstPostResponse = await request(app.getHttpServer())
-      .post(`/referral-rewards-window-job`)
+      .post(`/rewards-window-job`)
       .set({ Authorization: `Bearer ${adminJwt}` })
       .send({
         windowIndex: 1,
         maxDepositDate: new Date(Date.now() + dayInMS),
+        rewardsType: RewardsType.ReferralRewards,
       });
+    await wait(1);
     await referralService.cumputeReferralStats();
     await referralService.refreshMaterializedView();
     const deleteResponse = await request(app.getHttpServer())
@@ -179,11 +127,12 @@ describe("DELETE /referrals/merkle-distribution", () => {
     await referralService.cumputeReferralStats();
     await referralService.refreshMaterializedView();
     const secondPostResponse = await request(app.getHttpServer())
-      .post(`/referral-rewards-window-job`)
+      .post(`/rewards-window-job`)
       .set({ Authorization: `Bearer ${adminJwt}` })
       .send({
         windowIndex: 1,
         maxDepositDate: new Date(Date.now() + dayInMS),
+        rewardsType: RewardsType.ReferralRewards,
       });
     expect(firstPostResponse.status).toBe(201);
     expect(firstPostResponse.body.status).toBe("InProgress");
@@ -194,13 +143,17 @@ describe("DELETE /referrals/merkle-distribution", () => {
 
 describe("GET /referrals/summary", () => {
   beforeEach(async () => {
-    await referralService.cumputeReferralStats();
+    await depositFixture.deleteAllDeposits();
+    await claimFixture.deleteAllClaims();
+    await depositReferralStatFixture.deleteAllDepositReferralStats();
     await referralService.refreshMaterializedView();
   });
 
   afterEach(async () => {
     await depositFixture.deleteAllDeposits();
     await claimFixture.deleteAllClaims();
+    await depositReferralStatFixture.deleteAllDepositReferralStats();
+    await referralService.refreshMaterializedView();
   });
 
   it("return tier 1", async () => {

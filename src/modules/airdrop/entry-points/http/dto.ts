@@ -73,10 +73,12 @@ export class GetMerkleDistributorProofQuery {
 }
 
 export class GetMerkleDistributorProofsQuery {
+  @ApiProperty()
   @IsNumberString()
   @IsOptional()
   startWindowIndex: number;
 
+  @ApiProperty()
   @IsEthereumAddress()
   address: string;
 }

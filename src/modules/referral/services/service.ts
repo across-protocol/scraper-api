@@ -21,20 +21,14 @@ import {
 } from "./queries";
 import { AppConfig } from "../../configuration/configuration.service";
 import { DepositsMv, DepositsMvWithRewards } from "../../deposit/model/DepositsMv.entity";
-import {
-  InvalidReferralRewardsWindowJobException,
-  ReferralRewardsWindowJobNotFoundException,
-  WindowAlreadySetException,
-} from "./exceptions";
 import { DepositsFilteredReferrals } from "../model/DepositsFilteredReferrals.entity";
 import { DepositReferralStat } from "../../deposit/model/deposit-referral-stat.entity";
 import { splitArrayInChunks } from "../../../utils";
 import { Claim } from "../../airdrop/model/claim.entity";
 import { EthProvidersService } from "../../web3/services/EthProvidersService";
 import { ChainIds } from "../../web3/model/ChainId";
-import { RewardsWindowJob, RewardsWindowJobStatus } from "../model/ReferralRewardsWindowJob.entity";
-import { QueryDeepPartialEntity } from "typeorm/query-builder/QueryPartialEntity";
-import { ReferralRewardsWindowJobResult } from "../model/ReferralRewardsWindowJobResult.entity";
+import { RewardsWindowJob } from "../../rewards/model/RewardsWindowJob.entity";
+import { ReferralRewardsWindowJobResult } from "../../rewards/model/RewardsWindowJobResult.entity";
 import { GetReferralsSummaryQuery } from "../entry-points/http/dto";
 
 const REFERRAL_ADDRESS_DELIMITER = "d00dfeeddeadbeef";
@@ -219,162 +213,6 @@ export class ReferralService {
     return referrals;
   }
 
-  public async createNewReferralRewardsWindowJob(windowIndex: number, maxDepositDate: Date) {
-    return this.dataSource.transaction(async (entityManager) => {
-      const query = entityManager
-        .createQueryBuilder()
-        .select("job")
-        .from(RewardsWindowJob, "job")
-        .where("job.windowIndex = :windowIndex", { windowIndex })
-        .orderBy("job.createdAt", "DESC");
-      const jobs = await query.getMany();
-      if (jobs.length > 0 && jobs[0].status === RewardsWindowJobStatus.Initial) {
-        throw new InvalidReferralRewardsWindowJobException(`Job already created for window ${windowIndex}`);
-      }
-
-      if (jobs.length > 0 && jobs[0].status === RewardsWindowJobStatus.InProgress) {
-        throw new InvalidReferralRewardsWindowJobException(
-          `Job in progress for window ${windowIndex}. Please wait and try again.`,
-        );
-      }
-
-      // A new job for referral rewards window was created.
-      const insertJobResult = await entityManager
-        .createQueryBuilder()
-        .insert()
-        .into(RewardsWindowJob)
-        .values({
-          windowIndex,
-          status: RewardsWindowJobStatus.Initial,
-          config: { maxDepositDate: maxDepositDate.toISOString() },
-        })
-        .execute();
-      const jobId = insertJobResult.identifiers[0].id;
-      const job = await entityManager
-        .createQueryBuilder()
-        .select("job")
-        .from(RewardsWindowJob, "job")
-        .where("job.id = :id", { id: jobId })
-        .getOne();
-
-      return job;
-    });
-  }
-
-  public async updateReferralRewardsWindowJob(id: number, values: QueryDeepPartialEntity<RewardsWindowJob>) {
-    await this.dataSource.createQueryBuilder().update(RewardsWindowJob).set(values).where("id = :id", { id }).execute();
-
-    const job = await this.dataSource
-      .createQueryBuilder()
-      .select("job")
-      .from(RewardsWindowJob, "job")
-      .where("job.id = :id", { id })
-      .getOne();
-
-    return job;
-  }
-
-  public async createReferralRewardsWindowJob(windowIndex: number, maxDepositDate: Date) {
-    let job = await this.createNewReferralRewardsWindowJob(windowIndex, maxDepositDate);
-    job = await this.updateReferralRewardsWindowJob(job.id, { status: RewardsWindowJobStatus.InProgress });
-
-    const start = new Date().getTime();
-    this.computeReferralRewardsForWindow(job.id, windowIndex, maxDepositDate)
-      .then(() => {
-        const stop = new Date().getTime();
-        return this.updateReferralRewardsWindowJob(job.id, {
-          status: RewardsWindowJobStatus.Done,
-          executionTime: `${(stop - start) / 1000}`,
-        });
-      })
-      .catch((error) => {
-        const stop = new Date().getTime();
-        this.updateReferralRewardsWindowJob(job.id, {
-          status: RewardsWindowJobStatus.Failed,
-          error: JSON.stringify(error),
-          executionTime: `${(stop - start) / 1000}`,
-        });
-      });
-
-    return job;
-  }
-
-  public async getReferralRewardsWindowJob(id: number) {
-    const job = await this.referralRewardsWindowJobRepository.findOne({ where: { id } });
-
-    if (!job) throw new ReferralRewardsWindowJobNotFoundException(job.id);
-
-    const jobResults = await this.referralRewardsWindowJobResultRepository.find({ where: { jobId: job.id } });
-    const recipients = jobResults.map((result) => ({
-      account: result.address,
-      amount: result.amount,
-      metadata: {
-        amountBreakdown: {
-          referralRewards: result.amount,
-        },
-      },
-    }));
-
-    return {
-      job,
-      result: {
-        chainId: this.appConfig.values.web3.merkleDistributor.chainId,
-        contractAddress: this.appConfig.values.web3.merkleDistributor.address,
-        windowIndex: job.windowIndex,
-        rewardToken: this.appConfig.values.web3.acx.address,
-        rewardsToDeposit: jobResults[0]?.totalRewardsAmount || null,
-        recipients,
-      },
-    };
-  }
-
-  private computeReferralRewardsForWindow(jobId: number, windowIndex: number, maxDepositDate: Date) {
-    return this.dataSource.transaction(async (entityManager) => {
-      const depositWithSameWindowIndex = await entityManager
-        .createQueryBuilder()
-        .select("d")
-        .from(Deposit, "d")
-        .where("d.rewardsWindowIndex = :windowIndex", { windowIndex })
-        .getOne();
-
-      if (Boolean(depositWithSameWindowIndex)) {
-        throw new WindowAlreadySetException();
-      }
-
-      const deposits = await entityManager
-        .createQueryBuilder(DepositsMv, "deposit")
-        .where("deposit.rewardsWindowIndex IS NULL")
-        .andWhere("deposit.depositDate <= :maxDepositDate", { maxDepositDate })
-        .getMany();
-      const { recipients, rewardsToDeposit } = this.calculateReferralRewards(deposits);
-      for (const depositsChunk of splitArrayInChunks(deposits, 100)) {
-        await entityManager
-          .createQueryBuilder()
-          .update(Deposit)
-          .set({ rewardsWindowIndex: windowIndex })
-          .where({ id: In(depositsChunk.map((d) => d.id)) })
-          .execute();
-      }
-
-      for (const recipientsChunk of splitArrayInChunks(recipients, 100)) {
-        await entityManager
-          .createQueryBuilder()
-          .insert()
-          .into(ReferralRewardsWindowJobResult)
-          .values(
-            recipientsChunk.map((recipient) => ({
-              jobId,
-              windowIndex,
-              totalRewardsAmount: rewardsToDeposit,
-              address: recipient.account,
-              amount: recipient.amount,
-            })),
-          )
-          .execute();
-      }
-    });
-  }
-
   public async revertReferralsMerkleDistribution(windowIndex: number) {
     await this.depositRepository.update({ rewardsWindowIndex: windowIndex }, { rewardsWindowIndex: null });
   }
@@ -453,48 +291,6 @@ export class ReferralService {
 
   public refreshMaterializedView() {
     return this.depositRepository.query(getRefreshMaterializedView());
-  }
-
-  public calculateReferralRewards(deposits: DepositsMv[]) {
-    // Map an address to considered deposits for referral rewards
-    const addressToDepositsMap = deposits.reduce((acc: Record<string, DepositsMv[]>, d) => {
-      if (d.referralAddress) {
-        acc[d.referralAddress] = [...(acc[d.referralAddress] || []), d];
-        if (d.depositorAddr !== d.referralAddress) {
-          acc[d.depositorAddr] = [...(acc[d.depositorAddr] || []), d];
-        }
-      }
-      return acc;
-    }, {});
-
-    let rewardsToDeposit: BigNumber = new BigNumber(0);
-    const recipients: {
-      account: string;
-      amount: string;
-    }[] = [];
-
-    for (const [address, deposits] of Object.entries(addressToDepositsMap)) {
-      const acxRewards = deposits.reduce((sum, d) => {
-        const feePct =
-          d.depositorAddr === address && d.referralAddress === address ? 1 : d.depositorAddr === address ? 0.25 : 0.75;
-        const rewards = new BigNumber(d.bridgeFeeUsd)
-          .multipliedBy(d.referralRate)
-          .multipliedBy(feePct)
-          .multipliedBy(d.multiplier)
-          .multipliedBy(new BigNumber(10).pow(18))
-          .dividedBy(d.acxUsdPrice)
-          .toFixed(0);
-        return sum.plus(rewards);
-      }, new BigNumber(0));
-
-      rewardsToDeposit = rewardsToDeposit.plus(acxRewards);
-      recipients.push({
-        account: address,
-        amount: acxRewards.toFixed(),
-      });
-    }
-
-    return { rewardsToDeposit: rewardsToDeposit.toFixed(), recipients };
   }
 
   public cumputeReferralStats() {

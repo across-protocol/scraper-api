@@ -10,11 +10,13 @@ export enum ScraperQueue {
   TokenPrice = "TokenPrice",
   DepositFilledDate = "DepositFilledDate",
   MerkleDistributorBlocksEvents = "MerkleDistributorBlocksEvents",
+  MerkleDistributorBlocksEventsV2 = "MerkleDistributorBlocksEventsV2",
   DepositAcxPrice = "DepositAcxPrice",
   SuggestedFees = "SuggestedFees",
   TrackFillEvent = "TrackFillEvent",
   FeeBreakdown = "FeeBreakdown",
   OpRebateReward = "OpRebateReward",
+  MerkleDistributorClaim = "MerkleDistributorClaim",
 }
 
 export type BlocksEventsQueueMessage = {
@@ -108,4 +110,8 @@ export type FeeBreakdownQueueMessage = {
 
 export type OpRebateRewardMessage = {
   depositPrimaryKey: number;
+};
+
+export type MerkleDistributorClaimQueueMessage = {
+  claimId: number;
 };

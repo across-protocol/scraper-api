@@ -53,6 +53,7 @@ export class ScraperService {
 
     if (this.appConfig.values.enableMerkleDistributorEventsProcessing) {
       this.publishMerkleDistributorBlocks(30);
+      this.publishMerkleDistributorBlocksV2(30);
     }
   }
 
@@ -111,6 +112,39 @@ export class ScraperService {
           await this.scraperQueuesService.publishMessage<MerkleDistributorBlocksEventsQueueMessage>(
             ScraperQueue.MerkleDistributorBlocksEvents,
             queueMsg,
+          );
+        }
+      } catch (error) {
+        this.logger.error(error);
+      }
+      await wait(interval);
+    }
+  }
+
+  public async publishMerkleDistributorBlocksV2(interval: number) {
+    while (true) {
+      try {
+        const chainId = this.appConfig.values.web3.merkleDistributorContracts.opRewards.chainId;
+        const blockNumber = await this.providers.getProvider(chainId).getBlockNumber();
+        const configStartBlockNumber = this.appConfig.values.web3.merkleDistributorContracts.opRewards.blockNumber;
+        const range = await this.determineBlockRange(
+          chainId,
+          blockNumber,
+          configStartBlockNumber,
+          this.merkleDistributorProcessedBlockRepository,
+        );
+
+        if (!!range) {
+          const queueMsg = { chainId, ...range };
+          await this.scraperQueuesService.publishMessage<MerkleDistributorBlocksEventsQueueMessage>(
+            ScraperQueue.MerkleDistributorBlocksEventsV2,
+            queueMsg,
+          );
+          // publish the block range again to be processed with delay
+          await this.scraperQueuesService.publishMessage<MerkleDistributorBlocksEventsQueueMessage>(
+            ScraperQueue.MerkleDistributorBlocksEventsV2,
+            queueMsg,
+            { delay: 1000 * 60 * 3 },
           );
         }
       } catch (error) {
