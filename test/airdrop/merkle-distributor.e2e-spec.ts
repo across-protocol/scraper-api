@@ -54,6 +54,7 @@ describe("GET /airdrop/merkle-distributor-proof", () => {
       windowIndex: 0,
       rewardToken: "0xrewardtoken",
       rewardsToDeposit: "10",
+      contractAddress: "0xF633b72A4C2Fb73b77A379bf72864A825aD35b6D",
     });
     await merkleDistributorRecipientFixture.insertMerkleDistributorRecipient({
       accountIndex: 0,
@@ -94,6 +95,7 @@ describe("GET /airdrop/merkle-distributor-proof", () => {
       windowIndex: 0,
       rewardToken: "0xrewardtoken",
       rewardsToDeposit: "10",
+      contractAddress: "0xF633b72A4C2Fb73b77A379bf72864A825aD35b6D",
     });
     await merkleDistributorRecipientFixture.insertMerkleDistributorRecipient({
       accountIndex: 0,
@@ -133,6 +135,7 @@ describe("GET /airdrop/merkle-distributor-proof", () => {
       windowIndex: 0,
       rewardToken: "0xrewardtoken",
       rewardsToDeposit: "10",
+      contractAddress: "0xF633b72A4C2Fb73b77A379bf72864A825aD35b6D",
     });
     await merkleDistributorRecipientFixture.insertMerkleDistributorRecipient({
       accountIndex: 0,
@@ -165,6 +168,7 @@ describe("GET /airdrop/merkle-distributor-proof", () => {
       windowIndex: 0,
       rewardToken: "0xrewardtoken",
       rewardsToDeposit: "10",
+      contractAddress: "0xF633b72A4C2Fb73b77A379bf72864A825aD35b6D",
     });
     await merkleDistributorRecipientFixture.insertMerkleDistributorRecipient({
       accountIndex: 0,
@@ -203,12 +207,14 @@ describe("GET /airdrop/merkle-distributor-proofs", () => {
         windowIndex: 0,
         rewardToken: "0xrewardtoken",
         rewardsToDeposit: "10",
+        contractAddress: "0xF633b72A4C2Fb73b77A379bf72864A825aD35b6D",
       },
       {
         merkleRoot: "0xmerkleroot",
         windowIndex: 1,
         rewardToken: "0xrewardtoken",
         rewardsToDeposit: "10",
+        contractAddress: "0xF633b72A4C2Fb73b77A379bf72864A825aD35b6D",
       },
     ]);
     await merkleDistributorRecipientFixture.insertManyMerkleDistributorRecipients([
