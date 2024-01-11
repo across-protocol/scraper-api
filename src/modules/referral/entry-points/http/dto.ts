@@ -1,6 +1,6 @@
 import { ApiProperty } from "@nestjs/swagger";
 import { Type } from "class-transformer";
-import { IsArray, IsInt, IsNumberString, IsOptional, IsString, Length, Max, Min } from "class-validator";
+import { IsArray, IsInt, IsOptional, IsString, Length, Max, Min } from "class-validator";
 
 export class GetReferralsSummaryQuery {
   @IsString()
