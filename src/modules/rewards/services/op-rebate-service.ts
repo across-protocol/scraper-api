@@ -47,6 +47,7 @@ export class OpRebateService {
     userAddress = assertValidAddress(userAddress);
 
     const baseQuery = this.buildBaseQuery(this.rewardRepository.createQueryBuilder("r"), userAddress);
+    baseQuery.andWhere("r.isClaimed === :isClaimed", { isClaimed: false });
     const [{ depositsCount }, { unclaimedRewards }, { volumeUsd }] = await Promise.all([
       baseQuery.select("COUNT(DISTINCT r.depositPrimaryKey)", "depositsCount").getRawOne<{
         depositsCount: string;
