@@ -25,8 +25,6 @@ import {
   FilledRelayEvent2_5,
   FilledRelay2EvArgs,
   FilledRelay2_5EvArgs,
-  RefundRequestedEvent2_5,
-  RefundRequestedEv,
   RequestedSpeedUpDepositEvent2,
   RequestedSpeedUpDepositEvent2_5,
   RequestedSpeedUpDepositEv2Args,
@@ -47,7 +45,6 @@ export class BlocksEventsConsumer {
     @InjectRepository(Deposit) private depositRepository: Repository<Deposit>,
     @InjectRepository(FundsDepositedEv) private fundsDepositedEvRepository: Repository<FundsDepositedEv>,
     @InjectRepository(FilledRelayEv) private filledRelayEvRepository: Repository<FilledRelayEv>,
-    @InjectRepository(FilledRelayEv) private refundRequestedEvRepository: Repository<RefundRequestedEv>,
     @InjectRepository(RequestedSpeedUpDepositEv)
     private requestedSpeedUpDepositEvRepository: Repository<RequestedSpeedUpDepositEv>,
     private scraperQueuesService: ScraperQueuesService,
@@ -64,18 +61,16 @@ export class BlocksEventsConsumer {
     // Split the block range in case multiple SpokePool contracts need to be queried
     const blocksToQuery = splitBlockRanges(ascSpokePoolConfigs, from, to);
     // Get the events from the SpokePool contracts
-    const { depositEvents, fillEvents, refundEvents, speedUpEvents } = await this.getEvents(blocksToQuery, chainId);
+    const { depositEvents, fillEvents, speedUpEvents } = await this.getEvents(blocksToQuery, chainId);
     const eventsCount = {
       depositEvents: depositEvents.length,
       fillEvents: fillEvents.length,
       speedUpEvents: speedUpEvents.length,
-      refundEvents: refundEvents.length,
     };
     this.logger.log(`${from}-${to} - chainId ${chainId} - ${JSON.stringify(eventsCount)}`);
 
     await this.processDepositEvents(chainId, depositEvents);
     await this.processFillEvents(chainId, fillEvents);
-    await this.processRefundEvents(chainId, refundEvents);
     await this.processSpeedUpEvents(chainId, speedUpEvents);
   }
 
@@ -85,7 +80,6 @@ export class BlocksEventsConsumer {
   ) {
     const depositEvents: Event[] = [];
     const fillEvents: Event[] = [];
-    const refundEvents: Event[] = [];
     const speedUpEvents: Event[] = [];
 
     for (const blocks of blocksToQuery) {
@@ -96,34 +90,16 @@ export class BlocksEventsConsumer {
           .getSpokePoolEventQuerier(chainId, blocks.address)
           .getRequestedSpeedUpDepositEvents(blocks.from, blocks.to),
       ];
-
-      if (blocks.acrossVersion === "2.5") {
-        promises.push(
-          this.providers
-            .getSpokePoolEventQuerier(chainId, blocks.address)
-            .getRefundRequestedEvents(blocks.from, blocks.to),
-        );
-      } else {
-        promises.push(
-          (() =>
-            new Promise((res) => {
-              res([]);
-            }))(),
-        );
-      }
-
-      const [depositEventsChunk, fillEventsChunk, speedUpEventsChunk, refundEventsChunk] = await Promise.all(promises);
+      const [depositEventsChunk, fillEventsChunk, speedUpEventsChunk] = await Promise.all(promises);
 
       depositEvents.push(...depositEventsChunk);
       fillEvents.push(...fillEventsChunk);
       speedUpEvents.push(...speedUpEventsChunk);
-      refundEvents.push(...refundEventsChunk);
     }
 
     return {
       depositEvents,
       fillEvents,
-      refundEvents,
       speedUpEvents,
     };
   }
@@ -195,10 +171,6 @@ export class BlocksEventsConsumer {
         await this.scraperQueuesService.publishMessage<FillEventsQueueMessage2>(ScraperQueue.FillEvents2, message);
       }
     }
-  }
-
-  private async processRefundEvents(chainId: number, events: Event[]) {
-    await this.insertRawRefundEvents(chainId, events);
   }
 
   private async processSpeedUpEvents(chainId: number, events: Event[]) {
@@ -474,58 +446,6 @@ export class BlocksEventsConsumer {
     for (const event of dbEvents) {
       try {
         await this.requestedSpeedUpDepositEvRepository.insert(event);
-      } catch (error) {
-        if (error instanceof QueryFailedError && error.driverError?.code === "23505") {
-          // Ignore duplicate key value violates unique constraint error.
-          this.logger.warn(error);
-        } else {
-          throw error;
-        }
-      }
-    }
-  }
-
-  private async insertRawRefundEvents(chainId: number, events: Event[]) {
-    const typedEvents = events as RefundRequestedEvent2_5[];
-    const dbEvents = typedEvents.map((event) => {
-      const { blockNumber, blockHash, transactionIndex, address, transactionHash, logIndex, args } = event;
-      const {
-        relayer,
-        refundToken,
-        amount,
-        originChainId,
-        destinationChainId,
-        realizedLpFeePct,
-        depositId,
-        fillBlock,
-        previousIdenticalRequests,
-      } = args;
-
-      return this.refundRequestedEvRepository.create({
-        blockNumber,
-        blockHash,
-        transactionIndex,
-        address,
-        chainId,
-        transactionHash,
-        logIndex,
-        args: {
-          relayer,
-          refundToken,
-          amount: amount.toString(),
-          originChainId: originChainId.toString(),
-          destinationChainId: destinationChainId.toString(),
-          realizedLpFeePct: realizedLpFeePct.toString(),
-          depositId,
-          fillBlock: fillBlock.toString(),
-          previousIdenticalRequests: previousIdenticalRequests.toString(),
-        },
-      });
-    });
-
-    for (const event of dbEvents) {
-      try {
-        await this.refundRequestedEvRepository.insert(event);
       } catch (error) {
         if (error instanceof QueryFailedError && error.driverError?.code === "23505") {
           // Ignore duplicate key value violates unique constraint error.

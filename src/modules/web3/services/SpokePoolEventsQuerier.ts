@@ -19,10 +19,6 @@ export class SpokePoolEventsQuerier extends EventsQuerier {
     return this.getEvents(from, to, this.getRequestedSpeedUpDepositEventsFilters());
   }
 
-  public async getRefundRequestedEvents(from: number, to: number): Promise<Event[]> {
-    return this.getEvents(from, to, this.getRefundRequestedEventsFilters());
-  }
-
   private getFilledRelayEventsFilter() {
     return this.spokePool.filters.FilledRelay();
   }
@@ -33,9 +29,5 @@ export class SpokePoolEventsQuerier extends EventsQuerier {
 
   private getRequestedSpeedUpDepositEventsFilters() {
     return this.spokePool.filters.RequestedSpeedUpDeposit();
-  }
-
-  private getRefundRequestedEventsFilters() {
-    return this.spokePool.filters.RefundRequested();
   }
 }

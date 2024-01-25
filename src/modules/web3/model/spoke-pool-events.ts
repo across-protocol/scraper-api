@@ -132,17 +132,3 @@ export interface RequestedSpeedUpDepositEvent2_5 extends Event {
     depositorSignature: string;
   };
 }
-
-export interface RefundRequestedEvent2_5 extends Event {
-  args: [string, string, BigNumber, BigNumber, BigNumber, BigNumber, number, BigNumber, BigNumber] & {
-    relayer: string;
-    refundToken: string;
-    amount: BigNumber;
-    originChainId: BigNumber;
-    destinationChainId: BigNumber;
-    realizedLpFeePct: BigNumber;
-    depositId: number;
-    fillBlock: BigNumber;
-    previousIdenticalRequests: BigNumber;
-  };
-}

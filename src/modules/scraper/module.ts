@@ -39,7 +39,6 @@ import { GasFeesService } from "./adapter/gas-fees/gas-fees-service";
 import { ModuleOptions } from "../../dynamic-module";
 import { DepositModule } from "../deposit/module";
 import { AirdropModule } from "../airdrop/module";
-import { RefundRequestedEv } from "../web3/model/refund-requested-ev.entity";
 import { RectifyStickyReferralConsumer } from "./adapter/messaging/RectifyStickyReferralConsumer";
 import { OpRebateRewardConsumer } from "./adapter/messaging/OpRebateRewardConsumer";
 import { OpRebateService } from "../rewards/services/op-rebate-service";
@@ -94,7 +93,6 @@ export class ScraperModule {
           FundsDepositedEv,
           FilledRelayEv,
           RequestedSpeedUpDepositEv,
-          RefundRequestedEv,
           OpReward,
           QueueJobCount,
           MerkleDistributorClaim,
