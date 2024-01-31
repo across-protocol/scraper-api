@@ -36,6 +36,8 @@ import { AppConfig } from "../../../configuration/configuration.service";
 import { splitBlockRanges } from "../../utils";
 import { Event } from "ethers";
 
+const SPOKE_POOL_VERIFIER_CONTRACT_ADDRESS = "0x269727F088F16E1Aea52Cf5a97B1CD41DAA3f02D";
+
 @Processor(ScraperQueue.BlocksEvents)
 export class BlocksEventsConsumer {
   private logger = new Logger(BlocksEventsConsumer.name);
@@ -129,7 +131,7 @@ export class BlocksEventsConsumer {
   private async processDepositEvents(chainId: number, events: Event[]) {
     for (const event of events) {
       try {
-        const deposit = this.fromFundsDepositedEventToDeposit(event);
+        const deposit = await this.fromFundsDepositedEventToDeposit(chainId, event);
         const result = await this.depositRepository.insert(deposit);
         await this.scraperQueuesService.publishMessage<BlockNumberQueueMessage>(ScraperQueue.BlockNumber, {
           depositId: result.identifiers[0].id,
@@ -242,11 +244,18 @@ export class BlocksEventsConsumer {
     }
   }
 
-  private fromFundsDepositedEventToDeposit(event: Event) {
+  private async fromFundsDepositedEventToDeposit(chainId: number, event: Event) {
     const typedEvent = event as FundsDepositedEvent2 | FundsDepositedEvent2_5;
     const { transactionHash, blockNumber } = typedEvent;
     const { depositId, originChainId, destinationChainId, amount, originToken, depositor, relayerFeePct, recipient } =
       event.args;
+    // In some cases the depositor is the txn msg.sender
+    let trueDepositor = depositor;
+
+    if (depositor === SPOKE_POOL_VERIFIER_CONTRACT_ADDRESS) {
+      const tx = await this.providers.getCachedTransactionReceipt(chainId, transactionHash);
+      trueDepositor = tx.from;
+    }
 
     return this.depositRepository.create({
       depositId,
@@ -259,7 +268,7 @@ export class BlocksEventsConsumer {
       depositTxHash: transactionHash,
       fillTxs: [],
       blockNumber,
-      depositorAddr: depositor,
+      depositorAddr: trueDepositor,
       recipientAddr: recipient,
       depositRelayerFeePct: relayerFeePct.toString(),
       initialRelayerFeePct: relayerFeePct.toString(),
