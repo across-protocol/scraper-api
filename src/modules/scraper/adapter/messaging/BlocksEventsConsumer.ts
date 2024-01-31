@@ -253,7 +253,7 @@ export class BlocksEventsConsumer {
     let trueDepositor = depositor;
 
     if (depositor === SPOKE_POOL_VERIFIER_CONTRACT_ADDRESS) {
-      const tx = await this.providers.getProvider(chainId).getTransaction(transactionHash);
+      const tx = await this.providers.getCachedTransactionReceipt(chainId, transactionHash);
       trueDepositor = tx.from;
     }
 
