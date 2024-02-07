@@ -68,7 +68,7 @@ export class BlocksEventsConsumer {
     };
     this.logger.log(`${from}-${to} - chainId ${chainId} - ${JSON.stringify(eventsCount)}`);
 
-    await this.processDepositEvents(depositEvents);
+    await this.processDepositEvents(chainId, depositEvents);
     await this.processDepositV3Events(chainId, depositEvents);
     await this.processFillEvents(chainId, fillEvents);
     await this.processSpeedUpEvents(chainId, speedUpEvents);
@@ -133,7 +133,7 @@ export class BlocksEventsConsumer {
     };
   }
 
-  private async processDepositEvents(events: Event[]) {
+  private async processDepositEvents(chainId: number, events: Event[]) {
     for (const event of events) {
       try {
         const deposit = await this.fromFundsDepositedEventToDeposit(chainId, event);
