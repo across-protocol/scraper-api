@@ -20,6 +20,7 @@ import { RewardsWindowJobFixture } from "../src/modules/rewards/adapter/db/rewar
 import { RewardsType } from "../src/modules/rewards/model/RewardsWindowJob.entity";
 import { ValidationPipe } from "../src/validation.pipe";
 import { DepositReferralStatFixture } from "../src/modules/referral/adapter/db/DepositReferralStatFixture";
+import { Deposit } from "../src/modules/deposit/model/deposit.entity";
 
 const referrer = "0x9A8f92a830A5cB89a3816e3D267CB7791c16b04D";
 const depositor = "0xdf120Bf3AEE9892f213B1Ba95035a60682D637c3";
@@ -228,7 +229,7 @@ describe("GET /referrals/summary", () => {
   });
 
   it("reset to tier 4 from 5 after claim", async () => {
-    const tier5DepositBase = {
+    const tier5DepositBase: Partial<Deposit> = {
       referralAddress: referrer,
       stickyReferralAddress: referrer,
       amount: tier5DepositAmount,

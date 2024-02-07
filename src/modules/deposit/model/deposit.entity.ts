@@ -137,6 +137,32 @@ export class Deposit {
   @JoinColumn([{ name: "priceId", referencedColumnName: "id" }])
   price?: HistoricMarketPrice;
 
+  @Column({ type: "decimal", nullable: true })
+  outputAmount?: string;
+
+  @Column({ nullable: true })
+  outputTokenAddress?: string;
+
+  @Column({ nullable: true })
+  outputTokenId?: number;
+
+  @ManyToOne(() => Token)
+  @JoinColumn([{ name: "tokenId", referencedColumnName: "id", foreignKeyConstraintName: "FK_deposit_outputTokenId" }])
+  outputToken?: Token;
+
+  @Column({ nullable: true })
+  outputTokenPriceId?: number;
+
+  @ManyToOne(() => HistoricMarketPrice)
+  @JoinColumn([
+    {
+      name: "outputTokenPriceId",
+      referencedColumnName: "id",
+      foreignKeyConstraintName: "FK_deposit_outputTokenPriceId",
+    },
+  ])
+  outputTokenPrice?: HistoricMarketPrice;
+
   @Column()
   depositTxHash: string;
 
@@ -163,6 +189,15 @@ export class Deposit {
 
   @Column({ type: "decimal", nullable: true })
   acxUsdPrice?: string;
+
+  @Column({ nullable: true })
+  fillDeadline: Date;
+
+  @Column({ nullable: true })
+  exclusivityDeadline: Date;
+
+  @Column({ nullable: true })
+  relayer: string;
 
   @CreateDateColumn()
   createdAt: Date;

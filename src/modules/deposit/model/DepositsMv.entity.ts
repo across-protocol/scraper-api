@@ -1,9 +1,6 @@
 import { ViewEntity, ViewColumn, Unique } from "typeorm";
 
-import { DepositReferralStats } from "../../referral/model/DepositReferralStats.entity";
-
 @ViewEntity({
-  dependsOn: [DepositReferralStats],
   materialized: true,
   expression: `
     SELECT

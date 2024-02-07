@@ -15,7 +15,6 @@ import { CommunityRewards } from "../airdrop/model/community-rewards.entity";
 import { UserWallet } from "../user/model/user-wallet.entity";
 import { MerkleDistributorRecipient } from "../airdrop/model/merkle-distributor-recipient.entity";
 import { MerkleDistributorWindow } from "../airdrop/model/merkle-distributor-window.entity";
-import { DepositReferralStats } from "../referral/model/DepositReferralStats.entity";
 import { DepositsMv } from "../deposit/model/DepositsMv.entity";
 import { DepositsFilteredReferrals } from "../referral/model/DepositsFilteredReferrals.entity";
 import { DepositReferralStat } from "../deposit/model/deposit-referral-stat.entity";
@@ -45,7 +44,6 @@ const entities = [
   UserWallet,
   MerkleDistributorWindow,
   MerkleDistributorRecipient,
-  DepositReferralStats,
   DepositsMv,
   DepositsFilteredReferrals,
   DepositReferralStat,

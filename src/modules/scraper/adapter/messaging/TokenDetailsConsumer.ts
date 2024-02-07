@@ -1,12 +1,14 @@
 import { OnQueueFailed, Process, Processor } from "@nestjs/bull";
 import { Logger } from "@nestjs/common";
 import { Job } from "bull";
-import { ScraperQueue, TokenDetailsQueueMessage, TokenPriceQueueMessage } from ".";
 import { InjectRepository } from "@nestjs/typeorm";
-import { Deposit } from "../../../deposit/model/deposit.entity";
 import { Repository } from "typeorm";
+
+import { ScraperQueue, TokenDetailsQueueMessage, TokenPriceQueueMessage } from ".";
+import { Deposit } from "../../../deposit/model/deposit.entity";
 import { EthProvidersService } from "../../../web3/services/EthProvidersService";
 import { ScraperQueuesService } from "../../service/ScraperQueuesService";
+import { Token } from "../../../web3/model/token.entity";
 
 @Processor(ScraperQueue.TokenDetails)
 export class TokenDetailsConsumer {
@@ -23,10 +25,21 @@ export class TokenDetailsConsumer {
     const { depositId } = job.data;
     const deposit = await this.depositRepository.findOne({ where: { id: depositId } });
     if (!deposit) return;
-    const { sourceChainId, tokenAddr } = deposit;
-    const token = await this.ethProvidersService.getCachedToken(sourceChainId, tokenAddr);
-    if (!token) throw new Error("Token not found");
-    await this.depositRepository.update({ id: deposit.id }, { tokenId: token.id });
+    const { sourceChainId, tokenAddr, destinationChainId, outputTokenAddress } = deposit;
+    const inputToken = await this.ethProvidersService.getCachedToken(sourceChainId, tokenAddr);
+    let outputToken: Token | undefined = undefined;
+
+    if (outputTokenAddress) {
+      outputToken = await this.ethProvidersService.getCachedToken(destinationChainId, outputTokenAddress);
+    }
+
+    if (!inputToken) throw new Error(`Input token not found for deposit ${depositId}`);
+    if (outputTokenAddress && !outputToken) throw new Error(`Output token not found for deposit ${depositId}`);
+
+    await this.depositRepository.update(
+      { id: deposit.id },
+      { tokenId: inputToken.id, outputTokenId: outputToken ? outputToken.id : null },
+    );
     await this.scraperQueuesService.publishMessage<TokenPriceQueueMessage>(ScraperQueue.TokenPrice, {
       depositId,
     });

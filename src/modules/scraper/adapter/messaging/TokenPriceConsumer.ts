@@ -8,6 +8,7 @@ import { DepositAcxPriceQueueMessage, ScraperQueue, TokenPriceQueueMessage } fro
 import { Deposit } from "../../../deposit/model/deposit.entity";
 import { MarketPriceService } from "../../../market-price/services/service";
 import { ScraperQueuesService } from "../../service/ScraperQueuesService";
+import { HistoricMarketPrice } from "src/modules/market-price/model/historic-market-price.entity";
 
 @Processor(ScraperQueue.TokenPrice)
 export class TokenPriceConsumer {
@@ -22,18 +23,38 @@ export class TokenPriceConsumer {
   @Process()
   private async process(job: Job<TokenPriceQueueMessage>) {
     const { depositId } = job.data;
-    const deposit = await this.depositRepository.findOne({ where: { id: depositId }, relations: ["token"] });
+    const deposit = await this.depositRepository.findOne({
+      where: { id: depositId },
+      relations: ["token", "outputToken"],
+    });
 
     if (!deposit) return;
-    if (!deposit.tokenId || !deposit.token || !deposit.depositDate) throw new Error("Invalid deposit");
+    if (!deposit.depositDate) throw new Error(`Deposit has no deposit date`);
+    if (!deposit.tokenId || !deposit.token) throw new Error(`Deposit has no input token`);
+    if (deposit.outputTokenAddress && (!deposit.outputTokenId || !deposit.outputToken))
+      throw new Error(`Deposit has no output token`);
+
     const previousDate = DateTime.fromISO(deposit.depositDate.toISOString()).minus({ days: 1 }).toJSDate();
     const price = await this.marketPriceService.getCachedHistoricMarketPrice(
       previousDate,
       deposit.token.symbol.toLowerCase(),
     );
+    let outputTokenPrice: HistoricMarketPrice | undefined = undefined;
+
+    if (deposit.outputToken) {
+      outputTokenPrice = await this.marketPriceService.getCachedHistoricMarketPrice(
+        previousDate,
+        deposit.outputToken.symbol.toLowerCase(),
+      );
+    }
 
     if (!price) throw new Error("Price not found");
-    await this.depositRepository.update({ id: depositId }, { priceId: price.id });
+    if (deposit.outputToken && !outputTokenPrice) throw new Error("Output token price not found");
+
+    await this.depositRepository.update(
+      { id: depositId },
+      { priceId: price.id, outputTokenPriceId: outputTokenPrice ? outputTokenPrice.id : null },
+    );
     this.scraperQueuesService.publishMessage<DepositAcxPriceQueueMessage>(ScraperQueue.DepositAcxPrice, { depositId });
   }
 
