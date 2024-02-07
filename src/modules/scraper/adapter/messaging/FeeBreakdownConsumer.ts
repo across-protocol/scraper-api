@@ -57,8 +57,7 @@ export class FeeBreakdownConsumer {
       deposit.token.decimals,
       deposit.destinationChainId,
     );
-    deposit.feeBreakdown = feeBreakdown;
-    await this.depositRepository.save(deposit);
+    await this.depositRepository.update({ id: deposit.id }, { feeBreakdown });
 
     this.scraperQueuesService.publishMessage<OpRebateRewardMessage>(ScraperQueue.OpRebateReward, {
       depositPrimaryKey: deposit.id,
