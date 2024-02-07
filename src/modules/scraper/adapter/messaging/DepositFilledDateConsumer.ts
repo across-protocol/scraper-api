@@ -51,7 +51,14 @@ export class DepositFilledDateConsumer {
     }
 
     deposit.filledDate = filledDate;
-    await this.depositRepository.save(deposit);
+
+    await this.depositRepository.update(
+      { id: deposit.id },
+      {
+        filledDate: deposit.filledDate,
+        fillTxs: deposit.fillTxs,
+      },
+    );
 
     this.scraperQueuesService.publishMessage<TrackFillEventQueueMessage>(ScraperQueue.TrackFillEvent, {
       depositId: deposit.id,
