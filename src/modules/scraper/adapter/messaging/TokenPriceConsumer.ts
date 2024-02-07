@@ -8,7 +8,7 @@ import { DepositAcxPriceQueueMessage, ScraperQueue, TokenPriceQueueMessage } fro
 import { Deposit } from "../../../deposit/model/deposit.entity";
 import { MarketPriceService } from "../../../market-price/services/service";
 import { ScraperQueuesService } from "../../service/ScraperQueuesService";
-import { HistoricMarketPrice } from "src/modules/market-price/model/historic-market-price.entity";
+import { HistoricMarketPrice } from "../../../market-price/model/historic-market-price.entity";
 
 @Processor(ScraperQueue.TokenPrice)
 export class TokenPriceConsumer {

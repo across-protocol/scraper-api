@@ -1,4 +1,4 @@
-import { AcrossContractsVersion } from "src/modules/web3/model/across-version";
+import { AcrossContractsVersion } from "../../web3/model/across-version";
 
 /**
  * Given a (from, to) block range and a list of contracts along with the deployment date,

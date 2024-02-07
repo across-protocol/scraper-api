@@ -30,7 +30,7 @@ import {
 } from "../../../web3/model";
 import { AppConfig } from "../../../configuration/configuration.service";
 import { splitBlockRanges } from "../../utils";
-import { AcrossContractsVersion } from "src/modules/web3/model/across-version";
+import { AcrossContractsVersion } from "../../../web3/model/across-version";
 
 const SPOKE_POOL_VERIFIER_CONTRACT_ADDRESS = "0x269727F088F16E1Aea52Cf5a97B1CD41DAA3f02D";
 
