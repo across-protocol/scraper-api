@@ -29,6 +29,42 @@ export interface FundsDepositedEvent2_5 extends Event {
   };
 }
 
+export interface FundsDepositedV3Event extends Event {
+  args: [
+    string,
+    string,
+    BigNumber,
+    BigNumber,
+    BigNumber,
+    number,
+    number,
+    number,
+    number,
+    string,
+    string,
+    string,
+    string,
+  ] & {
+    destinationChainId: BigNumber;
+    depositId: number;
+    quoteTimestamp: number;
+    recipient: string;
+    depositor: string;
+    message: string;
+    // New properties in V3
+    inputToken: string;
+    outputToken: string;
+    inputAmount: BigNumber;
+    outputAmount: BigNumber;
+    fillDeadline: number;
+    exclusivityDeadline: number;
+    relayer: string;
+    // Missing events from V2
+    // relayerFeePct: BigNumber;
+    // originToken: string;
+  };
+}
+
 export interface FilledRelayEvent2 extends Event {
   args: [
     BigNumber,

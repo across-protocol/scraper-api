@@ -6,12 +6,14 @@ import ArbitrumSpokePool2Abi from "../web3/services/abi/ArbitrumSpokePool2.json"
 import OptimismSpokePool2Abi from "../web3/services/abi/OptimismSpokePool2.json";
 import PolygonSpokePool2Abi from "../web3/services/abi/PolygonSpokePool2.json";
 import BobaSpokePool2Abi from "../web3/services/abi/BobaSpokePool2.json";
+import SpokePoolV3Abi from "../web3/services/abi/SpokePoolV3.json";
 
 import GoerliSpokePool2_5Abi from "../web3/services/abi/GoerliSpokePool2_5.json";
 import EthereumSpokePool2_5Abi from "../web3/services/abi/EthereumSpokePool2_5.json";
 import ArbitrumSpokePool2_5Abi from "../web3/services/abi/ArbitrumSpokePool2_5.json";
 import PolygonSpokePool2_5Abi from "../web3/services/abi/PolygonSpokePool2_5.json";
 import OptimismSpokePool2_5Abi from "../web3/services/abi/OptimismSpokePool2_5.json";
+import { AcrossContractsVersion } from "../web3/model/across-version";
 
 export enum StickyReferralAddressesMechanism {
   Queue = "queue",
@@ -62,6 +64,7 @@ export const configValues = () => ({
       8453: process.env.WEB3_NODE_URL_8453,
       84531: process.env.WEB3_NODE_URL_84531,
       11155420: process.env.WEB3_NODE_URL_11155420,
+      11155111: process.env.WEB3_NODE_URL_11155111,
     },
     spokePoolContracts: {
       [ChainIds.mainnet]: [
@@ -69,13 +72,13 @@ export const configValues = () => ({
           address: "0x4D9079Bb4165aeb4084c526a32695dCfd2F77381",
           startBlockNumber: 14819486,
           abi: JSON.stringify(EthereumSpokePool2Abi),
-          acrossVersion: "2",
+          acrossVersion: AcrossContractsVersion.V2,
         },
         {
           address: "0x5c7BCd6E7De5423a257D81B442095A1a6ced35C5",
           startBlockNumber: 17125811,
           abi: JSON.stringify(EthereumSpokePool2_5Abi),
-          acrossVersion: "2.5",
+          acrossVersion: AcrossContractsVersion.V2_5,
         },
       ],
       [ChainIds.optimism]: [
@@ -83,13 +86,13 @@ export const configValues = () => ({
           address: "0xa420b2d1c0841415A695b81E5B867BCD07Dff8C9",
           startBlockNumber: 8747136,
           abi: JSON.stringify(OptimismSpokePool2Abi),
-          acrossVersion: "2",
+          acrossVersion: AcrossContractsVersion.V2,
         },
         {
           address: "0x6f26Bf09B1C792e3228e5467807a900A503c0281",
           startBlockNumber: 94233880,
           abi: JSON.stringify(OptimismSpokePool2_5Abi),
-          acrossVersion: "2.5",
+          acrossVersion: AcrossContractsVersion.V2_5,
         },
       ],
       [ChainIds.arbitrum]: [
@@ -97,13 +100,13 @@ export const configValues = () => ({
           address: "0xB88690461dDbaB6f04Dfad7df66B7725942FEb9C",
           startBlockNumber: 12741972,
           abi: JSON.stringify(ArbitrumSpokePool2Abi),
-          acrossVersion: "2",
+          acrossVersion: AcrossContractsVersion.V2,
         },
         {
           address: "0xe35e9842fceaCA96570B734083f4a58e8F7C5f2A",
           startBlockNumber: 84268970,
           abi: JSON.stringify(ArbitrumSpokePool2_5Abi),
-          acrossVersion: "2.5",
+          acrossVersion: AcrossContractsVersion.V2_5,
         },
       ],
       [ChainIds.boba]: [
@@ -111,7 +114,7 @@ export const configValues = () => ({
           address: "0xBbc6009fEfFc27ce705322832Cb2068F8C1e0A58",
           startBlockNumber: 619993,
           abi: JSON.stringify(BobaSpokePool2Abi),
-          acrossVersion: "2",
+          acrossVersion: AcrossContractsVersion.V2,
         },
       ],
       [ChainIds.polygon]: [
@@ -119,13 +122,13 @@ export const configValues = () => ({
           address: "0x69B5c72837769eF1e7C164Abc6515DcFf217F920",
           startBlockNumber: 28604263,
           abi: JSON.stringify(PolygonSpokePool2Abi),
-          acrossVersion: "2",
+          acrossVersion: AcrossContractsVersion.V2,
         },
         {
           address: "0x9295ee1d8C5b022Be115A2AD3c30C72E34e7F096",
           startBlockNumber: 41954460,
           abi: JSON.stringify(PolygonSpokePool2_5Abi),
-          acrossVersion: "2.5",
+          acrossVersion: AcrossContractsVersion.V2_5,
         },
       ],
       [ChainIds.goerli]: [
@@ -133,7 +136,7 @@ export const configValues = () => ({
           address: "0x063fFa6C9748e3f0b9bA8ee3bbbCEe98d92651f7",
           startBlockNumber: 8824950,
           abi: JSON.stringify(GoerliSpokePool2_5Abi),
-          acrossVersion: "2.5",
+          acrossVersion: AcrossContractsVersion.V2_5,
         },
       ],
       [ChainIds.arbitrumGoerli]: [
@@ -141,7 +144,7 @@ export const configValues = () => ({
           address: "0xD29C85F15DF544bA632C9E25829fd29d767d7978",
           startBlockNumber: 16711650,
           abi: JSON.stringify(GoerliSpokePool2_5Abi),
-          acrossVersion: "2.5",
+          acrossVersion: AcrossContractsVersion.V2_5,
         },
       ],
       [ChainIds.zkSyncTestnet]: [
@@ -149,7 +152,7 @@ export const configValues = () => ({
           address: "0x863859ef502F0Ee9676626ED5B418037252eFeb2",
           startBlockNumber: 5000000,
           abi: JSON.stringify(GoerliSpokePool2_5Abi),
-          acrossVersion: "2.5",
+          acrossVersion: AcrossContractsVersion.V2_5,
         },
       ],
       [ChainIds.zkSyncMainnet]: [
@@ -157,7 +160,7 @@ export const configValues = () => ({
           address: "0xE0B015E54d54fc84a6cB9B666099c46adE9335FF",
           startBlockNumber: 10352565,
           abi: JSON.stringify(EthereumSpokePool2_5Abi),
-          acrossVersion: "2.5",
+          acrossVersion: AcrossContractsVersion.V2_5,
         },
       ],
       [ChainIds.base]: [
@@ -165,7 +168,7 @@ export const configValues = () => ({
           address: "0x09aea4b2242abC8bb4BB78D537A67a245A7bEC64",
           startBlockNumber: 2164878,
           abi: JSON.stringify(EthereumSpokePool2_5Abi),
-          acrossVersion: "2.5",
+          acrossVersion: AcrossContractsVersion.V2_5,
         },
       ],
       [ChainIds.baseGoerli]: [
@@ -173,7 +176,15 @@ export const configValues = () => ({
           address: "0x1F5AA71C79ec6a11FC55789ed32dAE3B64d75791",
           startBlockNumber: 7992905,
           abi: JSON.stringify(EthereumSpokePool2_5Abi),
-          acrossVersion: "2.5",
+          acrossVersion: AcrossContractsVersion.V2_5,
+        },
+      ],
+      [ChainIds.sepolia]: [
+        {
+          address: "0x622d59F3dbD28fcFE746E0d2f83ebdC286E89A3c",
+          startBlockNumber: 14819486,
+          abi: JSON.stringify(SpokePoolV3Abi),
+          acrossVersion: AcrossContractsVersion.V3,
         },
       ],
     },

@@ -2,6 +2,7 @@ export type ChainId = number;
 
 export const ChainIds = {
   mainnet: 1,
+  sepolia: 11155111,
   optimism: 10,
   optimismKovan: 69,
   optimismSepolia: 11155420,

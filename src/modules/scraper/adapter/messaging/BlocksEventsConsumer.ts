@@ -29,10 +29,12 @@ import {
   RequestedSpeedUpDepositEvent2_5,
   RequestedSpeedUpDepositEv2Args,
   RequestedSpeedUpDepositEv2_5Args,
+  FundsDepositedV3Event,
 } from "../../../web3/model";
 import { AppConfig } from "../../../configuration/configuration.service";
 import { splitBlockRanges } from "../../utils";
 import { Event } from "ethers";
+import { AcrossContractsVersion } from "src/modules/web3/model/across-version";
 
 const SPOKE_POOL_VERIFIER_CONTRACT_ADDRESS = "0x269727F088F16E1Aea52Cf5a97B1CD41DAA3f02D";
 
@@ -61,9 +63,10 @@ export class BlocksEventsConsumer {
     // Split the block range in case multiple SpokePool contracts need to be queried
     const blocksToQuery = splitBlockRanges(ascSpokePoolConfigs, from, to);
     // Get the events from the SpokePool contracts
-    const { depositEvents, fillEvents, speedUpEvents } = await this.getEvents(blocksToQuery, chainId);
+    const { depositEvents, depositV3Events, fillEvents, speedUpEvents } = await this.getEvents(blocksToQuery, chainId);
     const eventsCount = {
       depositEvents: depositEvents.length,
+      depositV3Events: depositV3Events.length,
       fillEvents: fillEvents.length,
       speedUpEvents: speedUpEvents.length,
     };
@@ -75,30 +78,59 @@ export class BlocksEventsConsumer {
   }
 
   private async getEvents(
-    blocksToQuery: { from: number; to: number; address: string; acrossVersion: string }[],
+    blocksToQuery: { from: number; to: number; address: string; acrossVersion: AcrossContractsVersion }[],
     chainId: number,
   ) {
+    // TODO: Add all types of events
     const depositEvents: Event[] = [];
+    const depositV3Events: Event[] = [];
     const fillEvents: Event[] = [];
     const speedUpEvents: Event[] = [];
 
     for (const blocks of blocksToQuery) {
+      const spokePoolEventQuerier = this.providers.getSpokePoolEventQuerier(chainId, blocks.address);
+      let depositEventsPromises = [];
+
+      if (blocks.acrossVersion === AcrossContractsVersion.V2) {
+        depositEventsPromises = [
+          spokePoolEventQuerier.getFundsDepositEvents(blocks.from, blocks.to),
+          new Promise((res) => {
+            res([]);
+          }),
+        ];
+      } else if (blocks.acrossVersion === AcrossContractsVersion.V2_5) {
+        depositEventsPromises = [
+          spokePoolEventQuerier.getFundsDepositEvents(blocks.from, blocks.to),
+          new Promise((res) => {
+            res([]);
+          }),
+        ];
+      } else if (blocks.acrossVersion === AcrossContractsVersion.V3) {
+        depositEventsPromises = [
+          new Promise((res) => {
+            res([]);
+          }),
+          spokePoolEventQuerier.getFundsDepositedV3Events(blocks.from, blocks.to),
+        ];
+      }
       const promises = [
-        this.providers.getSpokePoolEventQuerier(chainId, blocks.address).getFundsDepositEvents(blocks.from, blocks.to),
-        this.providers.getSpokePoolEventQuerier(chainId, blocks.address).getFilledRelayEvents(blocks.from, blocks.to),
-        this.providers
-          .getSpokePoolEventQuerier(chainId, blocks.address)
-          .getRequestedSpeedUpDepositEvents(blocks.from, blocks.to),
+        ...depositEventsPromises,
+        spokePoolEventQuerier.getFilledRelayEvents(blocks.from, blocks.to),
+        spokePoolEventQuerier.getRequestedSpeedUpDepositEvents(blocks.from, blocks.to),
       ];
-      const [depositEventsChunk, fillEventsChunk, speedUpEventsChunk] = await Promise.all(promises);
+      const [depositEventsChunk, depositV3EventsChunk, fillEventsChunk, speedUpEventsChunk] = await Promise.all(
+        promises,
+      );
 
       depositEvents.push(...depositEventsChunk);
+      depositV3Events.push(...depositV3EventsChunk);
       fillEvents.push(...fillEventsChunk);
       speedUpEvents.push(...speedUpEventsChunk);
     }
 
     return {
       depositEvents,
+      depositV3Events,
       fillEvents,
       speedUpEvents,
     };
@@ -112,6 +144,36 @@ export class BlocksEventsConsumer {
         await this.scraperQueuesService.publishMessage<BlockNumberQueueMessage>(ScraperQueue.BlockNumber, {
           depositId: result.identifiers[0].id,
         });
+      } catch (error) {
+        if (error instanceof QueryFailedError && error.driverError?.code === "23505") {
+          // Ignore duplicate key value violates unique constraint error.
+          this.logger.warn(error);
+        } else {
+          throw error;
+        }
+      }
+
+      try {
+        await this.insertRawDepositEvent(chainId, event);
+      } catch (error) {
+        if (error instanceof QueryFailedError && error.driverError?.code === "23505") {
+          // Ignore duplicate key value violates unique constraint error.
+          this.logger.warn(error);
+        } else {
+          throw error;
+        }
+      }
+    }
+  }
+
+  private async processDepositV3Events(chainId: number, events: FundsDepositedV3Event[]) {
+    for (const event of events) {
+      try {
+        // const deposit = this.fromFundsDepositedV3EventToDeposit(event);
+        // const result = await this.depositRepository.insert(deposit);
+        // await this.scraperQueuesService.publishMessage<BlockNumberQueueMessage>(ScraperQueue.BlockNumber, {
+        //   depositId: result.identifiers[0].id,
+        // });
       } catch (error) {
         if (error instanceof QueryFailedError && error.driverError?.code === "23505") {
           // Ignore duplicate key value violates unique constraint error.
@@ -244,6 +306,34 @@ export class BlocksEventsConsumer {
       recipientAddr: recipient,
       depositRelayerFeePct: relayerFeePct.toString(),
       initialRelayerFeePct: relayerFeePct.toString(),
+    });
+  }
+
+  private fromFundsDepositedV3EventToDeposit(event: FundsDepositedV3Event) {
+    const { transactionHash, blockNumber } = event;
+    const { depositId, originChainId, destinationChainId, amount, originToken, depositor, relayerFeePct, recipient } =
+      event.args;
+
+    return this.depositRepository.create({
+      depositId,
+      sourceChainId: originChainId.toNumber(),
+      destinationChainId: destinationChainId.toNumber(),
+      status: "pending",
+      amount: amount.toString(),
+      filled: "0",
+      tokenAddr: originToken,
+      depositTxHash: transactionHash,
+      fillTxs: [],
+      blockNumber,
+      depositorAddr: depositor,
+      recipientAddr: recipient,
+      depositRelayerFeePct: relayerFeePct.toString(),
+      // what happens with relayer fee?
+      // how do you know if it is profitable
+      // how do you compute the bridge fee
+      // do we have partial fills or just one fill per deposit?
+      initialRelayerFeePct: relayerFeePct.toString(),
+      //relayerFeePct = realizedLpFeePct + (gasFeePct + capitalCostFeePct)(old usage of relayerFeePct)    
     });
   }
 

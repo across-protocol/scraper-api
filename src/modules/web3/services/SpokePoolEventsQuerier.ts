@@ -8,7 +8,11 @@ export class SpokePoolEventsQuerier extends EventsQuerier {
   }
 
   public async getFundsDepositEvents(from: number, to: number): Promise<Event[]> {
-    return this.getEvents(from, to, this.getDepositEventsFilters());
+    return this.getEvents(from, to, this.getFundsDepositedEventFilters());
+  }
+
+  public async getFundsDepositedV3Events(from: number, to: number): Promise<Event[]> {
+    return this.getEvents(from, to, this.getFundsDepositedV3EventFilters());
   }
 
   public async getFilledRelayEvents(from: number, to: number): Promise<Event[]> {
@@ -23,8 +27,12 @@ export class SpokePoolEventsQuerier extends EventsQuerier {
     return this.spokePool.filters.FilledRelay();
   }
 
-  private getDepositEventsFilters() {
+  private getFundsDepositedEventFilters() {
     return this.spokePool.filters.FundsDeposited();
+  }
+
+  private getFundsDepositedV3EventFilters() {
+    return this.spokePool.filters.V3FundsDeposited();
   }
 
   private getRequestedSpeedUpDepositEventsFilters() {
