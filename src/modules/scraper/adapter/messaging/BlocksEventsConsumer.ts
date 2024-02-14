@@ -69,7 +69,7 @@ export class BlocksEventsConsumer {
     this.logger.log(`${from}-${to} - chainId ${chainId} - ${JSON.stringify(eventsCount)}`);
 
     await this.processDepositEvents(chainId, depositEvents);
-    await this.processDepositV3Events(chainId, depositEvents);
+    await this.processDepositV3Events(chainId, depositV3Events);
     await this.processFillEvents(chainId, fillEvents);
     await this.processSpeedUpEvents(chainId, speedUpEvents);
   }
