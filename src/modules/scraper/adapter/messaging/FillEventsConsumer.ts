@@ -54,7 +54,7 @@ export class FillEventsConsumer {
     deposit.status = new BigNumber(deposit.amount).eq(deposit.filled) ? "filled" : "pending";
     deposit.bridgeFeePct = bridgeFeePct.toString();
 
-    return this.depositRepository.update(
+    await this.depositRepository.update(
       { id: deposit.id },
       {
         fillTxs: deposit.fillTxs,
@@ -63,6 +63,8 @@ export class FillEventsConsumer {
         bridgeFeePct: deposit.bridgeFeePct,
       },
     );
+
+    return this.depositRepository.findOne({ where: { id: deposit.id } });
   }
 
   private computeBridgeFee(deposit: Deposit, fill: FillEventsQueueMessage) {
