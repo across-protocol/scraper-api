@@ -19,12 +19,20 @@ export class SpokePoolEventsQuerier extends EventsQuerier {
     return this.getEvents(from, to, this.getFilledRelayEventsFilter());
   }
 
+  public async getFilledV3RelayEvents(from: number, to: number): Promise<Event[]> {
+    return this.getEvents(from, to, this.getFilledV3RelayEventsFilter());
+  }
+
   public async getRequestedSpeedUpDepositEvents(from: number, to: number): Promise<Event[]> {
     return this.getEvents(from, to, this.getRequestedSpeedUpDepositEventsFilters());
   }
 
   private getFilledRelayEventsFilter() {
     return this.spokePool.filters.FilledRelay();
+  }
+
+  private getFilledV3RelayEventsFilter() {
+    return this.spokePool.filters.FilledV3Relay();
   }
 
   private getFundsDepositedEventFilters() {

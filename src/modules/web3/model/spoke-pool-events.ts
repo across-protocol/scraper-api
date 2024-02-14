@@ -149,6 +149,52 @@ export interface FilledRelayEvent2_5 extends Event {
   };
 }
 
+export interface FilledV3RelayEvent extends Event {
+  args: [
+    string,
+    string,
+    BigNumber,
+    BigNumber,
+    BigNumber,
+    BigNumber,
+    number,
+    number,
+    number,
+    string,
+    string,
+    string,
+    string,
+    string,
+    [string, string, BigNumber, number] & {
+      updatedRecipient: string;
+      updatedMessage: string;
+      updatedOutputAmount: BigNumber;
+      fillType: number;
+    },
+  ] & {
+    inputToken: string;
+    outputToken: string;
+    inputAmount: BigNumber;
+    outputAmount: BigNumber;
+    repaymentChainId: BigNumber;
+    originChainId: BigNumber;
+    depositId: number;
+    fillDeadline: number;
+    exclusivityDeadline: number;
+    exclusiveRelayer: string;
+    relayer: string;
+    depositor: string;
+    recipient: string;
+    message: string;
+    relayExecutionInfo: [string, string, BigNumber, number] & {
+      updatedRecipient: string;
+      updatedMessage: string;
+      updatedOutputAmount: BigNumber;
+      fillType: number;
+    };
+  };
+}
+
 export interface RequestedSpeedUpDepositEvent2 extends Event {
   args: [BigNumber, number, string, string] & {
     newRelayerFeePct: BigNumber;

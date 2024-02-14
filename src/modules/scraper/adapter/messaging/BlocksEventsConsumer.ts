@@ -59,11 +59,15 @@ export class BlocksEventsConsumer {
     // Split the block range in case multiple SpokePool contracts need to be queried
     const blocksToQuery = splitBlockRanges(ascSpokePoolConfigs, from, to);
     // Get the events from the SpokePool contracts
-    const { depositEvents, depositV3Events, fillEvents, speedUpEvents } = await this.getEvents(blocksToQuery, chainId);
+    const { depositEvents, depositV3Events, fillEvents, fillV3Events, speedUpEvents } = await this.getEvents(
+      blocksToQuery,
+      chainId,
+    );
     const eventsCount = {
       depositEvents: depositEvents.length,
       depositV3Events: depositV3Events.length,
       fillEvents: fillEvents.length,
+      fillV3Events: fillV3Events.length,
       speedUpEvents: speedUpEvents.length,
     };
     this.logger.log(`${from}-${to} - chainId ${chainId} - ${JSON.stringify(eventsCount)}`);
@@ -82,15 +86,23 @@ export class BlocksEventsConsumer {
     const depositEvents: Event[] = [];
     const depositV3Events: Event[] = [];
     const fillEvents: Event[] = [];
+    const fillV3Events: Event[] = [];
     const speedUpEvents: Event[] = [];
 
     for (const blocks of blocksToQuery) {
       const spokePoolEventQuerier = this.providers.getSpokePoolEventQuerier(chainId, blocks.address);
       let depositEventsPromises = [];
+      let fillEventsPromises = [];
 
       if (blocks.acrossVersion === AcrossContractsVersion.V2) {
         depositEventsPromises = [
           spokePoolEventQuerier.getFundsDepositEvents(blocks.from, blocks.to),
+          new Promise((res) => {
+            res([]);
+          }),
+        ];
+        fillEventsPromises = [
+          spokePoolEventQuerier.getFilledRelayEvents(blocks.from, blocks.to),
           new Promise((res) => {
             res([]);
           }),
@@ -102,6 +114,12 @@ export class BlocksEventsConsumer {
             res([]);
           }),
         ];
+        fillEventsPromises = [
+          spokePoolEventQuerier.getFilledRelayEvents(blocks.from, blocks.to),
+          new Promise((res) => {
+            res([]);
+          }),
+        ];
       } else if (blocks.acrossVersion === AcrossContractsVersion.V3) {
         depositEventsPromises = [
           new Promise((res) => {
@@ -109,19 +127,23 @@ export class BlocksEventsConsumer {
           }),
           spokePoolEventQuerier.getFundsDepositedV3Events(blocks.from, blocks.to),
         ];
+        fillEventsPromises = [
+          spokePoolEventQuerier.getFilledRelayEvents(blocks.from, blocks.to),
+          spokePoolEventQuerier.getFilledV3RelayEvents(blocks.from, blocks.to),
+        ];
       }
       const promises = [
         ...depositEventsPromises,
-        spokePoolEventQuerier.getFilledRelayEvents(blocks.from, blocks.to),
+        ...fillEventsPromises,
         spokePoolEventQuerier.getRequestedSpeedUpDepositEvents(blocks.from, blocks.to),
       ];
-      const [depositEventsChunk, depositV3EventsChunk, fillEventsChunk, speedUpEventsChunk] = await Promise.all(
-        promises,
-      );
+      const [depositEventsChunk, depositV3EventsChunk, fillEventsChunk, fillV3EventsChunk, speedUpEventsChunk] =
+        await Promise.all(promises);
 
       depositEvents.push(...depositEventsChunk);
       depositV3Events.push(...depositV3EventsChunk);
       fillEvents.push(...fillEventsChunk);
+      fillV3Events.push(...fillV3EventsChunk);
       speedUpEvents.push(...speedUpEventsChunk);
     }
 
@@ -129,6 +151,7 @@ export class BlocksEventsConsumer {
       depositEvents,
       depositV3Events,
       fillEvents,
+      fillV3Events,
       speedUpEvents,
     };
   }
