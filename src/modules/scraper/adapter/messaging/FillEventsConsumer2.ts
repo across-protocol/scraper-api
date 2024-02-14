@@ -57,7 +57,15 @@ export class FillEventsConsumer2 {
     deposit.status = new BigNumber(deposit.amount).eq(deposit.filled) ? "filled" : "pending";
     deposit.bridgeFeePct = bridgeFeePct.toString();
 
-    return this.depositRepository.save(deposit);
+    return this.depositRepository.update(
+      { id: deposit.id },
+      {
+        fillTxs: deposit.fillTxs,
+        filled: deposit.filled,
+        status: deposit.status,
+        bridgeFeePct: deposit.bridgeFeePct,
+      },
+    );
   }
 
   private computeBridgeFee(deposit: Deposit, fill: FillEventsQueueMessage2) {
