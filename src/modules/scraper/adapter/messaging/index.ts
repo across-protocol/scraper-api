@@ -2,6 +2,7 @@ export enum ScraperQueue {
   BlocksEvents = "BlocksEvents",
   FillEvents = "FillEvents",
   FillEvents2 = "FillEvents2",
+  FillEventsV3 = "FillEventsV3",
   SpeedUpEvents = "SpeedUpEvents",
   BlockNumber = "BlockNumber",
   TokenDetails = "TokenDetails",
@@ -51,6 +52,16 @@ export type FillEventsQueueMessage2 = {
   transactionHash: string;
   relayerFeePct: string;
   destinationToken: string;
+};
+
+export type FillEventsV3QueueMessage = {
+  updatedRecipient: string;
+  updatedMessage: string;
+  updatedOutputAmount: string;
+  fillType: number;
+  transactionHash: string;
+  depositId: number;
+  originChainId: number;
 };
 
 export type SpeedUpEventsQueueMessage = {

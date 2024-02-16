@@ -11,6 +11,8 @@ import {
   BlocksEventsQueueMessage,
   FillEventsQueueMessage,
   FillEventsQueueMessage2,
+  FillEventsV3QueueMessage,
+  FillEventsV3QueueMessage,
   ScraperQueue,
   SpeedUpEventsQueueMessage,
 } from ".";
@@ -27,6 +29,7 @@ import {
   RequestedSpeedUpDepositEvent2,
   RequestedSpeedUpDepositEvent2_5,
   FundsDepositedV3Event,
+  FilledV3RelayEvent,
 } from "../../../web3/model";
 import { AppConfig } from "../../../configuration/configuration.service";
 import { splitBlockRanges } from "../../utils";
@@ -205,7 +208,7 @@ export class BlocksEventsConsumer {
         (contract) => contract.address === address,
       )[0];
 
-      if (acrossVersion === AcrossContractsVersion.V2) {
+      if (event.args.appliedRelayerFeePct) {
         const typedEvent = event as FilledRelayEvent2;
         const message: FillEventsQueueMessage = {
           depositId: typedEvent.args.depositId,
@@ -218,7 +221,7 @@ export class BlocksEventsConsumer {
           destinationToken: typedEvent.args.destinationToken,
         };
         await this.scraperQueuesService.publishMessage<FillEventsQueueMessage>(ScraperQueue.FillEvents, message);
-      } else if (acrossVersion === AcrossContractsVersion.V2_5) {
+      } else if (event.args.updatableRelayData) {
         const typedEvent = event as FilledRelayEvent2_5;
         const message: FillEventsQueueMessage2 = {
           depositId: typedEvent.args.depositId,
@@ -231,6 +234,20 @@ export class BlocksEventsConsumer {
           destinationToken: typedEvent.args.destinationToken,
         };
         await this.scraperQueuesService.publishMessage<FillEventsQueueMessage2>(ScraperQueue.FillEvents2, message);
+      } else if (event.args.relayExecutionInfo) {
+        const typedEvent = event as FilledV3RelayEvent;
+        const message: FillEventsV3QueueMessage = {
+          updatedRecipient: typedEvent.args.relayExecutionInfo.updatedRecipient,
+          updatedMessage: typedEvent.args.relayExecutionInfo.updatedMessage,
+          updatedOutputAmount: typedEvent.args.relayExecutionInfo.updatedOutputAmount.toString(),
+          fillType: typedEvent.args.relayExecutionInfo.fillType,
+          depositId: typedEvent.args.depositId,
+          originChainId: typedEvent.args.originChainId.toNumber(),
+          transactionHash: typedEvent.transactionHash,
+        };
+        await this.scraperQueuesService.publishMessage<FillEventsV3QueueMessage>(ScraperQueue.FillEventsV3, message);
+      } else {
+        throw new Error("Unknown fill event type");
       }
     }
   }
