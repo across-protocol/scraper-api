@@ -36,7 +36,7 @@ export type DepositFillTxV3 = {
   fillType: number;
   hash: string;
   date?: string;
-}
+};
 export type RequestedSpeedUpDepositTx = {
   hash: string;
   blockNumber: number;
@@ -175,7 +175,7 @@ export class Deposit {
   depositTxHash: string;
 
   @Column({ type: "jsonb", default: [] })
-  fillTxs: (DepositFillTx | DepositFillTx2 | ])[];
+  fillTxs: (DepositFillTx | DepositFillTx2 | DepositFillTxV3)[];
 
   @Column({ type: "jsonb", default: [] })
   speedUps: RequestedSpeedUpDepositTx[];

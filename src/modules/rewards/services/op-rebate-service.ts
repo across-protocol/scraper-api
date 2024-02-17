@@ -143,6 +143,10 @@ export class OpRebateService {
 
     this.assertDepositKeys(deposit, ["price", "token", "depositDate", "feeBreakdown"]);
 
+    if (deposit.outputTokenAddress) {
+      this.assertDepositKeys(deposit, ["outputTokenPrice", "outputToken"]);
+    }
+
     if (Object.keys(deposit.feeBreakdown).length === 0) {
       throw new Error(`Deposit with id ${depositPrimaryKey} is missing fee breakdown`);
     }

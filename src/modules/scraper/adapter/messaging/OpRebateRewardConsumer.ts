@@ -24,17 +24,8 @@ export class OpRebateRewardConsumer {
 
     const deposit = await this.depositRepository.findOne({ where: { id: depositPrimaryKey } });
 
-    if (!deposit) {
-      this.logger.verbose(`${ScraperQueue.OpRebateReward} Deposit with id ${depositPrimaryKey} not found`);
-      return;
-    }
-
-    if (deposit.destinationChainId !== ChainIds.optimism) {
-      this.logger.verbose(
-        `${ScraperQueue.OpRebateReward} Deposit with id ${depositPrimaryKey} is not going to Optimism`,
-      );
-      return;
-    }
+    if (!deposit) return;
+    if (deposit.destinationChainId !== ChainIds.optimism) return;
 
     await this.opRebateService.createOpRebatesForDeposit(deposit.id);
   }
