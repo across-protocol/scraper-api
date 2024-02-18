@@ -29,6 +29,7 @@ export class TokenDetailsConsumer {
     const inputToken = await this.ethProvidersService.getCachedToken(sourceChainId, tokenAddr);
     let outputToken: Token | undefined = undefined;
 
+    if (outputTokenAddress === "0x0000000000000000000000000000000000000000") return;
     if (outputTokenAddress) {
       outputToken = await this.ethProvidersService.getCachedToken(destinationChainId, outputTokenAddress);
     }

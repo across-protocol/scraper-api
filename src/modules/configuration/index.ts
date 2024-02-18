@@ -182,7 +182,7 @@ export const configValues = () => ({
       [ChainIds.sepolia]: [
         {
           address: "0x622d59F3dbD28fcFE746E0d2f83ebdC286E89A3c",
-          startBlockNumber: 14819486,
+          startBlockNumber: 5146129,
           abi: JSON.stringify(SpokePoolV3Abi),
           acrossVersion: AcrossContractsVersion.V3,
         },

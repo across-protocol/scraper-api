@@ -162,7 +162,9 @@ export class Deposit {
   outputTokenId?: number;
 
   @ManyToOne(() => Token)
-  @JoinColumn([{ name: "tokenId", referencedColumnName: "id", foreignKeyConstraintName: "FK_deposit_outputTokenId" }])
+  @JoinColumn([
+    { name: "outputTokenId", referencedColumnName: "id", foreignKeyConstraintName: "FK_deposit_outputTokenId" },
+  ])
   outputToken?: Token;
 
   @Column({ nullable: true })

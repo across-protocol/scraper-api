@@ -413,8 +413,8 @@ export class BlocksEventsConsumer {
       // v3 properties
       outputAmount: outputAmount.toString(),
       outputTokenAddress: outputToken,
-      fillDeadline: fillDeadline,
-      exclusivityDeadline: exclusivityDeadline,
+      fillDeadline: new Date(fillDeadline * 1000),
+      exclusivityDeadline: new Date(exclusivityDeadline * 1000),
       relayer,
     });
   }
