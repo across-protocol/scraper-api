@@ -12,9 +12,9 @@ import {
   FillEventsQueueMessage,
   FillEventsQueueMessage2,
   FillEventsV3QueueMessage,
-  FillEventsV3QueueMessage,
   ScraperQueue,
   SpeedUpEventsQueueMessage,
+  SpeedUpEventsV3QueueMessage,
 } from ".";
 import { Deposit } from "../../../deposit/model/deposit.entity";
 import { ScraperQueuesService } from "../../service/ScraperQueuesService";
@@ -30,6 +30,7 @@ import {
   RequestedSpeedUpDepositEvent2_5,
   FundsDepositedV3Event,
   FilledV3RelayEvent,
+  RequestedSpeedUpV3DepositEvent,
 } from "../../../web3/model";
 import { AppConfig } from "../../../configuration/configuration.service";
 import { splitBlockRanges } from "../../utils";
@@ -62,16 +63,15 @@ export class BlocksEventsConsumer {
     // Split the block range in case multiple SpokePool contracts need to be queried
     const blocksToQuery = splitBlockRanges(ascSpokePoolConfigs, from, to);
     // Get the events from the SpokePool contracts
-    const { depositEvents, depositV3Events, fillEvents, fillV3Events, speedUpEvents } = await this.getEvents(
-      blocksToQuery,
-      chainId,
-    );
+    const { depositEvents, depositV3Events, fillEvents, fillV3Events, speedUpEvents, speedUpV3Events } =
+      await this.getEvents(blocksToQuery, chainId);
     const eventsCount = {
       depositEvents: depositEvents.length,
       depositV3Events: depositV3Events.length,
       fillEvents: fillEvents.length,
       fillV3Events: fillV3Events.length,
       speedUpEvents: speedUpEvents.length,
+      speedUpV3Events: speedUpV3Events.length,
     };
     this.logger.log(`${from}-${to} - chainId ${chainId} - ${JSON.stringify(eventsCount)}`);
 
@@ -80,6 +80,7 @@ export class BlocksEventsConsumer {
     await this.processFillEvents(chainId, fillEvents);
     await this.processFillEvents(chainId, fillV3Events);
     await this.processSpeedUpEvents(chainId, speedUpEvents);
+    await this.processSpeedUpV3Events(chainId, speedUpV3Events);
   }
 
   private async getEvents(
@@ -92,11 +93,13 @@ export class BlocksEventsConsumer {
     const fillEvents: Event[] = [];
     const fillV3Events: Event[] = [];
     const speedUpEvents: Event[] = [];
+    const speedUpV3Events: Event[] = [];
 
     for (const blocks of blocksToQuery) {
       const spokePoolEventQuerier = this.providers.getSpokePoolEventQuerier(chainId, blocks.address);
       let depositEventsPromises = [];
       let fillEventsPromises = [];
+      let speedUpEventsPromises = [];
 
       if (blocks.acrossVersion === AcrossContractsVersion.V2) {
         depositEventsPromises = [
@@ -107,6 +110,12 @@ export class BlocksEventsConsumer {
         ];
         fillEventsPromises = [
           spokePoolEventQuerier.getFilledRelayEvents(blocks.from, blocks.to),
+          new Promise((res) => {
+            res([]);
+          }),
+        ];
+        speedUpEventsPromises = [
+          spokePoolEventQuerier.getRequestedSpeedUpDepositEvents(blocks.from, blocks.to),
           new Promise((res) => {
             res([]);
           }),
@@ -124,6 +133,12 @@ export class BlocksEventsConsumer {
             res([]);
           }),
         ];
+        speedUpEventsPromises = [
+          spokePoolEventQuerier.getRequestedSpeedUpDepositEvents(blocks.from, blocks.to),
+          new Promise((res) => {
+            res([]);
+          }),
+        ];
       } else if (blocks.acrossVersion === AcrossContractsVersion.V3) {
         depositEventsPromises = [
           new Promise((res) => {
@@ -135,20 +150,29 @@ export class BlocksEventsConsumer {
           spokePoolEventQuerier.getFilledRelayEvents(blocks.from, blocks.to),
           spokePoolEventQuerier.getFilledV3RelayEvents(blocks.from, blocks.to),
         ];
+        speedUpEventsPromises = [
+          new Promise((res) => {
+            res([]);
+          }),
+          spokePoolEventQuerier.getRequestedSpeedUpV3DepositEvents(blocks.from, blocks.to),
+        ];
       }
-      const promises = [
-        ...depositEventsPromises,
-        ...fillEventsPromises,
-        spokePoolEventQuerier.getRequestedSpeedUpDepositEvents(blocks.from, blocks.to),
-      ];
-      const [depositEventsChunk, depositV3EventsChunk, fillEventsChunk, fillV3EventsChunk, speedUpEventsChunk] =
-        await Promise.all(promises);
+      const promises = [...depositEventsPromises, ...fillEventsPromises, ...speedUpEventsPromises];
+      const [
+        depositEventsChunk,
+        depositV3EventsChunk,
+        fillEventsChunk,
+        fillV3EventsChunk,
+        speedUpEventsChunk,
+        speedUpV3EventsChunk,
+      ] = await Promise.all(promises);
 
       depositEvents.push(...depositEventsChunk);
       depositV3Events.push(...depositV3EventsChunk);
       fillEvents.push(...fillEventsChunk);
       fillV3Events.push(...fillV3EventsChunk);
       speedUpEvents.push(...speedUpEventsChunk);
+      speedUpV3Events.push(...speedUpV3EventsChunk);
     }
 
     return {
@@ -157,6 +181,7 @@ export class BlocksEventsConsumer {
       fillEvents,
       fillV3Events,
       speedUpEvents,
+      speedUpV3Events,
     };
   }
 
@@ -293,6 +318,28 @@ export class BlocksEventsConsumer {
       if (message) {
         await this.scraperQueuesService.publishMessage<SpeedUpEventsQueueMessage>(ScraperQueue.SpeedUpEvents, message);
       }
+    }
+  }
+
+  private async processSpeedUpV3Events(chainId: number, events: Event[]) {
+    for (const event of events) {
+      const { transactionHash, blockNumber, args } = event as RequestedSpeedUpV3DepositEvent;
+      const message: SpeedUpEventsV3QueueMessage = {
+        depositSourceChainId: chainId,
+        depositId: args.depositId,
+        transactionHash,
+        blockNumber,
+        depositor: args.depositor,
+        depositorSignature: args.depositorSignature,
+        updatedOutputAmount: args.updatedOutputAmount.toString(),
+        updatedRecipient: args.updatedRecipient,
+        updatedMessage: args.updatedMessage,
+      };
+
+      await this.scraperQueuesService.publishMessage<SpeedUpEventsV3QueueMessage>(
+        ScraperQueue.SpeedUpEventsV3,
+        message,
+      );
     }
   }
 

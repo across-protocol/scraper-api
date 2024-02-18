@@ -3,7 +3,7 @@ import { Logger } from "@nestjs/common";
 import { Job } from "bull";
 import { DepositFilledDateQueueMessage, ScraperQueue, SpeedUpEventsQueueMessage } from ".";
 import { InjectRepository } from "@nestjs/typeorm";
-import { Deposit } from "../../../deposit/model/deposit.entity";
+import { Deposit, RequestedSpeedUpDepositTx } from "../../../deposit/model/deposit.entity";
 import { Repository } from "typeorm";
 import { ScraperQueuesService } from "../../service/ScraperQueuesService";
 
@@ -46,7 +46,7 @@ export class SpeedUpEventsConsumer {
     const sortedSpeedUps = [
       ...deposit.speedUps,
       { hash: transactionHash, newRelayerFeePct, blockNumber, depositSourceChainId, updatedMessage, updatedRecipient },
-    ].sort((a, b) => b.blockNumber - a.blockNumber);
+    ].sort((a, b) => b.blockNumber - a.blockNumber) as RequestedSpeedUpDepositTx[];
 
     return this.depositRepository.update(
       { id: deposit.id },
