@@ -10,7 +10,7 @@ import { ScraperQueuesService } from "../../service/ScraperQueuesService";
 import { FeeBreakdownQueueMessage, OpRebateRewardMessage, ScraperQueue } from ".";
 import { Deposit, DepositFillTx, DepositFillTx2, DepositFillTxV3 } from "../../../deposit/model/deposit.entity";
 import { deriveRelayerFeeComponents, makePctValuesCalculator, toWeiPct } from "../../utils";
-import { AcrossContractsVersion } from "src/modules/web3/model/across-version";
+import { AcrossContractsVersion } from "../../../web3/model/across-version";
 
 @Processor(ScraperQueue.FeeBreakdown)
 export class FeeBreakdownConsumer {
