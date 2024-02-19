@@ -29,7 +29,7 @@ export class DepositController {
     if (offset >= 2000) {
       throw new BadRequestException({
         error: "BadRequestException",
-        message: "Offset is temporarily limited to 2500",
+        message: "Offset is temporarily limited to 2000",
       });
     }
 
