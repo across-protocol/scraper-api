@@ -3,9 +3,10 @@ import { Logger } from "@nestjs/common";
 import { Job } from "bull";
 import { DepositFilledDateQueueMessage, SpeedUpEventsV3QueueMessage, ScraperQueue } from ".";
 import { InjectRepository } from "@nestjs/typeorm";
-import { Deposit } from "../../../deposit/model/deposit.entity";
+import { Deposit, RequestedSpeedUpDepositTxV3 } from "../../../deposit/model/deposit.entity";
 import { Repository } from "typeorm";
 import { ScraperQueuesService } from "../../service/ScraperQueuesService";
+import BigNumber from "bignumber.js";
 
 @Processor(ScraperQueue.SpeedUpEventsV3)
 export class SpeedUpEventsV3Consumer {
@@ -25,18 +26,14 @@ export class SpeedUpEventsV3Consumer {
     if (this.isSpeedUpAlreadyProcessed(deposit, job.data)) return;
 
     await this.processSpeedUpEventQueueMessage(deposit, job.data);
-
-    this.scraperQueuesService.publishMessage<DepositFilledDateQueueMessage>(ScraperQueue.DepositFilledDate, {
-      depositId: deposit.id,
-    });
   }
 
   public async processSpeedUpEventQueueMessage(deposit: Deposit, data: SpeedUpEventsV3QueueMessage) {
     const {
       transactionHash,
-      updatedOutputAmount,
       blockNumber,
       depositSourceChainId,
+      updatedOutputAmount,
       updatedMessage,
       updatedRecipient,
     } = data;
@@ -51,14 +48,17 @@ export class SpeedUpEventsV3Consumer {
         updatedMessage,
         updatedRecipient,
       },
-    ].sort((a, b) => b.blockNumber - a.blockNumber);
-
+    ].sort((a, b) => b.blockNumber - a.blockNumber) as RequestedSpeedUpDepositTxV3[];
+    const wei = new BigNumber(10).pow(18);
+    const feePct = new BigNumber(updatedOutputAmount).multipliedBy(wei).div(deposit.amount);
     return this.depositRepository.update(
       { id: deposit.id },
       {
         speedUps: sortedSpeedUps,
         message: sortedSpeedUps[0].updatedMessage,
         recipientAddr: sortedSpeedUps[0].updatedRecipient,
+        outputAmount: sortedSpeedUps[0].updatedOutputAmount,
+        depositRelayerFeePct: feePct.toFixed(0),
       },
     );
   }

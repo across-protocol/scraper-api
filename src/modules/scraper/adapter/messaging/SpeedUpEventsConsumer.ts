@@ -33,10 +33,6 @@ export class SpeedUpEventsConsumer {
     }
 
     await this.processSpeedUpEventQueueMessage(deposit, job.data);
-
-    this.scraperQueuesService.publishMessage<DepositFilledDateQueueMessage>(ScraperQueue.DepositFilledDate, {
-      depositId: deposit.id,
-    });
   }
 
   public async processSpeedUpEventQueueMessage(deposit: Deposit, data: SpeedUpEventsQueueMessage) {
