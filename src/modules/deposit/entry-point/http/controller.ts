@@ -1,4 +1,4 @@
-import { Controller, Get, Query } from "@nestjs/common";
+import { BadRequestException, Controller, Get, Query } from "@nestjs/common";
 import { ApiResponse, ApiTags } from "@nestjs/swagger";
 import { DepositService } from "../../service";
 import {
@@ -25,6 +25,13 @@ export class DepositController {
   getDeposits(@Query() query: GetDepositsQuery) {
     const limit = parseInt(query.limit ?? "10");
     const offset = parseInt(query.offset ?? "0");
+
+    if (offset >= 2000) {
+      throw new BadRequestException({
+        error: "BadRequestException",
+        message: "Offset is temporarily limited to 2500",
+      });
+    }
 
     if (query.address) {
       return this.depositService.getUserDeposits(query.address, query.status, limit, offset);
