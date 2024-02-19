@@ -214,3 +214,14 @@ export interface RequestedSpeedUpDepositEvent2_5 extends Event {
     depositorSignature: string;
   };
 }
+
+export interface RequestedSpeedUpV3DepositEvent extends Event {
+  args: [BigNumber, number, string, string, string, string] & {
+    updatedOutputAmount: BigNumber;
+    depositId: number;
+    depositor: string;
+    updatedRecipient: string;
+    updatedMessage: string;
+    depositorSignature: string;
+  };
+}

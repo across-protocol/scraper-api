@@ -48,6 +48,7 @@ import { QueuesMonitoringCron } from "./service/queues-monitoring-cron";
 import { QueueJobCount } from "../monitoring/model/QueueJobCount.entity";
 import { MerkleDistributorClaim } from "../airdrop/model/merkle-distributor-claim.entity";
 import { MerkleDistributorWindow } from "../airdrop/model/merkle-distributor-window.entity";
+import { SpeedUpEventsV3Consumer } from "./adapter/messaging/SpeedUpEventsV3Consumer";
 
 @Module({})
 export class ScraperModule {
@@ -67,6 +68,7 @@ export class ScraperModule {
       FillEventsConsumer2,
       FillEventsV3Consumer,
       SpeedUpEventsConsumer,
+      SpeedUpEventsV3Consumer,
       BlockNumberConsumer,
       TokenDetailsConsumer,
       DepositReferralConsumer,
@@ -159,6 +161,15 @@ export class ScraperModule {
         }),
         BullModule.registerQueue({
           name: ScraperQueue.SpeedUpEvents,
+          defaultJobOptions: {
+            backoff: 120 * 1000,
+            attempts: Number.MAX_SAFE_INTEGER,
+            removeOnComplete: true,
+            removeOnFail: true,
+          },
+        }),
+        BullModule.registerQueue({
+          name: ScraperQueue.SpeedUpEventsV3,
           defaultJobOptions: {
             backoff: 120 * 1000,
             attempts: Number.MAX_SAFE_INTEGER,

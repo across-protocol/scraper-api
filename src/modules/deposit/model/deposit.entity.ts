@@ -45,6 +45,13 @@ export type RequestedSpeedUpDepositTx = {
   updatedRecipient?: string;
   updatedMessage?: string;
 };
+export type RequestedSpeedUpDepositTxV3 = {
+  hash: string;
+  blockNumber: number;
+  updatedOutputAmount: string;
+  updatedRecipient: string;
+  updatedMessage: string;
+};
 export type FeeBreakdown = {
   // lp fee
   lpFeeUsd: string;
@@ -155,7 +162,9 @@ export class Deposit {
   outputTokenId?: number;
 
   @ManyToOne(() => Token)
-  @JoinColumn([{ name: "tokenId", referencedColumnName: "id", foreignKeyConstraintName: "FK_deposit_outputTokenId" }])
+  @JoinColumn([
+    { name: "outputTokenId", referencedColumnName: "id", foreignKeyConstraintName: "FK_deposit_outputTokenId" },
+  ])
   outputToken?: Token;
 
   @Column({ nullable: true })
@@ -178,7 +187,7 @@ export class Deposit {
   fillTxs: (DepositFillTx | DepositFillTx2 | DepositFillTxV3)[];
 
   @Column({ type: "jsonb", default: [] })
-  speedUps: RequestedSpeedUpDepositTx[];
+  speedUps: RequestedSpeedUpDepositTx[] | RequestedSpeedUpDepositTxV3[];
 
   @Column({ type: "jsonb", default: {} })
   feeBreakdown: FeeBreakdown;

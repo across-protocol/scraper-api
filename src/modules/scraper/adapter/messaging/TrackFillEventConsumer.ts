@@ -44,7 +44,7 @@ export class TrackFillEventConsumer {
       throw new Error("Can not track fill event without token, price or deposit date");
     }
 
-    const fillTx = deposit.fillTxs.find((tx) => tx.hash === fillTxHash);
+    const fillTx = deposit.fillTxs.find((tx) => tx.hash === fillTxHash) as DepositFillTx | DepositFillTx2;
 
     if (!fillTx) {
       throw new Error("Fill tx does not exist on deposit");
@@ -53,6 +53,8 @@ export class TrackFillEventConsumer {
     if (!fillTx.date) {
       throw new Error("Fill tx does not have a date");
     }
+    // Temporary disabled for v3 fills
+    if ((fillTx as any).updatedOutputAmount) return;
 
     const destinationChainInfo = chainIdToInfo[deposit.destinationChainId] || {
       name: "unknown",
