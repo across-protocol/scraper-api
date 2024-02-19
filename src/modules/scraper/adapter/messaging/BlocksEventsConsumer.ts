@@ -78,6 +78,7 @@ export class BlocksEventsConsumer {
     await this.processDepositEvents(chainId, depositEvents);
     await this.processDepositV3Events(chainId, depositV3Events);
     await this.processFillEvents(chainId, fillEvents);
+    await this.processFillEvents(chainId, fillV3Events);
     await this.processSpeedUpEvents(chainId, speedUpEvents);
   }
 

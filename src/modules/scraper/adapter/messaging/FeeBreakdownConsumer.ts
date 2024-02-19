@@ -84,6 +84,7 @@ export class FeeBreakdownConsumer {
     const outputAmountUsd = new BigNumber(deposit.outputAmount).multipliedBy(deposit.outputTokenPrice.usd);
     const bridgeFeeUsd = inputAmountUsd.minus(outputAmountUsd);
     const bridgeFeeAmount = bridgeFeeUsd.dividedBy(deposit.price.usd);
+    const relayGasFeePct = new BigNumber(relayGasFeeAmount).dividedBy(deposit.amount);
     const feeBreakdown = {
       lpFeeUsd: undefined,
       lpFeePct: undefined,
@@ -92,8 +93,7 @@ export class FeeBreakdownConsumer {
       relayCapitalFeePct: undefined,
       relayCapitalFeeAmount: undefined,
       relayGasFeeUsd,
-      // TODO: undefined
-      relayGasFeePct: undefined,
+      relayGasFeePct: relayGasFeePct.toString(),
       relayGasFeeAmount,
       totalBridgeFeeUsd: bridgeFeeUsd.toString(),
       totalBridgeFeePct: bridgeFeePct.toString(),
