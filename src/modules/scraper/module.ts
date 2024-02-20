@@ -49,6 +49,7 @@ import { QueueJobCount } from "../monitoring/model/QueueJobCount.entity";
 import { MerkleDistributorClaim } from "../airdrop/model/merkle-distributor-claim.entity";
 import { MerkleDistributorWindow } from "../airdrop/model/merkle-distributor-window.entity";
 import { SpeedUpEventsV3Consumer } from "./adapter/messaging/SpeedUpEventsV3Consumer";
+import { Token } from "../web3/model/token.entity";
 
 @Module({})
 export class ScraperModule {
@@ -101,6 +102,7 @@ export class ScraperModule {
           QueueJobCount,
           MerkleDistributorClaim,
           MerkleDistributorWindow,
+          Token,
         ]),
         MarketPriceModule.forRoot(moduleOptions),
         HttpModule,

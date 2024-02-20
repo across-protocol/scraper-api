@@ -3,12 +3,14 @@ import { Logger } from "@nestjs/common";
 import { Job } from "bull";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
+import { ethers } from "ethers";
 
 import { ScraperQueue, TokenDetailsQueueMessage, TokenPriceQueueMessage } from ".";
 import { Deposit } from "../../../deposit/model/deposit.entity";
 import { EthProvidersService } from "../../../web3/services/EthProvidersService";
 import { ScraperQueuesService } from "../../service/ScraperQueuesService";
 import { Token } from "../../../web3/model/token.entity";
+import { ChainIds } from "../../../web3/model/ChainId";
 
 @Processor(ScraperQueue.TokenDetails)
 export class TokenDetailsConsumer {
@@ -16,6 +18,7 @@ export class TokenDetailsConsumer {
 
   constructor(
     @InjectRepository(Deposit) private depositRepository: Repository<Deposit>,
+    @InjectRepository(Token) private tokenRepository: Repository<Token>,
     private ethProvidersService: EthProvidersService,
     private scraperQueuesService: ScraperQueuesService,
   ) {}
@@ -25,21 +28,34 @@ export class TokenDetailsConsumer {
     const { depositId } = job.data;
     const deposit = await this.depositRepository.findOne({ where: { id: depositId } });
     if (!deposit) return;
-    const { sourceChainId, tokenAddr, destinationChainId, outputTokenAddress } = deposit;
+    const { sourceChainId, tokenAddr, destinationChainId } = deposit;
     const inputToken = await this.ethProvidersService.getCachedToken(sourceChainId, tokenAddr);
-    let outputToken: Token | undefined = undefined;
-
-    if (outputTokenAddress === "0x0000000000000000000000000000000000000000") return;
-    if (outputTokenAddress) {
-      outputToken = await this.ethProvidersService.getCachedToken(destinationChainId, outputTokenAddress);
-    }
 
     if (!inputToken) throw new Error(`Input token not found for deposit ${depositId}`);
-    if (outputTokenAddress && !outputToken) throw new Error(`Output token not found for deposit ${depositId}`);
+
+    let outputToken: Token | undefined = undefined;
+
+    if (deposit.outputTokenAddress) {
+      if (deposit.outputTokenAddress === ethers.constants.AddressZero) {
+        const outputTokenSymbol =
+          destinationChainId === ChainIds.base && inputToken.symbol === "USDC" ? "USDbC" : inputToken.symbol;
+        outputToken = await this.tokenRepository.findOne({
+          where: { chainId: destinationChainId, symbol: outputTokenSymbol },
+        });
+      } else {
+        outputToken = await this.ethProvidersService.getCachedToken(destinationChainId, deposit.outputTokenAddress);
+      }
+    }
+
+    if (deposit.outputTokenAddress && !outputToken) throw new Error(`Output token not found for deposit ${depositId}`);
 
     await this.depositRepository.update(
       { id: deposit.id },
-      { tokenId: inputToken.id, outputTokenId: outputToken ? outputToken.id : null },
+      {
+        tokenId: inputToken.id,
+        outputTokenId: outputToken ? outputToken.id : null,
+        outputTokenAddress: deposit.outputTokenAddress,
+      },
     );
     await this.scraperQueuesService.publishMessage<TokenPriceQueueMessage>(ScraperQueue.TokenPrice, {
       depositId,
