@@ -19,6 +19,7 @@ export const ChainIds = {
   zkSyncTestnet: 280,
   base: 8453,
   baseGoerli: 84531,
+  baseSepolia: 84532,
 };
 
 export const ChainIdToName = Object.entries(ChainIds).reduce((idToName, entry) => {

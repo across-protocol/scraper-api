@@ -63,6 +63,7 @@ export const configValues = () => ({
       324: process.env.WEB3_NODE_URL_324,
       8453: process.env.WEB3_NODE_URL_8453,
       84531: process.env.WEB3_NODE_URL_84531,
+      84532: process.env.WEB3_NODE_URL_84532,
       11155420: process.env.WEB3_NODE_URL_11155420,
       11155111: process.env.WEB3_NODE_URL_11155111,
     },
@@ -179,10 +180,18 @@ export const configValues = () => ({
           acrossVersion: AcrossContractsVersion.V2_5,
         },
       ],
+      [ChainIds.baseSepolia]: [
+        {
+          address: "0x82B564983aE7274c86695917BBf8C99ECb6F0F8F",
+          startBlockNumber: 6082004,
+          abi: JSON.stringify(SpokePoolV3Abi),
+          acrossVersion: AcrossContractsVersion.V3,
+        },
+      ],
       [ChainIds.sepolia]: [
         {
-          address: "0x622d59F3dbD28fcFE746E0d2f83ebdC286E89A3c",
-          startBlockNumber: 5146129,
+          address: "0x5ef6C01E11889d86803e0B23e3cB3F9E9d97B662",
+          startBlockNumber: 5288470,
           abi: JSON.stringify(SpokePoolV3Abi),
           acrossVersion: AcrossContractsVersion.V3,
         },
