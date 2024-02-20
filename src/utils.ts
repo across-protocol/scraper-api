@@ -46,6 +46,11 @@ export const chainIdToInfo = {
     chainId: ChainIds.base,
     nativeSymbol: "eth",
   },
+  [ChainIds.baseSepolia]: {
+    name: "Base Sepolia",
+    chainId: ChainIds.baseSepolia,
+    nativeSymbol: "eth",
+  },
   [ChainIds.zkSyncMainnet]: {
     name: "zkSync",
     chainId: ChainIds.zkSyncMainnet,

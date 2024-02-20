@@ -9,7 +9,7 @@ import { GasFeesService } from "../gas-fees/gas-fees-service";
 import { ScraperQueuesService } from "../../service/ScraperQueuesService";
 import { FeeBreakdownQueueMessage, OpRebateRewardMessage, ScraperQueue } from ".";
 import { Deposit, DepositFillTx, DepositFillTx2, DepositFillTxV3 } from "../../../deposit/model/deposit.entity";
-import { deriveRelayerFeeComponents, makePctValuesCalculator, toWeiPct } from "../../utils";
+import { deriveRelayerFeeComponents, fixedPointAdjustment, makePctValuesCalculator, toWeiPct } from "../../utils";
 import { AcrossContractsVersion } from "../../../web3/model/across-version";
 
 @Processor(ScraperQueue.FeeBreakdown)
@@ -74,17 +74,20 @@ export class FeeBreakdownConsumer {
 
     const { feeUsd, fee } = await this.gasFeesService.getFillTxNetworkFee(deposit.destinationChainId, fillTx.hash);
     const relayGasFeeUsd = feeUsd;
-    const relayGasFeeAmount = fee;
+    const relayGasFeeAmount = fixedPointAdjustment.multipliedBy(fee).toFixed(0);
 
     // Bridge fee computation
     const wei = new BigNumber(10).pow(18);
     const outputWeiPct = toWeiPct(new BigNumber(fillTx.updatedOutputAmount).dividedBy(deposit.amount).toString());
     const bridgeFeePct = wei.minus(outputWeiPct);
-    const inputAmountUsd = new BigNumber(deposit.amount).multipliedBy(deposit.price.usd);
-    const outputAmountUsd = new BigNumber(deposit.outputAmount).multipliedBy(deposit.outputTokenPrice.usd);
+    const inputAmountUsd = new BigNumber(deposit.amount)
+      .multipliedBy(deposit.price.usd)
+      .dividedBy(new BigNumber(10).pow(deposit.token.decimals));
+    const outputAmountUsd = new BigNumber(deposit.outputAmount)
+      .multipliedBy(deposit.outputTokenPrice.usd)
+      .dividedBy(new BigNumber(10).pow(deposit.outputToken.decimals));
     const bridgeFeeUsd = inputAmountUsd.minus(outputAmountUsd);
-    const bridgeFeeAmount = bridgeFeeUsd.dividedBy(deposit.price.usd);
-    const relayGasFeePct = new BigNumber(relayGasFeeAmount).dividedBy(deposit.amount);
+    const bridgeFeeAmount = bridgeFeeUsd.multipliedBy(fixedPointAdjustment).dividedBy(deposit.price.usd);
     const feeBreakdown = {
       lpFeeUsd: undefined,
       lpFeePct: undefined,
@@ -93,7 +96,7 @@ export class FeeBreakdownConsumer {
       relayCapitalFeePct: undefined,
       relayCapitalFeeAmount: undefined,
       relayGasFeeUsd,
-      relayGasFeePct: relayGasFeePct.toString(),
+      relayGasFeePct: undefined,
       relayGasFeeAmount,
       totalBridgeFeeUsd: bridgeFeeUsd.toString(),
       totalBridgeFeePct: bridgeFeePct.toString(),
