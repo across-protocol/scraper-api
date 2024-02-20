@@ -51,6 +51,11 @@ export const chainIdToInfo = {
     chainId: ChainIds.zkSyncMainnet,
     nativeSymbol: "eth",
   },
+  [ChainIds.sepolia]: {
+    name: "Sepolia",
+    chainId: ChainIds.sepolia,
+    nativeSymbol: "eth",
+  },
 };
 
 export const wait = (seconds = 1) =>

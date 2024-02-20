@@ -11,8 +11,10 @@ import {
   BlocksEventsQueueMessage,
   FillEventsQueueMessage,
   FillEventsQueueMessage2,
+  FillEventsV3QueueMessage,
   ScraperQueue,
   SpeedUpEventsQueueMessage,
+  SpeedUpEventsV3QueueMessage,
 } from ".";
 import { Deposit } from "../../../deposit/model/deposit.entity";
 import { ScraperQueuesService } from "../../service/ScraperQueuesService";
@@ -27,6 +29,8 @@ import {
   RequestedSpeedUpDepositEvent2,
   RequestedSpeedUpDepositEvent2_5,
   FundsDepositedV3Event,
+  FilledV3RelayEvent,
+  RequestedSpeedUpV3DepositEvent,
 } from "../../../web3/model";
 import { AppConfig } from "../../../configuration/configuration.service";
 import { splitBlockRanges } from "../../utils";
@@ -59,19 +63,24 @@ export class BlocksEventsConsumer {
     // Split the block range in case multiple SpokePool contracts need to be queried
     const blocksToQuery = splitBlockRanges(ascSpokePoolConfigs, from, to);
     // Get the events from the SpokePool contracts
-    const { depositEvents, depositV3Events, fillEvents, speedUpEvents } = await this.getEvents(blocksToQuery, chainId);
+    const { depositEvents, depositV3Events, fillEvents, fillV3Events, speedUpEvents, speedUpV3Events } =
+      await this.getEvents(blocksToQuery, chainId);
     const eventsCount = {
       depositEvents: depositEvents.length,
       depositV3Events: depositV3Events.length,
       fillEvents: fillEvents.length,
+      fillV3Events: fillV3Events.length,
       speedUpEvents: speedUpEvents.length,
+      speedUpV3Events: speedUpV3Events.length,
     };
     this.logger.log(`${from}-${to} - chainId ${chainId} - ${JSON.stringify(eventsCount)}`);
 
     await this.processDepositEvents(chainId, depositEvents);
     await this.processDepositV3Events(chainId, depositV3Events);
     await this.processFillEvents(chainId, fillEvents);
+    await this.processFillEvents(chainId, fillV3Events);
     await this.processSpeedUpEvents(chainId, speedUpEvents);
+    await this.processSpeedUpV3Events(chainId, speedUpV3Events);
   }
 
   private async getEvents(
@@ -82,15 +91,31 @@ export class BlocksEventsConsumer {
     const depositEvents: Event[] = [];
     const depositV3Events: Event[] = [];
     const fillEvents: Event[] = [];
+    const fillV3Events: Event[] = [];
     const speedUpEvents: Event[] = [];
+    const speedUpV3Events: Event[] = [];
 
     for (const blocks of blocksToQuery) {
       const spokePoolEventQuerier = this.providers.getSpokePoolEventQuerier(chainId, blocks.address);
       let depositEventsPromises = [];
+      let fillEventsPromises = [];
+      let speedUpEventsPromises = [];
 
       if (blocks.acrossVersion === AcrossContractsVersion.V2) {
         depositEventsPromises = [
           spokePoolEventQuerier.getFundsDepositEvents(blocks.from, blocks.to),
+          new Promise((res) => {
+            res([]);
+          }),
+        ];
+        fillEventsPromises = [
+          spokePoolEventQuerier.getFilledRelayEvents(blocks.from, blocks.to),
+          new Promise((res) => {
+            res([]);
+          }),
+        ];
+        speedUpEventsPromises = [
+          spokePoolEventQuerier.getRequestedSpeedUpDepositEvents(blocks.from, blocks.to),
           new Promise((res) => {
             res([]);
           }),
@@ -102,6 +127,18 @@ export class BlocksEventsConsumer {
             res([]);
           }),
         ];
+        fillEventsPromises = [
+          spokePoolEventQuerier.getFilledRelayEvents(blocks.from, blocks.to),
+          new Promise((res) => {
+            res([]);
+          }),
+        ];
+        speedUpEventsPromises = [
+          spokePoolEventQuerier.getRequestedSpeedUpDepositEvents(blocks.from, blocks.to),
+          new Promise((res) => {
+            res([]);
+          }),
+        ];
       } else if (blocks.acrossVersion === AcrossContractsVersion.V3) {
         depositEventsPromises = [
           new Promise((res) => {
@@ -109,27 +146,42 @@ export class BlocksEventsConsumer {
           }),
           spokePoolEventQuerier.getFundsDepositedV3Events(blocks.from, blocks.to),
         ];
+        fillEventsPromises = [
+          spokePoolEventQuerier.getFilledRelayEvents(blocks.from, blocks.to),
+          spokePoolEventQuerier.getFilledV3RelayEvents(blocks.from, blocks.to),
+        ];
+        speedUpEventsPromises = [
+          new Promise((res) => {
+            res([]);
+          }),
+          spokePoolEventQuerier.getRequestedSpeedUpV3DepositEvents(blocks.from, blocks.to),
+        ];
       }
-      const promises = [
-        ...depositEventsPromises,
-        spokePoolEventQuerier.getFilledRelayEvents(blocks.from, blocks.to),
-        spokePoolEventQuerier.getRequestedSpeedUpDepositEvents(blocks.from, blocks.to),
-      ];
-      const [depositEventsChunk, depositV3EventsChunk, fillEventsChunk, speedUpEventsChunk] = await Promise.all(
-        promises,
-      );
+      const promises = [...depositEventsPromises, ...fillEventsPromises, ...speedUpEventsPromises];
+      const [
+        depositEventsChunk,
+        depositV3EventsChunk,
+        fillEventsChunk,
+        fillV3EventsChunk,
+        speedUpEventsChunk,
+        speedUpV3EventsChunk,
+      ] = await Promise.all(promises);
 
       depositEvents.push(...depositEventsChunk);
       depositV3Events.push(...depositV3EventsChunk);
       fillEvents.push(...fillEventsChunk);
+      fillV3Events.push(...fillV3EventsChunk);
       speedUpEvents.push(...speedUpEventsChunk);
+      speedUpV3Events.push(...speedUpV3EventsChunk);
     }
 
     return {
       depositEvents,
       depositV3Events,
       fillEvents,
+      fillV3Events,
       speedUpEvents,
+      speedUpV3Events,
     };
   }
 
@@ -182,7 +234,7 @@ export class BlocksEventsConsumer {
         (contract) => contract.address === address,
       )[0];
 
-      if (acrossVersion === AcrossContractsVersion.V2) {
+      if (event.args.appliedRelayerFeePct) {
         const typedEvent = event as FilledRelayEvent2;
         const message: FillEventsQueueMessage = {
           depositId: typedEvent.args.depositId,
@@ -195,7 +247,7 @@ export class BlocksEventsConsumer {
           destinationToken: typedEvent.args.destinationToken,
         };
         await this.scraperQueuesService.publishMessage<FillEventsQueueMessage>(ScraperQueue.FillEvents, message);
-      } else if (acrossVersion === AcrossContractsVersion.V2_5) {
+      } else if (event.args.updatableRelayData) {
         const typedEvent = event as FilledRelayEvent2_5;
         const message: FillEventsQueueMessage2 = {
           depositId: typedEvent.args.depositId,
@@ -208,6 +260,20 @@ export class BlocksEventsConsumer {
           destinationToken: typedEvent.args.destinationToken,
         };
         await this.scraperQueuesService.publishMessage<FillEventsQueueMessage2>(ScraperQueue.FillEvents2, message);
+      } else if (event.args.relayExecutionInfo) {
+        const typedEvent = event as FilledV3RelayEvent;
+        const message: FillEventsV3QueueMessage = {
+          updatedRecipient: typedEvent.args.relayExecutionInfo.updatedRecipient,
+          updatedMessage: typedEvent.args.relayExecutionInfo.updatedMessage,
+          updatedOutputAmount: typedEvent.args.relayExecutionInfo.updatedOutputAmount.toString(),
+          fillType: typedEvent.args.relayExecutionInfo.fillType,
+          depositId: typedEvent.args.depositId,
+          originChainId: typedEvent.args.originChainId.toNumber(),
+          transactionHash: typedEvent.transactionHash,
+        };
+        await this.scraperQueuesService.publishMessage<FillEventsV3QueueMessage>(ScraperQueue.FillEventsV3, message);
+      } else {
+        throw new Error("Unknown fill event type");
       }
     }
   }
@@ -252,6 +318,28 @@ export class BlocksEventsConsumer {
       if (message) {
         await this.scraperQueuesService.publishMessage<SpeedUpEventsQueueMessage>(ScraperQueue.SpeedUpEvents, message);
       }
+    }
+  }
+
+  private async processSpeedUpV3Events(chainId: number, events: Event[]) {
+    for (const event of events) {
+      const { transactionHash, blockNumber, args } = event as RequestedSpeedUpV3DepositEvent;
+      const message: SpeedUpEventsV3QueueMessage = {
+        depositSourceChainId: chainId,
+        depositId: args.depositId,
+        transactionHash,
+        blockNumber,
+        depositor: args.depositor,
+        depositorSignature: args.depositorSignature,
+        updatedOutputAmount: args.updatedOutputAmount.toString(),
+        updatedRecipient: args.updatedRecipient,
+        updatedMessage: args.updatedMessage,
+      };
+
+      await this.scraperQueuesService.publishMessage<SpeedUpEventsV3QueueMessage>(
+        ScraperQueue.SpeedUpEventsV3,
+        message,
+      );
     }
   }
 
@@ -325,8 +413,8 @@ export class BlocksEventsConsumer {
       // v3 properties
       outputAmount: outputAmount.toString(),
       outputTokenAddress: outputToken,
-      fillDeadline: fillDeadline,
-      exclusivityDeadline: exclusivityDeadline,
+      fillDeadline: new Date(fillDeadline * 1000),
+      exclusivityDeadline: new Date(exclusivityDeadline * 1000),
       relayer,
     });
   }
