@@ -54,7 +54,7 @@ export class TokenDetailsConsumer {
       {
         tokenId: inputToken.id,
         outputTokenId: outputToken ? outputToken.id : null,
-        outputTokenAddress: deposit.outputTokenAddress,
+        outputTokenAddress: outputToken ? outputToken.address : deposit.outputTokenAddress,
       },
     );
     await this.scraperQueuesService.publishMessage<TokenPriceQueueMessage>(ScraperQueue.TokenPrice, {

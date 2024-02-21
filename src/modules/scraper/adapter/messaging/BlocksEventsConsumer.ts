@@ -410,7 +410,6 @@ export class BlocksEventsConsumer {
       depositorAddr: depositor,
       recipientAddr: recipient,
       depositRelayerFeePct: feePct.toString(),
-      // what happens with relayer fee?
       initialRelayerFeePct: feePct.toString(),
       //relayerFeePct = realizedLpFeePct + (gasFeePct + capitalCostFeePct)(old usage of relayerFeePct)
       // v3 properties

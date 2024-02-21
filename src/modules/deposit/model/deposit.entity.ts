@@ -208,13 +208,13 @@ export class Deposit {
   acxUsdPrice?: string;
 
   @Column({ nullable: true })
-  fillDeadline: Date;
+  fillDeadline?: Date;
 
   @Column({ nullable: true })
-  exclusivityDeadline: Date;
+  exclusivityDeadline?: Date;
 
   @Column({ nullable: true })
-  relayer: string;
+  relayer?: string;
 
   @CreateDateColumn()
   createdAt: Date;
