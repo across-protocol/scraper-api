@@ -23,6 +23,7 @@ export class SpeedUpEventsV3Consumer {
     const deposit = await this.depositRepository.findOne({ where: { sourceChainId: depositSourceChainId, depositId } });
 
     if (!deposit) throw new Error("Deposit not found");
+
     if (this.isSpeedUpAlreadyProcessed(deposit, job.data)) return;
 
     await this.processSpeedUpEventQueueMessage(deposit, job.data);
