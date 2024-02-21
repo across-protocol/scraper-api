@@ -189,6 +189,12 @@ export const configValues = () => ({
           abi: JSON.stringify(EthereumSpokePool2_5Abi),
           acrossVersion: AcrossContractsVersion.V2_5,
         },
+        {
+          address: "0x09aea4b2242abC8bb4BB78D537A67a245A7bEC64",
+          startBlockNumber: 2164879,
+          abi: JSON.stringify(SpokePoolV3Abi),
+          acrossVersion: AcrossContractsVersion.V3,
+        },
       ],
       [ChainIds.baseGoerli]: [
         {
