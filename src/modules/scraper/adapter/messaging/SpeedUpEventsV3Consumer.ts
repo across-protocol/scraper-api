@@ -51,7 +51,7 @@ export class SpeedUpEventsV3Consumer {
       },
     ].sort((a, b) => b.blockNumber - a.blockNumber) as RequestedSpeedUpDepositTxV3[];
     const wei = new BigNumber(10).pow(18);
-    const feePct = new BigNumber(updatedOutputAmount).multipliedBy(wei).div(deposit.amount);
+    const feePct = wei.minus(wei.multipliedBy(updatedOutputAmount).dividedBy(deposit.amount));
     return this.depositRepository.update(
       { id: deposit.id },
       {
