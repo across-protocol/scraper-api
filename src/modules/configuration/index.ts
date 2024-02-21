@@ -121,6 +121,12 @@ export const configValues = () => ({
           abi: JSON.stringify(ArbitrumSpokePool2_5Abi),
           acrossVersion: AcrossContractsVersion.V2_5,
         },
+        {
+          address: "0xe35e9842fceaCA96570B734083f4a58e8F7C5f2A",
+          startBlockNumber: 84268971,
+          abi: JSON.stringify(SpokePoolV3Abi),
+          acrossVersion: AcrossContractsVersion.V3,
+        },
       ],
       [ChainIds.boba]: [
         {
