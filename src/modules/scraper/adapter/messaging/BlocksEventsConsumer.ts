@@ -379,7 +379,7 @@ export class BlocksEventsConsumer {
     } = event.args;
 
     const wei = BigNumber.from(10).pow(18);
-    const feePct = outputAmount.mul(wei).div(inputAmount);
+    const feePct = wei.sub(outputAmount.mul(wei).div(inputAmount));
     let exclusivityDeadlineDate = undefined;
 
     if (exclusivityDeadline > 0) exclusivityDeadlineDate = new Date(exclusivityDeadline * 1000);
