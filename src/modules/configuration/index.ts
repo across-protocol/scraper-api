@@ -165,7 +165,7 @@ export const configValues = () => ({
         },
         {
           address: "0xE0B015E54d54fc84a6cB9B666099c46adE9335FF",
-          startBlockNumber: 10352565,
+          startBlockNumber: 10352566,
           abi: JSON.stringify(SpokePoolV3Abi),
           acrossVersion: AcrossContractsVersion.V3,
         },
