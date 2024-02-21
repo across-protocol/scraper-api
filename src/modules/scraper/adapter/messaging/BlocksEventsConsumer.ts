@@ -392,6 +392,9 @@ export class BlocksEventsConsumer {
 
     const wei = BigNumber.from(10).pow(18);
     const feePct = outputAmount.mul(wei).div(inputAmount);
+    let exclusivityDeadlineDate = undefined;
+
+    if (exclusivityDeadline > 0) exclusivityDeadlineDate = new Date(exclusivityDeadline * 1000);
 
     return this.depositRepository.create({
       depositId,
@@ -414,7 +417,7 @@ export class BlocksEventsConsumer {
       outputAmount: outputAmount.toString(),
       outputTokenAddress: outputToken,
       fillDeadline: new Date(fillDeadline * 1000),
-      exclusivityDeadline: new Date(exclusivityDeadline * 1000),
+      exclusivityDeadline: exclusivityDeadlineDate,
       relayer,
     });
   }
