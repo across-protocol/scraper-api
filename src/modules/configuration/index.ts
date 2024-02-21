@@ -81,12 +81,6 @@ export const configValues = () => ({
           abi: JSON.stringify(EthereumSpokePool2_5Abi),
           acrossVersion: AcrossContractsVersion.V2_5,
         },
-        {
-          address: "0x5c7BCd6E7De5423a257D81B442095A1a6ced35C5",
-          startBlockNumber: 17125811,
-          abi: JSON.stringify(SpokePoolV3Abi),
-          acrossVersion: AcrossContractsVersion.V3,
-        },
       ],
       [ChainIds.optimism]: [
         {
@@ -101,12 +95,6 @@ export const configValues = () => ({
           abi: JSON.stringify(OptimismSpokePool2_5Abi),
           acrossVersion: AcrossContractsVersion.V2_5,
         },
-        {
-          address: "0x6f26Bf09B1C792e3228e5467807a900A503c0281",
-          startBlockNumber: 94233880,
-          abi: JSON.stringify(SpokePoolV3Abi),
-          acrossVersion: AcrossContractsVersion.V3,
-        },
       ],
       [ChainIds.arbitrum]: [
         {
@@ -120,12 +108,6 @@ export const configValues = () => ({
           startBlockNumber: 84268970,
           abi: JSON.stringify(ArbitrumSpokePool2_5Abi),
           acrossVersion: AcrossContractsVersion.V2_5,
-        },
-        {
-          address: "0xe35e9842fceaCA96570B734083f4a58e8F7C5f2A",
-          startBlockNumber: 84268970,
-          abi: JSON.stringify(SpokePoolV3Abi),
-          acrossVersion: AcrossContractsVersion.V3,
         },
       ],
       [ChainIds.boba]: [
@@ -148,12 +130,6 @@ export const configValues = () => ({
           startBlockNumber: 41954460,
           abi: JSON.stringify(PolygonSpokePool2_5Abi),
           acrossVersion: AcrossContractsVersion.V2_5,
-        },
-        {
-          address: "0x9295ee1d8C5b022Be115A2AD3c30C72E34e7F096",
-          startBlockNumber: 41954460,
-          abi: JSON.stringify(SpokePoolV3Abi),
-          acrossVersion: AcrossContractsVersion.V3,
         },
       ],
       [ChainIds.goerli]: [
@@ -200,12 +176,6 @@ export const configValues = () => ({
           startBlockNumber: 2164878,
           abi: JSON.stringify(EthereumSpokePool2_5Abi),
           acrossVersion: AcrossContractsVersion.V2_5,
-        },
-        {
-          address: "0x09aea4b2242abC8bb4BB78D537A67a245A7bEC64",
-          startBlockNumber: 2164878,
-          abi: JSON.stringify(SpokePoolV3Abi),
-          acrossVersion: AcrossContractsVersion.V3,
         },
       ],
       [ChainIds.baseGoerli]: [
