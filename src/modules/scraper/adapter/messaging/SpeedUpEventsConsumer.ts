@@ -1,7 +1,7 @@
 import { OnQueueFailed, Process, Processor } from "@nestjs/bull";
 import { Logger } from "@nestjs/common";
 import { Job } from "bull";
-import { DepositFilledDateQueueMessage, ScraperQueue, SpeedUpEventsQueueMessage } from ".";
+import { ScraperQueue, SpeedUpEventsQueueMessage } from ".";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Deposit, RequestedSpeedUpDepositTx } from "../../../deposit/model/deposit.entity";
 import { Repository } from "typeorm";

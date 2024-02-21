@@ -19,9 +19,6 @@ import {
 import { Deposit } from "../../../deposit/model/deposit.entity";
 import { ScraperQueuesService } from "../../service/ScraperQueuesService";
 import {
-  RequestedSpeedUpDepositEv,
-  FilledRelayEv,
-  FundsDepositedEv,
   FundsDepositedEvent2,
   FundsDepositedEvent2_5,
   FilledRelayEvent2,
@@ -45,10 +42,6 @@ export class BlocksEventsConsumer {
   constructor(
     private providers: EthProvidersService,
     @InjectRepository(Deposit) private depositRepository: Repository<Deposit>,
-    @InjectRepository(FundsDepositedEv) private fundsDepositedEvRepository: Repository<FundsDepositedEv>,
-    @InjectRepository(FilledRelayEv) private filledRelayEvRepository: Repository<FilledRelayEv>,
-    @InjectRepository(RequestedSpeedUpDepositEv)
-    private requestedSpeedUpDepositEvRepository: Repository<RequestedSpeedUpDepositEv>,
     private scraperQueuesService: ScraperQueuesService,
     private appConfig: AppConfig,
   ) {}
@@ -229,11 +222,6 @@ export class BlocksEventsConsumer {
     // await this.insertRawFillEvents(chainId, events);
 
     for (const event of events) {
-      const { address } = event;
-      const { acrossVersion } = this.appConfig.values.web3.spokePoolContracts[chainId].filter(
-        (contract) => contract.address === address,
-      )[0];
-
       if (event.args.appliedRelayerFeePct) {
         const typedEvent = event as FilledRelayEvent2;
         const message: FillEventsQueueMessage = {
