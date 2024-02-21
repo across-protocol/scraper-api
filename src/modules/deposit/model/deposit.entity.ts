@@ -29,6 +29,14 @@ export type DepositFillTx2 = {
   relayerFeePct: string;
   date?: string;
 };
+export type DepositFillTxV3 = {
+  updatedRecipient: string;
+  updatedMessage: string;
+  updatedOutputAmount: string;
+  fillType: number;
+  hash: string;
+  date?: string;
+};
 export type RequestedSpeedUpDepositTx = {
   hash: string;
   blockNumber: number;
@@ -36,6 +44,13 @@ export type RequestedSpeedUpDepositTx = {
   depositSourceChainId: number;
   updatedRecipient?: string;
   updatedMessage?: string;
+};
+export type RequestedSpeedUpDepositTxV3 = {
+  hash: string;
+  blockNumber: number;
+  updatedOutputAmount: string;
+  updatedRecipient: string;
+  updatedMessage: string;
 };
 export type FeeBreakdown = {
   // lp fee
@@ -137,14 +152,42 @@ export class Deposit {
   @JoinColumn([{ name: "priceId", referencedColumnName: "id" }])
   price?: HistoricMarketPrice;
 
+  @Column({ type: "decimal", nullable: true })
+  outputAmount?: string;
+
+  @Column({ nullable: true })
+  outputTokenAddress?: string;
+
+  @Column({ nullable: true })
+  outputTokenId?: number;
+
+  @ManyToOne(() => Token)
+  @JoinColumn([
+    { name: "outputTokenId", referencedColumnName: "id", foreignKeyConstraintName: "FK_deposit_outputTokenId" },
+  ])
+  outputToken?: Token;
+
+  @Column({ nullable: true })
+  outputTokenPriceId?: number;
+
+  @ManyToOne(() => HistoricMarketPrice)
+  @JoinColumn([
+    {
+      name: "outputTokenPriceId",
+      referencedColumnName: "id",
+      foreignKeyConstraintName: "FK_deposit_outputTokenPriceId",
+    },
+  ])
+  outputTokenPrice?: HistoricMarketPrice;
+
   @Column()
   depositTxHash: string;
 
   @Column({ type: "jsonb", default: [] })
-  fillTxs: (DepositFillTx | DepositFillTx2)[];
+  fillTxs: (DepositFillTx | DepositFillTx2 | DepositFillTxV3)[];
 
   @Column({ type: "jsonb", default: [] })
-  speedUps: RequestedSpeedUpDepositTx[];
+  speedUps: RequestedSpeedUpDepositTx[] | RequestedSpeedUpDepositTxV3[];
 
   @Column({ type: "jsonb", default: {} })
   feeBreakdown: FeeBreakdown;
@@ -163,6 +206,15 @@ export class Deposit {
 
   @Column({ type: "decimal", nullable: true })
   acxUsdPrice?: string;
+
+  @Column({ nullable: true })
+  fillDeadline?: Date;
+
+  @Column({ nullable: true })
+  exclusivityDeadline?: Date;
+
+  @Column({ nullable: true })
+  relayer?: string;
 
   @CreateDateColumn()
   createdAt: Date;

@@ -8,34 +8,50 @@ export class SpokePoolEventsQuerier extends EventsQuerier {
   }
 
   public async getFundsDepositEvents(from: number, to: number): Promise<Event[]> {
-    return this.getEvents(from, to, this.getDepositEventsFilters());
+    return this.getEvents(from, to, this.getFundsDepositedEventFilters());
+  }
+
+  public async getFundsDepositedV3Events(from: number, to: number): Promise<Event[]> {
+    return this.getEvents(from, to, this.getFundsDepositedV3EventFilters());
   }
 
   public async getFilledRelayEvents(from: number, to: number): Promise<Event[]> {
     return this.getEvents(from, to, this.getFilledRelayEventsFilter());
   }
 
+  public async getFilledV3RelayEvents(from: number, to: number): Promise<Event[]> {
+    return this.getEvents(from, to, this.getFilledV3RelayEventsFilter());
+  }
+
   public async getRequestedSpeedUpDepositEvents(from: number, to: number): Promise<Event[]> {
     return this.getEvents(from, to, this.getRequestedSpeedUpDepositEventsFilters());
   }
 
-  public async getRefundRequestedEvents(from: number, to: number): Promise<Event[]> {
-    return this.getEvents(from, to, this.getRefundRequestedEventsFilters());
+  public async getRequestedSpeedUpV3DepositEvents(from: number, to: number): Promise<Event[]> {
+    return this.getEvents(from, to, this.getRequestedSpeedUpV3DepositEventsFilters());
   }
 
   private getFilledRelayEventsFilter() {
     return this.spokePool.filters.FilledRelay();
   }
 
-  private getDepositEventsFilters() {
+  private getFilledV3RelayEventsFilter() {
+    return this.spokePool.filters.FilledV3Relay();
+  }
+
+  private getFundsDepositedEventFilters() {
     return this.spokePool.filters.FundsDeposited();
+  }
+
+  private getFundsDepositedV3EventFilters() {
+    return this.spokePool.filters.V3FundsDeposited();
   }
 
   private getRequestedSpeedUpDepositEventsFilters() {
     return this.spokePool.filters.RequestedSpeedUpDeposit();
   }
 
-  private getRefundRequestedEventsFilters() {
-    return this.spokePool.filters.RefundRequested();
+  private getRequestedSpeedUpV3DepositEventsFilters() {
+    return this.spokePool.filters.RequestedSpeedUpV3Deposit();
   }
 }

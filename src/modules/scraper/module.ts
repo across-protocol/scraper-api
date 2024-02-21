@@ -18,6 +18,7 @@ import { DepositFilledDateConsumer } from "./adapter/messaging/DepositFilledDate
 import { DepositReferralConsumer } from "./adapter/messaging/DepositReferralConsumer";
 import { FillEventsConsumer } from "./adapter/messaging/FillEventsConsumer";
 import { FillEventsConsumer2 } from "./adapter/messaging/FillEventsConsumer2";
+import { FillEventsV3Consumer } from "./adapter/messaging/FillEventsV3Consumer";
 import { SpeedUpEventsConsumer } from "./adapter/messaging/SpeedUpEventsConsumer";
 import { TokenDetailsConsumer } from "./adapter/messaging/TokenDetailsConsumer";
 import { TokenPriceConsumer } from "./adapter/messaging/TokenPriceConsumer";
@@ -39,7 +40,6 @@ import { GasFeesService } from "./adapter/gas-fees/gas-fees-service";
 import { ModuleOptions } from "../../dynamic-module";
 import { DepositModule } from "../deposit/module";
 import { AirdropModule } from "../airdrop/module";
-import { RefundRequestedEv } from "../web3/model/refund-requested-ev.entity";
 import { RectifyStickyReferralConsumer } from "./adapter/messaging/RectifyStickyReferralConsumer";
 import { OpRebateRewardConsumer } from "./adapter/messaging/OpRebateRewardConsumer";
 import { OpRebateService } from "../rewards/services/op-rebate-service";
@@ -48,6 +48,8 @@ import { QueuesMonitoringCron } from "./service/queues-monitoring-cron";
 import { QueueJobCount } from "../monitoring/model/QueueJobCount.entity";
 import { MerkleDistributorClaim } from "../airdrop/model/merkle-distributor-claim.entity";
 import { MerkleDistributorWindow } from "../airdrop/model/merkle-distributor-window.entity";
+import { SpeedUpEventsV3Consumer } from "./adapter/messaging/SpeedUpEventsV3Consumer";
+import { Token } from "../web3/model/token.entity";
 
 @Module({})
 export class ScraperModule {
@@ -65,7 +67,9 @@ export class ScraperModule {
       MerkleDistributorBlocksEventsConsumerV2,
       FillEventsConsumer,
       FillEventsConsumer2,
+      FillEventsV3Consumer,
       SpeedUpEventsConsumer,
+      SpeedUpEventsV3Consumer,
       BlockNumberConsumer,
       TokenDetailsConsumer,
       DepositReferralConsumer,
@@ -94,11 +98,11 @@ export class ScraperModule {
           FundsDepositedEv,
           FilledRelayEv,
           RequestedSpeedUpDepositEv,
-          RefundRequestedEv,
           OpReward,
           QueueJobCount,
           MerkleDistributorClaim,
           MerkleDistributorWindow,
+          Token,
         ]),
         MarketPriceModule.forRoot(moduleOptions),
         HttpModule,
@@ -149,7 +153,25 @@ export class ScraperModule {
           },
         }),
         BullModule.registerQueue({
+          name: ScraperQueue.FillEventsV3,
+          defaultJobOptions: {
+            backoff: 120 * 1000,
+            attempts: Number.MAX_SAFE_INTEGER,
+            removeOnComplete: true,
+            removeOnFail: true,
+          },
+        }),
+        BullModule.registerQueue({
           name: ScraperQueue.SpeedUpEvents,
+          defaultJobOptions: {
+            backoff: 120 * 1000,
+            attempts: Number.MAX_SAFE_INTEGER,
+            removeOnComplete: true,
+            removeOnFail: true,
+          },
+        }),
+        BullModule.registerQueue({
+          name: ScraperQueue.SpeedUpEventsV3,
           defaultJobOptions: {
             backoff: 120 * 1000,
             attempts: Number.MAX_SAFE_INTEGER,

@@ -3,6 +3,7 @@ import { Logger } from "@nestjs/common";
 import { Job } from "bull";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository, QueryFailedError } from "typeorm";
+import { BigNumber, Event } from "ethers";
 
 import { EthProvidersService } from "../../../web3/services/EthProvidersService";
 import {
@@ -10,31 +11,27 @@ import {
   BlocksEventsQueueMessage,
   FillEventsQueueMessage,
   FillEventsQueueMessage2,
+  FillEventsV3QueueMessage,
   ScraperQueue,
   SpeedUpEventsQueueMessage,
+  SpeedUpEventsV3QueueMessage,
 } from ".";
 import { Deposit } from "../../../deposit/model/deposit.entity";
 import { ScraperQueuesService } from "../../service/ScraperQueuesService";
 import {
-  RequestedSpeedUpDepositEv,
-  FilledRelayEv,
-  FundsDepositedEv,
   FundsDepositedEvent2,
   FundsDepositedEvent2_5,
   FilledRelayEvent2,
   FilledRelayEvent2_5,
-  FilledRelay2EvArgs,
-  FilledRelay2_5EvArgs,
-  RefundRequestedEvent2_5,
-  RefundRequestedEv,
   RequestedSpeedUpDepositEvent2,
   RequestedSpeedUpDepositEvent2_5,
-  RequestedSpeedUpDepositEv2Args,
-  RequestedSpeedUpDepositEv2_5Args,
+  FundsDepositedV3Event,
+  FilledV3RelayEvent,
+  RequestedSpeedUpV3DepositEvent,
 } from "../../../web3/model";
 import { AppConfig } from "../../../configuration/configuration.service";
 import { splitBlockRanges } from "../../utils";
-import { Event } from "ethers";
+import { AcrossContractsVersion } from "../../../web3/model/across-version";
 
 const SPOKE_POOL_VERIFIER_CONTRACT_ADDRESS = "0x269727F088F16E1Aea52Cf5a97B1CD41DAA3f02D";
 
@@ -45,11 +42,6 @@ export class BlocksEventsConsumer {
   constructor(
     private providers: EthProvidersService,
     @InjectRepository(Deposit) private depositRepository: Repository<Deposit>,
-    @InjectRepository(FundsDepositedEv) private fundsDepositedEvRepository: Repository<FundsDepositedEv>,
-    @InjectRepository(FilledRelayEv) private filledRelayEvRepository: Repository<FilledRelayEv>,
-    @InjectRepository(FilledRelayEv) private refundRequestedEvRepository: Repository<RefundRequestedEv>,
-    @InjectRepository(RequestedSpeedUpDepositEv)
-    private requestedSpeedUpDepositEvRepository: Repository<RequestedSpeedUpDepositEv>,
     private scraperQueuesService: ScraperQueuesService,
     private appConfig: AppConfig,
   ) {}
@@ -64,67 +56,125 @@ export class BlocksEventsConsumer {
     // Split the block range in case multiple SpokePool contracts need to be queried
     const blocksToQuery = splitBlockRanges(ascSpokePoolConfigs, from, to);
     // Get the events from the SpokePool contracts
-    const { depositEvents, fillEvents, refundEvents, speedUpEvents } = await this.getEvents(blocksToQuery, chainId);
+    const { depositEvents, depositV3Events, fillEvents, fillV3Events, speedUpEvents, speedUpV3Events } =
+      await this.getEvents(blocksToQuery, chainId);
     const eventsCount = {
       depositEvents: depositEvents.length,
+      depositV3Events: depositV3Events.length,
       fillEvents: fillEvents.length,
+      fillV3Events: fillV3Events.length,
       speedUpEvents: speedUpEvents.length,
-      refundEvents: refundEvents.length,
+      speedUpV3Events: speedUpV3Events.length,
     };
     this.logger.log(`${from}-${to} - chainId ${chainId} - ${JSON.stringify(eventsCount)}`);
 
     await this.processDepositEvents(chainId, depositEvents);
+    await this.processDepositV3Events(chainId, depositV3Events);
     await this.processFillEvents(chainId, fillEvents);
-    await this.processRefundEvents(chainId, refundEvents);
+    await this.processFillEvents(chainId, fillV3Events);
     await this.processSpeedUpEvents(chainId, speedUpEvents);
+    await this.processSpeedUpV3Events(chainId, speedUpV3Events);
   }
 
   private async getEvents(
-    blocksToQuery: { from: number; to: number; address: string; acrossVersion: string }[],
+    blocksToQuery: { from: number; to: number; address: string; acrossVersion: AcrossContractsVersion }[],
     chainId: number,
   ) {
+    // TODO: Add all types of events
     const depositEvents: Event[] = [];
+    const depositV3Events: Event[] = [];
     const fillEvents: Event[] = [];
-    const refundEvents: Event[] = [];
+    const fillV3Events: Event[] = [];
     const speedUpEvents: Event[] = [];
+    const speedUpV3Events: Event[] = [];
 
     for (const blocks of blocksToQuery) {
-      const promises = [
-        this.providers.getSpokePoolEventQuerier(chainId, blocks.address).getFundsDepositEvents(blocks.from, blocks.to),
-        this.providers.getSpokePoolEventQuerier(chainId, blocks.address).getFilledRelayEvents(blocks.from, blocks.to),
-        this.providers
-          .getSpokePoolEventQuerier(chainId, blocks.address)
-          .getRequestedSpeedUpDepositEvents(blocks.from, blocks.to),
-      ];
+      const spokePoolEventQuerier = this.providers.getSpokePoolEventQuerier(chainId, blocks.address);
+      let depositEventsPromises = [];
+      let fillEventsPromises = [];
+      let speedUpEventsPromises = [];
 
-      if (blocks.acrossVersion === "2.5") {
-        promises.push(
-          this.providers
-            .getSpokePoolEventQuerier(chainId, blocks.address)
-            .getRefundRequestedEvents(blocks.from, blocks.to),
-        );
-      } else {
-        promises.push(
-          (() =>
-            new Promise((res) => {
-              res([]);
-            }))(),
-        );
+      if (blocks.acrossVersion === AcrossContractsVersion.V2) {
+        depositEventsPromises = [
+          spokePoolEventQuerier.getFundsDepositEvents(blocks.from, blocks.to),
+          new Promise((res) => {
+            res([]);
+          }),
+        ];
+        fillEventsPromises = [
+          spokePoolEventQuerier.getFilledRelayEvents(blocks.from, blocks.to),
+          new Promise((res) => {
+            res([]);
+          }),
+        ];
+        speedUpEventsPromises = [
+          spokePoolEventQuerier.getRequestedSpeedUpDepositEvents(blocks.from, blocks.to),
+          new Promise((res) => {
+            res([]);
+          }),
+        ];
+      } else if (blocks.acrossVersion === AcrossContractsVersion.V2_5) {
+        depositEventsPromises = [
+          spokePoolEventQuerier.getFundsDepositEvents(blocks.from, blocks.to),
+          new Promise((res) => {
+            res([]);
+          }),
+        ];
+        fillEventsPromises = [
+          spokePoolEventQuerier.getFilledRelayEvents(blocks.from, blocks.to),
+          new Promise((res) => {
+            res([]);
+          }),
+        ];
+        speedUpEventsPromises = [
+          spokePoolEventQuerier.getRequestedSpeedUpDepositEvents(blocks.from, blocks.to),
+          new Promise((res) => {
+            res([]);
+          }),
+        ];
+      } else if (blocks.acrossVersion === AcrossContractsVersion.V3) {
+        depositEventsPromises = [
+          new Promise((res) => {
+            res([]);
+          }),
+          spokePoolEventQuerier.getFundsDepositedV3Events(blocks.from, blocks.to),
+        ];
+        fillEventsPromises = [
+          spokePoolEventQuerier.getFilledRelayEvents(blocks.from, blocks.to),
+          spokePoolEventQuerier.getFilledV3RelayEvents(blocks.from, blocks.to),
+        ];
+        speedUpEventsPromises = [
+          new Promise((res) => {
+            res([]);
+          }),
+          spokePoolEventQuerier.getRequestedSpeedUpV3DepositEvents(blocks.from, blocks.to),
+        ];
       }
-
-      const [depositEventsChunk, fillEventsChunk, speedUpEventsChunk, refundEventsChunk] = await Promise.all(promises);
+      const promises = [...depositEventsPromises, ...fillEventsPromises, ...speedUpEventsPromises];
+      const [
+        depositEventsChunk,
+        depositV3EventsChunk,
+        fillEventsChunk,
+        fillV3EventsChunk,
+        speedUpEventsChunk,
+        speedUpV3EventsChunk,
+      ] = await Promise.all(promises);
 
       depositEvents.push(...depositEventsChunk);
+      depositV3Events.push(...depositV3EventsChunk);
       fillEvents.push(...fillEventsChunk);
+      fillV3Events.push(...fillV3EventsChunk);
       speedUpEvents.push(...speedUpEventsChunk);
-      refundEvents.push(...refundEventsChunk);
+      speedUpV3Events.push(...speedUpV3EventsChunk);
     }
 
     return {
       depositEvents,
+      depositV3Events,
       fillEvents,
-      refundEvents,
+      fillV3Events,
       speedUpEvents,
+      speedUpV3Events,
     };
   }
 
@@ -144,9 +194,19 @@ export class BlocksEventsConsumer {
           throw error;
         }
       }
+    }
+  }
 
+  private async processDepositV3Events(chainId: number, events: Event[]) {
+    const typedEvents = events as FundsDepositedV3Event[];
+
+    for (const event of typedEvents) {
       try {
-        await this.insertRawDepositEvent(chainId, event);
+        const deposit = this.fromFundsDepositedV3EventToDeposit(chainId, event);
+        const result = await this.depositRepository.insert(deposit);
+        await this.scraperQueuesService.publishMessage<BlockNumberQueueMessage>(ScraperQueue.BlockNumber, {
+          depositId: result.identifiers[0].id,
+        });
       } catch (error) {
         if (error instanceof QueryFailedError && error.driverError?.code === "23505") {
           // Ignore duplicate key value violates unique constraint error.
@@ -159,15 +219,10 @@ export class BlocksEventsConsumer {
   }
 
   private async processFillEvents(chainId: number, events: Event[]) {
-    await this.insertRawFillEvents(chainId, events);
+    // await this.insertRawFillEvents(chainId, events);
 
     for (const event of events) {
-      const { address } = event;
-      const { acrossVersion } = this.appConfig.values.web3.spokePoolContracts[chainId].filter(
-        (contract) => contract.address === address,
-      )[0];
-
-      if (acrossVersion === "2") {
+      if (event.args.appliedRelayerFeePct) {
         const typedEvent = event as FilledRelayEvent2;
         const message: FillEventsQueueMessage = {
           depositId: typedEvent.args.depositId,
@@ -180,7 +235,7 @@ export class BlocksEventsConsumer {
           destinationToken: typedEvent.args.destinationToken,
         };
         await this.scraperQueuesService.publishMessage<FillEventsQueueMessage>(ScraperQueue.FillEvents, message);
-      } else if (acrossVersion === "2.5") {
+      } else if (event.args.updatableRelayData) {
         const typedEvent = event as FilledRelayEvent2_5;
         const message: FillEventsQueueMessage2 = {
           depositId: typedEvent.args.depositId,
@@ -193,16 +248,26 @@ export class BlocksEventsConsumer {
           destinationToken: typedEvent.args.destinationToken,
         };
         await this.scraperQueuesService.publishMessage<FillEventsQueueMessage2>(ScraperQueue.FillEvents2, message);
+      } else if (event.args.relayExecutionInfo) {
+        const typedEvent = event as FilledV3RelayEvent;
+        const message: FillEventsV3QueueMessage = {
+          updatedRecipient: typedEvent.args.relayExecutionInfo.updatedRecipient,
+          updatedMessage: typedEvent.args.relayExecutionInfo.updatedMessage,
+          updatedOutputAmount: typedEvent.args.relayExecutionInfo.updatedOutputAmount.toString(),
+          fillType: typedEvent.args.relayExecutionInfo.fillType,
+          depositId: typedEvent.args.depositId,
+          originChainId: typedEvent.args.originChainId.toNumber(),
+          transactionHash: typedEvent.transactionHash,
+        };
+        await this.scraperQueuesService.publishMessage<FillEventsV3QueueMessage>(ScraperQueue.FillEventsV3, message);
+      } else {
+        throw new Error("Unknown fill event type");
       }
     }
   }
 
-  private async processRefundEvents(chainId: number, events: Event[]) {
-    await this.insertRawRefundEvents(chainId, events);
-  }
-
   private async processSpeedUpEvents(chainId: number, events: Event[]) {
-    await this.insertRawSpeedUpEvents(chainId, events);
+    // await this.insertRawSpeedUpEvents(chainId, events);
 
     for (const event of events) {
       const { address } = event;
@@ -212,7 +277,7 @@ export class BlocksEventsConsumer {
 
       let message: SpeedUpEventsQueueMessage;
 
-      if (acrossVersion === "2") {
+      if (acrossVersion === AcrossContractsVersion.V2) {
         const typedEvent = event as RequestedSpeedUpDepositEvent2;
         message = {
           depositSourceChainId: chainId,
@@ -223,7 +288,7 @@ export class BlocksEventsConsumer {
           blockNumber: typedEvent.blockNumber,
           newRelayerFeePct: typedEvent.args.newRelayerFeePct.toString(),
         };
-      } else if (acrossVersion === "2.5") {
+      } else if (acrossVersion === AcrossContractsVersion.V2_5) {
         const typedEvent = event as RequestedSpeedUpDepositEvent2_5;
         message = {
           depositSourceChainId: chainId,
@@ -241,6 +306,28 @@ export class BlocksEventsConsumer {
       if (message) {
         await this.scraperQueuesService.publishMessage<SpeedUpEventsQueueMessage>(ScraperQueue.SpeedUpEvents, message);
       }
+    }
+  }
+
+  private async processSpeedUpV3Events(chainId: number, events: Event[]) {
+    for (const event of events) {
+      const { transactionHash, blockNumber, args } = event as RequestedSpeedUpV3DepositEvent;
+      const message: SpeedUpEventsV3QueueMessage = {
+        depositSourceChainId: chainId,
+        depositId: args.depositId,
+        transactionHash,
+        blockNumber,
+        depositor: args.depositor,
+        depositorSignature: args.depositorSignature,
+        updatedOutputAmount: args.updatedOutputAmount.toString(),
+        updatedRecipient: args.updatedRecipient,
+        updatedMessage: args.updatedMessage,
+      };
+
+      await this.scraperQueuesService.publishMessage<SpeedUpEventsV3QueueMessage>(
+        ScraperQueue.SpeedUpEventsV3,
+        message,
+      );
     }
   }
 
@@ -275,267 +362,262 @@ export class BlocksEventsConsumer {
     });
   }
 
-  private async insertRawDepositEvent(chainId: number, event: Event) {
-    const typedEvent = event as FundsDepositedEvent2 | FundsDepositedEvent2_5;
-    const { blockNumber, blockHash, transactionIndex, address, transactionHash, logIndex, args } = typedEvent;
+  private fromFundsDepositedV3EventToDeposit(chainId: number, event: FundsDepositedV3Event) {
+    const { transactionHash, blockNumber } = event;
     const {
-      amount,
-      originChainId,
-      destinationChainId,
-      relayerFeePct,
       depositId,
-      quoteTimestamp,
-      originToken,
-      recipient,
+      destinationChainId,
+      inputAmount,
+      inputToken,
+      outputAmount,
+      outputToken,
       depositor,
-    } = args;
+      recipient,
+      fillDeadline,
+      exclusivityDeadline,
+      relayer,
+    } = event.args;
 
-    return this.fundsDepositedEvRepository.insert({
+    const wei = BigNumber.from(10).pow(18);
+    const feePct = outputAmount.mul(wei).div(inputAmount);
+    let exclusivityDeadlineDate = undefined;
+
+    if (exclusivityDeadline > 0) exclusivityDeadlineDate = new Date(exclusivityDeadline * 1000);
+
+    return this.depositRepository.create({
+      depositId,
+      sourceChainId: chainId,
+      destinationChainId: destinationChainId.toNumber(),
+      status: "pending",
+      amount: inputAmount.toString(),
+      filled: "0",
+      tokenAddr: inputToken,
+      depositTxHash: transactionHash,
+      fillTxs: [],
       blockNumber,
-      blockHash,
-      transactionIndex,
-      address,
-      chainId,
-      transactionHash,
-      logIndex,
-      args: {
-        amount: amount.toString(),
-        originChainId: originChainId.toString(),
-        destinationChainId: destinationChainId.toString(),
-        relayerFeePct: relayerFeePct.toString(),
-        depositId,
-        quoteTimestamp,
-        originToken,
-        recipient,
-        depositor,
-      },
+      depositorAddr: depositor,
+      recipientAddr: recipient,
+      depositRelayerFeePct: feePct.toString(),
+      initialRelayerFeePct: feePct.toString(),
+      //relayerFeePct = realizedLpFeePct + (gasFeePct + capitalCostFeePct)(old usage of relayerFeePct)
+      // v3 properties
+      outputAmount: outputAmount.toString(),
+      outputTokenAddress: outputToken,
+      fillDeadline: new Date(fillDeadline * 1000),
+      exclusivityDeadline: exclusivityDeadlineDate,
+      relayer,
     });
   }
 
-  private async insertRawFillEvents(chainId: number, events: Event[]) {
-    const dbEvents = events.map((event) => {
-      const { blockNumber, blockHash, transactionIndex, address, transactionHash, logIndex } = event;
-      const { acrossVersion } = this.appConfig.values.web3.spokePoolContracts[chainId].filter(
-        (contract) => contract.address === address,
-      )[0];
-      let dbArgs: FilledRelay2EvArgs | FilledRelay2_5EvArgs;
+  // private async insertRawDepositEvent(chainId: number, event: Event) {
+  //   const typedEvent = event as FundsDepositedEvent2 | FundsDepositedEvent2_5;
+  //   const { blockNumber, blockHash, transactionIndex, address, transactionHash, logIndex, args } = typedEvent;
+  //   const {
+  //     amount,
+  //     originChainId,
+  //     destinationChainId,
+  //     relayerFeePct,
+  //     depositId,
+  //     quoteTimestamp,
+  //     originToken,
+  //     recipient,
+  //     depositor,
+  //   } = args;
 
-      if (acrossVersion === "2") {
-        const typedEvent = event as FilledRelayEvent2;
-        const { args } = typedEvent;
-        const {
-          amount,
-          totalFilledAmount,
-          fillAmount,
-          repaymentChainId,
-          originChainId,
-          destinationChainId,
-          relayerFeePct,
-          appliedRelayerFeePct,
-          realizedLpFeePct,
-          depositId,
-          destinationToken,
-          relayer,
-          depositor,
-          recipient,
-          isSlowRelay,
-        } = args;
+  //   return this.fundsDepositedEvRepository.insert({
+  //     blockNumber,
+  //     blockHash,
+  //     transactionIndex,
+  //     address,
+  //     chainId,
+  //     transactionHash,
+  //     logIndex,
+  //     args: {
+  //       amount: amount.toString(),
+  //       originChainId: originChainId.toString(),
+  //       destinationChainId: destinationChainId.toString(),
+  //       relayerFeePct: relayerFeePct.toString(),
+  //       depositId,
+  //       quoteTimestamp,
+  //       originToken,
+  //       recipient,
+  //       depositor,
+  //     },
+  //   });
+  // }
 
-        dbArgs = {
-          amount: amount.toString(),
-          totalFilledAmount: totalFilledAmount.toString(),
-          fillAmount: fillAmount.toString(),
-          repaymentChainId: repaymentChainId.toString(),
-          originChainId: originChainId.toString(),
-          destinationChainId: destinationChainId.toString(),
-          relayerFeePct: relayerFeePct.toString(),
-          appliedRelayerFeePct: appliedRelayerFeePct.toString(),
-          realizedLpFeePct: realizedLpFeePct.toString(),
-          depositId,
-          destinationToken,
-          relayer,
-          depositor,
-          recipient,
-          isSlowRelay,
-        };
-      } else if (acrossVersion === "2.5") {
-        const typedEvent = event as FilledRelayEvent2_5;
-        const { args } = typedEvent;
-        const {
-          amount,
-          totalFilledAmount,
-          fillAmount,
-          repaymentChainId,
-          originChainId,
-          destinationChainId,
-          relayerFeePct,
-          realizedLpFeePct,
-          depositId,
-          destinationToken,
-          relayer,
-          depositor,
-          recipient,
-          message,
-          updatableRelayData,
-        } = args;
-        dbArgs = {
-          amount: amount.toString(),
-          totalFilledAmount: totalFilledAmount.toString(),
-          fillAmount: fillAmount.toString(),
-          repaymentChainId: repaymentChainId.toString(),
-          originChainId: originChainId.toString(),
-          destinationChainId: destinationChainId.toString(),
-          relayerFeePct: relayerFeePct.toString(),
-          realizedLpFeePct: realizedLpFeePct.toString(),
-          depositId,
-          destinationToken,
-          relayer,
-          depositor,
-          recipient,
-          message,
-          updatableRelayData: {
-            recipient: updatableRelayData.recipient,
-            message: updatableRelayData.message,
-            relayerFeePct: updatableRelayData.relayerFeePct.toString(),
-            isSlowRelay: updatableRelayData.isSlowRelay,
-            payoutAdjustmentPct: updatableRelayData.payoutAdjustmentPct.toString(),
-          },
-        };
-      }
+  // private async insertRawFillEvents(chainId: number, events: Event[]) {
+  //   const dbEvents = events.map((event) => {
+  //     const { blockNumber, blockHash, transactionIndex, address, transactionHash, logIndex } = event;
+  //     const { acrossVersion } = this.appConfig.values.web3.spokePoolContracts[chainId].filter(
+  //       (contract) => contract.address === address,
+  //     )[0];
+  //     let dbArgs: FilledRelay2EvArgs | FilledRelay2_5EvArgs;
 
-      return this.filledRelayEvRepository.create({
-        blockNumber,
-        blockHash,
-        transactionIndex,
-        address,
-        chainId,
-        transactionHash,
-        logIndex,
-        args: dbArgs,
-      });
-    });
+  //     if (acrossVersion === "2") {
+  //       const typedEvent = event as FilledRelayEvent2;
+  //       const { args } = typedEvent;
+  //       const {
+  //         amount,
+  //         totalFilledAmount,
+  //         fillAmount,
+  //         repaymentChainId,
+  //         originChainId,
+  //         destinationChainId,
+  //         relayerFeePct,
+  //         appliedRelayerFeePct,
+  //         realizedLpFeePct,
+  //         depositId,
+  //         destinationToken,
+  //         relayer,
+  //         depositor,
+  //         recipient,
+  //         isSlowRelay,
+  //       } = args;
 
-    for (const event of dbEvents) {
-      try {
-        await this.filledRelayEvRepository.insert(event);
-      } catch (error) {
-        if (error instanceof QueryFailedError && error.driverError?.code === "23505") {
-          // Ignore duplicate key value violates unique constraint error.
-          this.logger.warn(error);
-        } else {
-          throw error;
-        }
-      }
-    }
-  }
+  //       dbArgs = {
+  //         amount: amount.toString(),
+  //         totalFilledAmount: totalFilledAmount.toString(),
+  //         fillAmount: fillAmount.toString(),
+  //         repaymentChainId: repaymentChainId.toString(),
+  //         originChainId: originChainId.toString(),
+  //         destinationChainId: destinationChainId.toString(),
+  //         relayerFeePct: relayerFeePct.toString(),
+  //         appliedRelayerFeePct: appliedRelayerFeePct.toString(),
+  //         realizedLpFeePct: realizedLpFeePct.toString(),
+  //         depositId,
+  //         destinationToken,
+  //         relayer,
+  //         depositor,
+  //         recipient,
+  //         isSlowRelay,
+  //       };
+  //     } else if (acrossVersion === "2.5") {
+  //       const typedEvent = event as FilledRelayEvent2_5;
+  //       const { args } = typedEvent;
+  //       const {
+  //         amount,
+  //         totalFilledAmount,
+  //         fillAmount,
+  //         repaymentChainId,
+  //         originChainId,
+  //         destinationChainId,
+  //         relayerFeePct,
+  //         realizedLpFeePct,
+  //         depositId,
+  //         destinationToken,
+  //         relayer,
+  //         depositor,
+  //         recipient,
+  //         message,
+  //         updatableRelayData,
+  //       } = args;
+  //       dbArgs = {
+  //         amount: amount.toString(),
+  //         totalFilledAmount: totalFilledAmount.toString(),
+  //         fillAmount: fillAmount.toString(),
+  //         repaymentChainId: repaymentChainId.toString(),
+  //         originChainId: originChainId.toString(),
+  //         destinationChainId: destinationChainId.toString(),
+  //         relayerFeePct: relayerFeePct.toString(),
+  //         realizedLpFeePct: realizedLpFeePct.toString(),
+  //         depositId,
+  //         destinationToken,
+  //         relayer,
+  //         depositor,
+  //         recipient,
+  //         message,
+  //         updatableRelayData: {
+  //           recipient: updatableRelayData.recipient,
+  //           message: updatableRelayData.message,
+  //           relayerFeePct: updatableRelayData.relayerFeePct.toString(),
+  //           isSlowRelay: updatableRelayData.isSlowRelay,
+  //           payoutAdjustmentPct: updatableRelayData.payoutAdjustmentPct.toString(),
+  //         },
+  //       };
+  //     }
 
-  private async insertRawSpeedUpEvents(chainId: number, events: Event[]) {
-    const dbEvents = events.map((event) => {
-      const { blockNumber, blockHash, transactionIndex, address, transactionHash, logIndex } = event;
-      const { acrossVersion } = this.appConfig.values.web3.spokePoolContracts[chainId].filter(
-        (contract) => contract.address === address,
-      )[0];
-      let dbArgs: RequestedSpeedUpDepositEv2Args | RequestedSpeedUpDepositEv2_5Args;
+  //     return this.filledRelayEvRepository.create({
+  //       blockNumber,
+  //       blockHash,
+  //       transactionIndex,
+  //       address,
+  //       chainId,
+  //       transactionHash,
+  //       logIndex,
+  //       args: dbArgs,
+  //     });
+  //   });
 
-      if (acrossVersion === "2") {
-        const typedEvent = event as RequestedSpeedUpDepositEvent2;
-        const { depositId, depositor, depositorSignature, newRelayerFeePct } = typedEvent.args;
-        dbArgs = {
-          newRelayerFeePct: newRelayerFeePct.toString(),
-          depositId,
-          depositor,
-          depositorSignature,
-        };
-      } else if (acrossVersion === "2.5") {
-        const typedEvent = event as RequestedSpeedUpDepositEvent2_5;
-        const { depositId, depositor, depositorSignature, updatedMessage, updatedRecipient, newRelayerFeePct } =
-          typedEvent.args;
-        dbArgs = {
-          depositId,
-          depositor,
-          depositorSignature,
-          updatedMessage,
-          updatedRecipient,
-          newRelayerFeePct: newRelayerFeePct.toString(),
-        };
-      }
-      return this.requestedSpeedUpDepositEvRepository.create({
-        blockNumber,
-        blockHash,
-        transactionIndex,
-        address,
-        chainId,
-        transactionHash,
-        logIndex,
-        args: dbArgs,
-      });
-    });
+  //   for (const event of dbEvents) {
+  //     try {
+  //       await this.filledRelayEvRepository.insert(event);
+  //     } catch (error) {
+  //       if (error instanceof QueryFailedError && error.driverError?.code === "23505") {
+  //         // Ignore duplicate key value violates unique constraint error.
+  //         this.logger.warn(error);
+  //       } else {
+  //         throw error;
+  //       }
+  //     }
+  //   }
+  // }
 
-    for (const event of dbEvents) {
-      try {
-        await this.requestedSpeedUpDepositEvRepository.insert(event);
-      } catch (error) {
-        if (error instanceof QueryFailedError && error.driverError?.code === "23505") {
-          // Ignore duplicate key value violates unique constraint error.
-          this.logger.warn(error);
-        } else {
-          throw error;
-        }
-      }
-    }
-  }
+  // private async insertRawSpeedUpEvents(chainId: number, events: Event[]) {
+  //   const dbEvents = events.map((event) => {
+  //     const { blockNumber, blockHash, transactionIndex, address, transactionHash, logIndex } = event;
+  //     const { acrossVersion } = this.appConfig.values.web3.spokePoolContracts[chainId].filter(
+  //       (contract) => contract.address === address,
+  //     )[0];
+  //     let dbArgs: RequestedSpeedUpDepositEv2Args | RequestedSpeedUpDepositEv2_5Args;
 
-  private async insertRawRefundEvents(chainId: number, events: Event[]) {
-    const typedEvents = events as RefundRequestedEvent2_5[];
-    const dbEvents = typedEvents.map((event) => {
-      const { blockNumber, blockHash, transactionIndex, address, transactionHash, logIndex, args } = event;
-      const {
-        relayer,
-        refundToken,
-        amount,
-        originChainId,
-        destinationChainId,
-        realizedLpFeePct,
-        depositId,
-        fillBlock,
-        previousIdenticalRequests,
-      } = args;
+  //     if (acrossVersion === "2") {
+  //       const typedEvent = event as RequestedSpeedUpDepositEvent2;
+  //       const { depositId, depositor, depositorSignature, newRelayerFeePct } = typedEvent.args;
+  //       dbArgs = {
+  //         newRelayerFeePct: newRelayerFeePct.toString(),
+  //         depositId,
+  //         depositor,
+  //         depositorSignature,
+  //       };
+  //     } else if (acrossVersion === "2.5") {
+  //       const typedEvent = event as RequestedSpeedUpDepositEvent2_5;
+  //       const { depositId, depositor, depositorSignature, updatedMessage, updatedRecipient, newRelayerFeePct } =
+  //         typedEvent.args;
+  //       dbArgs = {
+  //         depositId,
+  //         depositor,
+  //         depositorSignature,
+  //         updatedMessage,
+  //         updatedRecipient,
+  //         newRelayerFeePct: newRelayerFeePct.toString(),
+  //       };
+  //     }
+  //     return this.requestedSpeedUpDepositEvRepository.create({
+  //       blockNumber,
+  //       blockHash,
+  //       transactionIndex,
+  //       address,
+  //       chainId,
+  //       transactionHash,
+  //       logIndex,
+  //       args: dbArgs,
+  //     });
+  //   });
 
-      return this.refundRequestedEvRepository.create({
-        blockNumber,
-        blockHash,
-        transactionIndex,
-        address,
-        chainId,
-        transactionHash,
-        logIndex,
-        args: {
-          relayer,
-          refundToken,
-          amount: amount.toString(),
-          originChainId: originChainId.toString(),
-          destinationChainId: destinationChainId.toString(),
-          realizedLpFeePct: realizedLpFeePct.toString(),
-          depositId,
-          fillBlock: fillBlock.toString(),
-          previousIdenticalRequests: previousIdenticalRequests.toString(),
-        },
-      });
-    });
-
-    for (const event of dbEvents) {
-      try {
-        await this.refundRequestedEvRepository.insert(event);
-      } catch (error) {
-        if (error instanceof QueryFailedError && error.driverError?.code === "23505") {
-          // Ignore duplicate key value violates unique constraint error.
-          this.logger.warn(error);
-        } else {
-          throw error;
-        }
-      }
-    }
-  }
+  //   for (const event of dbEvents) {
+  //     try {
+  //       await this.requestedSpeedUpDepositEvRepository.insert(event);
+  //     } catch (error) {
+  //       if (error instanceof QueryFailedError && error.driverError?.code === "23505") {
+  //         // Ignore duplicate key value violates unique constraint error.
+  //         this.logger.warn(error);
+  //       } else {
+  //         throw error;
+  //       }
+  //     }
+  //   }
+  // }
 
   @OnQueueFailed()
   private onQueueFailed(job: Job, error: Error) {

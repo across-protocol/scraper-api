@@ -2,6 +2,7 @@ export type ChainId = number;
 
 export const ChainIds = {
   mainnet: 1,
+  sepolia: 11155111,
   optimism: 10,
   optimismKovan: 69,
   optimismSepolia: 11155420,
@@ -18,6 +19,7 @@ export const ChainIds = {
   zkSyncTestnet: 280,
   base: 8453,
   baseGoerli: 84531,
+  baseSepolia: 84532,
 };
 
 export const ChainIdToName = Object.entries(ChainIds).reduce((idToName, entry) => {

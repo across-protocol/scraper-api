@@ -15,14 +15,12 @@ import { CommunityRewards } from "../airdrop/model/community-rewards.entity";
 import { UserWallet } from "../user/model/user-wallet.entity";
 import { MerkleDistributorRecipient } from "../airdrop/model/merkle-distributor-recipient.entity";
 import { MerkleDistributorWindow } from "../airdrop/model/merkle-distributor-window.entity";
-import { DepositReferralStats } from "../referral/model/DepositReferralStats.entity";
 import { DepositsMv } from "../deposit/model/DepositsMv.entity";
 import { DepositsFilteredReferrals } from "../referral/model/DepositsFilteredReferrals.entity";
 import { DepositReferralStat } from "../deposit/model/deposit-referral-stat.entity";
 import { FundsDepositedEv } from "../web3/model/funds-deposited-ev.entity";
 import { FilledRelayEv } from "../web3/model/filled-relay-ev.entity";
 import { RequestedSpeedUpDepositEv } from "../web3/model/requested-speed-up-deposit-ev.entity";
-import { RefundRequestedEv } from "../web3/model/refund-requested-ev.entity";
 import { RewardsWindowJob } from "../rewards/model/RewardsWindowJob.entity";
 import { ReferralRewardsWindowJobResult } from "../rewards/model/RewardsWindowJobResult.entity";
 import { OpReward } from "../rewards/model/op-reward.entity";
@@ -46,14 +44,12 @@ const entities = [
   UserWallet,
   MerkleDistributorWindow,
   MerkleDistributorRecipient,
-  DepositReferralStats,
   DepositsMv,
   DepositsFilteredReferrals,
   DepositReferralStat,
   FundsDepositedEv,
   FilledRelayEv,
   RequestedSpeedUpDepositEv,
-  RefundRequestedEv,
   RewardsWindowJob,
   ReferralRewardsWindowJobResult,
   OpReward,

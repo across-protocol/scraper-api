@@ -6,7 +6,7 @@ import { Repository } from "typeorm";
 import { DateTime } from "luxon";
 import { EthProvidersService } from "../../../web3/services/EthProvidersService";
 import { DepositFilledDateQueueMessage, ScraperQueue, TrackFillEventQueueMessage } from ".";
-import { Deposit, DepositFillTx, DepositFillTx2 } from "../../../deposit/model/deposit.entity";
+import { Deposit, DepositFillTx, DepositFillTx2, DepositFillTxV3 } from "../../../deposit/model/deposit.entity";
 import { ScraperQueuesService } from "../../service/ScraperQueuesService";
 
 @Processor(ScraperQueue.DepositFilledDate)
@@ -27,9 +27,7 @@ export class DepositFilledDateConsumer {
     if (!deposit) return;
     if (deposit.status !== "filled") return;
 
-    if (!deposit.depositDate) {
-      throw new Error("Wait for deposit date");
-    }
+    if (!deposit.depositDate) throw new Error("Wait for deposit date");
 
     const fillTxsWithoutDate = deposit.fillTxs.filter((fillTx) => !fillTx.date).length;
 
@@ -67,7 +65,7 @@ export class DepositFilledDateConsumer {
     });
   }
 
-  private async fillDateForFillTx(chainId: number, fillTx: DepositFillTx | DepositFillTx2) {
+  private async fillDateForFillTx(chainId: number, fillTx: DepositFillTx | DepositFillTx2 | DepositFillTxV3) {
     if (fillTx.date) return fillTx;
 
     const tx = await this.providers.getCachedTransaction(chainId, fillTx.hash);

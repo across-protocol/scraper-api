@@ -1,15 +1,17 @@
+import { AcrossContractsVersion } from "../../web3/model/across-version";
+
 /**
  * Given a (from, to) block range and a list of contracts along with the deployment date,
  * determine which contracts need to be queried
  */
 export function splitBlockRanges(
-  contracts: { address: string; startBlockNumber: number; acrossVersion: string }[] = [],
+  contracts: { address: string; startBlockNumber: number; acrossVersion: AcrossContractsVersion }[] = [],
   from: number,
   to: number,
 ) {
   if (contracts[0].startBlockNumber > from) return undefined;
 
-  const intervals: { from: number; to: number; address: string; acrossVersion: string }[] = [];
+  const intervals: { from: number; to: number; address: string; acrossVersion: AcrossContractsVersion }[] = [];
 
   if (contracts.length === 1) {
     return [{ from, to, address: contracts[0].address, acrossVersion: contracts[0].acrossVersion }];
