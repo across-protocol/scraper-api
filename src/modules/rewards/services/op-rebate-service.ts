@@ -126,40 +126,18 @@ export class OpRebateService {
 
     const deposit = await this.depositRepository.findOne({
       where: { id: depositPrimaryKey },
-      relations: ["token", "price", "outputToken", "outputTokenPrice"],
     });
 
-    if (!deposit || deposit.status === "pending") {
-      this.logger.verbose(
-        `Deposit with id ${depositPrimaryKey} ${!deposit ? "is not found" : "is pending"}. Skipping...`,
-      );
-      return;
-    }
+    if (!deposit || deposit.status === "pending") return;
+    if (deposit.destinationChainId !== ChainIds.optimism) return;
 
-    if (deposit.destinationChainId !== ChainIds.optimism) {
-      this.logger.verbose(`Deposit with id ${depositPrimaryKey} is not going to Optimism. Skipping...`);
-      return;
-    }
+    this.assertDepositKeys(deposit, ["depositDate", "feeBreakdown"]);
 
-    this.assertDepositKeys(deposit, ["price", "token", "depositDate", "feeBreakdown"]);
-
-    if (deposit.outputTokenAddress) {
-      this.assertDepositKeys(deposit, ["outputTokenPrice", "outputToken"]);
+    if (!deposit.feeBreakdown.totalBridgeFeeUsd) {
+      throw new Error(`Deposit with id ${depositPrimaryKey} is missing total bridge fee in USD`);
     }
-
-    if (Object.keys(deposit.feeBreakdown).length === 0) {
-      throw new Error(`Deposit with id ${depositPrimaryKey} is missing fee breakdown`);
-    }
-
-    if (!this.isDepositTimeAfterStart(deposit)) {
-      this.logger.verbose(`Deposit with id ${depositPrimaryKey} was made before the start of the program. Skipping...`);
-      return;
-    }
-
-    if (!this.isDepositTimeBeforeEnd(deposit)) {
-      this.logger.verbose(`Deposit with id ${depositPrimaryKey} was made after the end of the program. Skipping...`);
-      return;
-    }
+    if (!this.isDepositTimeAfterStart(deposit)) return;
+    if (!this.isDepositTimeBeforeEnd(deposit)) return;
 
     // We use the `from` address of the deposit transaction as the reward receiver
     // to also take into accounts deposits routed through the SpokePoolVerifier contract.
