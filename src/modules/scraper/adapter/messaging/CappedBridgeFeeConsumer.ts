@@ -10,7 +10,7 @@ import { Deposit } from "../../../deposit/model/deposit.entity";
 import { AcrossContractsVersion } from "../../../web3/model/across-version";
 
 /**
- * This consumer computes the the capped bridge fee percentage used for computing referral rewards
+ * This consumer computes the capped bridge fee percentage used for computing referral rewards
  */
 @Processor(ScraperQueue.CappedBridgeFee)
 export class CappedBridgeFeeConsumer {
