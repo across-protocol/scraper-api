@@ -126,7 +126,7 @@ export class OpRebateService {
 
     const deposit = await this.depositRepository.findOne({
       where: { id: depositPrimaryKey },
-      relations: ["token", "price"],
+      relations: ["token", "price", "outputToken", "outputTokenPrice"],
     });
 
     if (!deposit || deposit.status === "pending") {
