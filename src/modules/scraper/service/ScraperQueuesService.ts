@@ -30,6 +30,7 @@ export class ScraperQueuesService {
     @InjectQueue(ScraperQueue.FeeBreakdown) private feeBreakdownsQueue: Queue,
     @InjectQueue(ScraperQueue.OpRebateReward) private opRebateRewardsQueue: Queue,
     @InjectQueue(ScraperQueue.MerkleDistributorClaim) private merkleDistributorClaimQueue: Queue,
+    @InjectQueue(ScraperQueue.CappedBridgeFee) private cappedBridgeFeeQueue: Queue,
   ) {
     this.queuesMap = {
       [ScraperQueue.BlocksEvents]: this.blocksEventsQueue,
@@ -52,6 +53,7 @@ export class ScraperQueuesService {
       [ScraperQueue.FeeBreakdown]: this.feeBreakdownsQueue,
       [ScraperQueue.OpRebateReward]: this.opRebateRewardsQueue,
       [ScraperQueue.MerkleDistributorClaim]: this.merkleDistributorClaimQueue,
+      [ScraperQueue.CappedBridgeFee]: this.cappedBridgeFeeQueue,
     };
   }
 

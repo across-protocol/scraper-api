@@ -1,7 +1,7 @@
 import { OnQueueFailed, Process, Processor } from "@nestjs/bull";
 import { Logger } from "@nestjs/common";
 import { Job } from "bull";
-import { DepositFilledDateQueueMessage, FeeBreakdownQueueMessage, FillEventsV3QueueMessage, ScraperQueue } from ".";
+import { CappedBridgeFeeQueueMessage, DepositFilledDateQueueMessage, FeeBreakdownQueueMessage, FillEventsV3QueueMessage, ScraperQueue } from ".";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Deposit, DepositFillTxV3 } from "../../../deposit/model/deposit.entity";
 import { Repository } from "typeorm";
@@ -33,6 +33,9 @@ export class FillEventsV3Consumer {
     this.scraperQueuesService.publishMessage<FeeBreakdownQueueMessage>(ScraperQueue.FeeBreakdown, {
       depositId: deposit.id,
     });
+    this.scraperQueuesService.publishMessage<CappedBridgeFeeQueueMessage>(ScraperQueue.CappedBridgeFee, {
+      depositId: deposit.id,
+    });
   }
 
   public async processFillEventQueueMessage(deposit: Deposit, data: FillEventsV3QueueMessage) {
@@ -41,17 +44,11 @@ export class FillEventsV3Consumer {
       ...deposit.fillTxs,
       { hash: transactionHash, fillType, updatedMessage, updatedOutputAmount, updatedRecipient },
     ];
-    const wei = new BigNumber(10).pow(18);
-    const outputPercentage = new BigNumber(updatedOutputAmount).multipliedBy(wei).dividedBy(deposit.amount);
-    const bridgeFeePct = wei.minus(outputPercentage).toString();
-    const maxBridgeFeePct = new BigNumber(10).pow(18).times(0.0012);
-    const bridgeFeePctCapped = BigNumber.min(bridgeFeePct, maxBridgeFeePct);
 
     await this.depositRepository.update(
       { id: deposit.id },
       {
         status: "filled",
-        bridgeFeePct: bridgeFeePctCapped.toFixed(0),
         outputAmount: updatedOutputAmount,
         recipientAddr: updatedRecipient,
         fillTxs,

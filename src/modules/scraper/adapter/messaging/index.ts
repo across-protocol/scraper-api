@@ -19,6 +19,7 @@ export enum ScraperQueue {
   FeeBreakdown = "FeeBreakdown",
   OpRebateReward = "OpRebateReward",
   MerkleDistributorClaim = "MerkleDistributorClaim",
+  CappedBridgeFee = "CappedBridgeFee",
 }
 
 export type BlocksEventsQueueMessage = {
@@ -138,4 +139,8 @@ export type OpRebateRewardMessage = {
 
 export type MerkleDistributorClaimQueueMessage = {
   claimId: number;
+};
+
+export type CappedBridgeFeeQueueMessage = {
+  depositId: number;
 };

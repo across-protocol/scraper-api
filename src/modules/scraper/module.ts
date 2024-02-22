@@ -50,6 +50,7 @@ import { MerkleDistributorClaim } from "../airdrop/model/merkle-distributor-clai
 import { MerkleDistributorWindow } from "../airdrop/model/merkle-distributor-window.entity";
 import { SpeedUpEventsV3Consumer } from "./adapter/messaging/SpeedUpEventsV3Consumer";
 import { Token } from "../web3/model/token.entity";
+import { CappedBridgeFeeConsumer } from "./adapter/messaging/CappedBridgeFeeUsdConsumer";
 
 @Module({})
 export class ScraperModule {
@@ -82,6 +83,7 @@ export class ScraperModule {
       FeeBreakdownConsumer,
       OpRebateRewardConsumer,
       MerkleDistributorClaimConsumer,
+      CappedBridgeFeeConsumer,
     ];
 
     return {
@@ -199,6 +201,9 @@ export class ScraperModule {
         }),
         BullModule.registerQueue({
           name: ScraperQueue.MerkleDistributorClaim,
+        }),
+        BullModule.registerQueue({
+          name: ScraperQueue.CappedBridgeFee,
         }),
       ],
       exports: [ScraperQueuesService],
