@@ -7,7 +7,7 @@ import BigNumber from "bignumber.js";
 
 import { CappedBridgeFeeQueueMessage, ScraperQueue } from ".";
 import { Deposit } from "../../../deposit/model/deposit.entity";
-import { AcrossContractsVersion } from "src/modules/web3/model/across-version";
+import { AcrossContractsVersion } from "../../../web3/model/across-version";
 
 /**
  * This consumer computes the the capped bridge fee percentage used for computing referral rewards
