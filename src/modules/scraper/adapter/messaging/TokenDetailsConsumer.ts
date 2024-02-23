@@ -37,8 +37,15 @@ export class TokenDetailsConsumer {
 
     if (deposit.outputTokenAddress) {
       if (deposit.outputTokenAddress === ethers.constants.AddressZero) {
-        const outputTokenSymbol =
-          destinationChainId === ChainIds.base && inputToken.symbol === "USDC" ? "USDbC" : inputToken.symbol;
+        let outputTokenSymbol: string;
+
+        if (destinationChainId === ChainIds.base && inputToken.symbol === "USDC") {
+          outputTokenSymbol = "USDbC";
+        } else if (sourceChainId === ChainIds.base && inputToken.symbol === "USDbC") {
+          outputTokenSymbol = "USDC";
+        } else {
+          outputTokenSymbol = inputToken.symbol;
+        }
         outputToken = await this.tokenRepository.findOne({
           where: { chainId: destinationChainId, symbol: outputTokenSymbol },
         });
