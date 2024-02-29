@@ -87,7 +87,9 @@ export class FeeBreakdownConsumer {
       .multipliedBy(deposit.outputTokenPrice.usd)
       .dividedBy(new BigNumber(10).pow(deposit.outputToken.decimals));
     const bridgeFeeUsd = inputAmountUsd.minus(outputAmountUsd);
-    const bridgeFeeAmount = bridgeFeeUsd.multipliedBy(fixedPointAdjustment).dividedBy(deposit.price.usd);
+    const bridgeFeeAmount = bridgeFeeUsd
+      .multipliedBy(new BigNumber(10).pow(deposit.token.decimals))
+      .dividedBy(deposit.price.usd);
     const feeBreakdown = {
       lpFeeUsd: undefined,
       lpFeePct: undefined,
