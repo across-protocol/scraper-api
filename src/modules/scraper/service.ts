@@ -19,12 +19,15 @@ import {
 } from "./adapter/messaging";
 import { wait } from "../../utils";
 import {
+  BackfillDepositorAddressBody,
   BackfillFeeBreakdownBody,
   BackfillFilledDateBody,
   RetryIncompleteDepositsBody,
   SubmitReindexReferralAddressJobBody,
 } from "./entry-point/http/dto";
 import { Deposit } from "../deposit/model/deposit.entity";
+
+const SPOKE_POOL_VERIFIER_CONTRACT_ADDRESS = "0x269727F088F16E1Aea52Cf5a97B1CD41DAA3f02D";
 
 @Injectable()
 export class ScraperService {
@@ -334,5 +337,29 @@ export class ScraperService {
         depositId: deposit.id,
       });
     }
+  }
+
+  public async backfillDepositorAddress(body: BackfillDepositorAddressBody) {
+    const depositorAddress = SPOKE_POOL_VERIFIER_CONTRACT_ADDRESS;
+    const query = this.depositRepository
+      .createQueryBuilder("d")
+      .where("d.depositorAddress = :depositorAddress", { depositorAddress })
+      .orderBy("d.depositDate", "ASC")
+      .take(body.count || 1000);
+
+    if (body.fromDate) {
+      query.andWhere("d.depositDate >= :fromDate", { fromDate: body.fromDate });
+    }
+
+    const deposits = await query.getMany();
+
+    for (const deposit of deposits) {
+      const receipt = await this.providers.getCachedTransactionReceipt(deposit.sourceChainId, deposit.depositTxHash);
+      await this.depositRepository.update({ id: deposit.id }, { depositorAddr: receipt.from });
+    }
+
+    return {
+      deposits: deposits.length,
+    };
   }
 }
