@@ -343,7 +343,7 @@ export class ScraperService {
     const depositorAddress = SPOKE_POOL_VERIFIER_CONTRACT_ADDRESS;
     const query = this.depositRepository
       .createQueryBuilder("d")
-      .where("d.depositorAddress = :depositorAddress", { depositorAddress })
+      .where("d.depositorAddr = :depositorAddress", { depositorAddress })
       .orderBy("d.depositDate", "ASC")
       .take(body.count || 1000);
 
