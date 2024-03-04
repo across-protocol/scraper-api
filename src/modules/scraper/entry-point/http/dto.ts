@@ -138,3 +138,15 @@ export class BackfillFilledDateBody {
   @ApiProperty({ example: 0 })
   count?: number;
 }
+
+export class BackfillDepositorAddressBody {
+  @IsDateString()
+  @ApiProperty({ example: "2024-02-01T00:00:00.000Z", required: false })
+  @IsOptional()
+  fromDate?: string;
+
+  @IsInt()
+  @ApiProperty({ example: 0 })
+  @IsOptional()
+  count?: number;
+}

@@ -202,7 +202,7 @@ export class BlocksEventsConsumer {
 
     for (const event of typedEvents) {
       try {
-        const deposit = this.fromFundsDepositedV3EventToDeposit(chainId, event);
+        const deposit = await this.fromFundsDepositedV3EventToDeposit(chainId, event);
         const result = await this.depositRepository.insert(deposit);
         await this.scraperQueuesService.publishMessage<BlockNumberQueueMessage>(ScraperQueue.BlockNumber, {
           depositId: result.identifiers[0].id,
@@ -362,7 +362,7 @@ export class BlocksEventsConsumer {
     });
   }
 
-  private fromFundsDepositedV3EventToDeposit(chainId: number, event: FundsDepositedV3Event) {
+  private async fromFundsDepositedV3EventToDeposit(chainId: number, event: FundsDepositedV3Event) {
     const { transactionHash, blockNumber } = event;
     const {
       depositId,
@@ -380,9 +380,14 @@ export class BlocksEventsConsumer {
 
     const wei = BigNumber.from(10).pow(18);
     const feePct = wei.sub(outputAmount.mul(wei).div(inputAmount));
+    let trueDepositor = depositor;
     let exclusivityDeadlineDate = undefined;
 
     if (exclusivityDeadline > 0) exclusivityDeadlineDate = new Date(exclusivityDeadline * 1000);
+    if (depositor === SPOKE_POOL_VERIFIER_CONTRACT_ADDRESS) {
+      const tx = await this.providers.getCachedTransactionReceipt(chainId, transactionHash);
+      trueDepositor = tx.from;
+    }
 
     return this.depositRepository.create({
       depositId,
@@ -395,7 +400,7 @@ export class BlocksEventsConsumer {
       depositTxHash: transactionHash,
       fillTxs: [],
       blockNumber,
-      depositorAddr: depositor,
+      depositorAddr: trueDepositor,
       recipientAddr: recipient,
       depositRelayerFeePct: feePct.toString(),
       initialRelayerFeePct: feePct.toString(),
