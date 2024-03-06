@@ -3,6 +3,7 @@ import { InjectRepository } from "@nestjs/typeorm";
 import { Brackets, DataSource, Repository } from "typeorm";
 import { utils } from "ethers";
 import { Cache } from "cache-manager";
+import BigNumber from "bignumber.js";
 
 import { Deposit } from "./model/deposit.entity";
 import {
@@ -288,6 +289,24 @@ export class DepositService {
       acx_rewards_amount_referrer: d.acxRewardsAmountReferrer,
       acx_rewards_amount_referee: d.acxRewardsAmountReferee,
     }));
+  }
+
+  public computeBridgeFeePctForV3Deposit(deposit: Deposit) {
+    const wei = new BigNumber(10).pow(18);
+
+    if (
+      deposit.token.symbol === deposit.outputToken.symbol ||
+      (deposit.token.symbol === "USDC" && deposit.outputToken.symbol === "USDbC") ||
+      (deposit.token.symbol === "USDbC" && deposit.outputToken.symbol === "USDC")
+    ) {
+      const fraction = new BigNumber(deposit.outputAmount).multipliedBy(wei).dividedBy(deposit.amount);
+      const feePct = wei.minus(fraction);
+      return feePct;
+    } else {
+      throw new Error(
+        `[computeBridgeFeePctForV3Deposit] Invalid token pair: ${deposit.token.symbol} -> ${deposit.outputToken.symbol}`,
+      );
+    }
   }
 
   private getFilteredDepositsQuery(

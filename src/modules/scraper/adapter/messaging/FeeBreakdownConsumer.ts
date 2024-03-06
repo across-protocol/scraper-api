@@ -11,6 +11,7 @@ import { FeeBreakdownQueueMessage, OpRebateRewardMessage, ScraperQueue } from ".
 import { Deposit, DepositFillTx, DepositFillTx2, DepositFillTxV3 } from "../../../deposit/model/deposit.entity";
 import { deriveRelayerFeeComponents, fixedPointAdjustment, makePctValuesCalculator, toWeiPct } from "../../utils";
 import { AcrossContractsVersion } from "../../../web3/model/across-version";
+import { DepositService } from "src/modules/deposit/service";
 
 @Processor(ScraperQueue.FeeBreakdown)
 export class FeeBreakdownConsumer {
@@ -19,6 +20,7 @@ export class FeeBreakdownConsumer {
   constructor(
     private gasFeesService: GasFeesService,
     @InjectRepository(Deposit) private depositRepository: Repository<Deposit>,
+    private depositService: DepositService,
     private scraperQueuesService: ScraperQueuesService,
   ) {}
 
@@ -78,18 +80,11 @@ export class FeeBreakdownConsumer {
 
     // Bridge fee computation
     const wei = new BigNumber(10).pow(18);
-    const outputWeiPct = toWeiPct(new BigNumber(fillTx.updatedOutputAmount).dividedBy(deposit.amount).toString());
-    const bridgeFeePct = wei.minus(outputWeiPct);
-    const inputAmountUsd = new BigNumber(deposit.amount)
+    const bridgeFeePct = this.depositService.computeBridgeFeePctForV3Deposit(deposit);
+    const bridgeFeeAmount = bridgeFeePct.multipliedBy(deposit.amount).dividedBy(wei);
+    const bridgeFeeUsd = bridgeFeeAmount
       .multipliedBy(deposit.price.usd)
       .dividedBy(new BigNumber(10).pow(deposit.token.decimals));
-    const outputAmountUsd = new BigNumber(deposit.outputAmount)
-      .multipliedBy(deposit.outputTokenPrice.usd)
-      .dividedBy(new BigNumber(10).pow(deposit.outputToken.decimals));
-    const bridgeFeeUsd = inputAmountUsd.minus(outputAmountUsd);
-    const bridgeFeeAmount = bridgeFeeUsd
-      .multipliedBy(new BigNumber(10).pow(deposit.token.decimals))
-      .dividedBy(deposit.price.usd);
     const feeBreakdown = {
       lpFeeUsd: undefined,
       lpFeePct: undefined,
@@ -101,7 +96,7 @@ export class FeeBreakdownConsumer {
       relayGasFeePct: undefined,
       relayGasFeeAmount,
       totalBridgeFeeUsd: bridgeFeeUsd.toString(),
-      totalBridgeFeePct: bridgeFeePct.toString(),
+      totalBridgeFeePct: bridgeFeePct.toFixed(0),
       totalBridgeFeeAmount: bridgeFeeAmount.toFixed(0),
     };
     await this.depositRepository.update({ id: deposit.id }, { feeBreakdown });

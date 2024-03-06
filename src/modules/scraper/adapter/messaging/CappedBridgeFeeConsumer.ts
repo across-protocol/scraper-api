@@ -8,6 +8,7 @@ import BigNumber from "bignumber.js";
 import { CappedBridgeFeeQueueMessage, ScraperQueue } from ".";
 import { Deposit } from "../../../deposit/model/deposit.entity";
 import { AcrossContractsVersion } from "../../../web3/model/across-version";
+import { DepositService } from "src/modules/deposit/service";
 
 /**
  * This consumer computes the capped bridge fee percentage used for computing referral rewards
@@ -16,7 +17,10 @@ import { AcrossContractsVersion } from "../../../web3/model/across-version";
 export class CappedBridgeFeeConsumer {
   private logger = new Logger(CappedBridgeFeeConsumer.name);
 
-  constructor(@InjectRepository(Deposit) private depositRepository: Repository<Deposit>) {}
+  constructor(
+    @InjectRepository(Deposit) private depositRepository: Repository<Deposit>,
+    private depositService: DepositService,
+  ) {}
 
   @Process()
   async process(job: Job<CappedBridgeFeeQueueMessage>) {
@@ -40,16 +44,9 @@ export class CappedBridgeFeeConsumer {
 
   private async computeCappedBridgeFeePct(deposit: Deposit) {
     const wei = new BigNumber(10).pow(18);
-    const inputAmountUsd = new BigNumber(deposit.amount)
-      .multipliedBy(deposit.price.usd)
-      .dividedBy(new BigNumber(10).pow(deposit.token.decimals));
-    const outputAmountUsd = new BigNumber(deposit.outputAmount)
-      .multipliedBy(deposit.outputTokenPrice.usd)
-      .dividedBy(new BigNumber(10).pow(deposit.outputToken.decimals));
-    const bridgeFeePct = new BigNumber(1).minus(outputAmountUsd.dividedBy(inputAmountUsd));
-    const bridgeFeePctWei = bridgeFeePct.multipliedBy(wei);
+    const bridgeFeePct = this.depositService.computeBridgeFeePctForV3Deposit(deposit);
     const maxBridgeFeePct = wei.times(0.0012);
-    const bridgeFeePctCapped = BigNumber.min(bridgeFeePctWei, maxBridgeFeePct);
+    const bridgeFeePctCapped = BigNumber.min(bridgeFeePct, maxBridgeFeePct);
 
     await this.depositRepository.update(
       { id: deposit.id },
