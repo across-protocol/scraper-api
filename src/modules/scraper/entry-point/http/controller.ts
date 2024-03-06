@@ -275,4 +275,13 @@ export class ScraperController {
   async backfillDepositorAddress(@Body() body: BackfillDepositorAddressBody) {
     return this.scraperService.backfillDepositorAddress(body);
   }
+
+  @Post("scraper/fix-bridge-fee")
+  @ApiTags("scraper")
+  @Roles(Role.Admin)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @ApiBearerAuth()
+  async fixBridgeFee() {
+    return this.scraperService.fixBridgeFee();
+  }
 }

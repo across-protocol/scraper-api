@@ -13,20 +13,18 @@ import { OpReward } from "../rewards/model/op-reward.entity";
 @Module({})
 export class DepositModule {
   static forRoot(moduleOptions: ModuleOptions): DynamicModule {
-    let module: DynamicModule = { module: DepositModule, providers: [], controllers: [], imports: [], exports: [] };
+    let module: DynamicModule = {
+      module: DepositModule,
+      providers: [DepositService],
+      exports: [DepositService],
+      controllers: [],
+      imports: [TypeOrmModule.forFeature([Deposit, OpReward]), AppConfigModule, RewardModule.forRoot(moduleOptions)],
+    };
 
     if (moduleOptions.runModes.includes(RunMode.Normal) || moduleOptions.runModes.includes(RunMode.Test)) {
       module = {
         ...module,
         controllers: [...module.controllers, DepositController, EtlController],
-        providers: [...module.providers, DepositService],
-        exports: [...module.exports, DepositService],
-        imports: [
-          ...module.imports,
-          TypeOrmModule.forFeature([Deposit, OpReward]),
-          AppConfigModule,
-          RewardModule.forRoot(moduleOptions),
-        ],
       };
     }
 
