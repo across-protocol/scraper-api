@@ -11,7 +11,7 @@ import { FeeBreakdownQueueMessage, OpRebateRewardMessage, ScraperQueue } from ".
 import { Deposit, DepositFillTx, DepositFillTx2, DepositFillTxV3 } from "../../../deposit/model/deposit.entity";
 import { deriveRelayerFeeComponents, fixedPointAdjustment, makePctValuesCalculator, toWeiPct } from "../../utils";
 import { AcrossContractsVersion } from "../../../web3/model/across-version";
-import { DepositService } from "src/modules/deposit/service";
+import { DepositService } from "../../../deposit/service";
 
 @Processor(ScraperQueue.FeeBreakdown)
 export class FeeBreakdownConsumer {
