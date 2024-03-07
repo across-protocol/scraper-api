@@ -20,6 +20,8 @@ export const ChainIds = {
   base: 8453,
   baseGoerli: 84531,
   baseSepolia: 84532,
+  linea: 59144,
+  lineaGoerli: 59140,
 };
 
 export const ChainIdToName = Object.entries(ChainIds).reduce((idToName, entry) => {

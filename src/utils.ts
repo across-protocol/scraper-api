@@ -61,6 +61,16 @@ export const chainIdToInfo = {
     chainId: ChainIds.sepolia,
     nativeSymbol: "eth",
   },
+  [ChainIds.linea]: {
+    name: "Linea",
+    chainId: ChainIds.linea,
+    nativeSymbol: "eth",
+  },
+  [ChainIds.lineaGoerli]: {
+    name: "Linea Goerli",
+    chainId: ChainIds.lineaGoerli,
+    nativeSymbol: "eth",
+  },
 };
 
 export const wait = (seconds = 1) =>
