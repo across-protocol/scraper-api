@@ -376,6 +376,7 @@ export class BlocksEventsConsumer {
       fillDeadline,
       exclusivityDeadline,
       relayer,
+      message,
     } = event.args;
 
     const wei = BigNumber.from(10).pow(18);
@@ -411,6 +412,7 @@ export class BlocksEventsConsumer {
       fillDeadline: new Date(fillDeadline * 1000),
       exclusivityDeadline: exclusivityDeadlineDate,
       relayer,
+      message,
     });
   }
 
