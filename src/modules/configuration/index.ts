@@ -232,6 +232,22 @@ export const configValues = () => ({
           acrossVersion: AcrossContractsVersion.V3,
         },
       ],
+      [ChainIds.linea]: [
+        {
+          address: "0x7E63A5f1a8F0B4d0934B2f2327DAED3F6bb2ee75",
+          startBlockNumber: 2721169,
+          abi: JSON.stringify(SpokePoolV3Abi),
+          acrossVersion: AcrossContractsVersion.V3,
+        },
+      ],
+      [ChainIds.lineaGoerli]: [
+        {
+          address: "0xfa3DA25059F4ff59dA7566B58D3299dB8a04691F",
+          startBlockNumber: 2782100,
+          abi: JSON.stringify(SpokePoolV3Abi),
+          acrossVersion: AcrossContractsVersion.V3,
+        },
+      ],
     },
     merkleDistributor: {
       address: process.env.MERKLE_DISTRIBUTOR_ADDRESS || "0xF633b72A4C2Fb73b77A379bf72864A825aD35b6D", // TODO: replace with mainnet
