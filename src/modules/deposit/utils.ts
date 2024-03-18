@@ -38,5 +38,6 @@ export function formatDeposit(deposit: Deposit) {
           decimals: deposit.token.decimals,
         }
       : undefined,
+    fillDeadline: deposit.fillDeadline || null,
   };
 }
