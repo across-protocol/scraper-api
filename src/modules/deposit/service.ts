@@ -1,6 +1,6 @@
 import { BadRequestException, CACHE_MANAGER, Inject, Injectable } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
-import { Brackets, DataSource, Repository } from "typeorm";
+import { Brackets, DataSource, Repository, SelectQueryBuilder } from "typeorm";
 import { utils } from "ethers";
 import { Cache } from "cache-manager";
 import BigNumber from "bignumber.js";
@@ -19,6 +19,8 @@ import { formatDeposit } from "./utils";
 import { RewardService } from "../rewards/services/reward-service";
 
 export const DEPOSITS_STATS_CACHE_KEY = "deposits:stats";
+export const DEPOSITS_COUNT_CACHE_KEY = "deposits:count";
+export const DEPOSITS_COUNT_CACHE_DURATION_SECONDS = 60 * 5;
 
 @Injectable()
 export class DepositService {
@@ -96,7 +98,10 @@ export class DepositService {
     queryBuilder = queryBuilder.take(limit);
     queryBuilder = queryBuilder.skip(offset);
 
-    const [deposits, total] = await queryBuilder.getManyAndCount();
+    const [deposits, total] = await Promise.all([
+      queryBuilder.getMany(),
+      this.getDepositsCountForTxPage(query, queryBuilder),
+    ]);
 
     // Only include rewards if a user address is provided
     if (query.depositorOrRecipientAddress) {
@@ -126,6 +131,22 @@ export class DepositService {
         total,
       },
     };
+  }
+
+  public async getDepositsCountForTxPage(
+    query: Partial<GetDepositsForTxPageQuery>,
+    queryBuilder: SelectQueryBuilder<Deposit>,
+  ) {
+    if (query.depositorOrRecipientAddress) {
+      return queryBuilder.getCount();
+    }
+
+    let count = await this.cacheManager.get(DEPOSITS_COUNT_CACHE_KEY);
+    if (count) return count;
+    count = await queryBuilder.getCount();
+    await this.cacheManager.set(DEPOSITS_COUNT_CACHE_KEY, count, DEPOSITS_COUNT_CACHE_DURATION_SECONDS);
+
+    return count;
   }
 
   public async getUserDeposits(userAddress: string, status?: "filled" | "pending", limit = 10, offset = 0) {
