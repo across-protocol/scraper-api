@@ -27,6 +27,7 @@ import { OpReward } from "../rewards/model/op-reward.entity";
 import { TransactionReceipt } from "../web3/model/tx-receipt.entity";
 import { QueueJobCount } from "../monitoring/model/QueueJobCount.entity";
 import { MerkleDistributorClaim } from "../airdrop/model/merkle-distributor-claim.entity";
+import { DepositGapCheck } from "../scraper/model/DepositGapCheck.entity";
 
 // TODO: Add db entities here
 const entities = [
@@ -56,6 +57,7 @@ const entities = [
   TransactionReceipt,
   QueueJobCount,
   MerkleDistributorClaim,
+  DepositGapCheck,
 ];
 
 @Injectable()

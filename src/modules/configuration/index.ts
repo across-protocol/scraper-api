@@ -75,18 +75,21 @@ export const configValues = () => ({
           startBlockNumber: 14819486,
           abi: JSON.stringify(EthereumSpokePool2Abi),
           acrossVersion: AcrossContractsVersion.V2,
+          firstDepositId: 0,
         },
         {
           address: "0x5c7BCd6E7De5423a257D81B442095A1a6ced35C5",
           startBlockNumber: 17125811,
           abi: JSON.stringify(EthereumSpokePool2_5Abi),
           acrossVersion: AcrossContractsVersion.V2_5,
+          firstDepositId: 1000000,
         },
         {
           address: "0x5c7BCd6E7De5423a257D81B442095A1a6ced35C5",
           startBlockNumber: 17125812,
           abi: JSON.stringify(SpokePoolV3Abi),
           acrossVersion: AcrossContractsVersion.V3,
+          firstDepositId: 1000000,
         },
       ],
       [ChainIds.optimism]: [
@@ -95,18 +98,21 @@ export const configValues = () => ({
           startBlockNumber: 8747136,
           abi: JSON.stringify(OptimismSpokePool2Abi),
           acrossVersion: AcrossContractsVersion.V2,
+          firstDepositId: 0,
         },
         {
           address: "0x6f26Bf09B1C792e3228e5467807a900A503c0281",
           startBlockNumber: 94233880,
           abi: JSON.stringify(OptimismSpokePool2_5Abi),
           acrossVersion: AcrossContractsVersion.V2_5,
+          firstDepositId: 1000000,
         },
         {
           address: "0x6f26Bf09B1C792e3228e5467807a900A503c0281",
           startBlockNumber: 94233881,
           abi: JSON.stringify(SpokePoolV3Abi),
           acrossVersion: AcrossContractsVersion.V3,
+          firstDepositId: 1000000,
         },
       ],
       [ChainIds.arbitrum]: [
@@ -115,18 +121,21 @@ export const configValues = () => ({
           startBlockNumber: 12741972,
           abi: JSON.stringify(ArbitrumSpokePool2Abi),
           acrossVersion: AcrossContractsVersion.V2,
+          firstDepositId: 0,
         },
         {
           address: "0xe35e9842fceaCA96570B734083f4a58e8F7C5f2A",
           startBlockNumber: 84268970,
           abi: JSON.stringify(ArbitrumSpokePool2_5Abi),
           acrossVersion: AcrossContractsVersion.V2_5,
+          firstDepositId: 1000000,
         },
         {
           address: "0xe35e9842fceaCA96570B734083f4a58e8F7C5f2A",
           startBlockNumber: 84268971,
           abi: JSON.stringify(SpokePoolV3Abi),
           acrossVersion: AcrossContractsVersion.V3,
+          firstDepositId: 1000000,
         },
       ],
       [ChainIds.boba]: [
@@ -135,6 +144,7 @@ export const configValues = () => ({
           startBlockNumber: 619993,
           abi: JSON.stringify(BobaSpokePool2Abi),
           acrossVersion: AcrossContractsVersion.V2,
+          firstDepositId: 0,
         },
       ],
       [ChainIds.polygon]: [
@@ -143,18 +153,21 @@ export const configValues = () => ({
           startBlockNumber: 28604263,
           abi: JSON.stringify(PolygonSpokePool2Abi),
           acrossVersion: AcrossContractsVersion.V2,
+          firstDepositId: 0,
         },
         {
           address: "0x9295ee1d8C5b022Be115A2AD3c30C72E34e7F096",
           startBlockNumber: 41954460,
           abi: JSON.stringify(PolygonSpokePool2_5Abi),
           acrossVersion: AcrossContractsVersion.V2_5,
+          firstDepositId: 1000000,
         },
         {
           address: "0x9295ee1d8C5b022Be115A2AD3c30C72E34e7F096",
           startBlockNumber: 41954461,
           abi: JSON.stringify(SpokePoolV3Abi),
           acrossVersion: AcrossContractsVersion.V3,
+          firstDepositId: 1000000,
         },
       ],
       [ChainIds.goerli]: [
@@ -163,6 +176,7 @@ export const configValues = () => ({
           startBlockNumber: 8824950,
           abi: JSON.stringify(GoerliSpokePool2_5Abi),
           acrossVersion: AcrossContractsVersion.V2_5,
+          firstDepositId: 1000000,
         },
       ],
       [ChainIds.arbitrumGoerli]: [
@@ -171,6 +185,7 @@ export const configValues = () => ({
           startBlockNumber: 16711650,
           abi: JSON.stringify(GoerliSpokePool2_5Abi),
           acrossVersion: AcrossContractsVersion.V2_5,
+          firstDepositId: 1000000,
         },
       ],
       [ChainIds.zkSyncTestnet]: [
@@ -179,6 +194,7 @@ export const configValues = () => ({
           startBlockNumber: 5000000,
           abi: JSON.stringify(GoerliSpokePool2_5Abi),
           acrossVersion: AcrossContractsVersion.V2_5,
+          firstDepositId: 1000000,
         },
       ],
       [ChainIds.zkSyncMainnet]: [
@@ -187,12 +203,14 @@ export const configValues = () => ({
           startBlockNumber: 10352565,
           abi: JSON.stringify(EthereumSpokePool2_5Abi),
           acrossVersion: AcrossContractsVersion.V2_5,
+          firstDepositId: 1000000,
         },
         {
           address: "0xE0B015E54d54fc84a6cB9B666099c46adE9335FF",
           startBlockNumber: 10352566,
           abi: JSON.stringify(SpokePoolV3Abi),
           acrossVersion: AcrossContractsVersion.V3,
+          firstDepositId: 1000000,
         },
       ],
       [ChainIds.base]: [
@@ -201,12 +219,14 @@ export const configValues = () => ({
           startBlockNumber: 2164878,
           abi: JSON.stringify(EthereumSpokePool2_5Abi),
           acrossVersion: AcrossContractsVersion.V2_5,
+          firstDepositId: 1000000,
         },
         {
           address: "0x09aea4b2242abC8bb4BB78D537A67a245A7bEC64",
           startBlockNumber: 2164879,
           abi: JSON.stringify(SpokePoolV3Abi),
           acrossVersion: AcrossContractsVersion.V3,
+          firstDepositId: 1000000,
         },
       ],
       [ChainIds.baseGoerli]: [
@@ -215,6 +235,7 @@ export const configValues = () => ({
           startBlockNumber: 7992905,
           abi: JSON.stringify(EthereumSpokePool2_5Abi),
           acrossVersion: AcrossContractsVersion.V2_5,
+          firstDepositId: 1000000,
         },
       ],
       [ChainIds.baseSepolia]: [
@@ -223,6 +244,7 @@ export const configValues = () => ({
           startBlockNumber: 6082004,
           abi: JSON.stringify(SpokePoolV3Abi),
           acrossVersion: AcrossContractsVersion.V3,
+          firstDepositId: 1000000,
         },
       ],
       [ChainIds.sepolia]: [
@@ -231,6 +253,7 @@ export const configValues = () => ({
           startBlockNumber: 5288470,
           abi: JSON.stringify(SpokePoolV3Abi),
           acrossVersion: AcrossContractsVersion.V3,
+          firstDepositId: 1000000,
         },
       ],
       [ChainIds.linea]: [
@@ -239,6 +262,7 @@ export const configValues = () => ({
           startBlockNumber: 2721169,
           abi: JSON.stringify(SpokePoolV3Abi),
           acrossVersion: AcrossContractsVersion.V3,
+          firstDepositId: 1000000,
         },
       ],
       [ChainIds.lineaGoerli]: [
@@ -247,6 +271,7 @@ export const configValues = () => ({
           startBlockNumber: 2782100,
           abi: JSON.stringify(SpokePoolV3Abi),
           acrossVersion: AcrossContractsVersion.V3,
+          firstDepositId: 1000000,
         },
       ],
     },
