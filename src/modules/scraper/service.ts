@@ -82,11 +82,11 @@ export class ScraperService {
         if (!!range) {
           const queueMsg = { chainId, ...range };
           await this.scraperQueuesService.publishMessage<BlocksEventsQueueMessage>(ScraperQueue.BlocksEvents, queueMsg);
-          // publish the block range again to be processed with a delay of 60 seconds
+          // publish the block range again to be processed with a delay of 10 minutes
           await this.scraperQueuesService.publishMessage<BlocksEventsQueueMessage>(
             ScraperQueue.BlocksEvents,
             queueMsg,
-            { delay: 5000 * 60 },
+            { delay: 1000 * 60 * 10 },
           );
           this.logger.log(`publish chainId: ${chainId} from: ${range.from} to: ${range.to}`);
         }
