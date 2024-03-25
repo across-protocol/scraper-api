@@ -309,6 +309,17 @@ export class DepositService {
     }
   }
 
+  public getFirstDepositIdFromSpokePoolConfig(chainId: number, throwIfNotFound = true) {
+    const contracts = this.appConfig.values.web3.spokePoolContracts[chainId];
+    if (!contracts && throwIfNotFound) {
+      throw new Error(`SpokePool contracts for chainId ${chainId} not found`);
+    }
+    if (!contracts) return undefined;
+
+    const firstDepositIds = contracts.map((contract) => contract.firstDepositId);
+    return Math.min(...firstDepositIds);
+  }
+
   private getFilteredDepositsQuery(
     queryBuilder: ReturnType<typeof this.depositRepository.createQueryBuilder>,
     filter: Partial<GetDepositsBaseQuery>,

@@ -51,18 +51,27 @@ import { MerkleDistributorWindow } from "../airdrop/model/merkle-distributor-win
 import { SpeedUpEventsV3Consumer } from "./adapter/messaging/SpeedUpEventsV3Consumer";
 import { Token } from "../web3/model/token.entity";
 import { CappedBridgeFeeConsumer } from "./adapter/messaging/CappedBridgeFeeConsumer";
+import { DepositsGapDetectionCron } from "./service/DepositsGapDetectionCron";
+import { MonitoringModule } from "../monitoring/module";
+import { DepositGapCheck } from "./model/DepositGapCheck.entity";
+import { DepositGapCheckFixture } from "./adapter/db/DepositGapCheckFixture";
+import { DepositGapService } from "./service/DepositGapService";
 
 @Module({})
 export class ScraperModule {
   static forRoot(moduleOptions: ModuleOptions): DynamicModule {
+    const crons = [QueuesMonitoringCron, DepositsGapDetectionCron];
+    const fixtures = [DepositGapCheckFixture];
     const providers: Provider<any>[] = [
+      ...crons,
+      ...fixtures,
       ScraperService,
       ScraperQueuesService,
-      QueuesMonitoringCron,
       SuggestedFeesService,
       TrackService,
       GasFeesService,
       OpRebateService,
+      DepositGapService,
       BlocksEventsConsumer,
       MerkleDistributorBlocksEventsConsumer,
       MerkleDistributorBlocksEventsConsumerV2,
@@ -105,6 +114,7 @@ export class ScraperModule {
           MerkleDistributorClaim,
           MerkleDistributorWindow,
           Token,
+          DepositGapCheck,
         ]),
         MarketPriceModule.forRoot(moduleOptions),
         HttpModule,
@@ -112,6 +122,7 @@ export class ScraperModule {
         AirdropModule.forRoot(moduleOptions),
         ReferralModule.forRoot(moduleOptions),
         RewardModule.forRoot(moduleOptions),
+        MonitoringModule.forRoot(moduleOptions),
         BullModule.registerQueue({
           name: ScraperQueue.BlockNumber,
         }),
