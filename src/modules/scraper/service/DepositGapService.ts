@@ -4,6 +4,7 @@ import { DepositGapCheck } from "../model/DepositGapCheck.entity";
 import { InjectRepository } from "@nestjs/typeorm";
 import { DepositService } from "../../deposit/service";
 import { Deposit } from "../../deposit/model/deposit.entity";
+import { ChainIds } from "../../web3/model/ChainId";
 
 export type DepositGapInterval = {
   fromDepositId: number;
@@ -18,6 +19,13 @@ type CheckDepositGapsResult = {
 
 const DEPOSITS_GAP_DETECTION_LIMIT = 50;
 const MAX_GAP_SIZE = 50;
+const MaxDepositIdV2 = {
+  [ChainIds.mainnet]: 89186,
+  [ChainIds.optimism]: 261927,
+  [ChainIds.polygon]: 212598,
+  [ChainIds.arbitrum]: 328405,
+};
+const ACROSS_V2_5_FIRST_DEPOSIT_ID = 1000000;
 
 @Injectable()
 export class DepositGapService {
@@ -58,10 +66,14 @@ export class DepositGapService {
     chainId,
     gapsLimit = DEPOSITS_GAP_DETECTION_LIMIT,
     maxGapSize = MAX_GAP_SIZE,
+    maxDepositIdV2 = MaxDepositIdV2,
+    acrossV2_5FirstDepositId = ACROSS_V2_5_FIRST_DEPOSIT_ID,
   }: {
     chainId: number;
     gapsLimit?: number;
     maxGapSize?: number;
+    maxDepositIdV2?: { [key: number]: number };
+    acrossV2_5FirstDepositId?: number;
   }): Promise<CheckDepositGapsResult> {
     const gapIntervals: DepositGapInterval[] = [];
     let gapCheckPassDepositId;
@@ -73,7 +85,6 @@ export class DepositGapService {
     if (!lastDeposit) return { gapIntervals, lastDepositId: lastDeposit?.depositId, gapCheckPassDepositId };
 
     const firstDepositId = await this.getDepositToStartGapCheck(chainId);
-    let gapDetected = false;
     this.logger.debug(`Checking gaps for chainId: ${chainId} from ${firstDepositId} to ${lastDeposit.depositId}`);
     for (let i = firstDepositId; i <= lastDeposit.depositId; i++) {
       const d = await this.depositRepository.findOne({
@@ -83,34 +94,26 @@ export class DepositGapService {
 
       if (d) {
         this.logger.debug(`Deposit ${i} found`);
-        if (!gapDetected) {
-          gapCheckPassDepositId = i;
-        }
+        // console.log(`Deposit ${i} found`);
+        if (!gapIntervals.length) gapCheckPassDepositId = i;
         if (gapIntervals.length === gapsLimit) {
           break;
         }
       } else {
-        gapDetected = true;
-
+        this.logger.debug(`Deposit ${i} not found.`);
+        // console.log(`Deposit ${i} not found.`);
         if (gapIntervals.length === 0) {
           gapIntervals.push({
             fromDepositId: i,
             toDepositId: i,
           });
         } else {
-          const lastInterval = gapIntervals[gapIntervals.length - 1];
+          let lastInterval = gapIntervals[gapIntervals.length - 1];
+          // Insert or extend the last gap interval
           if (
-            gapIntervals.length === gapsLimit &&
-            lastInterval.toDepositId - lastInterval.fromDepositId >= maxGapSize - 1
+            lastInterval.toDepositId === i - 1 &&
+            lastInterval.toDepositId - lastInterval.fromDepositId < maxGapSize - 1
           ) {
-            break;
-          } else if (lastInterval.toDepositId - lastInterval.fromDepositId >= maxGapSize - 1) {
-            // If the gap is bigger than the maxGapSize, we start a new interval
-            gapIntervals.push({
-              fromDepositId: i,
-              toDepositId: i,
-            });
-          } else if (lastInterval.toDepositId === i - 1) {
             lastInterval.toDepositId = i;
           } else {
             gapIntervals.push({
@@ -118,8 +121,20 @@ export class DepositGapService {
               toDepositId: i,
             });
           }
+          this.logger.debug(`Number of gaps: ${gapIntervals.length}`);
+          // console.log(`gaps: ${JSON.stringify(gapIntervals)}`);
+          lastInterval = gapIntervals[gapIntervals.length - 1];
+          // If we have reached the limit of gaps and the last gap is the maximum size, we can stop
+          if (
+            gapIntervals.length === gapsLimit &&
+            lastInterval.toDepositId - lastInterval.fromDepositId === maxGapSize - 1
+          ) {
+            break;
+          }
         }
-        this.logger.debug(`Deposit ${i} not found. Number of gaps: ${gapIntervals.length}`);
+      }
+      if (i === maxDepositIdV2[chainId]) {
+        i = acrossV2_5FirstDepositId - 1;
       }
     }
 
