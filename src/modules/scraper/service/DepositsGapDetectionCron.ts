@@ -127,7 +127,7 @@ export class DepositsGapDetectionCron {
           elements: [
             {
               type: "text",
-              text: `deposits from ${gapInterval.fromDepositId} to ${gapInterval.toDepositId}\n(previous: ${gapInterval.previousKnownDeposit?.depositId} ${gapInterval.previousKnownDeposit?.blockNumber}, next: ${gapInterval.nextKnownDeposit?.depositId} ${gapInterval.nextKnownDeposit?.blockNumber}`,
+              text: `deposit id from ${gapInterval.fromDepositId} to ${gapInterval.toDepositId}\n(previous id: ${gapInterval.previousKnownDeposit?.depositId} block: ${gapInterval.previousKnownDeposit?.blockNumber}, next id:${gapInterval.nextKnownDeposit?.depositId} block:${gapInterval.nextKnownDeposit?.blockNumber}`,
             },
           ],
         });
