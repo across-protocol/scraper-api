@@ -1,12 +1,12 @@
 import { Module, DynamicModule } from "@nestjs/common";
 import { HttpModule } from "@nestjs/axios";
+import { TypeOrmModule } from "@nestjs/typeorm";
 
 import { ModuleOptions, RunMode } from "../../dynamic-module";
 import { AppConfigModule } from "../configuration/configuration.module";
 import { SlackService } from "./adapter/slack/service";
 import { MonitoringService } from "./service";
 import { SlackReportingCron } from "./service/slack-reporting-cron";
-import { TypeOrmModule } from "@nestjs/typeorm";
 import { QueueJobCount } from "./model/QueueJobCount.entity";
 
 @Module({})
@@ -32,7 +32,7 @@ export class MonitoringModule {
         ...module,
         providers: [...module.providers, SlackService, MonitoringService, SlackReportingCron],
         imports: [...module.imports, HttpModule, AppConfigModule, TypeOrmModule.forFeature([QueueJobCount])],
-        exports: [],
+        exports: [MonitoringService],
       };
     }
 
