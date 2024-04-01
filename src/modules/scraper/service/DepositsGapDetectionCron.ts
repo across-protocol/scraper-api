@@ -49,9 +49,9 @@ export class DepositsGapDetectionCron {
 
     for (const chainId of chainIds) {
       this.logger.log(`Detecting deposits gap for chainId: ${chainId}`);
-      const { gapIntervals, lastDepositId, gapCheckPassDepositId } = await this.depositGapService.checkDepositGaps(
+      const { gapIntervals, lastDepositId, gapCheckPassDepositId } = await this.depositGapService.checkDepositGaps({
         chainId,
-      );
+      });
       if (gapCheckPassDepositId) {
         await this.depositGapService.markDepositGapCheckAsPassed(gapCheckPassDepositId, chainId);
       }

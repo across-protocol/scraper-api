@@ -88,9 +88,9 @@ describe("DepositGapService::checkDepositGaps", () => {
   });
 
   it("should be no gaps if no deposits", async () => {
-    const { gapIntervals, lastDepositId, gapCheckPassDepositId } = await depositGapService.checkDepositGaps(
-      ChainIds.mainnet,
-    );
+    const { gapIntervals, lastDepositId, gapCheckPassDepositId } = await depositGapService.checkDepositGaps({
+      chainId: ChainIds.mainnet,
+    });
     expect(gapIntervals.length).toBe(0);
     expect(lastDepositId).toBeUndefined();
     expect(gapCheckPassDepositId).toBeUndefined();
@@ -98,9 +98,9 @@ describe("DepositGapService::checkDepositGaps", () => {
 
   it("should be no gaps if a single deposit", async () => {
     await depositFixture.insertDeposit({ depositId: 0, sourceChainId: ChainIds.mainnet });
-    const { gapIntervals, lastDepositId, gapCheckPassDepositId } = await depositGapService.checkDepositGaps(
-      ChainIds.mainnet,
-    );
+    const { gapIntervals, lastDepositId, gapCheckPassDepositId } = await depositGapService.checkDepositGaps({
+      chainId: ChainIds.mainnet,
+    });
     expect(gapIntervals.length).toBe(0);
     expect(lastDepositId).toBe(0);
     expect(gapCheckPassDepositId).toBe(0);
@@ -111,9 +111,9 @@ describe("DepositGapService::checkDepositGaps", () => {
     await depositFixture.insertDeposit({ depositId: 1, sourceChainId: ChainIds.mainnet });
     await depositFixture.insertDeposit({ depositId: 2, sourceChainId: ChainIds.mainnet });
     await depositFixture.insertDeposit({ depositId: 3, sourceChainId: ChainIds.mainnet });
-    const { gapIntervals, lastDepositId, gapCheckPassDepositId } = await depositGapService.checkDepositGaps(
-      ChainIds.mainnet,
-    );
+    const { gapIntervals, lastDepositId, gapCheckPassDepositId } = await depositGapService.checkDepositGaps({
+      chainId: ChainIds.mainnet,
+    });
     expect(gapIntervals.length).toBe(0);
     expect(lastDepositId).toBe(3);
     expect(gapCheckPassDepositId).toBe(3);
@@ -128,9 +128,9 @@ describe("DepositGapService::checkDepositGaps", () => {
     await depositFixture.insertDeposit({ depositId: 2, sourceChainId: ChainIds.mainnet });
     await depositFixture.insertDeposit({ depositId: 3, sourceChainId: ChainIds.mainnet });
     await depositFixture.insertDeposit({ depositId: 5, sourceChainId: ChainIds.mainnet });
-    const { gapIntervals, lastDepositId, gapCheckPassDepositId } = await depositGapService.checkDepositGaps(
-      ChainIds.mainnet,
-    );
+    const { gapIntervals, lastDepositId, gapCheckPassDepositId } = await depositGapService.checkDepositGaps({
+      chainId: ChainIds.mainnet,
+    });
     expect(gapIntervals).toStrictEqual([{ fromDepositId: 4, toDepositId: 4 }]);
     expect(lastDepositId).toBe(5);
     expect(gapCheckPassDepositId).toBe(3);
@@ -143,9 +143,9 @@ describe("DepositGapService::checkDepositGaps", () => {
     await depositFixture.insertDeposit({ depositId: 3, sourceChainId: ChainIds.mainnet });
     await depositFixture.insertDeposit({ depositId: 5, sourceChainId: ChainIds.mainnet });
     await depositFixture.insertDeposit({ depositId: 10, sourceChainId: ChainIds.mainnet });
-    const { gapIntervals, lastDepositId, gapCheckPassDepositId } = await depositGapService.checkDepositGaps(
-      ChainIds.mainnet,
-    );
+    const { gapIntervals, lastDepositId, gapCheckPassDepositId } = await depositGapService.checkDepositGaps({
+      chainId: ChainIds.mainnet,
+    });
     expect(gapIntervals).toStrictEqual([
       { fromDepositId: 4, toDepositId: 4 },
       { fromDepositId: 6, toDepositId: 9 },
@@ -157,9 +157,9 @@ describe("DepositGapService::checkDepositGaps", () => {
   it("should detect gaps", async () => {
     await depositFixture.insertDeposit({ depositId: 1, sourceChainId: ChainIds.mainnet });
     await depositFixture.insertDeposit({ depositId: 2, sourceChainId: ChainIds.mainnet });
-    const { gapIntervals, lastDepositId, gapCheckPassDepositId } = await depositGapService.checkDepositGaps(
-      ChainIds.mainnet,
-    );
+    const { gapIntervals, lastDepositId, gapCheckPassDepositId } = await depositGapService.checkDepositGaps({
+      chainId: ChainIds.mainnet,
+    });
     expect(gapIntervals).toStrictEqual([{ fromDepositId: 0, toDepositId: 0 }]);
     expect(lastDepositId).toBe(2);
     expect(gapCheckPassDepositId).toBeUndefined();
@@ -170,14 +170,49 @@ describe("DepositGapService::checkDepositGaps", () => {
     await depositFixture.insertDeposit({ depositId: 0, sourceChainId: ChainIds.mainnet });
     await depositFixture.insertDeposit({ depositId: 3, sourceChainId: ChainIds.mainnet });
     await depositFixture.insertDeposit({ depositId: 5, sourceChainId: ChainIds.mainnet });
-    const { gapIntervals, lastDepositId, gapCheckPassDepositId } = await depositGapService.checkDepositGaps(
-      ChainIds.mainnet,
-    );
+    const { gapIntervals, lastDepositId, gapCheckPassDepositId } = await depositGapService.checkDepositGaps({
+      chainId: ChainIds.mainnet,
+    });
     expect(gapIntervals).toStrictEqual([
       { fromDepositId: 1, toDepositId: 2 },
       { fromDepositId: 4, toDepositId: 4 },
     ]);
     expect(lastDepositId).toBe(5);
     expect(gapCheckPassDepositId).toBeUndefined();
+  });
+
+  it("should not allow gaps size above a certain number", async () => {
+    await depositFixture.insertDeposit({ depositId: 0, sourceChainId: ChainIds.mainnet });
+    await depositFixture.insertDeposit({ depositId: 2, sourceChainId: ChainIds.mainnet });
+    await depositFixture.insertDeposit({ depositId: 25, sourceChainId: ChainIds.mainnet });
+    const { gapIntervals, lastDepositId, gapCheckPassDepositId } = await depositGapService.checkDepositGaps({
+      chainId: ChainIds.mainnet,
+      maxGapSize: 20,
+    });
+    expect(gapIntervals).toStrictEqual([
+      { fromDepositId: 1, toDepositId: 1 },
+      { fromDepositId: 3, toDepositId: 22 },
+      { fromDepositId: 23, toDepositId: 24 },
+    ]);
+    expect(lastDepositId).toBe(25);
+    expect(gapCheckPassDepositId).toBe(0);
+  });
+
+  it("should not exceed max gaps and max gap limit", async () => {
+    await depositFixture.insertDeposit({ depositId: 0, sourceChainId: ChainIds.mainnet });
+    await depositFixture.insertDeposit({ depositId: 2, sourceChainId: ChainIds.mainnet });
+    await depositFixture.insertDeposit({ depositId: 25, sourceChainId: ChainIds.mainnet });
+    const { gapIntervals, lastDepositId, gapCheckPassDepositId } = await depositGapService.checkDepositGaps({
+      chainId: ChainIds.mainnet,
+      maxGapSize: 5,
+      gapsLimit: 3,
+    });
+    expect(gapIntervals).toStrictEqual([
+      { fromDepositId: 1, toDepositId: 1 },
+      { fromDepositId: 3, toDepositId: 7 },
+      { fromDepositId: 8, toDepositId: 12 },
+    ]);
+    expect(lastDepositId).toBe(25);
+    expect(gapCheckPassDepositId).toBe(0);
   });
 });

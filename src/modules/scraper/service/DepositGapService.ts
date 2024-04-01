@@ -17,6 +17,7 @@ type CheckDepositGapsResult = {
 };
 
 const DEPOSITS_GAP_DETECTION_LIMIT = 50;
+const MAX_GAP_SIZE = 50;
 
 @Injectable()
 export class DepositGapService {
@@ -51,7 +52,15 @@ export class DepositGapService {
       : this.depositService.getFirstDepositIdFromSpokePoolConfig(chainId);
   }
 
-  async checkDepositGaps(chainId: number, gapsLimit = DEPOSITS_GAP_DETECTION_LIMIT): Promise<CheckDepositGapsResult> {
+  async checkDepositGaps({
+    chainId,
+    gapsLimit = DEPOSITS_GAP_DETECTION_LIMIT,
+    maxGapSize = MAX_GAP_SIZE,
+  }: {
+    chainId: number;
+    gapsLimit?: number;
+    maxGapSize?: number;
+  }): Promise<CheckDepositGapsResult> {
     const gapIntervals: DepositGapInterval[] = [];
     let gapCheckPassDepositId;
     const lastDeposit = await this.depositRepository.findOne({
@@ -84,7 +93,18 @@ export class DepositGapService {
           });
         } else {
           const lastInterval = gapIntervals[gapIntervals.length - 1];
-          if (lastInterval.toDepositId === i - 1) {
+          if (
+            gapIntervals.length === gapsLimit &&
+            lastInterval.toDepositId - lastInterval.fromDepositId >= maxGapSize - 1
+          ) {
+            break;
+          } else if (lastInterval.toDepositId - lastInterval.fromDepositId >= maxGapSize - 1) {
+            // If the gap is bigger than the maxGapSize, we start a new interval
+            gapIntervals.push({
+              fromDepositId: i,
+              toDepositId: i,
+            });
+          } else if (lastInterval.toDepositId === i - 1) {
             lastInterval.toDepositId = i;
           } else {
             gapIntervals.push({
