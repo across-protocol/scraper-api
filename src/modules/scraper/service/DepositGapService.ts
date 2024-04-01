@@ -1,4 +1,4 @@
-import { Injectable } from "@nestjs/common";
+import { Injectable, Logger } from "@nestjs/common";
 import { DataSource, Repository } from "typeorm";
 import { DepositGapCheck } from "../model/DepositGapCheck.entity";
 import { InjectRepository } from "@nestjs/typeorm";
@@ -21,6 +21,8 @@ const MAX_GAP_SIZE = 50;
 
 @Injectable()
 export class DepositGapService {
+  private readonly logger = new Logger(DepositGapService.name);
+
   constructor(
     private dataSource: DataSource,
     private depositService: DepositService,
@@ -72,13 +74,17 @@ export class DepositGapService {
 
     const firstDepositId = await this.getDepositToStartGapCheck(chainId);
     let gapDetected = false;
-
+    this.logger.debug(`Checking gaps for chainId: ${chainId} from ${firstDepositId} to ${lastDeposit.depositId}`);
     for (let i = firstDepositId; i <= lastDeposit.depositId; i++) {
-      const deposit = await this.depositRepository.findOne({ where: { sourceChainId: chainId, depositId: i } });
+      const d = await this.depositRepository.findOne({
+        where: { sourceChainId: chainId, depositId: i },
+        select: ["id"],
+      });
 
-      if (deposit) {
+      if (d) {
+        this.logger.debug(`Deposit ${i} found`);
         if (!gapDetected) {
-          gapCheckPassDepositId = deposit.depositId;
+          gapCheckPassDepositId = i;
         }
         if (gapIntervals.length === gapsLimit) {
           break;
@@ -113,6 +119,7 @@ export class DepositGapService {
             });
           }
         }
+        this.logger.debug(`Deposit ${i} not found. Number of gaps: ${gapIntervals.length}`);
       }
     }
 
