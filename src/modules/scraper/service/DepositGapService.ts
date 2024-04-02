@@ -101,14 +101,14 @@ export class DepositGapService {
       });
 
       if (d) {
-        this.logger.debug(`Deposit ${i} found`);
+        this.logger.debug(`chainId ${chainId} deposit ${i} found`);
         // console.log(`Deposit ${i} found`);
         if (!gapIntervals.length) gapCheckPassDepositId = i;
         if (gapIntervals.length === gapsLimit) {
           break;
         }
       } else {
-        this.logger.debug(`Deposit ${i} not found.`);
+        this.logger.debug(`chainId ${chainId} deposit ${i} not found.`);
         // console.log(`Deposit ${i} not found.`);
         if (gapIntervals.length === 0) {
           gapIntervals.push({
@@ -129,7 +129,7 @@ export class DepositGapService {
               toDepositId: i,
             });
           }
-          this.logger.debug(`Number of gaps: ${gapIntervals.length}`);
+          this.logger.debug(`chainId ${chainId} number of gaps: ${gapIntervals.length}`);
           // console.log(`gaps: ${JSON.stringify(gapIntervals)}`);
           lastInterval = gapIntervals[gapIntervals.length - 1];
           // If we have reached the limit of gaps and the last gap is the maximum size, we can stop
