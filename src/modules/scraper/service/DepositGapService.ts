@@ -54,8 +54,17 @@ export class DepositGapService {
     });
   }
 
-  async getDepositToStartGapCheck(chainId: number) {
+  async getDepositToStartGapCheck(
+    chainId: number,
+    maxDepositIdV2 = MaxDepositIdV2,
+    acrossV2_5FirstDepositId = ACROSS_V2_5_FIRST_DEPOSIT_ID,
+  ) {
     const lastDepositGapCheck = await this.getLastDepositThatPassedGapCheck(chainId);
+
+    if (lastDepositGapCheck && lastDepositGapCheck.depositId === maxDepositIdV2[chainId]) {
+      return acrossV2_5FirstDepositId;
+    }
+
     return lastDepositGapCheck
       ? lastDepositGapCheck.depositId + 1
       : this.depositService.getFirstDepositIdFromSpokePoolConfig(chainId);
@@ -83,7 +92,7 @@ export class DepositGapService {
 
     if (!lastDeposit) return { gapIntervals, lastDepositId: lastDeposit?.depositId, gapCheckPassDepositId };
 
-    const firstDepositId = await this.getDepositToStartGapCheck(chainId);
+    const firstDepositId = await this.getDepositToStartGapCheck(chainId, maxDepositIdV2, acrossV2_5FirstDepositId);
     this.logger.debug(`Checking gaps for chainId: ${chainId} from ${firstDepositId} to ${lastDeposit.depositId}`);
     for (let i = firstDepositId; i <= lastDeposit.depositId; i++) {
       const d = await this.depositRepository.findOne({
@@ -92,14 +101,14 @@ export class DepositGapService {
       });
 
       if (d) {
-        this.logger.debug(`Deposit ${i} found`);
+        this.logger.debug(`chainId ${chainId} deposit ${i} found`);
         // console.log(`Deposit ${i} found`);
         if (!gapIntervals.length) gapCheckPassDepositId = i;
         if (gapIntervals.length === gapsLimit) {
           break;
         }
       } else {
-        this.logger.debug(`Deposit ${i} not found.`);
+        this.logger.debug(`chainId ${chainId} deposit ${i} not found.`);
         // console.log(`Deposit ${i} not found.`);
         if (gapIntervals.length === 0) {
           gapIntervals.push({
@@ -120,7 +129,7 @@ export class DepositGapService {
               toDepositId: i,
             });
           }
-          this.logger.debug(`Number of gaps: ${gapIntervals.length}`);
+          this.logger.debug(`chainId ${chainId} number of gaps: ${gapIntervals.length}`);
           // console.log(`gaps: ${JSON.stringify(gapIntervals)}`);
           lastInterval = gapIntervals[gapIntervals.length - 1];
           // If we have reached the limit of gaps and the last gap is the maximum size, we can stop

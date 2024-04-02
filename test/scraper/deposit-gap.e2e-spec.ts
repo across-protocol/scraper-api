@@ -249,4 +249,20 @@ describe("DepositGapService::checkDepositGaps", () => {
     expect(lastDepositId).toBe(11);
     expect(gapCheckPassDepositId).toBe(2);
   });
+
+  it("should take into consideration the v2 max deposit id", async () => {
+    await depositGapCheckFixture.insertDepositGapCheck({ depositId: 2, originChainId: ChainIds.mainnet, passed: true });
+    await depositFixture.insertDeposit({ depositId: 0, sourceChainId: ChainIds.mainnet });
+    await depositFixture.insertDeposit({ depositId: 1, sourceChainId: ChainIds.mainnet });
+    await depositFixture.insertDeposit({ depositId: 2, sourceChainId: ChainIds.mainnet });
+    await depositFixture.insertDeposit({ depositId: 11, sourceChainId: ChainIds.mainnet });
+    const { gapIntervals, lastDepositId, gapCheckPassDepositId } = await depositGapService.checkDepositGaps({
+      chainId: ChainIds.mainnet,
+      maxDepositIdV2: { [ChainIds.mainnet]: 2 },
+      acrossV2_5FirstDepositId: 10,
+    });
+    expect(gapIntervals).toStrictEqual([{ fromDepositId: 10, toDepositId: 10 }]);
+    expect(lastDepositId).toBe(11);
+    expect(gapCheckPassDepositId).toBeUndefined();
+  });
 });
