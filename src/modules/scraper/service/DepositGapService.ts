@@ -54,8 +54,17 @@ export class DepositGapService {
     });
   }
 
-  async getDepositToStartGapCheck(chainId: number) {
+  async getDepositToStartGapCheck(
+    chainId: number,
+    maxDepositIdV2 = MaxDepositIdV2,
+    acrossV2_5FirstDepositId = ACROSS_V2_5_FIRST_DEPOSIT_ID,
+  ) {
     const lastDepositGapCheck = await this.getLastDepositThatPassedGapCheck(chainId);
+
+    if (lastDepositGapCheck && lastDepositGapCheck.depositId === maxDepositIdV2[chainId]) {
+      return acrossV2_5FirstDepositId;
+    }
+
     return lastDepositGapCheck
       ? lastDepositGapCheck.depositId + 1
       : this.depositService.getFirstDepositIdFromSpokePoolConfig(chainId);
@@ -83,7 +92,7 @@ export class DepositGapService {
 
     if (!lastDeposit) return { gapIntervals, lastDepositId: lastDeposit?.depositId, gapCheckPassDepositId };
 
-    const firstDepositId = await this.getDepositToStartGapCheck(chainId);
+    const firstDepositId = await this.getDepositToStartGapCheck(chainId, maxDepositIdV2, acrossV2_5FirstDepositId);
     this.logger.debug(`Checking gaps for chainId: ${chainId} from ${firstDepositId} to ${lastDeposit.depositId}`);
     for (let i = firstDepositId; i <= lastDeposit.depositId; i++) {
       const d = await this.depositRepository.findOne({
