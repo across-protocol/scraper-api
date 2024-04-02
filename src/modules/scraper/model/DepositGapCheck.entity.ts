@@ -1,4 +1,4 @@
-import { Column, CreateDateColumn, Entity, PrimaryColumn } from "typeorm";
+import { Column, CreateDateColumn, Entity, PrimaryColumn, UpdateDateColumn } from "typeorm";
 
 /**
  * Table that stores the deposit ids for which the preceding deposits don't have gaps.
@@ -8,7 +8,7 @@ export class DepositGapCheck {
   @PrimaryColumn()
   originChainId: number;
 
-  @PrimaryColumn()
+  @Column()
   depositId: number;
 
   @Column()
@@ -16,4 +16,7 @@ export class DepositGapCheck {
 
   @CreateDateColumn()
   createdAt: Date;
+
+  @UpdateDateColumn()
+  updatedAt: Date;
 }

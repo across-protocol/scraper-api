@@ -44,14 +44,13 @@ export class DepositGapService {
       .insert()
       .into(DepositGapCheck)
       .values({ depositId, originChainId, passed: true })
-      .orUpdate(["passed"], ["originChainId", "depositId"])
+      .orUpdate(["passed", "depositId"], ["originChainId"])
       .execute();
   }
 
   async getLastDepositThatPassedGapCheck(originChainId: number) {
     return this.depositGapCheckRepository.findOne({
       where: { originChainId, passed: true },
-      order: { depositId: "DESC" },
     });
   }
 
