@@ -11,6 +11,7 @@ import { SpokePoolEventsQuerier } from "./SpokePoolEventsQuerier";
 import { MerkleDistributorEventsQuerier } from "./MerkleDistributorEventsQuerier";
 import { Transaction } from "../model/transaction.entity";
 import { TransactionReceipt } from "../model/tx-receipt.entity";
+import { AcrossContractsVersion } from "../model/across-version";
 
 @Injectable()
 export class EthProvidersService {
@@ -38,8 +39,11 @@ export class EthProvidersService {
     return this.providers;
   }
 
-  public getSpokePoolEventQuerier(chainId: ChainId, address: string): SpokePoolEventsQuerier | undefined {
-    return this.spokePoolEventQueriers[chainId][address];
+  public getSpokePoolEventQuerier(
+    chainId: ChainId,
+    version: AcrossContractsVersion,
+  ): SpokePoolEventsQuerier | undefined {
+    return this.spokePoolEventQueriers[chainId][version];
   }
 
   public getSpokePoolEventQueriers() {
@@ -163,7 +167,7 @@ export class EthProvidersService {
       const spokePools = this.appConfig.values.web3.spokePoolContracts[chainId] || [];
       for (const spokePool of spokePools) {
         const contract = new ethers.Contract(spokePool.address, spokePool.abi, this.getProvider(chainId));
-        this.spokePoolEventQueriers[chainId][spokePool.address] = new SpokePoolEventsQuerier(contract);
+        this.spokePoolEventQueriers[chainId][spokePool.acrossVersion] = new SpokePoolEventsQuerier(contract);
       }
     }
   }

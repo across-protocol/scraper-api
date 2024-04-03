@@ -89,7 +89,7 @@ export class BlocksEventsConsumer {
     const speedUpV3Events: Event[] = [];
 
     for (const blocks of blocksToQuery) {
-      const spokePoolEventQuerier = this.providers.getSpokePoolEventQuerier(chainId, blocks.address);
+      const spokePoolEventQuerier = this.providers.getSpokePoolEventQuerier(chainId, blocks.acrossVersion);
       let depositEventsPromises = [];
       let fillEventsPromises = [];
       let speedUpEventsPromises = [];
