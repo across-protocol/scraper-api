@@ -47,11 +47,12 @@ export class CappedBridgeFeeConsumer {
     const bridgeFeePct = this.depositService.computeBridgeFeePctForV3Deposit(deposit);
     const maxBridgeFeePct = wei.times(0.0012);
     const bridgeFeePctCapped = BigNumber.min(bridgeFeePct, maxBridgeFeePct);
+    const positiveBridgeFeePct = BigNumber.max(bridgeFeePctCapped, 0);
 
     await this.depositRepository.update(
       { id: deposit.id },
       {
-        bridgeFeePct: bridgeFeePctCapped.toFixed(0),
+        bridgeFeePct: positiveBridgeFeePct.toFixed(0),
       },
     );
   }
