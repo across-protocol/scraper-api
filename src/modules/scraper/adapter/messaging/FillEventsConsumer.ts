@@ -80,8 +80,9 @@ export class FillEventsConsumer {
     const blendedRelayerFeePct = relayerFeeChargedToUser.dividedBy(deposit.amount).decimalPlaces(0, 1);
     const bridgeFeePct = blendedRelayerFeePct.plus(fill.realizedLpFeePct);
     const bridgeFeePctCapped = BigNumber.min(bridgeFeePct, maxBridgeFeePct);
+    const positiveBridgeFeePct = BigNumber.max(bridgeFeePctCapped, 0);
 
-    return bridgeFeePctCapped;
+    return positiveBridgeFeePct;
   }
 
   public fillTxAlreadyProcessed(deposit: Deposit, fill: FillEventsQueueMessage) {
