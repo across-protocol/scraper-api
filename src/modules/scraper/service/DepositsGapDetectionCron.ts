@@ -73,6 +73,9 @@ export class DepositsGapDetectionCron {
     for (const chainId of Object.keys(chainGapIntervals).map((chainId) => parseInt(chainId))) {
       for (const interval of chainGapIntervals[chainId]) {
         if (interval.previousKnownDeposit && interval.nextKnownDeposit) {
+          this.logger.log(
+            `Publishing blocks events for chainId: ${chainId} from ${interval.previousKnownDeposit.blockNumber} to ${interval.nextKnownDeposit.blockNumber}`,
+          );
           await this.scraperQueuesService.publishMessage<BlocksEventsQueueMessage>(ScraperQueue.BlocksEvents, {
             chainId,
             from: interval.previousKnownDeposit.blockNumber,
