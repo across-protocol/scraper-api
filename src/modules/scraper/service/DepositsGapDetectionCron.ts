@@ -7,6 +7,8 @@ import { AppConfig } from "../../configuration/configuration.service";
 import { Deposit } from "../../deposit/model/deposit.entity";
 import { MonitoringService } from "../../monitoring/service";
 import { DepositGapInterval, DepositGapService } from "./DepositGapService";
+import { ScraperQueuesService } from "./ScraperQueuesService";
+import { BlocksEventsQueueMessage, ScraperQueue } from "../adapter/messaging";
 
 export type DepositGapIntervalWithBlocks = DepositGapInterval & {
   previousKnownDeposit?: { depositId: number; blockNumber: number };
@@ -23,6 +25,7 @@ export class DepositsGapDetectionCron {
     @InjectRepository(Deposit) private depositRepository: Repository<Deposit>,
     private monitoringService: MonitoringService,
     private depositGapService: DepositGapService,
+    private scraperQueuesService: ScraperQueuesService,
   ) {}
 
   @EnhancedCron("0 5/10 * * * *")
@@ -45,7 +48,7 @@ export class DepositsGapDetectionCron {
 
   private async detectDepositsGap() {
     const chainIds = this.appConfig.values.spokePoolsEventsProcessingChainIds;
-    const chainGapIntervals: Record<number, DepositGapInterval[]> = {};
+    const chainGapIntervals: Record<number, DepositGapIntervalWithBlocks[]> = {};
 
     for (const chainId of chainIds) {
       this.logger.log(`Detecting deposits gap for chainId: ${chainId}`);
@@ -66,6 +69,18 @@ export class DepositsGapDetectionCron {
       }
     }
     await this.monitoringService.postSlackMessage(this.formatSlackPayload(chainGapIntervals));
+
+    for (const chainId of Object.keys(chainGapIntervals).map((chainId) => parseInt(chainId))) {
+      for (const interval of chainGapIntervals[chainId]) {
+        if (interval.previousKnownDeposit && interval.nextKnownDeposit) {
+          await this.scraperQueuesService.publishMessage<BlocksEventsQueueMessage>(ScraperQueue.BlocksEvents, {
+            chainId,
+            from: interval.previousKnownDeposit.blockNumber,
+            to: interval.nextKnownDeposit.blockNumber,
+          });
+        }
+      }
+    }
   }
 
   private async attachBlocksToDepositGaps(gapIntervals: DepositGapInterval[], chainId: number) {
