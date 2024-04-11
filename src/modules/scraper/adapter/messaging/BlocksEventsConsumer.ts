@@ -378,9 +378,8 @@ export class BlocksEventsConsumer {
       relayer,
       message,
     } = event.args;
-
     const wei = BigNumber.from(10).pow(18);
-    const feePct = wei.sub(outputAmount.mul(wei).div(inputAmount));
+    const feePct = inputAmount.eq(0) ? BigNumber.from(0) : wei.sub(outputAmount.mul(wei).div(inputAmount));
     let trueDepositor = depositor;
     let exclusivityDeadlineDate = undefined;
 
