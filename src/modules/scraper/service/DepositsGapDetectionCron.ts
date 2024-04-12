@@ -68,7 +68,12 @@ export class DepositsGapDetectionCron {
         chainGapIntervals[chainId] = gapIntervalsWithBlocks;
       }
     }
-    await this.monitoringService.postSlackMessage(this.formatSlackPayload(chainGapIntervals));
+
+    if (this.shouldSendSlackMessage(chainGapIntervals)) {
+      await this.monitoringService.postSlackMessage(this.formatSlackPayload(chainGapIntervals));
+    } else {
+      this.logger.log("No deposit gap detected");
+    }
 
     for (const chainId of Object.keys(chainGapIntervals).map((chainId) => parseInt(chainId))) {
       for (const interval of chainGapIntervals[chainId]) {
@@ -84,6 +89,18 @@ export class DepositsGapDetectionCron {
         }
       }
     }
+  }
+
+  private shouldSendSlackMessage(chainGapIntervals: Record<number, DepositGapIntervalWithBlocks[]>) {
+    const chainIds = Object.keys(chainGapIntervals);
+
+    for (const chainId of chainIds) {
+      if (chainGapIntervals[chainId].length > 0) {
+        return true;
+      }
+    }
+
+    return false;
   }
 
   private async attachBlocksToDepositGaps(gapIntervals: DepositGapInterval[], chainId: number) {
