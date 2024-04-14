@@ -46,7 +46,7 @@ export class BlocksEventsConsumer {
     private appConfig: AppConfig,
   ) {}
 
-  @Process()
+  @Process({ concurrency: 5 })
   private async process(job: Job<BlocksEventsQueueMessage>) {
     const { chainId, from, to } = job.data;
     const spokePoolConfigs = this.appConfig.values.web3.spokePoolContracts[chainId];
