@@ -1,6 +1,6 @@
 # Scraper API
 
-API service for serving Across V2 data.
+API service for processing Across data.
 
 ## Usage example
 
