@@ -68,7 +68,7 @@ export class DepositFilledDateConsumer {
   private async fillDateForFillTx(chainId: number, fillTx: DepositFillTx | DepositFillTx2 | DepositFillTxV3) {
     if (fillTx.date) return fillTx;
 
-    const tx = await this.providers.getCachedTransaction(chainId, fillTx.hash);
+    const tx = await this.providers.getCachedTransactionReceipt(chainId, fillTx.hash);
     const block = await this.providers.getCachedBlock(chainId, tx.blockNumber);
 
     return {
