@@ -305,11 +305,6 @@ export const configValues = () => ({
   stickyReferralAddressesMechanism: process.env.STICKY_REFERRAL_ADDRESSES_MECHANISM
     ? process.env.STICKY_REFERRAL_ADDRESSES_MECHANISM
     : StickyReferralAddressesMechanism.Disabled,
-  followingDistances: process.env.FOLLOWING_DISTANCES
-    ? (JSON.parse(process.env.FOLLOWING_DISTANCES) as {
-        [chainId: string]: number;
-      })
-    : {},
   auth: {
     jwtSecret: process.env.JWT_SECRET,
   },

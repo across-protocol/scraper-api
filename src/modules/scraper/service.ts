@@ -78,6 +78,7 @@ export class ScraperService {
           blockNumber,
           defaultStartBlockNumber,
           this.processedBlockRepository,
+          true,
         );
         if (!!range) {
           const queueMsg = { chainId, ...range };
@@ -136,6 +137,7 @@ export class ScraperService {
           blockNumber,
           configStartBlockNumber,
           this.merkleDistributorProcessedBlockRepository,
+          true,
         );
 
         if (!!range) {
@@ -209,16 +211,11 @@ export class ScraperService {
   }
 
   public getFollowingDistance(chainId: number) {
-    const distanceFromConfig = this.appConfig.values.followingDistances[chainId];
-    if (distanceFromConfig) {
-      return Number(distanceFromConfig);
+    if (chainId === ChainIds.mainnet) {
+      return 3;
     }
 
-    if ([ChainIds.polygon, ChainIds.polygonMumbai].includes(chainId)) {
-      return 100;
-    }
-
-    return 3;
+    return 10;
   }
 
   /**
