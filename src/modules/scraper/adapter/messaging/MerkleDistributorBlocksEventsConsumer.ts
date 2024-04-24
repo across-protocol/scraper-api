@@ -6,7 +6,7 @@ import { Repository, QueryFailedError } from "typeorm";
 
 import { EthProvidersService } from "../../../web3/services/EthProvidersService";
 import { MerkleDistributorBlocksEventsQueueMessage, ScraperQueue } from ".";
-import { ClaimedEvent } from "@across-protocol/contracts-v2/dist/typechain/MerkleDistributor";
+import { ClaimedEvent } from "@across-protocol/contracts-v2/dist/typechain/contracts/merkle-distributor/AcrossMerkleDistributor";
 import { Claim } from "../../../airdrop/model/claim.entity";
 import { utils } from "ethers";
 import { AppConfig } from "../../../configuration/configuration.service";

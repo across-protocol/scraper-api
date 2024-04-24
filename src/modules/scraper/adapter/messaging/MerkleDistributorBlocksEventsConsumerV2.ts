@@ -7,7 +7,7 @@ import { utils } from "ethers";
 
 import { EthProvidersService } from "../../../web3/services/EthProvidersService";
 import { MerkleDistributorBlocksEventsQueueMessage, MerkleDistributorClaimQueueMessage, ScraperQueue } from ".";
-import { ClaimedEvent } from "@across-protocol/contracts-v2/dist/typechain/MerkleDistributor";
+import { ClaimedEvent } from "@across-protocol/contracts-v2/dist/typechain/contracts/merkle-distributor/AcrossMerkleDistributor";
 import { MerkleDistributorClaim } from "../../../airdrop/model/merkle-distributor-claim.entity";
 import { AppConfig } from "../../../configuration/configuration.service";
 import { MerkleDistributorWindow } from "../../../airdrop/model/merkle-distributor-window.entity";
