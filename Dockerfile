@@ -1,6 +1,4 @@
-FROM node:16-alpine AS development
-
-RUN apk --no-cache add --virtual .builds-deps build-base python3 git
+FROM node:18 AS development
 
 WORKDIR /usr/src/app
 COPY package*.json ./
@@ -9,7 +7,7 @@ RUN yarn install --frozen-lockfile --ignore-scripts
 COPY . .
 RUN yarn build
 
-FROM node:16-stretch AS production
+FROM node:18 AS production
 
 ARG NODE_ENV=production
 ENV NODE_ENV=${NODE_ENV}

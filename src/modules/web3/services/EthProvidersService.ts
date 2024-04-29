@@ -1,17 +1,20 @@
-import { ERC20__factory, AcrossMerkleDistributor__factory } from "@across-protocol/contracts-v2";
+import { AcrossMerkleDistributor } from "@across-protocol/contracts-v2";
 import { Injectable } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { ethers } from "ethers";
-import { AppConfig } from "../../configuration/configuration.service";
 import { Repository } from "typeorm";
+
+import { AppConfig } from "../../configuration/configuration.service";
 import { Block } from "../model/block.entity";
 import { ChainId } from "../model/ChainId";
 import { Token } from "../model/token.entity";
-import { SpokePoolEventsQuerier } from "./SpokePoolEventsQuerier";
-import { MerkleDistributorEventsQuerier } from "./MerkleDistributorEventsQuerier";
 import { Transaction } from "../model/transaction.entity";
 import { TransactionReceipt } from "../model/tx-receipt.entity";
 import { AcrossContractsVersion } from "../model/across-version";
+import { SpokePoolEventsQuerier } from "./SpokePoolEventsQuerier";
+import { MerkleDistributorEventsQuerier } from "./MerkleDistributorEventsQuerier";
+import ERC20Abi from "../../web3/services/abi/ERC20.json";
+import AcrossMerkleDistributorAbi from "../../web3/services/abi/AcrossMerkleDistributor.json";
 
 @Injectable()
 export class EthProvidersService {
@@ -78,7 +81,7 @@ export class EthProvidersService {
     let token = await this.tokenRepository.findOne({ where: { chainId, address: tokenAddr } });
 
     if (!token) {
-      const tokenContract = ERC20__factory.connect(tokenAddr, this.getProvider(chainId));
+      const tokenContract = new ethers.Contract(tokenAddr, JSON.stringify(ERC20Abi), this.getProvider(chainId));
       const [name, symbol, decimals] = await Promise.all([
         tokenContract.name(),
         tokenContract.symbol(),
@@ -176,9 +179,9 @@ export class EthProvidersService {
     let chainId = this.appConfig.values.web3.merkleDistributor.chainId;
     let provider = this.getProvider(chainId);
     let address = this.appConfig.values.web3.merkleDistributor.address;
-    let contract = AcrossMerkleDistributor__factory.connect(address, provider);
+    let contract = new ethers.Contract(address, JSON.stringify(AcrossMerkleDistributorAbi), provider);
     this.merkleDistributorEventQueriers[chainId] = {
-      [address]: new MerkleDistributorEventsQuerier(contract),
+      [address]: new MerkleDistributorEventsQuerier(contract as AcrossMerkleDistributor),
     };
 
     chainId = this.appConfig.values.web3.merkleDistributorContracts.opRewards.chainId;
@@ -186,10 +189,10 @@ export class EthProvidersService {
     address = this.appConfig.values.web3.merkleDistributorContracts.opRewards.address;
 
     if (address) {
-      contract = AcrossMerkleDistributor__factory.connect(address, provider);
+      contract = new ethers.Contract(address, JSON.stringify(AcrossMerkleDistributorAbi), provider);
       this.merkleDistributorEventQueriers[chainId] = {
         ...(this.merkleDistributorEventQueriers[chainId] || {}),
-        [address]: new MerkleDistributorEventsQuerier(contract),
+        [address]: new MerkleDistributorEventsQuerier(contract as AcrossMerkleDistributor),
       };
     }
   }
