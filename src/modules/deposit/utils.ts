@@ -38,6 +38,14 @@ export function formatDeposit(deposit: Deposit) {
           decimals: deposit.token.decimals,
         }
       : undefined,
+    outputToken: deposit.outputToken
+      ? {
+          address: deposit.outputToken.address,
+          chainId: deposit.outputToken.chainId,
+          symbol: deposit.outputToken.symbol,
+          decimals: deposit.outputToken.decimals,
+        }
+      : undefined,
     fillDeadline: deposit.fillDeadline || null,
   };
 }
