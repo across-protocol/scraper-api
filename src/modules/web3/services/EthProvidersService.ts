@@ -152,18 +152,14 @@ export class EthProvidersService {
     return cachedReceipt;
   }
 
-  public parseTransactionReceiptLogs<T>(
-    receipt: ethers.providers.TransactionReceipt,
-    eventName: string,
-    abi: any,
-  ): T[] {
-    const events: T[] = [];
+  public parseTransactionReceiptLogs(receipt: ethers.providers.TransactionReceipt, eventName: string, abi: any) {
+    const events: ethers.utils.LogDescription[] = [];
 
     for (const log of receipt.logs) {
       const contractInterface = new ethers.utils.Interface(abi);
       const parsedLog = contractInterface.parseLog(log);
       if (parsedLog && parsedLog.name === eventName) {
-        events.push(parsedLog as T);
+        events.push(parsedLog);
       }
     }
 

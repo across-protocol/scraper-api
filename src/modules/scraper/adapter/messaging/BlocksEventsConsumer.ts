@@ -384,11 +384,11 @@ export class BlocksEventsConsumer {
     const feePct = inputAmount.eq(0) ? BigNumber.from(0) : wei.sub(outputAmount.mul(wei).div(inputAmount));
     // const txReceipt = await this.providers.getCachedTransactionReceipt(chainId, transactionHash);
     const txReceipt = await this.providers.getProvider(chainId).getTransactionReceipt(transactionHash);
-    const swapBeforeBridgeEvents = this.providers.parseTransactionReceiptLogs<SwapBeforeBridgeEvent>(
+    const swapBeforeBridgeEvents = this.providers.parseTransactionReceiptLogs(
       txReceipt,
       "SwapBeforeBridge",
       SwapAndBridgeAbi,
-    );
+    ) as unknown as SwapBeforeBridgeEvent[];
     const swapEvent = swapBeforeBridgeEvents.length > 0 ? swapBeforeBridgeEvents[0] : undefined;
     const swapToken = swapEvent ? await this.providers.getCachedToken(chainId, swapEvent.args.swapToken) : undefined;
     let trueDepositor = depositor;
