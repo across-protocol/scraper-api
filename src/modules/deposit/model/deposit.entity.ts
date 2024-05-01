@@ -216,6 +216,16 @@ export class Deposit {
   @Column({ nullable: true })
   relayer?: string;
 
+  @Column({ nullable: true })
+  swapTokenId?: number;
+
+  @ManyToOne(() => Token)
+  @JoinColumn([{ name: "swapTokenId", referencedColumnName: "id" }])
+  swapToken?: Token;
+
+  @Column({ type: "decimal", nullable: true })
+  swapTokenAmount?: string;
+
   @CreateDateColumn()
   createdAt: Date;
 

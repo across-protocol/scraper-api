@@ -29,6 +29,8 @@ import {
   FilledV3RelayEvent,
   RequestedSpeedUpV3DepositEvent,
 } from "../../../web3/model";
+import SwapAndBridgeAbi from "../../../web3/services/abi/SwapAndBridge.json";
+import { SwapBeforeBridgeEvent } from "../../../web3/model/swap-and-bridge-events";
 import { AppConfig } from "../../../configuration/configuration.service";
 import { splitBlockRanges } from "../../utils";
 import { AcrossContractsVersion } from "../../../web3/model/across-version";
@@ -380,13 +382,21 @@ export class BlocksEventsConsumer {
     } = event.args;
     const wei = BigNumber.from(10).pow(18);
     const feePct = inputAmount.eq(0) ? BigNumber.from(0) : wei.sub(outputAmount.mul(wei).div(inputAmount));
+    // const txReceipt = await this.providers.getCachedTransactionReceipt(chainId, transactionHash);
+    const txReceipt = await this.providers.getProvider(chainId).getTransactionReceipt(transactionHash);
+    const swapBeforeBridgeEvents = this.providers.parseTransactionReceiptLogs<SwapBeforeBridgeEvent>(
+      txReceipt,
+      "SwapBeforeBridge",
+      SwapAndBridgeAbi,
+    );
+    const swapEvent = swapBeforeBridgeEvents.length > 0 ? swapBeforeBridgeEvents[0] : undefined;
+    const swapToken = swapEvent ? await this.providers.getCachedToken(chainId, swapEvent.args.swapToken) : undefined;
     let trueDepositor = depositor;
     let exclusivityDeadlineDate = undefined;
 
     if (exclusivityDeadline > 0) exclusivityDeadlineDate = new Date(exclusivityDeadline * 1000);
     if (depositor === SPOKE_POOL_VERIFIER_CONTRACT_ADDRESS) {
-      const tx = await this.providers.getCachedTransactionReceipt(chainId, transactionHash);
-      trueDepositor = tx.from;
+      trueDepositor = txReceipt.from;
     }
 
     return this.depositRepository.create({
@@ -412,6 +422,9 @@ export class BlocksEventsConsumer {
       exclusivityDeadline: exclusivityDeadlineDate,
       relayer,
       message,
+      // swap event properties
+      swapTokenId: swapToken?.id,
+      swapTokenAmount: swapEvent?.args.swapTokenAmount.toString(),
     });
   }
 

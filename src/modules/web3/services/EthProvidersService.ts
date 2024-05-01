@@ -152,6 +152,24 @@ export class EthProvidersService {
     return cachedReceipt;
   }
 
+  public parseTransactionReceiptLogs<T>(
+    receipt: ethers.providers.TransactionReceipt,
+    eventName: string,
+    abi: any,
+  ): T[] {
+    const events: T[] = [];
+
+    for (const log of receipt.logs) {
+      const contractInterface = new ethers.utils.Interface(abi);
+      const parsedLog = contractInterface.parseLog(log);
+      if (parsedLog && parsedLog.name === eventName) {
+        events.push(parsedLog as T);
+      }
+    }
+
+    return events;
+  }
+
   private setProviders() {
     const supportedChainIds = Object.keys(this.appConfig.values.web3.providers);
 
