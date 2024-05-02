@@ -217,10 +217,13 @@ export class Deposit {
   relayer?: string;
 
   @Column({ nullable: true })
+  swapTokenAddress?: string;
+
+  @Column({ nullable: true })
   swapTokenId?: number;
 
   @ManyToOne(() => Token)
-  @JoinColumn([{ name: "swapTokenId", referencedColumnName: "id" }])
+  @JoinColumn([{ name: "swapTokenId", referencedColumnName: "id", foreignKeyConstraintName: "FK_deposit_swapTokenId" }])
   swapToken?: Token;
 
   @Column({ type: "decimal", nullable: true })

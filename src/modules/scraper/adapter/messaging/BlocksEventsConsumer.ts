@@ -425,6 +425,7 @@ export class BlocksEventsConsumer {
       // swap event properties
       swapTokenId: swapToken?.id,
       swapTokenAmount: swapEvent?.args.swapTokenAmount.toString(),
+      swapTokenAddress: swapEvent?.args.swapToken,
     });
   }
 

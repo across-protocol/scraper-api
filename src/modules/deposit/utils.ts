@@ -56,5 +56,6 @@ export function formatDeposit(deposit: Deposit) {
         }
       : undefined,
     swapTokenAmount: deposit.swapTokenAmount,
+    swapTokenAddress: deposit.swapTokenAddress,
   };
 }
