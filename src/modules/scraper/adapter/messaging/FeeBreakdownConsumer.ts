@@ -74,10 +74,6 @@ export class FeeBreakdownConsumer {
     const typedFillTx = deposit.fillTxs as DepositFillTxV3[];
     const fillTx = typedFillTx[0];
 
-    const { feeUsd, fee } = await this.gasFeesService.getFillTxNetworkFee(deposit.destinationChainId, fillTx.hash);
-    const relayGasFeeUsd = feeUsd;
-    const relayGasFeeAmount = fixedPointAdjustment.multipliedBy(fee).toFixed(0);
-
     // Bridge fee computation
     const wei = new BigNumber(10).pow(18);
     const bridgeFeePct = this.depositService.computeBridgeFeePctForV3Deposit(deposit);
@@ -85,6 +81,16 @@ export class FeeBreakdownConsumer {
     const bridgeFeeUsd = bridgeFeeAmount
       .multipliedBy(deposit.price.usd)
       .dividedBy(new BigNumber(10).pow(deposit.token.decimals));
+
+    // Gas fee computation
+    const calcPctValues = makePctValuesCalculator(deposit.amount, deposit.price.usd, deposit.token.decimals);
+    const { feeUsd: relayGasFeeUsd } = await this.gasFeesService.getFillTxNetworkFee(
+      deposit.destinationChainId,
+      fillTx.hash,
+    );
+    const relayGasFeePct = new BigNumber(relayGasFeeUsd).multipliedBy(wei).dividedBy(bridgeFeeUsd);
+    const { pctAmount: relayGasFeeAmount } = calcPctValues(relayGasFeePct.toFixed(0));
+
     const feeBreakdown = {
       lpFeeUsd: undefined,
       lpFeePct: undefined,
@@ -93,7 +99,7 @@ export class FeeBreakdownConsumer {
       relayCapitalFeePct: undefined,
       relayCapitalFeeAmount: undefined,
       relayGasFeeUsd,
-      relayGasFeePct: undefined,
+      relayGasFeePct: relayGasFeePct.toFixed(0),
       relayGasFeeAmount,
       totalBridgeFeeUsd: bridgeFeeUsd.toString(),
       totalBridgeFeePct: bridgeFeePct.toFixed(0),
