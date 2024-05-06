@@ -157,9 +157,17 @@ export class EthProvidersService {
 
     for (const log of receipt.logs) {
       const contractInterface = new ethers.utils.Interface(abi);
-      const parsedLog = contractInterface.parseLog(log);
-      if (parsedLog && parsedLog.name === eventName) {
-        events.push(parsedLog);
+      try {
+        const parsedLog = contractInterface.parseLog(log);
+        if (parsedLog && parsedLog.name === eventName) {
+          events.push(parsedLog);
+        }
+      } catch (e) {
+        if (e.reason === "no matching event" && e.code === "INVALID_ARGUMENT") {
+          continue;
+        } else {
+          throw e;
+        }
       }
     }
 
