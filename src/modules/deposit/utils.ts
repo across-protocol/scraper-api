@@ -47,5 +47,15 @@ export function formatDeposit(deposit: Deposit) {
         }
       : undefined,
     fillDeadline: deposit.fillDeadline || null,
+    swapToken: deposit.swapToken
+      ? {
+          address: deposit.swapToken.address,
+          chainId: deposit.swapToken.chainId,
+          symbol: deposit.swapToken.symbol,
+          decimals: deposit.swapToken.decimals,
+        }
+      : undefined,
+    swapTokenAmount: deposit.swapTokenAmount,
+    swapTokenAddress: deposit.swapTokenAddress,
   };
 }
