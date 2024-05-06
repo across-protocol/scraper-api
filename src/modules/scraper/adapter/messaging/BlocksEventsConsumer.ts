@@ -51,12 +51,6 @@ export class BlocksEventsConsumer {
   @Process({ concurrency: 20 })
   private async process(job: Job<BlocksEventsQueueMessage>) {
     const { chainId, from, to } = job.data;
-
-    if (to - from >= 90_000) {
-      this.logger.error(`Block range too big: ${from}-${to}`);
-      return;
-    }
-
     const spokePoolConfigs = this.appConfig.values.web3.spokePoolContracts[chainId];
     const ascSpokePoolConfigs = spokePoolConfigs.sort((sp1, sp2) =>
       sp1.startBlockNumber < sp2.startBlockNumber ? -1 : 1,
@@ -388,15 +382,15 @@ export class BlocksEventsConsumer {
     } = event.args;
     const wei = BigNumber.from(10).pow(18);
     const feePct = inputAmount.eq(0) ? BigNumber.from(0) : wei.sub(outputAmount.mul(wei).div(inputAmount));
-    const txReceipt = await this.providers.getCachedTransactionReceipt(chainId, transactionHash);
-    // const txReceipt = await this.providers.getProvider(chainId).getTransactionReceipt(transactionHash);
-    // const swapBeforeBridgeEvents = this.providers.parseTransactionReceiptLogs(
-    //   txReceipt,
-    //   "SwapBeforeBridge",
-    //   SwapAndBridgeAbi,
-    // ) as unknown as SwapBeforeBridgeEvent[];
-    // const swapEvent = swapBeforeBridgeEvents.length > 0 ? swapBeforeBridgeEvents[0] : undefined;
-    // const swapToken = swapEvent ? await this.providers.getCachedToken(chainId, swapEvent.args.swapToken) : undefined;
+    // const txReceipt = await this.providers.getCachedTransactionReceipt(chainId, transactionHash);
+    const txReceipt = await this.providers.getProvider(chainId).getTransactionReceipt(transactionHash);
+    const swapBeforeBridgeEvents = this.providers.parseTransactionReceiptLogs(
+      txReceipt,
+      "SwapBeforeBridge",
+      SwapAndBridgeAbi,
+    ) as unknown as SwapBeforeBridgeEvent[];
+    const swapEvent = swapBeforeBridgeEvents.length > 0 ? swapBeforeBridgeEvents[0] : undefined;
+    const swapToken = swapEvent ? await this.providers.getCachedToken(chainId, swapEvent.args.swapToken) : undefined;
     let trueDepositor = depositor;
     let exclusivityDeadlineDate = undefined;
 
@@ -429,12 +423,9 @@ export class BlocksEventsConsumer {
       relayer,
       message,
       // swap event properties
-      // swapTokenId: swapToken?.id,
-      // swapTokenAmount: swapEvent?.args.swapTokenAmount.toString(),
-      // swapTokenAddress: swapEvent?.args.swapToken,
-      swapTokenId: undefined,
-      swapTokenAmount: undefined,
-      swapTokenAddress: undefined,
+      swapTokenId: swapToken?.id,
+      swapTokenAmount: swapEvent?.args.swapTokenAmount.toString(),
+      swapTokenAddress: swapEvent?.args.swapToken,
     });
   }
 
