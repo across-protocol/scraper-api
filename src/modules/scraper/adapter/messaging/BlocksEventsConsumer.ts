@@ -48,11 +48,9 @@ export class BlocksEventsConsumer {
     private appConfig: AppConfig,
   ) {}
 
-  @Process({ concurrency: 10 })
+  @Process({ concurrency: 20 })
   private async process(job: Job<BlocksEventsQueueMessage>) {
     const { chainId, from, to } = job.data;
-
-    if (to - from >= 90_000) return;
 
     const spokePoolConfigs = this.appConfig.values.web3.spokePoolContracts[chainId];
     const ascSpokePoolConfigs = spokePoolConfigs.sort((sp1, sp2) =>
