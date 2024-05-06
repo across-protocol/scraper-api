@@ -9,7 +9,7 @@ import { GasFeesService } from "../gas-fees/gas-fees-service";
 import { ScraperQueuesService } from "../../service/ScraperQueuesService";
 import { FeeBreakdownQueueMessage, OpRebateRewardMessage, ScraperQueue } from ".";
 import { Deposit, DepositFillTx, DepositFillTx2, DepositFillTxV3 } from "../../../deposit/model/deposit.entity";
-import { deriveRelayerFeeComponents, fixedPointAdjustment, makePctValuesCalculator, toWeiPct } from "../../utils";
+import { deriveRelayerFeeComponents, makePctValuesCalculator, toWeiPct } from "../../utils";
 import { AcrossContractsVersion } from "../../../web3/model/across-version";
 import { DepositService } from "../../../deposit/service";
 
