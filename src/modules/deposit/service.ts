@@ -391,6 +391,7 @@ export class DepositService {
     if (filter.include.includes("token")) {
       queryBuilder = queryBuilder.leftJoinAndSelect("d.token", "token");
       queryBuilder = queryBuilder.leftJoinAndSelect("d.outputToken", "outputToken");
+      queryBuilder = queryBuilder.leftJoinAndSelect("d.swapToken", "swapToken");
     }
 
     return queryBuilder;
