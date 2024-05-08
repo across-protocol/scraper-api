@@ -36,6 +36,11 @@ export const chainIdToInfo = {
     chainId: ChainIds.optimism,
     nativeSymbol: "eth",
   },
+  [ChainIds.optimismSepolia]: {
+    name: "Optimism Sepolia",
+    chainId: ChainIds.optimismSepolia,
+    nativeSymbol: "eth",
+  },
   [ChainIds.polygon]: {
     name: "Polygon",
     chainId: ChainIds.polygon,
