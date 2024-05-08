@@ -19,6 +19,7 @@ const symbolIdMap = {
   pool: "pooltogether",
   usdbc: "bridged-usd-coin-base",
   op: "optimism",
+  "usdc.e": "usd-coin-ethereum-bridged",
 };
 
 @Injectable()
