@@ -51,6 +51,12 @@ export class BlocksEventsConsumer {
   @Process({ concurrency: 20 })
   private async process(job: Job<BlocksEventsQueueMessage>) {
     const { chainId, from, to } = job.data;
+
+    if (to - from >= 90_000) {
+      this.logger.error(`Block range too big: ${from}-${to}`);
+      return;
+    }
+
     const spokePoolConfigs = this.appConfig.values.web3.spokePoolContracts[chainId];
     const ascSpokePoolConfigs = spokePoolConfigs.sort((sp1, sp2) =>
       sp1.startBlockNumber < sp2.startBlockNumber ? -1 : 1,
