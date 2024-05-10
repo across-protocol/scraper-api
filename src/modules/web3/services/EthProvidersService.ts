@@ -160,7 +160,7 @@ export class EthProvidersService {
       try {
         const parsedLog = contractInterface.parseLog(log);
         if (parsedLog && parsedLog.name === eventName) {
-          events.push(parsedLog);
+          events.push({ ...log, ...parsedLog });
         }
       } catch (e) {
         if (e.reason === "no matching event" && e.code === "INVALID_ARGUMENT") {

@@ -201,20 +201,52 @@ export class BlocksEventsConsumer {
 
   private async processDepositV3Events(chainId: number, events: Event[]) {
     const typedEvents = events as FundsDepositedV3Event[];
+    const depositEventsByTxHash = typedEvents.reduce((acc, event) => {
+      acc[event.transactionHash] = [...(acc[event.transactionHash] || []), event];
+      return acc;
+    }, {} as Record<string, FundsDepositedV3Event[]>);
+    const swapEventsByTxHash: Record<string, SwapBeforeBridgeEvent[]> = {};
 
-    for (const event of typedEvents) {
-      try {
-        const deposit = await this.fromFundsDepositedV3EventToDeposit(chainId, event);
-        const result = await this.depositRepository.insert(deposit);
-        await this.scraperQueuesService.publishMessage<BlockNumberQueueMessage>(ScraperQueue.BlockNumber, {
-          depositId: result.identifiers[0].id,
-        });
-      } catch (error) {
-        if (error instanceof QueryFailedError && error.driverError?.code === "23505") {
-          // Ignore duplicate key value violates unique constraint error.
-          this.logger.warn(error);
+    for (const transactionHash of Object.keys(depositEventsByTxHash)) {
+      const txReceipt = await this.providers.getProvider(chainId).getTransactionReceipt(transactionHash);
+      const swapBeforeBridgeEvents = this.providers.parseTransactionReceiptLogs(
+        txReceipt,
+        "SwapBeforeBridge",
+        SwapAndBridgeAbi,
+      ) as unknown as SwapBeforeBridgeEvent[];
+      swapEventsByTxHash[transactionHash] = swapBeforeBridgeEvents;
+    }
+
+    for (const transactionHash of Object.keys(depositEventsByTxHash)) {
+      const pairs: [FundsDepositedV3Event, SwapBeforeBridgeEvent | undefined][] = [];
+      const depositEvents = depositEventsByTxHash[transactionHash].sort((d1, d2) => d1.logIndex - d2.logIndex);
+      const swapEvents = swapEventsByTxHash[transactionHash].sort((s1, s2) => s1.logIndex - s2.logIndex);
+
+      for (const depositEvent of depositEvents) {
+        const swapEventIndex = swapEvents.findIndex((e) => e.logIndex < depositEvent.logIndex);
+
+        if (swapEventIndex >= 0) {
+          pairs.push([depositEvent, swapEvents[swapEventIndex]]);
+          swapEvents.splice(swapEventIndex, 1);
         } else {
-          throw error;
+          pairs.push([depositEvent, undefined]);
+        }
+      }
+
+      for (const [depositEvent, swapEvent] of pairs) {
+        try {
+          const deposit = await this.fromFundsDepositedV3EventToDeposit(chainId, depositEvent, swapEvent);
+          const result = await this.depositRepository.insert(deposit);
+          await this.scraperQueuesService.publishMessage<BlockNumberQueueMessage>(ScraperQueue.BlockNumber, {
+            depositId: result.identifiers[0].id,
+          });
+        } catch (error) {
+          if (error instanceof QueryFailedError && error.driverError?.code === "23505") {
+            // Ignore duplicate key value violates unique constraint error.
+            this.logger.warn(error);
+          } else {
+            throw error;
+          }
         }
       }
     }
@@ -364,8 +396,12 @@ export class BlocksEventsConsumer {
     });
   }
 
-  private async fromFundsDepositedV3EventToDeposit(chainId: number, event: FundsDepositedV3Event) {
-    const { transactionHash, blockNumber } = event;
+  private async fromFundsDepositedV3EventToDeposit(
+    chainId: number,
+    depositEvent: FundsDepositedV3Event,
+    swapEvent?: SwapBeforeBridgeEvent,
+  ) {
+    const { transactionHash, blockNumber } = depositEvent;
     const {
       depositId,
       destinationChainId,
@@ -379,17 +415,10 @@ export class BlocksEventsConsumer {
       exclusivityDeadline,
       relayer,
       message,
-    } = event.args;
+    } = depositEvent.args;
     const wei = BigNumber.from(10).pow(18);
     const feePct = inputAmount.eq(0) ? BigNumber.from(0) : wei.sub(outputAmount.mul(wei).div(inputAmount));
-    // const txReceipt = await this.providers.getCachedTransactionReceipt(chainId, transactionHash);
-    const txReceipt = await this.providers.getProvider(chainId).getTransactionReceipt(transactionHash);
-    const swapBeforeBridgeEvents = this.providers.parseTransactionReceiptLogs(
-      txReceipt,
-      "SwapBeforeBridge",
-      SwapAndBridgeAbi,
-    ) as unknown as SwapBeforeBridgeEvent[];
-    const swapEvent = swapBeforeBridgeEvents.length > 0 ? swapBeforeBridgeEvents[0] : undefined;
+    const txReceipt = await this.providers.getCachedTransactionReceipt(chainId, transactionHash);
     const swapToken = swapEvent ? await this.providers.getCachedToken(chainId, swapEvent.args.swapToken) : undefined;
     let trueDepositor = depositor;
     let exclusivityDeadlineDate = undefined;
