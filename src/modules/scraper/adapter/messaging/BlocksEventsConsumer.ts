@@ -52,7 +52,7 @@ export class BlocksEventsConsumer {
   private async process(job: Job<BlocksEventsQueueMessage>) {
     const { chainId, from, to } = job.data;
 
-    if (to - from >= 90_000) {
+    if (to - from >= 50_000) {
       this.logger.error(`Block range too big: ${from}-${to}`);
       return;
     }
