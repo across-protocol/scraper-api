@@ -401,10 +401,8 @@ export class ReferralService {
     const sortedDeposits = deposits.sort((d1, d2) => (d1.depositDate.getTime() < d2.depositDate.getTime() ? -1 : 0));
     const sortedClaims = claims.sort((c1, c2) => (c1.claimedAt.getTime() < c2.claimedAt.getTime() ? -1 : 0));
     const groupedDeposits = this.groupDepositsByClaimDate(sortedDeposits, sortedClaims);
-
-    for (const deposits of Object.values(groupedDeposits)) {
-      await this.computeReferralStatsForDeposits(deposits, entityManager);
-    }
+    const depositsWithNoWindow = groupedDeposits["-1"] || [];
+    await this.computeReferralStatsForDeposits(depositsWithNoWindow, entityManager);
   }
 
   private async computeReferralStatsForDeposits(deposits: DepositsFilteredReferrals[], entityManager: EntityManager) {
