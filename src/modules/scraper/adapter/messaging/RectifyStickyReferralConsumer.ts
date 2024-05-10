@@ -25,7 +25,6 @@ export class RectifyStickyReferralConsumer {
     const deposit = await this.depositRepository.findOne({ where: { id: depositId } });
 
     if (!deposit) return;
-    this.logger.debug(`deposit id: ${deposit.id} start`);
     // After extracting the referral address, all deposits with later deposit time must have
     // the sticky referral address updated
     const deposits = await this.depositRepository.find({
