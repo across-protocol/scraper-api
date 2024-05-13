@@ -2,7 +2,7 @@ import { AcrossMerkleDistributor } from "@across-protocol/contracts-v2";
 import { Injectable } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { ethers } from "ethers";
-import { Repository } from "typeorm";
+import { DataSource, Repository } from "typeorm";
 
 import { AppConfig } from "../../configuration/configuration.service";
 import { Block } from "../model/block.entity";
@@ -28,6 +28,7 @@ export class EthProvidersService {
     @InjectRepository(Token) private tokenRepository: Repository<Token>,
     @InjectRepository(Transaction) private transactionRepository: Repository<Transaction>,
     @InjectRepository(TransactionReceipt) private txReceiptRepository: Repository<TransactionReceipt>,
+    private dataSource: DataSource,
   ) {
     this.setProviders();
     this.setSpokePoolEventQueriers();
@@ -121,6 +122,11 @@ export class EthProvidersService {
   public async getCachedTransactionReceipt(chainId: number, hash: string) {
     let cachedReceipt = await this.txReceiptRepository.findOne({ where: { chainId, hash } });
 
+    if (cachedReceipt && !cachedReceipt.logs) {
+      await this.txReceiptRepository.delete({ chainId, hash });
+      cachedReceipt = undefined;
+    }
+
     if (!cachedReceipt) {
       const receipt = await this.getProvider(chainId).getTransactionReceipt(hash);
       const {
@@ -133,26 +139,34 @@ export class EthProvidersService {
         gasUsed,
         effectiveGasPrice,
         blockHash,
+        logs,
       } = receipt;
-      cachedReceipt = this.txReceiptRepository.create({
-        from,
-        to,
-        hash: transactionHash,
-        transactionIndex,
-        contractAddress,
-        gasUsed: gasUsed.toString(),
-        effectiveGasPrice: effectiveGasPrice.toString(),
-        chainId,
-        blockHash,
-        blockNumber,
-      });
-      cachedReceipt = await this.txReceiptRepository.save(cachedReceipt);
+      await this.dataSource
+        .createQueryBuilder()
+        .insert()
+        .into(TransactionReceipt)
+        .values({
+          from,
+          to,
+          hash: transactionHash,
+          transactionIndex,
+          contractAddress,
+          gasUsed: gasUsed.toString(),
+          effectiveGasPrice: effectiveGasPrice.toString(),
+          chainId,
+          blockHash,
+          blockNumber,
+          logs: logs as any[],
+        })
+        .orIgnore()
+        .execute();
+      cachedReceipt = await this.txReceiptRepository.findOne({ where: { chainId, hash } });
     }
 
     return cachedReceipt;
   }
 
-  public parseTransactionReceiptLogs(receipt: ethers.providers.TransactionReceipt, eventName: string, abi: any) {
+  public parseTransactionReceiptLogs(receipt: TransactionReceipt, eventName: string, abi: any) {
     const events: ethers.utils.LogDescription[] = [];
 
     for (const log of receipt.logs) {

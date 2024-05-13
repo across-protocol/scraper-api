@@ -36,6 +36,9 @@ export class TransactionReceipt {
   @Column({ type: "decimal" })
   gasUsed: string;
 
+  @Column({ type: "jsonb", nullable: true })
+  logs?: any[];
+
   @CreateDateColumn()
   createdAt: number;
 }
