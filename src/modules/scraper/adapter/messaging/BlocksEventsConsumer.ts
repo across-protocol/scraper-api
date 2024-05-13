@@ -42,7 +42,7 @@ import {
   WethDepositEventBase,
   WethDepositEventLinea,
   WethDepositEventOptimism,
-  WethTransfetEventArbitrum,
+  WethTransferEventArbitrum,
 } from "../../../web3/model/weth-events";
 import { AppConfig } from "../../../configuration/configuration.service";
 import { splitBlockRanges } from "../../utils";
@@ -287,7 +287,7 @@ export class BlocksEventsConsumer {
               spokePoolAddresses.includes(typedEvent.args.dst)
             );
           } else if (chainId === ChainIds.arbitrum) {
-            const typedEvent = e as WethTransfetEventArbitrum;
+            const typedEvent = e as WethTransferEventArbitrum;
             return (
               e.logIndex < depositEvent.logIndex &&
               typedEvent.args.value.eq(depositEvent.args.inputAmount) &&
@@ -663,7 +663,7 @@ export class BlocksEventsConsumer {
       } else if (chainId === ChainIds.arbitrum) {
         swapTokenValues = {
           swapTokenId: undefined,
-          swapTokenAmount: (wethEvent as WethTransfetEventArbitrum).args.value.toString(),
+          swapTokenAmount: (wethEvent as WethTransferEventArbitrum).args.value.toString(),
           swapTokenAddress: "native",
         };
       } else if (chainId === ChainIds.linea) {

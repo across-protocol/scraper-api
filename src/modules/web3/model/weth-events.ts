@@ -28,7 +28,7 @@ export interface WethDepositEventBase extends Event {
   };
 }
 
-export interface WethTransfetEventArbitrum extends Event {
+export interface WethTransferEventArbitrum extends Event {
   args: [string, string, BigNumber] & {
     from: string;
     to: string;
