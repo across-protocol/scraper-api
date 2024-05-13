@@ -60,10 +60,7 @@ import { DepositGapService } from "./service/DepositGapService";
 @Module({})
 export class ScraperModule {
   static forRoot(moduleOptions: ModuleOptions): DynamicModule {
-    const crons = [
-      QueuesMonitoringCron,
-      // DepositsGapDetectionCron
-    ];
+    const crons = [QueuesMonitoringCron, DepositsGapDetectionCron];
     const fixtures = [DepositGapCheckFixture];
     const providers: Provider<any>[] = [
       ...crons,
