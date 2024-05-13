@@ -18,7 +18,7 @@ type CheckDepositGapsResult = {
 };
 
 const DEPOSITS_GAP_DETECTION_LIMIT = 50;
-const MAX_GAP_SIZE = 50;
+const MAX_GAP_SIZE = 1000;
 const MaxDepositIdV2 = {
   [ChainIds.mainnet]: 89186,
   [ChainIds.optimism]: 261927,

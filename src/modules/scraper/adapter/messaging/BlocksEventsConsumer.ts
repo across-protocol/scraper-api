@@ -208,7 +208,7 @@ export class BlocksEventsConsumer {
     const swapEventsByTxHash: Record<string, SwapBeforeBridgeEvent[]> = {};
 
     for (const transactionHash of Object.keys(depositEventsByTxHash)) {
-      const txReceipt = await this.providers.getProvider(chainId).getTransactionReceipt(transactionHash);
+      const txReceipt = await this.providers.getCachedTransactionReceipt(chainId, transactionHash);
       const swapBeforeBridgeEvents = this.providers.parseTransactionReceiptLogs(
         txReceipt,
         "SwapBeforeBridge",
