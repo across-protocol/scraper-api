@@ -88,7 +88,7 @@ export class FeeBreakdownConsumer {
       deposit.destinationChainId,
       fillTx.hash,
     );
-    const relayGasFeePct = new BigNumber(relayGasFeeUsd).multipliedBy(wei).dividedBy(bridgeFeeUsd);
+    const relayGasFeePct = new BigNumber(relayGasFeeUsd).dividedBy(bridgeFeeUsd).multipliedBy(bridgeFeePct);
     const { pctAmount: relayGasFeeAmount } = calcPctValues(relayGasFeePct.toFixed(0));
 
     const feeBreakdown = {
