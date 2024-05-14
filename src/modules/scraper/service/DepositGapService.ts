@@ -102,12 +102,10 @@ export class DepositGapService {
 
       if (d) {
         this.logger.debug(`chainId ${chainId} deposit ${i} found`);
-        // console.log(`Deposit ${i} found`);
         if (!gapIntervals.length) gapCheckPassDepositId = i;
         if (gapIntervals.length === gapsLimit) break;
       } else {
         this.logger.debug(`chainId ${chainId} deposit ${i} not found.`);
-        // console.log(`Deposit ${i} not found.`);
         if (gapIntervals.length === 0) {
           gapIntervals.push({
             fromDepositId: i,
