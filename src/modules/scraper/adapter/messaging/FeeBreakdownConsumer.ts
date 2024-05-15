@@ -91,6 +91,13 @@ export class FeeBreakdownConsumer {
     const relayGasFeePct = new BigNumber(relayGasFeeUsd).dividedBy(bridgeFeeUsd).multipliedBy(bridgeFeePct);
     const { pctAmount: relayGasFeeAmount } = calcPctValues(relayGasFeePct.toFixed(0));
 
+    // Swap fee computation
+    const swapFeeAmount = new BigNumber(deposit.swapTokenAmount || deposit.amount).minus(deposit.amount);
+    const swapFeePct = swapFeeAmount.dividedBy(deposit.amount).multipliedBy(wei);
+    const swapFeeUsd = swapFeeAmount
+      .multipliedBy(deposit.price.usd)
+      .dividedBy(new BigNumber(10).pow(deposit.token.decimals));
+
     const feeBreakdown = {
       lpFeeUsd: undefined,
       lpFeePct: undefined,
@@ -104,6 +111,9 @@ export class FeeBreakdownConsumer {
       totalBridgeFeeUsd: bridgeFeeUsd.toString(),
       totalBridgeFeePct: bridgeFeePct.toFixed(0),
       totalBridgeFeeAmount: bridgeFeeAmount.toFixed(0),
+      swapFeeUsd: swapFeeUsd.toString(),
+      swapFeePct: swapFeePct.toFixed(0),
+      swapFeeAmount: swapFeeAmount.toFixed(0),
     };
     await this.depositRepository.update({ id: deposit.id }, { feeBreakdown });
 
