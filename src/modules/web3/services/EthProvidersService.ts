@@ -171,6 +171,9 @@ export class EthProvidersService {
 
     for (const log of receipt.logs) {
       const contractInterface = new ethers.utils.Interface(abi);
+
+      if (log.topics.length === 0) continue;
+
       try {
         const parsedLog = contractInterface.parseLog(log);
         if (parsedLog && parsedLog.name === eventName) {
