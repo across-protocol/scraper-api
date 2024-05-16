@@ -26,7 +26,8 @@ import { ViewEntity, ViewColumn } from "typeorm";
       AND d."acxUsdPrice" is not null
       AND (
         d."destinationChainId" != 10 OR d."depositDate" < '2023-11-30 21:30:00'
-      );
+      )
+      AND d."depositDate" <= '2024-05-15 23:59:59';
   `,
 })
 export class DepositsFilteredReferrals {

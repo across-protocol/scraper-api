@@ -3,6 +3,7 @@ import { INestApplication } from "@nestjs/common";
 import { JwtService } from "@nestjs/jwt";
 import { Test } from "@nestjs/testing";
 import { ethers, utils } from "ethers";
+import { DateTime } from "luxon";
 
 import { DepositFixture, mockDepositEntity } from "../src/modules/deposit/adapter/db/deposit-fixture";
 import { ClaimFixture } from "../src/modules/airdrop/adapter/db/claim-fixture";
@@ -183,6 +184,7 @@ describe("GET /referrals/summary", () => {
           tokenId: token.id,
           priceId: price.id,
           depositorAddr: `0x${i}`,
+          depositDate: DateTime.fromISO("2024-05-01T00:00:00.000Z").toJSDate(),
         }),
       ),
     );
@@ -243,6 +245,7 @@ describe("GET /referrals/summary", () => {
         status: "filled",
         depositId: 1,
         rewardsWindowIndex: 1,
+        depositDate: DateTime.fromISO("2024-05-01T00:00:00.000Z").toJSDate(),
       }),
       mockDepositEntity({
         ...tier5DepositBase,
@@ -250,6 +253,7 @@ describe("GET /referrals/summary", () => {
         status: "filled",
         depositId: 2,
         rewardsWindowIndex: 2,
+        depositDate: DateTime.fromISO("2024-05-01T00:00:00.000Z").toJSDate(),
       }),
     ]);
     await referralService.cumputeReferralStats();
