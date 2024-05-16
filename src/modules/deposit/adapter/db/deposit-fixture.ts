@@ -62,7 +62,7 @@ export function mockManyDepositEntities(
     .map((zero, i) =>
       mockDepositEntity({
         depositId: depositIdStartIndex + i,
-        depositDate: DateTime.now()
+        depositDate: DateTime.fromISO("2024-04-01T00:00:00")
           .minus(Duration.fromObject({ days: n - i }))
           .toJSDate(),
         ...overrides,
