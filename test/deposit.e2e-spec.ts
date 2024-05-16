@@ -2,6 +2,7 @@ import request from "supertest";
 import { INestApplication } from "@nestjs/common";
 import { Test } from "@nestjs/testing";
 import { constants, ethers } from "ethers";
+import { DateTime } from "luxon";
 
 import {
   DepositFixture,
@@ -435,7 +436,7 @@ describe("GET /deposits/tx-page", () => {
         status: "pending",
         sourceChainId: 137,
         destinationChainId: 42161,
-        depositDate: new Date(Date.now()),
+        depositDate: DateTime.fromISO("2024-05-10T23:59:59").toJSDate(),
         depositRelayerFeePct: "2",
         suggestedRelayerFeePct: "1",
       },
@@ -446,7 +447,7 @@ describe("GET /deposits/tx-page", () => {
         sourceChainId: 1,
         destinationChainId: 10,
         tokenAddr: usdc.address,
-        depositDate: new Date(Date.now() - 30_000),
+        depositDate: DateTime.fromISO("2024-05-10T23:59:59").minus({ day: 1 }).toJSDate(),
         depositRelayerFeePct: "2",
         suggestedRelayerFeePct: "1",
         bridgeFeePct: "10000000000000000", // 1%
@@ -462,7 +463,7 @@ describe("GET /deposits/tx-page", () => {
         status: "filled",
         sourceChainId: 137,
         destinationChainId: 42161,
-        depositDate: new Date(Date.now()),
+        depositDate: DateTime.fromISO("2024-05-10T23:59:59").toJSDate(),
         depositRelayerFeePct: "2",
         suggestedRelayerFeePct: "1",
         bridgeFeePct: "10000000000000000", // 1%
@@ -535,7 +536,7 @@ describe("GET /deposits/tx-page", () => {
   it("200 for 'skipOldUnprofitable' query params", async () => {
     const response = await request(app.getHttpServer()).get("/deposits/tx-page").query({ skipOldUnprofitable: true });
     expect(response.status).toBe(200);
-    expect(response.body.deposits).toHaveLength(3);
+    expect(response.body.deposits).toHaveLength(2);
   });
 
   it("200 for 'orderBy' query params", async () => {

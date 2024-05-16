@@ -29,7 +29,7 @@ export function mockDepositEntity(overrides: Partial<Deposit>) {
     depositId: getRandomInt(),
     sourceChainId: 1,
     destinationChainId: 1,
-    depositDate: new Date("2024-04-01T00:00:00"),
+    depositDate: new Date(),
     depositorAddr: "0x",
     recipientAddr: "0x",
     status: "pending" as TransferStatus,
@@ -62,7 +62,7 @@ export function mockManyDepositEntities(
     .map((zero, i) =>
       mockDepositEntity({
         depositId: depositIdStartIndex + i,
-        depositDate: DateTime.fromISO("2024-04-01T00:00:00")
+        depositDate: DateTime.now()
           .minus(Duration.fromObject({ days: n - i }))
           .toJSDate(),
         ...overrides,

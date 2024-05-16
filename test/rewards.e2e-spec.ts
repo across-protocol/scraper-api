@@ -1,6 +1,7 @@
 import request from "supertest";
 import { INestApplication } from "@nestjs/common";
 import { Test } from "@nestjs/testing";
+import { DateTime } from "luxon";
 
 import { DepositFixture } from "../src/modules/deposit/adapter/db/deposit-fixture";
 import { ValidationPipe } from "../src/validation.pipe";
@@ -68,6 +69,7 @@ describe("GET /rewards/earned", () => {
         tokenAddr: usdc.address,
         tokenId: token.id,
         priceId: price.id,
+        depositDate: DateTime.fromISO("2024-05-01T00:00:00.000Z").toJSDate(),
       },
       {
         depositId: 2,
@@ -82,6 +84,7 @@ describe("GET /rewards/earned", () => {
         stickyReferralAddress: userAddress,
         bridgeFeePct: "100000000000000000", // 10%
         acxUsdPrice: "1",
+        depositDate: DateTime.fromISO("2024-05-01T00:00:00.000Z").toJSDate(),
       },
     ]);
     await rewardFixture.insertOpReward({
@@ -91,6 +94,7 @@ describe("GET /rewards/earned", () => {
       amount: "123000",
       amountUsd: "0.123",
       rewardTokenId: token.id,
+      depositDate: DateTime.fromISO("2024-05-01T00:00:00.000Z").toJSDate(),
     });
     await referralService.cumputeReferralStats();
     await referralService.refreshMaterializedView();
@@ -258,6 +262,7 @@ describe("GET /rewards/referrals", () => {
         priceId: price.id,
         stickyReferralAddress: userAddress,
         bridgeFeePct: "100000000000000000", // 10%
+        depositDate: DateTime.fromISO("2024-05-01T00:00:00.000Z").toJSDate(),
       },
       {
         depositId: 2,
@@ -271,6 +276,7 @@ describe("GET /rewards/referrals", () => {
         depositorAddr: userAddress,
         stickyReferralAddress: "0x",
         bridgeFeePct: "100000000000000000", // 10%
+        depositDate: DateTime.fromISO("2024-05-01T00:00:00.000Z").toJSDate(),
       },
       {
         depositId: 3,
@@ -284,6 +290,7 @@ describe("GET /rewards/referrals", () => {
         depositorAddr: userAddress,
         stickyReferralAddress: userAddress,
         bridgeFeePct: "100000000000000000", // 10%
+        depositDate: DateTime.fromISO("2024-05-01T00:00:00.000Z").toJSDate(),
       },
     ]);
     await referralService.cumputeReferralStats();
