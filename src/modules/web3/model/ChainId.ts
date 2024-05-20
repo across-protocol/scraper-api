@@ -22,6 +22,8 @@ export const ChainIds = {
   baseSepolia: 84532,
   linea: 59144,
   lineaGoerli: 59140,
+  mode: 34443,
+  modeTestnet: 919,
 };
 
 export const ChainIdToName = Object.entries(ChainIds).reduce((idToName, entry) => {
