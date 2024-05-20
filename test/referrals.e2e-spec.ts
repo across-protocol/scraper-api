@@ -207,7 +207,7 @@ describe("GET /referrals/summary", () => {
         priceId: price.id,
         amount: tier5DepositAmount,
         depositorAddr: `0x1`,
-        depositDate: new Date(Date.now() - dayInMS),
+        depositDate: DateTime.fromISO("2024-05-01T00:00:00.000Z").toJSDate(),
         rewardsWindowIndex: 1,
       }),
     ]);
