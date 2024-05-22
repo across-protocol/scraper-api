@@ -7,7 +7,7 @@ import BigNumber from "bignumber.js";
 
 import { GasFeesService } from "../gas-fees/gas-fees-service";
 import { ScraperQueuesService } from "../../service/ScraperQueuesService";
-import { FeeBreakdownQueueMessage, OpRebateRewardMessage, ScraperQueue } from ".";
+import { FeeBreakdownQueueMessage, OpRebateRewardMessage, ScraperQueue, TrackFillEventQueueMessage } from ".";
 import { Deposit, DepositFillTx, DepositFillTx2, DepositFillTxV3 } from "../../../deposit/model/deposit.entity";
 import { deriveRelayerFeeComponents, makePctValuesCalculator, toWeiPct } from "../../utils";
 import { AcrossContractsVersion } from "../../../web3/model/across-version";
@@ -48,6 +48,14 @@ export class FeeBreakdownConsumer {
       await this.computeFeeBreakdownForV2FillEvents(deposit);
     } else if (fillEventsVersion === AcrossContractsVersion.V3) {
       await this.computeFeeBreakdownForV3FillEvents(deposit);
+      this.scraperQueuesService.publishMessage<OpRebateRewardMessage>(ScraperQueue.OpRebateReward, {
+        depositPrimaryKey: deposit.id,
+      });
+      this.scraperQueuesService.publishMessage<TrackFillEventQueueMessage>(ScraperQueue.TrackFillEvent, {
+        depositId: deposit.id,
+        destinationToken: deposit.tokenAddr,
+        fillTxHash: deposit.fillTxs[0].hash,
+      });
     }
   }
 
@@ -116,10 +124,6 @@ export class FeeBreakdownConsumer {
       swapFeeAmount: swapFeeAmount.toFixed(0),
     };
     await this.depositRepository.update({ id: deposit.id }, { feeBreakdown });
-
-    this.scraperQueuesService.publishMessage<OpRebateRewardMessage>(ScraperQueue.OpRebateReward, {
-      depositPrimaryKey: deposit.id,
-    });
   }
 
   private getFillEventsVersion(deposit: Deposit) {
