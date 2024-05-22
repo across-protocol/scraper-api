@@ -57,12 +57,6 @@ export class DepositFilledDateConsumer {
         fillTxs: deposit.fillTxs,
       },
     );
-
-    this.scraperQueuesService.publishMessage<TrackFillEventQueueMessage>(ScraperQueue.TrackFillEvent, {
-      depositId: deposit.id,
-      destinationToken: deposit.tokenAddr,
-      fillTxHash: deposit.fillTxs[0].hash,
-    });
   }
 
   private async fillDateForFillTx(chainId: number, fillTx: DepositFillTx | DepositFillTx2 | DepositFillTxV3) {
