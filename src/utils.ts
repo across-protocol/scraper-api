@@ -76,6 +76,11 @@ export const chainIdToInfo = {
     chainId: ChainIds.lineaGoerli,
     nativeSymbol: "eth",
   },
+  [ChainIds.mode]: {
+    name: "Mode",
+    chainId: ChainIds.mode,
+    nativeSymbol: "eth",
+  },
 };
 
 export const wait = (seconds = 1) =>
