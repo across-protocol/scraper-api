@@ -294,6 +294,15 @@ export const configValues = () => ({
           firstDepositId: 1000000,
         },
       ],
+      [ChainIds.mode]: [
+        {
+          address: "0x3baD7AD0728f9917d1Bf08af5782dCbD516cDd96",
+          startBlockNumber: 8043187,
+          abi: JSON.stringify(SpokePoolV3Abi),
+          acrossVersion: AcrossContractsVersion.V3,
+          firstDepositId: 1,
+        },
+      ],
     },
     merkleDistributor: {
       address: process.env.MERKLE_DISTRIBUTOR_ADDRESS || "0xF633b72A4C2Fb73b77A379bf72864A825aD35b6D", // TODO: replace with mainnet
