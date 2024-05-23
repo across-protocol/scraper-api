@@ -1,6 +1,6 @@
 import { BadRequestException, CACHE_MANAGER, Inject, Injectable } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
-import { Brackets, DataSource, Repository } from "typeorm";
+import { Brackets, DataSource, In, Repository } from "typeorm";
 import { utils } from "ethers";
 import { Cache } from "cache-manager";
 import BigNumber from "bignumber.js";
@@ -60,45 +60,57 @@ export class DepositService {
       });
     }
 
-    let queryBuilder = this.depositRepository.createQueryBuilder("d");
-    queryBuilder = this.getFilteredDepositsQuery(queryBuilder, query);
-    queryBuilder = this.getJoinedDepositsQuery(queryBuilder, query);
+    let queryBuilder = this.dataSource.createQueryBuilder().select(["d.id"]).from(Deposit, "d");
+    queryBuilder = queryBuilder.andWhere("d.depositDate is not null");
+    if (query.status) {
+      queryBuilder = queryBuilder.andWhere("d.status = :status", { status: query.status });
+    }
+    if (query.depositorOrRecipientAddress) {
+      const depositorOrRecipientAddress = this.assertValidAddress(query.depositorOrRecipientAddress);
+      queryBuilder = queryBuilder.andWhere(
+        new Brackets((qb) => {
+          qb.where("d.depositorAddr = :depositorOrRecipientAddress", {
+            depositorOrRecipientAddress,
+          }).orWhere("d.recipientAddr = :depositorOrRecipientAddress", { depositorOrRecipientAddress });
+        }),
+      );
+    }
 
-    // If this flag is set to true, we will skip pending deposits that:
-    // - are older than 1 day because the relayer will ignore such deposits using its fixed lookback
-    // - or are unprofitable for the relayer
-    if (query.skipOldUnprofitable) {
+    if (!query.depositorOrRecipientAddress) {
       queryBuilder = queryBuilder.andWhere(
         `
         CASE
-          WHEN d.status = 'filled' THEN true
-          WHEN d.status = 'pending'
-            AND d.depositDate <= NOW() - INTERVAL '1 days'
+          WHEN d.status = 'pending' AND d.depositDate <= NOW() - INTERVAL '1 days'
               THEN false
-          WHEN d.status = 'pending'
-            AND d.depositRelayerFeePct * :multiplier < d.suggestedRelayerFeePct 
+          WHEN d.status = 'pending' AND d.depositRelayerFeePct * :multiplier < d.suggestedRelayerFeePct 
               THEN false
           ELSE true
-        END
-        `,
+        END`,
         {
           multiplier: this.appConfig.values.suggestedFees.deviationBufferMultiplier,
         },
       );
     }
 
-    // show pending first
-    if (query.orderBy === "status") {
-      queryBuilder = queryBuilder.addOrderBy("d.status", "DESC");
-    }
-
+    queryBuilder = queryBuilder.addOrderBy("d.status", "DESC");
     queryBuilder = queryBuilder.addOrderBy("d.depositDate", "DESC");
     queryBuilder = queryBuilder.take(limit);
     queryBuilder = queryBuilder.skip(offset);
 
-    const [deposits, total] = await queryBuilder.getManyAndCount();
+    const [rawDeposits, total] = await queryBuilder.getManyAndCount();
+    const depositIds = rawDeposits.map((d) => d.id);
+    const deposits = await this.depositRepository.find({
+      where: { id: In(depositIds) },
+      relations: ["token", "outputToken", "swapToken"],
+    });
 
-    // Only include rewards if a user address is provided
+    deposits.sort((a, b) => {
+      if (a.status === b.status) {
+        return b.depositDate.getTime() - a.depositDate.getTime();
+      }
+      return a.status === "pending" ? 1 : -1;
+    });
+
     if (query.depositorOrRecipientAddress) {
       const userAddress = this.assertValidAddress(query.depositorOrRecipientAddress);
       const rewards = await this.rewardService.getRewardsForDepositsAndUserAddress(deposits, userAddress);
@@ -382,7 +394,7 @@ export class DepositService {
 
   private getJoinedDepositsQuery(
     queryBuilder: ReturnType<typeof this.depositRepository.createQueryBuilder>,
-    filter: Partial<GetDepositsV2Query | GetDepositsForTxPageQuery>,
+    filter: Partial<GetDepositsV2Query>,
   ) {
     if (!filter.include) {
       return queryBuilder;

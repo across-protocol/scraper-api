@@ -479,7 +479,7 @@ describe("GET /deposits/tx-page", () => {
   it("200 without query params", async () => {
     const response = await request(app.getHttpServer()).get("/deposits/tx-page");
     expect(response.status).toBe(200);
-    expect(response.body.deposits).toHaveLength(4);
+    expect(response.body.deposits).toHaveLength(2);
   });
 
   it("200 for 'depositorOrRecipientAddress' query param", async () => {
@@ -517,34 +517,6 @@ describe("GET /deposits/tx-page", () => {
     const response = await request(app.getHttpServer()).get("/deposits/tx-page").query({ status: "filled" });
     expect(response.status).toBe(200);
     expect(response.body.deposits).toHaveLength(2);
-  });
-
-  it("200 for 'originChainId' and 'destinationChainId' query params", async () => {
-    const response = await request(app.getHttpServer())
-      .get("/deposits/tx-page")
-      .query({ originChainId: 1, destinationChainId: 10 });
-    expect(response.status).toBe(200);
-    expect(response.body.deposits).toHaveLength(2);
-  });
-
-  it("200 for 'tokenAddress' query params", async () => {
-    const response = await request(app.getHttpServer()).get("/deposits/tx-page").query({ tokenAddress: usdc.address });
-    expect(response.status).toBe(200);
-    expect(response.body.deposits).toHaveLength(1);
-  });
-
-  it("200 for 'skipOldUnprofitable' query params", async () => {
-    const response = await request(app.getHttpServer()).get("/deposits/tx-page").query({ skipOldUnprofitable: true });
-    expect(response.status).toBe(200);
-    expect(response.body.deposits).toHaveLength(2);
-  });
-
-  it("200 for 'orderBy' query params", async () => {
-    const response = await request(app.getHttpServer()).get("/deposits/tx-page").query({ orderBy: "status" });
-    expect(response.status).toBe(200);
-    expect(response.body.deposits).toHaveLength(4);
-    expect(response.body.deposits[0].depositId).toBe(2);
-    expect(response.body.deposits[2].depositId).toBe(4);
   });
 
   afterEach(async () => {
