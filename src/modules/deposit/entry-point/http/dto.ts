@@ -190,22 +190,36 @@ export class GetDepositsBaseQuery {
 
 export class GetDepositsV2Query extends GetDepositsBaseQuery {}
 
-export class GetDepositsForTxPageQuery extends GetDepositsBaseQuery {
+export class GetDepositsForTxPageQuery {
   @IsOptional()
-  @IsBoolean()
-  @Type(() => Boolean)
-  @ApiProperty({ example: "true", required: false })
-  skipOldUnprofitable: boolean;
+  @IsString()
+  @ApiProperty({ example: "0x", required: false })
+  depositorOrRecipientAddress?: string;
 
   @IsOptional()
   @IsEnum(
     {
-      STATUS: "status",
+      FILLED: "filled",
+      PENDING: "pending",
     },
     {
-      message: "Must be one of: 'status'",
+      message: "Must be one of: 'filled', 'pending'",
     },
   )
-  @ApiProperty({ example: "status", required: false })
-  orderBy: "status";
+  @ApiProperty({ example: "filled", required: false })
+  status?: "filled" | "pending";
+
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  @Max(100)
+  @ApiProperty({ example: 10, required: false })
+  limit: string;
+
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  @Max(10_000_000)
+  @ApiProperty({ example: 0, required: false })
+  offset: string;
 }
