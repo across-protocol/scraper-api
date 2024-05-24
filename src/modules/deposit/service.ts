@@ -108,7 +108,7 @@ export class DepositService {
       if (a.status === b.status) {
         return b.depositDate.getTime() - a.depositDate.getTime();
       }
-      return a.status === "pending" ? 1 : -1;
+      return a.status === "pending" ? -1 : 1;
     });
 
     if (query.depositorOrRecipientAddress) {
