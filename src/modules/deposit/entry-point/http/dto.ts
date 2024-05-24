@@ -213,6 +213,7 @@ export class GetDepositsForTxPageQuery {
   @IsInt()
   @Min(1)
   @Max(100)
+  @Type(() => Number)
   @ApiProperty({ example: 10, required: false })
   limit: string;
 
@@ -220,6 +221,7 @@ export class GetDepositsForTxPageQuery {
   @IsInt()
   @Min(0)
   @Max(10_000_000)
+  @Type(() => Number)
   @ApiProperty({ example: 0, required: false })
   offset: string;
 }
