@@ -7,7 +7,13 @@ import BigNumber from "bignumber.js";
 
 import { GasFeesService } from "../gas-fees/gas-fees-service";
 import { ScraperQueuesService } from "../../service/ScraperQueuesService";
-import { FeeBreakdownQueueMessage, OpRebateRewardMessage, ScraperQueue, TrackFillEventQueueMessage } from ".";
+import {
+  ArbRebateRewardMessage,
+  FeeBreakdownQueueMessage,
+  OpRebateRewardMessage,
+  ScraperQueue,
+  TrackFillEventQueueMessage,
+} from ".";
 import { Deposit, DepositFillTx, DepositFillTx2, DepositFillTxV3 } from "../../../deposit/model/deposit.entity";
 import { deriveRelayerFeeComponents, makePctValuesCalculator, toWeiPct } from "../../utils";
 import { AcrossContractsVersion } from "../../../web3/model/across-version";
@@ -49,6 +55,9 @@ export class FeeBreakdownConsumer {
     } else if (fillEventsVersion === AcrossContractsVersion.V3) {
       await this.computeFeeBreakdownForV3FillEvents(deposit);
       this.scraperQueuesService.publishMessage<OpRebateRewardMessage>(ScraperQueue.OpRebateReward, {
+        depositPrimaryKey: deposit.id,
+      });
+      this.scraperQueuesService.publishMessage<ArbRebateRewardMessage>(ScraperQueue.ArbRebateReward, {
         depositPrimaryKey: deposit.id,
       });
       this.scraperQueuesService.publishMessage<TrackFillEventQueueMessage>(ScraperQueue.TrackFillEvent, {

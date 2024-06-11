@@ -316,6 +316,15 @@ export const configValues = () => ({
         address: process.env.OP_REWARDS_MERKLE_DISTRIBUTOR_ADDRESS,
         blockNumber: Number(process.env.OP_REWARDS_MERKLE_DISTRIBUTOR_BLOCK_NUMBER),
       },
+      arbRewards: {
+        chainId: process.env.ARB_REWARDS_MERKLE_DISTRIBUTOR_CHAIN_ID
+          ? Number(process.env.ARB_REWARDS_MERKLE_DISTRIBUTOR_CHAIN_ID)
+          : 42161,
+        address: process.env.ARB_REWARDS_MERKLE_DISTRIBUTOR_ADDRESS || "0x9f6Cb0A37F1ae91b8e65405f525A596bAFC5A9a6",
+        blockNumber: process.env.ARB_REWARDS_MERKLE_DISTRIBUTOR_BLOCK_NUMBER
+          ? Number(process.env.OP_REWARDS_MERKLE_DISTRIBUTOR_BLOCK_NUMBER)
+          : 220861533,
+      },
     },
     acx: {
       address: process.env.ACX_ADDRESS || "0x40153DdFAd90C49dbE3F5c9F96f2a5B25ec67461", // TODO: replace with mainnet,
@@ -362,6 +371,19 @@ export const configValues = () => ({
         : undefined,
       endDate: process.env.OP_REBATES_REWARD_PROGRAM_END_DATE
         ? new Date(process.env.OP_REBATES_REWARD_PROGRAM_END_DATE)
+        : undefined,
+    },
+    arbRebates: {
+      rewardToken: {
+        address: process.env.ARB_REBATES_REWARD_TOKEN_ADDRESS || "0x912CE59144191C1204E64559FE8253a0e49E6548",
+        chainId: Number(process.env.ARB_REBATES_REWARD_TOKEN_CHAIN_ID || "42161"),
+      },
+      enabled: process.env.ARB_REBATES_REWARD_PROGRAM_ENABLED === "true",
+      startDate: process.env.ARB_REBATES_REWARD_PROGRAM_START_DATE
+        ? new Date(process.env.ARB_REBATES_REWARD_PROGRAM_START_DATE)
+        : undefined,
+      endDate: process.env.ARB_REBATES_REWARD_PROGRAM_END_DATE
+        ? new Date(process.env.ARB_REBATES_REWARD_PROGRAM_END_DATE)
         : undefined,
     },
   },

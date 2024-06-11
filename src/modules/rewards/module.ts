@@ -19,6 +19,8 @@ import { ModuleOptions, RunMode } from "../../dynamic-module";
 import { RewardFixture } from "./adapter/db/reward-fixture";
 import { ReferralRewardsService } from "./services/referral-rewards-service";
 import { RewardsWindowJobFixture } from "./adapter/db/rewards-window-job-fixture";
+import { ArbRebateService } from "./services/arb-rebate-service";
+import { ArbReward } from "./model/arb-reward.entity";
 
 @Module({})
 export class RewardModule {
@@ -26,15 +28,22 @@ export class RewardModule {
     const module: DynamicModule = {
       module: RewardModule,
       controllers: [RewardController],
-      providers: [RewardService, OpRebateService, ReferralService, ReferralRewardsService],
+      providers: [RewardService, OpRebateService, ReferralService, ReferralRewardsService, ArbRebateService],
       imports: [
-        TypeOrmModule.forFeature([Deposit, OpReward, DepositsMv, RewardsWindowJob, ReferralRewardsWindowJobResult]),
+        TypeOrmModule.forFeature([
+          Deposit,
+          OpReward,
+          DepositsMv,
+          RewardsWindowJob,
+          ReferralRewardsWindowJobResult,
+          ArbReward,
+        ]),
         AppConfigModule,
         Web3Module,
         ReferralModule.forRoot(moduleOptions),
         MarketPriceModule.forRoot(moduleOptions),
       ],
-      exports: [RewardService, OpRebateService, ReferralService],
+      exports: [RewardService, OpRebateService, ReferralService, ArbRebateService],
     };
 
     if (moduleOptions.runModes.includes(RunMode.Test)) {

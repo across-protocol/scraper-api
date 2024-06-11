@@ -42,6 +42,7 @@ import { DepositModule } from "../deposit/module";
 import { AirdropModule } from "../airdrop/module";
 import { RectifyStickyReferralConsumer } from "./adapter/messaging/RectifyStickyReferralConsumer";
 import { OpRebateRewardConsumer } from "./adapter/messaging/OpRebateRewardConsumer";
+import { ArbRebateRewardConsumer } from "./adapter/messaging/ArbRebateRewardConsumer";
 import { OpRebateService } from "../rewards/services/op-rebate-service";
 import { OpReward } from "../rewards/model/op-reward.entity";
 import { QueuesMonitoringCron } from "./service/queues-monitoring-cron";
@@ -91,6 +92,7 @@ export class ScraperModule {
       RectifyStickyReferralConsumer,
       FeeBreakdownConsumer,
       OpRebateRewardConsumer,
+      ArbRebateRewardConsumer,
       MerkleDistributorClaimConsumer,
       CappedBridgeFeeConsumer,
     ];
@@ -209,6 +211,9 @@ export class ScraperModule {
         }),
         BullModule.registerQueue({
           name: ScraperQueue.OpRebateReward,
+        }),
+        BullModule.registerQueue({
+          name: ScraperQueue.ArbRebateReward,
         }),
         BullModule.registerQueue({
           name: ScraperQueue.MerkleDistributorClaim,

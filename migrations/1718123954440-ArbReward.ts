@@ -17,7 +17,7 @@ export class ArbReward1718123954440 implements MigrationInterface {
       "isClaimed" boolean NOT NULL DEFAULT false, 
       "createdAt" TIMESTAMP NOT NULL DEFAULT now(), 
       "updatedAt" TIMESTAMP NOT NULL DEFAULT now(), 
-      CONSTRAINT "UK_arb_reward_recipient_depositPk" UNIQUE ("recipient", "depositPrimaryKey"), 
+      CONSTRAINT "UK_arb_reward_depositPk" UNIQUE ("depositPrimaryKey"), 
       CONSTRAINT "PK_15ab2d5f32f73347e21725b9d59" PRIMARY KEY ("id"))
     `);
     await queryRunner.query(`

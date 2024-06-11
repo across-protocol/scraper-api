@@ -17,7 +17,7 @@ export type RewardMetadata = {
 };
 
 @Entity()
-@Unique("UK_arb_reward_recipient_depositPk", ["recipient", "depositPrimaryKey"])
+@Unique("UK_arb_reward_depositPk", ["depositPrimaryKey"])
 @Index("IX_arb_reward_recipient_depositDate", ["recipient", "depositDate"])
 export class ArbReward {
   @PrimaryGeneratedColumn()

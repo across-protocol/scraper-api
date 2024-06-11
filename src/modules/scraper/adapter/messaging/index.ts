@@ -18,6 +18,7 @@ export enum ScraperQueue {
   TrackFillEvent = "TrackFillEvent",
   FeeBreakdown = "FeeBreakdown",
   OpRebateReward = "OpRebateReward",
+  ArbRebateReward = "ArbRebateReward",
   MerkleDistributorClaim = "MerkleDistributorClaim",
   CappedBridgeFee = "CappedBridgeFee",
 }
@@ -134,6 +135,10 @@ export type FeeBreakdownQueueMessage = {
 };
 
 export type OpRebateRewardMessage = {
+  depositPrimaryKey: number;
+};
+
+export type ArbRebateRewardMessage = {
   depositPrimaryKey: number;
 };
 
