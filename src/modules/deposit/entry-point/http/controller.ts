@@ -7,6 +7,7 @@ import {
   GetDepositsStatsResponse,
   GetDepositsV2Query,
   GetDepositsForTxPageQuery,
+  GetDepositStatusQuery,
 } from "./dto";
 
 @Controller()
@@ -49,6 +50,12 @@ export class DepositController {
   @ApiTags("deposits")
   getDepositsDetails(@Query() query: GetDepositDetailsQuery) {
     return this.depositService.getDepositDetails(query.depositTxHash, parseInt(query.originChainId));
+  }
+
+  @Get("deposit/status")
+  @ApiTags("deposits")
+  getDepositStatus(@Query() query: GetDepositStatusQuery) {
+    return this.depositService.getDepositStatus(query);
   }
 
   @Get("deposits/stats")

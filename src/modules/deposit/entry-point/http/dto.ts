@@ -9,9 +9,9 @@ import {
   Max,
   Min,
   IsPositive,
-  IsBoolean,
   IsArray,
   ArrayMaxSize,
+  IsNumberString,
 } from "class-validator";
 
 export class GetDepositsQuery {
@@ -60,6 +60,16 @@ export class GetDepositDetailsQuery {
   @IsPositive()
   @Type(() => Number)
   @ApiProperty({ example: 1, required: true })
+  originChainId: string;
+}
+
+export class GetDepositStatusQuery {
+  @IsNumberString({ no_symbols: true })
+  @ApiProperty({ example: 1293630, required: true })
+  depositId: string;
+
+  @IsNumberString({ no_symbols: true })
+  @ApiProperty({ example: 59144, required: true })
   originChainId: string;
 }
 
