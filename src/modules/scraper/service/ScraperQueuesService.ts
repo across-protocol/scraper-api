@@ -29,6 +29,7 @@ export class ScraperQueuesService {
     @InjectQueue(ScraperQueue.RectifyStickyReferral) private rectifyStickyReferralQueue: Queue,
     @InjectQueue(ScraperQueue.FeeBreakdown) private feeBreakdownsQueue: Queue,
     @InjectQueue(ScraperQueue.OpRebateReward) private opRebateRewardsQueue: Queue,
+    @InjectQueue(ScraperQueue.ArbRebateReward) private arbRebateRewardQueue: Queue,
     @InjectQueue(ScraperQueue.MerkleDistributorClaim) private merkleDistributorClaimQueue: Queue,
     @InjectQueue(ScraperQueue.CappedBridgeFee) private cappedBridgeFeeQueue: Queue,
   ) {
@@ -52,6 +53,7 @@ export class ScraperQueuesService {
       [ScraperQueue.RectifyStickyReferral]: this.rectifyStickyReferralQueue,
       [ScraperQueue.FeeBreakdown]: this.feeBreakdownsQueue,
       [ScraperQueue.OpRebateReward]: this.opRebateRewardsQueue,
+      [ScraperQueue.ArbRebateReward]: this.arbRebateRewardQueue,
       [ScraperQueue.MerkleDistributorClaim]: this.merkleDistributorClaimQueue,
       [ScraperQueue.CappedBridgeFee]: this.cappedBridgeFeeQueue,
     };

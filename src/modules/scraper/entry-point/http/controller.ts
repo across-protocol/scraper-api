@@ -16,6 +16,7 @@ import {
   SuggestedFeesQueueMessage,
   FeeBreakdownQueueMessage,
   OpRebateRewardMessage,
+  ArbRebateRewardMessage,
 } from "../../adapter/messaging";
 import { ScraperService } from "../../service";
 import { ScraperQueuesService } from "../../service/ScraperQueuesService";
@@ -226,6 +227,21 @@ export class ScraperController {
 
     for (let depositId = fromDepositId; depositId <= toDepositId; depositId++) {
       await this.scraperQueuesService.publishMessage<OpRebateRewardMessage>(ScraperQueue.OpRebateReward, {
+        depositPrimaryKey: depositId,
+      });
+    }
+  }
+
+  @Post("scraper/arb-rebate-reward")
+  @ApiTags("scraper")
+  @Roles(Role.Admin)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @ApiBearerAuth()
+  async submitArbRebateRewardJob(@Body() body: OpRebateRewardBody) {
+    const { fromDepositId, toDepositId } = body;
+
+    for (let depositId = fromDepositId; depositId <= toDepositId; depositId++) {
+      this.scraperQueuesService.publishMessage<ArbRebateRewardMessage>(ScraperQueue.ArbRebateReward, {
         depositPrimaryKey: depositId,
       });
     }
