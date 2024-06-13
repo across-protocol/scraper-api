@@ -10,12 +10,5 @@ runs:
         registry-url: https://registry.npmjs.org
         cache: yarn
 
-    - uses: actions/cache@v3
-      id: yarn-cache
-      with:
-        path: node_modules/
-        key: ${{ runner.os }}-install-${{ hashFiles('**/yarn.lock') }}
-
-    - if: steps.yarn-cache.outputs.cache-hit != 'true'
-      run: yarn install --frozen-lockfile --ignore-scripts
-      shell: bash
+    - name: Install project dependencies
+      run: yarn
