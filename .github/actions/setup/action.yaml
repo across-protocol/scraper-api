@@ -12,3 +12,4 @@ runs:
 
     - name: Install project dependencies
       run: yarn
+      shell: bash
