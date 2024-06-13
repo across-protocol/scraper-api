@@ -55,8 +55,8 @@ export class FindMissedFillEventConsumer {
       } (${fromBlock.date.toISOString()}) to block ${toBlock.blockNumber} (${toBlock.date.toISOString()})`,
     );
 
-    if (DateTime.fromJSDate(fromBlock.date).diff(DateTime.fromJSDate(toBlock.date), ["seconds"]).seconds < 10) {
-      throw new Error(`Not enough time between blocks: ${DateTime.fromJSDate(fromBlock.date).diff(DateTime.fromJSDate(toBlock.date), ["seconds"]).seconds}`);
+    if (DateTime.fromJSDate(toBlock.date).diff(DateTime.fromJSDate(fromBlock.date), ["seconds"]).seconds < 10) {
+      throw new Error(`Not enough time between blocks: ${DateTime.fromJSDate(toBlock.date).diff(DateTime.fromJSDate(fromBlock.date), ["seconds"]).seconds}`);
     }
 
     const event = await this.ethProvidersService
