@@ -23,7 +23,7 @@ export class ReferralCronService {
   @EnhancedCron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
   async startCrons() {
     try {
-      if (this.semaphore) return
+      if (this.semaphore) return;
       this.semaphore = true;
       await this.updateStickyReferralAddresses();
       await this.refreshMaterializedView();
