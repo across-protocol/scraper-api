@@ -11,6 +11,8 @@ import { DepositsMvWithRewards } from "../../deposit/model/DepositsMv.entity";
 import { ReferralService } from "../../referral/services/service";
 import { assertValidAddress } from "../../../utils";
 
+import { ArbReward } from "../model/arb-reward.entity";
+import { ArbRebateService } from "./arb-rebate-service";
 import { OpRebateService } from "./op-rebate-service";
 import { OpReward } from "../model/op-reward.entity";
 import {
@@ -29,28 +31,47 @@ import { AppConfig } from "../../configuration/configuration.service";
 export class RewardService {
   constructor(
     @InjectRepository(Deposit) readonly depositRepository: Repository<Deposit>,
+    @InjectRepository(ArbReward) readonly arbRewardRepository: Repository<ArbReward>,
     @InjectRepository(OpReward) readonly opRewardRepository: Repository<OpReward>,
     @InjectRepository(RewardsWindowJob) readonly rewardsWindowJobRepository: Repository<RewardsWindowJob>,
     @InjectRepository(ReferralRewardsWindowJobResult)
     readonly referralRewardsWindowJobResultRepository: Repository<ReferralRewardsWindowJobResult>,
     private dataSource: DataSource,
+    private arbRebateService: ArbRebateService,
+    private opRebateService: OpRebateService,
     private referralService: ReferralService,
     private referralRewardsService: ReferralRewardsService,
-    private opRebateService: OpRebateService,
     private appConfig: AppConfig,
   ) {}
 
   public async getEarnedRewards(query: GetSummaryQuery) {
     const { userAddress } = query;
-    const [opRewards, referralRewards] = await Promise.all([
-      this.opRebateService.getEarnedRewards(userAddress),
-      this.referralService.getEarnedRewards(userAddress),
-    ]);
+    const [arbRewards, opRewards, referralRewards] = await Promise.all(
+      [this.arbRebateService, this.opRebateService, this.referralService].map((service) =>
+        service.getEarnedRewards(userAddress),
+      ),
+    );
 
     return {
+      "arb-rebates": arbRewards,
       "op-rebates": opRewards,
       referrals: referralRewards,
     };
+  }
+
+  public async getArbRebateRewardDeposits(query: GetRewardsQuery) {
+    const { rewards, pagination } = await this.arbRebateService.getArbRebateRewards(query);
+    return {
+      deposits: rewards.map((reward) => ({
+        ...formatDeposit(reward.deposit),
+        rewards: this.formatOpRebate(reward),
+      })),
+      pagination,
+    };
+  }
+
+  public async getArbRebatesSummary(query: GetSummaryQuery) {
+    return this.arbRebateService.getArbRebatesSummary(query.userAddress);
   }
 
   public async getOpRebateRewardDeposits(query: GetRewardsQuery) {

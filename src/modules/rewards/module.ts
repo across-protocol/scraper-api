@@ -16,11 +16,12 @@ import { RewardsWindowJob } from "./model/RewardsWindowJob.entity";
 import { ReferralRewardsWindowJobResult } from "./model/RewardsWindowJobResult.entity";
 import { MarketPriceModule } from "../market-price/module";
 import { ModuleOptions, RunMode } from "../../dynamic-module";
-import { RewardFixture } from "./adapter/db/reward-fixture";
+import { RewardFixture } from "./adapter/db/op-reward-fixture";
 import { ReferralRewardsService } from "./services/referral-rewards-service";
 import { RewardsWindowJobFixture } from "./adapter/db/rewards-window-job-fixture";
 import { ArbRebateService } from "./services/arb-rebate-service";
 import { ArbReward } from "./model/arb-reward.entity";
+import { ArbRewardFixture } from "./adapter/db/arb-reward-fixture";
 
 @Module({})
 export class RewardModule {
@@ -47,7 +48,7 @@ export class RewardModule {
     };
 
     if (moduleOptions.runModes.includes(RunMode.Test)) {
-      module.providers = [...module.providers, RewardFixture, RewardsWindowJobFixture];
+      module.providers = [...module.providers, ArbRewardFixture, RewardFixture, RewardsWindowJobFixture];
     }
 
     return module;

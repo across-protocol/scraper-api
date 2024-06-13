@@ -22,6 +22,18 @@ export class RewardController {
     return this.rewardService.getEarnedRewards(query);
   }
 
+  @Get("rewards/arb-rebates/summary")
+  @ApiTags("rewards")
+  getArbRebatesSummary(@Query() query: GetSummaryQuery) {
+    return this.rewardService.getArbRebatesSummary(query);
+  }
+
+  @Get("rewards/arb-rebates")
+  @ApiTags("rewards")
+  getArbRebates(@Query() query: GetRewardsQuery) {
+    return this.rewardService.getArbRebateRewardDeposits(query);
+  }
+
   @Get("rewards/op-rebates/summary")
   @ApiTags("rewards")
   getOpRebatesSummary(@Query() query: GetSummaryQuery) {

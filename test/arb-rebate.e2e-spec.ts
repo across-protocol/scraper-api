@@ -12,7 +12,7 @@ import { TokenFixture } from "../src/modules/web3/adapters/db/token-fixture";
 import { HistoricMarketPriceFixture } from "../src/modules/market-price/adapters/hmp-fixture";
 import { HistoricMarketPrice } from "../src/modules/market-price/model/historic-market-price.entity";
 import { Token } from "../src/modules/web3/model/token.entity";
-import { RewardFixture } from "../src/modules/rewards/adapter/db/op-reward-fixture";
+import { ArbRewardFixture } from "../src/modules/rewards/adapter/db/arb-reward-fixture";
 
 const usdc = {
   address: "0x1",
@@ -26,7 +26,7 @@ let referralService: ReferralService;
 let priceFixture: HistoricMarketPriceFixture;
 let tokenFixture: TokenFixture;
 let depositFixture: DepositFixture;
-let rewardFixture: RewardFixture;
+let arbRewardFixture: ArbRewardFixture;
 
 let token: Token;
 let price: HistoricMarketPrice;
@@ -42,7 +42,7 @@ beforeAll(async () => {
 
   depositFixture = app.get(DepositFixture);
   tokenFixture = app.get(TokenFixture);
-  rewardFixture = app.get(RewardFixture);
+  arbRewardFixture = app.get(ArbRewardFixture);
   priceFixture = app.get(HistoricMarketPriceFixture);
   referralService = app.get(ReferralService);
 });
@@ -64,7 +64,7 @@ describe("GET /rewards/earned", () => {
         depositId: 1,
         status: "filled",
         sourceChainId: 1,
-        destinationChainId: 10,
+        destinationChainId: 42161,
         amount: "10000000", // 10 USDC
         tokenAddr: usdc.address,
         tokenId: token.id,
@@ -75,7 +75,7 @@ describe("GET /rewards/earned", () => {
         depositId: 2,
         status: "filled",
         sourceChainId: 137,
-        destinationChainId: 42161,
+        destinationChainId: 10,
         amount: "10000000", // 10 USDC
         tokenAddr: usdc.address,
         tokenId: token.id,
@@ -87,7 +87,7 @@ describe("GET /rewards/earned", () => {
         depositDate: DateTime.fromISO("2024-05-01T00:00:00.000Z").toJSDate(),
       },
     ]);
-    await rewardFixture.insertOpReward({
+    await arbRewardFixture.insertArbReward({
       depositPrimaryKey: 1,
       recipient: userAddress,
       metadata: { rate: 0.95 },
@@ -105,12 +105,11 @@ describe("GET /rewards/earned", () => {
       userAddress,
     });
     expect(response.status).toBe(200);
-    expect(response.body["op-rebates"]).toBe("123000");
-    expect(response.body.referrals).toBe("400000000000000000"); // 0.4 ACX
+    expect(response.body["arb-rebates"]).toBe("123000");
   });
 
   it("400 without params 'userAddress'", async () => {
-    const response = await request(app.getHttpServer()).get("/rewards/op-rebates/summary");
+    const response = await request(app.getHttpServer()).get("/rewards/arb-rebates/summary");
     expect(response.status).toBe(400);
   });
 
@@ -123,7 +122,7 @@ describe("GET /rewards/earned", () => {
   });
 });
 
-describe("GET /rewards/op-rebates", () => {
+describe("GET /rewards/arb-rebates", () => {
   beforeAll(async () => {
     [token] = await Promise.all([tokenFixture.insertToken({ ...usdc })]);
   });
@@ -134,7 +133,7 @@ describe("GET /rewards/op-rebates", () => {
         depositId: 1,
         status: "filled",
         sourceChainId: 1,
-        destinationChainId: 10,
+        destinationChainId: 42161,
         tokenAddr: usdc.address,
         tokenId: token.id,
       },
@@ -142,11 +141,11 @@ describe("GET /rewards/op-rebates", () => {
         depositId: 2,
         status: "filled",
         sourceChainId: 137,
-        destinationChainId: 42161,
+        destinationChainId: 10,
         tokenId: token.id,
       },
     ]);
-    await rewardFixture.insertOpReward({
+    await arbRewardFixture.insertArbReward({
       depositPrimaryKey: 1,
       recipient: userAddress,
       metadata: { rate: 0.95 },
@@ -157,7 +156,7 @@ describe("GET /rewards/op-rebates", () => {
   });
 
   it("200 with params 'userAddress'", async () => {
-    const response = await request(app.getHttpServer()).get("/rewards/op-rebates").query({
+    const response = await request(app.getHttpServer()).get("/rewards/arb-rebates").query({
       userAddress,
     });
     expect(response.status).toBe(200);
@@ -166,7 +165,7 @@ describe("GET /rewards/op-rebates", () => {
   });
 
   it("400 without params 'userAddress'", async () => {
-    const response = await request(app.getHttpServer()).get("/rewards/op-rebates");
+    const response = await request(app.getHttpServer()).get("/rewards/arb-rebates");
     expect(response.status).toBe(400);
   });
 
@@ -179,7 +178,7 @@ describe("GET /rewards/op-rebates", () => {
   });
 });
 
-describe("GET /rewards/op-rebates/summary", () => {
+describe("GET /rewards/arb-rebates/summary", () => {
   beforeAll(async () => {
     [token, price] = await Promise.all([
       tokenFixture.insertToken({ ...usdc }),
@@ -187,7 +186,7 @@ describe("GET /rewards/op-rebates/summary", () => {
         symbol: usdc.symbol,
         usd: "1",
       }),
-    ]);
+    ]); // estamos como repitiendo esto, seguro se puede poner a un nivel más alto
   });
 
   beforeEach(async () => {
@@ -203,7 +202,7 @@ describe("GET /rewards/op-rebates/summary", () => {
         priceId: price.id,
       },
     ]);
-    await rewardFixture.insertOpReward({
+    await arbRewardFixture.insertArbReward({
       depositPrimaryKey: 1,
       recipient: userAddress,
       metadata: { rate: 0.95 },
@@ -214,7 +213,7 @@ describe("GET /rewards/op-rebates/summary", () => {
   });
 
   it("200 with params 'userAddress'", async () => {
-    const response = await request(app.getHttpServer()).get("/rewards/op-rebates/summary").query({
+    const response = await request(app.getHttpServer()).get("/rewards/arb-rebates/summary").query({
       userAddress,
     });
     expect(response.status).toBe(200);
@@ -224,7 +223,7 @@ describe("GET /rewards/op-rebates/summary", () => {
   });
 
   it("400 without params 'userAddress'", async () => {
-    const response = await request(app.getHttpServer()).get("/rewards/op-rebates/summary");
+    const response = await request(app.getHttpServer()).get("/rewards/arb-rebates/summary");
     expect(response.status).toBe(400);
   });
 
@@ -236,105 +235,4 @@ describe("GET /rewards/op-rebates/summary", () => {
     await tokenFixture.deleteAllTokens();
     await priceFixture.deleteAllPrices();
   });
-});
-
-describe("GET /rewards/referrals", () => {
-  beforeAll(async () => {
-    [token, price] = await Promise.all([
-      tokenFixture.insertToken({ ...usdc }),
-      priceFixture.insertPrice({
-        symbol: usdc.symbol,
-        usd: "1",
-      }),
-    ]);
-  });
-
-  beforeEach(async () => {
-    await depositFixture.insertManyDeposits([
-      {
-        depositId: 1,
-        status: "filled",
-        sourceChainId: 1,
-        destinationChainId: 42161,
-        amount: "10000000", // 10 USDC
-        tokenAddr: usdc.address,
-        tokenId: token.id,
-        priceId: price.id,
-        stickyReferralAddress: userAddress,
-        bridgeFeePct: "100000000000000000", // 10%
-        depositDate: DateTime.fromISO("2024-05-01T00:00:00.000Z").toJSDate(),
-      },
-      {
-        depositId: 2,
-        status: "filled",
-        sourceChainId: 1,
-        destinationChainId: 42161,
-        amount: "10000000", // 10 USDC
-        tokenAddr: usdc.address,
-        tokenId: token.id,
-        priceId: price.id,
-        depositorAddr: userAddress,
-        stickyReferralAddress: "0x",
-        bridgeFeePct: "100000000000000000", // 10%
-        depositDate: DateTime.fromISO("2024-05-01T00:00:00.000Z").toJSDate(),
-      },
-      {
-        depositId: 3,
-        status: "filled",
-        sourceChainId: 1,
-        destinationChainId: 42161,
-        amount: "10000000", // 10 USDC
-        tokenAddr: usdc.address,
-        tokenId: token.id,
-        priceId: price.id,
-        depositorAddr: userAddress,
-        stickyReferralAddress: userAddress,
-        bridgeFeePct: "100000000000000000", // 10%
-        depositDate: DateTime.fromISO("2024-05-01T00:00:00.000Z").toJSDate(),
-      },
-    ]);
-    await referralService.cumputeReferralStats();
-    await referralService.refreshMaterializedView();
-  });
-
-  it("200 with params 'userAddress'", async () => {
-    const response = await request(app.getHttpServer()).get("/rewards/referrals").query({
-      userAddress,
-    });
-    expect(response.status).toBe(200);
-    expect(response.body.deposits).toHaveLength(3);
-
-    // userAddress is referrer
-    expect(response.body.deposits[0].rewards.userRate).toBe(0.75);
-    expect(response.body.deposits[0].rewards.referralRate).toBe(0.4);
-    expect(response.body.deposits[0].rewards.rate).toBe(0.3); // 0.75 * 0.4
-
-    // userAddress is depositor
-    expect(response.body.deposits[1].rewards.userRate).toBe(0.25);
-    expect(response.body.deposits[1].rewards.referralRate).toBe(0.4);
-    expect(response.body.deposits[1].rewards.rate).toBe(0.1); // 0.25 * 0.4
-
-    // userAddress is both referrer and depositor
-    expect(response.body.deposits[2].rewards.userRate).toBe(1);
-    expect(response.body.deposits[2].rewards.referralRate).toBe(0.4);
-    expect(response.body.deposits[2].rewards.rate).toBe(0.4); // 1 * 0.4
-  });
-
-  it("400 without params 'userAddress'", async () => {
-    const response = await request(app.getHttpServer()).get("/rewards/op-rebates/summary");
-    expect(response.status).toBe(400);
-  });
-
-  afterEach(async () => {
-    await depositFixture.deleteAllDeposits();
-  });
-
-  afterAll(async () => {
-    await tokenFixture.deleteAllTokens();
-    await priceFixture.deleteAllPrices();
-  });
-});
-
-afterAll(async () => {
-  await app.close();
 });

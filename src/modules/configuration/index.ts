@@ -47,6 +47,9 @@ export const configValues = () => ({
       referralsSummary: isNaN(parseInt(process.env.REFERRALS_SUMMARY_CACHE_SECONDS_DURATION))
         ? 120
         : parseInt(process.env.REFERRALS_SUMMARY_CACHE_SECONDS_DURATION),
+      rebatesData: isNaN(parseInt(process.env.REBATES_DATA_CACHE_SECONDS_DURATION))
+        ? 60 * 10
+        : parseInt(process.env.REBATES_DATA_CACHE_SECONDS_DURATION),
     },
     runModes: process.env.RUN_MODES ? (process.env.RUN_MODES.split(",") as RunMode[]) : ([RunMode.Normal] as RunMode[]),
   },

@@ -17,7 +17,7 @@ import { TokenFixture } from "../src/modules/web3/adapters/db/token-fixture";
 import { HistoricMarketPriceFixture } from "../src/modules/market-price/adapters/hmp-fixture";
 import { HistoricMarketPrice } from "../src/modules/market-price/model/historic-market-price.entity";
 import { Token } from "../src/modules/web3/model/token.entity";
-import { RewardFixture } from "../src/modules/rewards/adapter/db/reward-fixture";
+import { RewardFixture } from "../src/modules/rewards/adapter/db/op-reward-fixture";
 
 const usdc = {
   address: "0x1",
