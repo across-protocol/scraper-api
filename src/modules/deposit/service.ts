@@ -300,7 +300,7 @@ export class DepositService {
 
     const deposit = await this.depositRepository.findOne({
       where: { depositId, sourceChainId: originChainId },
-      select: ["fillTxs", "status", "fillDeadline"],
+      select: ["fillTxs", "status", "fillDeadline", "destinationChainId"],
     });
 
     if (!deposit) throw new DepositNotFoundException();
@@ -317,6 +317,7 @@ export class DepositService {
       originChainId,
       status,
       fillTx: deposit.fillTxs.length > 0 ? deposit.fillTxs[0].hash : null,
+      destinationChainId: deposit.destinationChainId,
     };
 
     if (status === "filled" || status === "expired") {
