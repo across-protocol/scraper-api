@@ -90,7 +90,6 @@ export const wait = (seconds = 1) =>
 
 export const EnhancedCron = (cronExpression: string) => {
   if (process.env.DISABLE_CRONS != "true") return applyDecorators(Cron(cronExpression));
-  // eslint-disable-next-line @typescript-eslint/no-empty-function
   else return () => {};
 };
 

@@ -29,6 +29,7 @@ import { QueueJobCount } from "../monitoring/model/QueueJobCount.entity";
 import { MerkleDistributorClaim } from "../airdrop/model/merkle-distributor-claim.entity";
 import { DepositGapCheck } from "../scraper/model/DepositGapCheck.entity";
 import { ArbReward } from "../rewards/model/arb-reward.entity";
+import { FindMissedFillEventJob } from "../scraper/model/FindMissedFillEventJob.entity";
 
 // TODO: Add db entities here
 const entities = [
@@ -60,6 +61,7 @@ const entities = [
   MerkleDistributorClaim,
   DepositGapCheck,
   ArbReward,
+  FindMissedFillEventJob,
 ];
 
 @Injectable()

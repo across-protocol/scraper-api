@@ -3,7 +3,7 @@ import { EventsQuerier } from "./EventsQuerier";
 import { Contract, Event } from "ethers";
 
 export class SpokePoolEventsQuerier extends EventsQuerier {
-  constructor(private spokePool: Contract, blockRangeSize?: number) {
+  constructor(public spokePool: Contract, blockRangeSize?: number) {
     super(spokePool, new Logger(SpokePoolEventsQuerier.name), blockRangeSize);
   }
 
@@ -23,6 +23,16 @@ export class SpokePoolEventsQuerier extends EventsQuerier {
     return this.getEvents(from, to, this.getFilledV3RelayEventsFilter());
   }
 
+  public async getFilledV3RelayEvent(
+    from: number,
+    to: number,
+    originChainId: number,
+    depositId: number,
+  ): Promise<Event> {
+    const events = await this.getEvents(from, to, this.getFilledV3RelayEventFilter(originChainId, depositId));
+    return events[0];
+  }
+
   public async getRequestedSpeedUpDepositEvents(from: number, to: number): Promise<Event[]> {
     return this.getEvents(from, to, this.getRequestedSpeedUpDepositEventsFilters());
   }
@@ -37,6 +47,26 @@ export class SpokePoolEventsQuerier extends EventsQuerier {
 
   private getFilledV3RelayEventsFilter() {
     return this.spokePool.filters.FilledV3Relay();
+  }
+
+  private getFilledV3RelayEventFilter(originChainId: number, depositId: number) {
+    return this.spokePool.filters.FilledV3Relay(
+      null,
+      null,
+      null,
+      null,
+      null,
+      originChainId,
+      depositId,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+    );
   }
 
   private getFundsDepositedEventFilters() {

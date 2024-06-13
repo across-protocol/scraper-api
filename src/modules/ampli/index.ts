@@ -1,5 +1,3 @@
-/* tslint:disable */
-/* eslint-disable */
 /**
  * Ampli - A strong typed wrapper for your Analytics
  *
