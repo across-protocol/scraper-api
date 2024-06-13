@@ -1,6 +1,6 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
-import { DataSource, Repository } from "typeorm";
+import { DataSource, In, Repository } from "typeorm";
 import BigNumber from "bignumber.js";
 import { ethers } from "ethers";
 import { DateTime } from "luxon";
@@ -10,8 +10,10 @@ import { AppConfig } from "../../configuration/configuration.service";
 import { EthProvidersService } from "../../web3/services/EthProvidersService";
 import { ChainIds } from "../../web3/model/ChainId";
 import { MarketPriceService } from "../../market-price/services/service";
+import { assertValidAddress } from "../../../utils";
 
 import { ArbReward } from "../model/arb-reward.entity";
+import { GetRewardsQuery } from "../entrypoints/http/dto";
 
 const ARB_REBATE_RATE = 0.95;
 
@@ -41,6 +43,76 @@ export class ArbRebateService {
     private appConfig: AppConfig,
     private dataSource: DataSource,
   ) {}
+
+  public async getEarnedRewards(userAddress: string) {
+    userAddress = assertValidAddress(userAddress);
+
+    const baseQuery = this.buildBaseQuery(this.arbRewardRepository.createQueryBuilder("r"), userAddress);
+    const { arbRewards } = await baseQuery
+      .select("SUM(CAST(r.amount as DECIMAL))", "arbRewards")
+      .where("r.isClaimed = :isClaimed", { isClaimed: true })
+      .getRawOne<{ arbRewards: string }>();
+
+    return arbRewards;
+  }
+
+  public async getArbRebatesSummary(userAddress: string) {
+    userAddress = assertValidAddress(userAddress);
+
+    const baseQuery = this.buildBaseQuery(this.arbRewardRepository.createQueryBuilder("r"), userAddress);
+    baseQuery.andWhere("r.isClaimed = :isClaimed", { isClaimed: false });
+    const [{ depositsCount }, { unclaimedRewards }, { volumeUsd }] = await Promise.all([
+      baseQuery.select("COUNT(DISTINCT r.depositPrimaryKey)", "depositsCount").getRawOne<{
+        depositsCount: string;
+      }>(),
+      baseQuery.select("SUM(CAST(r.amount as DECIMAL))", "unclaimedRewards").getRawOne<{
+        unclaimedRewards: number;
+      }>(),
+      baseQuery
+        .leftJoinAndSelect("r.deposit", "d")
+        .leftJoinAndSelect("d.token", "t")
+        .leftJoinAndSelect("d.price", "p")
+        .select(`COALESCE(SUM(d.amount / power(10, t.decimals) * p.usd), 0)`, "volumeUsd")
+        .getRawOne<{
+          volumeUsd: number;
+        }>(),
+    ]);
+
+    return {
+      depositsCount: parseInt(depositsCount),
+      unclaimedRewards,
+      volumeUsd,
+      claimableRewards: "0",
+    };
+  }
+
+  public async getArbRebateRewards(query: GetRewardsQuery) {
+    const limit = parseInt(query.limit ?? "10");
+    const offset = parseInt(query.offset ?? "0");
+    const userAddress = assertValidAddress(query.userAddress);
+
+    const baseQuery = this.buildBaseQuery(this.arbRewardRepository.createQueryBuilder("r"), userAddress);
+
+    const rewardsQuery = baseQuery.orderBy("r.depositDate", "DESC").limit(limit).offset(offset);
+    const [rewards, total] = await rewardsQuery.getManyAndCount();
+
+    const depositPrimaryKeys = rewards.map((reward) => reward.depositPrimaryKey);
+    const deposits = await this.depositRepository.find({
+      where: { id: In(depositPrimaryKeys) },
+    });
+
+    return {
+      rewards: rewards.map((reward) => ({
+        ...reward,
+        deposit: deposits.find((deposit) => deposit.id === reward.depositPrimaryKey),
+      })),
+      pagination: {
+        limit,
+        offset,
+        total,
+      },
+    };
+  }
 
   public async createArbRebatesForDeposit(depositPrimaryKey: number) {
     if (!this.appConfig.values.rewardPrograms.arbRebates.enabled) {
@@ -139,5 +211,9 @@ export class ArbRebateService {
         throw new Error(`Deposit with id ${deposit.id} is missing '${key}'`);
       }
     }
+  }
+
+  private buildBaseQuery(qb: ReturnType<typeof this.arbRewardRepository.createQueryBuilder>, recipientAddress: string) {
+    return qb.where("r.recipient = :recipient", { recipient: recipientAddress });
   }
 }

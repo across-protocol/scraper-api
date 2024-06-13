@@ -38,6 +38,7 @@ export class OpRebateService {
     const baseQuery = this.buildBaseQuery(this.rewardRepository.createQueryBuilder("r"), userAddress);
     const { opRewards } = await baseQuery
       .select("SUM(CAST(r.amount as DECIMAL))", "opRewards")
+      .where("r.isClaimed = :isClaimed", { isClaimed: true })
       .getRawOne<{ opRewards: string }>();
 
     return opRewards;
@@ -81,11 +82,7 @@ export class OpRebateService {
 
     const baseQuery = this.buildBaseQuery(this.rewardRepository.createQueryBuilder("r"), userAddress);
 
-    const rewardsQuery = baseQuery
-      .leftJoinAndSelect("r.rewardToken", "rewardToken")
-      .orderBy("r.depositDate", "DESC")
-      .limit(limit)
-      .offset(offset);
+    const rewardsQuery = baseQuery.orderBy("r.depositDate", "DESC").limit(limit).offset(offset);
     const [rewards, total] = await rewardsQuery.getManyAndCount();
 
     const depositPrimaryKeys = rewards.map((reward) => reward.depositPrimaryKey);

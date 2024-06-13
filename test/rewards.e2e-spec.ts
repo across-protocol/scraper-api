@@ -12,7 +12,8 @@ import { TokenFixture } from "../src/modules/web3/adapters/db/token-fixture";
 import { HistoricMarketPriceFixture } from "../src/modules/market-price/adapters/hmp-fixture";
 import { HistoricMarketPrice } from "../src/modules/market-price/model/historic-market-price.entity";
 import { Token } from "../src/modules/web3/model/token.entity";
-import { RewardFixture } from "../src/modules/rewards/adapter/db/reward-fixture";
+import { ArbRewardFixture } from "../src/modules/rewards/adapter/db/arb-reward-fixture";
+import { RewardFixture } from "../src/modules/rewards/adapter/db/op-reward-fixture";
 
 const usdc = {
   address: "0x1",
@@ -27,6 +28,7 @@ let priceFixture: HistoricMarketPriceFixture;
 let tokenFixture: TokenFixture;
 let depositFixture: DepositFixture;
 let rewardFixture: RewardFixture;
+let arbRewardFixture: ArbRewardFixture;
 
 let token: Token;
 let price: HistoricMarketPrice;
@@ -42,6 +44,7 @@ beforeAll(async () => {
 
   depositFixture = app.get(DepositFixture);
   tokenFixture = app.get(TokenFixture);
+  arbRewardFixture = app.get(ArbRewardFixture);
   rewardFixture = app.get(RewardFixture);
   priceFixture = app.get(HistoricMarketPriceFixture);
   referralService = app.get(ReferralService);
@@ -86,6 +89,17 @@ describe("GET /rewards/earned", () => {
         acxUsdPrice: "1",
         depositDate: DateTime.fromISO("2024-05-01T00:00:00.000Z").toJSDate(),
       },
+      {
+        depositId: 3,
+        status: "filled",
+        sourceChainId: 1,
+        destinationChainId: 42161,
+        amount: "10000000", // 10 USDC
+        tokenAddr: usdc.address,
+        tokenId: token.id,
+        priceId: price.id,
+        depositDate: DateTime.fromISO("2024-05-01T00:00:00.000Z").toJSDate(),
+      },
     ]);
     await rewardFixture.insertOpReward({
       depositPrimaryKey: 1,
@@ -94,6 +108,17 @@ describe("GET /rewards/earned", () => {
       amount: "123000",
       amountUsd: "0.123",
       rewardTokenId: token.id,
+      isClaimed: true,
+      depositDate: DateTime.fromISO("2024-05-01T00:00:00.000Z").toJSDate(),
+    });
+    await arbRewardFixture.insertArbReward({
+      depositPrimaryKey: 1,
+      recipient: userAddress,
+      metadata: { rate: 0.95 },
+      amount: "153000",
+      amountUsd: "0.123",
+      rewardTokenId: token.id,
+      isClaimed: true,
       depositDate: DateTime.fromISO("2024-05-01T00:00:00.000Z").toJSDate(),
     });
     await referralService.cumputeReferralStats();
@@ -106,6 +131,7 @@ describe("GET /rewards/earned", () => {
     });
     expect(response.status).toBe(200);
     expect(response.body["op-rebates"]).toBe("123000");
+    expect(response.body["arb-rebates"]).toBe("153000");
     expect(response.body.referrals).toBe("400000000000000000"); // 0.4 ACX
   });
 
@@ -332,6 +358,124 @@ describe("GET /rewards/referrals", () => {
   afterAll(async () => {
     await tokenFixture.deleteAllTokens();
     await priceFixture.deleteAllPrices();
+    await arbRewardFixture.deleteAllArbRewards();
+  });
+});
+
+describe("GET /rewards/arb-rebates", () => {
+  beforeAll(async () => {
+    [token] = await Promise.all([tokenFixture.insertToken({ ...usdc })]);
+  });
+
+  beforeEach(async () => {
+    await depositFixture.insertManyDeposits([
+      {
+        depositId: 1,
+        status: "filled",
+        sourceChainId: 1,
+        destinationChainId: 42161,
+        tokenAddr: usdc.address,
+        tokenId: token.id,
+      },
+      {
+        depositId: 2,
+        status: "filled",
+        sourceChainId: 137,
+        destinationChainId: 10,
+        tokenId: token.id,
+      },
+    ]);
+    await arbRewardFixture.insertArbReward({
+      depositPrimaryKey: 1,
+      recipient: userAddress,
+      metadata: { rate: 0.95 },
+      amount: "1000000000000000000",
+      amountUsd: "1",
+      rewardTokenId: token.id,
+    });
+  });
+
+  it("200 with params 'userAddress'", async () => {
+    const response = await request(app.getHttpServer()).get("/rewards/arb-rebates").query({
+      userAddress,
+    });
+    expect(response.status).toBe(200);
+    expect(response.body.deposits).toHaveLength(1);
+    expect(response.body.deposits[0].depositId).toBe(1);
+  });
+
+  it("400 without params 'userAddress'", async () => {
+    const response = await request(app.getHttpServer()).get("/rewards/arb-rebates");
+    expect(response.status).toBe(400);
+  });
+
+  afterEach(async () => {
+    await depositFixture.deleteAllDeposits();
+  });
+
+  afterAll(async () => {
+    await tokenFixture.deleteAllTokens();
+    await arbRewardFixture.deleteAllArbRewards();
+  });
+});
+
+describe("GET /rewards/arb-rebates/summary", () => {
+  beforeAll(async () => {
+    [token, price] = await Promise.all([
+      tokenFixture.insertToken({ ...usdc }),
+      priceFixture.insertPrice({
+        symbol: usdc.symbol,
+        usd: "1",
+      }),
+    ]);
+  });
+
+  beforeEach(async () => {
+    await depositFixture.insertManyDeposits([
+      {
+        depositId: 1,
+        status: "filled",
+        sourceChainId: 1,
+        destinationChainId: 10,
+        amount: "10000000",
+        tokenAddr: usdc.address,
+        tokenId: token.id,
+        priceId: price.id,
+      },
+    ]);
+    await arbRewardFixture.insertArbReward({
+      depositPrimaryKey: 1,
+      recipient: userAddress,
+      metadata: { rate: 0.95 },
+      amount: "1000000000000000000",
+      amountUsd: "1",
+      rewardTokenId: token.id,
+    });
+  });
+
+  it("200 with params 'userAddress'", async () => {
+    const response = await request(app.getHttpServer()).get("/rewards/arb-rebates/summary").query({
+      userAddress,
+    });
+    expect(response.status).toBe(200);
+    expect(response.body.depositsCount).toBe(1);
+    expect(response.body.unclaimedRewards).toBe("1000000000000000000");
+    expect(response.body.volumeUsd).toBe(10);
+  });
+
+  it("400 without params 'userAddress'", async () => {
+    const response = await request(app.getHttpServer()).get("/rewards/arb-rebates/summary");
+    expect(response.status).toBe(400);
+  });
+
+  afterEach(async () => {
+    await depositFixture.deleteAllDeposits();
+  });
+
+  afterAll(async () => {
+    await tokenFixture.deleteAllTokens();
+    await priceFixture.deleteAllPrices();
+    await arbRewardFixture.deleteAllArbRewards();
   });
 });
 
