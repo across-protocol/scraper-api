@@ -3,12 +3,11 @@ import typescriptParser from "@typescript-eslint/parser";
 import globals from "globals";
 import eslint from "@eslint/js";
 import tseslint from "typescript-eslint";
-import eslintConfigPrettier from "eslint-config-prettier";
+import stylistic from "@stylistic/eslint-plugin";
 
 export default [
   eslint.configs.recommended,
   ...tseslint.configs.recommended,
-  eslintConfigPrettier,
   {
     languageOptions: {
       parser: typescriptParser,
@@ -33,10 +32,25 @@ export default [
       "no-extra-boolean-cast": "off",
     },
     files: ["src/**/*.ts"],
-
   },
   {
-    ignores: ["dist/",]
-  }
-  
+    ignores: ["dist/"],
+  },
+  {
+    plugins: {
+      "@stylistic": stylistic,
+    },
+    rules: {
+      "@stylistic/max-len": [
+        "warn",
+        {
+          code: 120,
+          ignoreComments: true,
+          ignoreTemplateLiterals: true,
+          ignoreStrings: true,
+        },
+      ],
+      "@stylistic/comma-dangle": ["error", "always-multiline"],
+    },
+  },
 ];
