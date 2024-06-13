@@ -57,7 +57,7 @@
     "class-transformer": "^0.5.1",
     "class-validator": "^0.13.2",
     "dotenv": "^16.0.0",
-    "ethers": "^5.6.8",
+    "ethers": "^5.7.2",
     "helmet": "^5.0.2",
     "luxon": "^2.4.0",
     "nanoid": "^3.0.0",

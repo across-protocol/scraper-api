@@ -57,15 +57,17 @@ import { MonitoringModule } from "../monitoring/module";
 import { DepositGapCheck } from "./model/DepositGapCheck.entity";
 import { DepositGapCheckFixture } from "./adapter/db/DepositGapCheckFixture";
 import { DepositGapService } from "./service/DepositGapService";
+import { CheckMissedFillEventsCron } from "./service/CheckMissedFillEventsCron";
+import { FindMissedFillEventConsumer } from "./adapter/messaging/FindMissedFillEventConsumer";
+import { FindMissedFillEventJob } from "./model/FindMissedFillEventJob.entity";
+import { Block } from "../web3/model/block.entity";
 
 @Module({})
 export class ScraperModule {
   static forRoot(moduleOptions: ModuleOptions): DynamicModule {
-    const crons = [QueuesMonitoringCron, DepositsGapDetectionCron];
+    const crons = [QueuesMonitoringCron, DepositsGapDetectionCron, CheckMissedFillEventsCron];
     const fixtures = [DepositGapCheckFixture];
-    const providers: Provider<any>[] = [
-      ...crons,
-      ...fixtures,
+    const services = [
       ScraperService,
       ScraperQueuesService,
       SuggestedFeesService,
@@ -73,6 +75,8 @@ export class ScraperModule {
       GasFeesService,
       OpRebateService,
       DepositGapService,
+    ];
+    const consumers = [
       BlocksEventsConsumer,
       MerkleDistributorBlocksEventsConsumer,
       MerkleDistributorBlocksEventsConsumerV2,
@@ -95,7 +99,9 @@ export class ScraperModule {
       ArbRebateRewardConsumer,
       MerkleDistributorClaimConsumer,
       CappedBridgeFeeConsumer,
+      FindMissedFillEventConsumer,
     ];
+    const providers: Provider<any>[] = [...crons, ...fixtures, ...services, ...consumers];
 
     return {
       module: ScraperModule,
@@ -117,6 +123,8 @@ export class ScraperModule {
           MerkleDistributorWindow,
           Token,
           DepositGapCheck,
+          FindMissedFillEventJob,
+          Block,
         ]),
         MarketPriceModule.forRoot(moduleOptions),
         HttpModule,
@@ -220,6 +228,9 @@ export class ScraperModule {
         }),
         BullModule.registerQueue({
           name: ScraperQueue.CappedBridgeFee,
+        }),
+        BullModule.registerQueue({
+          name: ScraperQueue.FindMissedFillEvent,
         }),
       ],
       exports: [ScraperQueuesService],

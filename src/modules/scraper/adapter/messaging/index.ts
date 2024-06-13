@@ -21,6 +21,7 @@ export enum ScraperQueue {
   ArbRebateReward = "ArbRebateReward",
   MerkleDistributorClaim = "MerkleDistributorClaim",
   CappedBridgeFee = "CappedBridgeFee",
+  FindMissedFillEvent = "FindMissedFillEvent",
 }
 
 export type BlocksEventsQueueMessage = {
@@ -65,6 +66,10 @@ export type FillEventsV3QueueMessage = {
   transactionHash: string;
   depositId: number;
   originChainId: number;
+};
+
+export type FindMissedFillEventQueueMessage = {
+  jobId: number;
 };
 
 export type SpeedUpEventsQueueMessage = {
