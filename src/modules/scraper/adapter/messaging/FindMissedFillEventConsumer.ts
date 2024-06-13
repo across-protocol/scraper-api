@@ -49,15 +49,15 @@ export class FindMissedFillEventConsumer {
       order: { date: "DESC" },
     });
 
-    if (DateTime.fromJSDate(fromBlock.date).diff(DateTime.fromJSDate(toBlock.date), ["seconds"]).seconds < 10) {
-      throw new Error("Not enough time between blocks");
-    }
-
     this.logger.verbose(
       `Find fill for deposit ${j.depositPrimaryKey} (${j.depositDate.toISOString()}) from block ${
         fromBlock.blockNumber
       } (${fromBlock.date.toISOString()}) to block ${toBlock.blockNumber} (${toBlock.date.toISOString()})`,
     );
+
+    if (DateTime.fromJSDate(fromBlock.date).diff(DateTime.fromJSDate(toBlock.date), ["seconds"]).seconds < 10) {
+      throw new Error(`Not enough time between blocks: ${DateTime.fromJSDate(fromBlock.date).diff(DateTime.fromJSDate(toBlock.date), ["seconds"]).seconds}`);
+    }
 
     const event = await this.ethProvidersService
       .getSpokePoolEventQuerier(j.destinationChainId, AcrossContractsVersion.V3)
