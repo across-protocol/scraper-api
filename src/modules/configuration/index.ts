@@ -50,6 +50,9 @@ export const configValues = () => ({
       rebatesData: isNaN(parseInt(process.env.REBATES_DATA_CACHE_SECONDS_DURATION))
         ? 60 * 10
         : parseInt(process.env.REBATES_DATA_CACHE_SECONDS_DURATION),
+      earnedRewards: isNaN(parseInt(process.env.EARNED_REWARDS_CACHE_SECONDS_DURATION))
+        ? 60 * 10
+        : parseInt(process.env.EARNED_REWARDS_CACHE_SECONDS_DURATION),
     },
     runModes: process.env.RUN_MODES ? (process.env.RUN_MODES.split(",") as RunMode[]) : ([RunMode.Normal] as RunMode[]),
   },

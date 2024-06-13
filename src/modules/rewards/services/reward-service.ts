@@ -1,7 +1,8 @@
-import { Injectable } from "@nestjs/common";
+import { CACHE_MANAGER, Inject, Injectable } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { DataSource, Repository } from "typeorm";
 import BigNumber from "bignumber.js";
+import { Cache } from "cache-manager";
 import { ethers } from "ethers";
 import { QueryDeepPartialEntity } from "typeorm/query-builder/QueryPartialEntity";
 
@@ -27,6 +28,11 @@ import { ReferralRewardsService } from "./referral-rewards-service";
 import { ReferralRewardsWindowJobResult } from "../model/RewardsWindowJobResult.entity";
 import { AppConfig } from "../../configuration/configuration.service";
 
+// Cache Keys
+const getArbRebatesSummaryCacheKey = (address: string) => `arbRebates:summary:${address}`;
+const getOpRebatesSummaryCacheKey = (address: string) => `opRebates:summary:${address}`;
+const getEarnedRewardsCacheKey = (address: string) => `earnedRewards:${address}`;
+
 @Injectable()
 export class RewardService {
   constructor(
@@ -42,21 +48,36 @@ export class RewardService {
     private referralService: ReferralService,
     private referralRewardsService: ReferralRewardsService,
     private appConfig: AppConfig,
+    @Inject(CACHE_MANAGER) private cacheManager: Cache,
   ) {}
 
   public async getEarnedRewards(query: GetSummaryQuery) {
     const { userAddress } = query;
+
+    let data = await this.cacheManager.get(getEarnedRewardsCacheKey(userAddress));
+    if (data) return data;
+
     const [arbRewards, opRewards, referralRewards] = await Promise.all(
       [this.arbRebateService, this.opRebateService, this.referralService].map((service) =>
         service.getEarnedRewards(userAddress),
       ),
     );
 
-    return {
+    data = {
       "arb-rebates": arbRewards,
       "op-rebates": opRewards,
       referrals: referralRewards,
     };
+
+    if (this.appConfig.values.app.cacheDuration.rebatesData) {
+      await this.cacheManager.set(
+        getEarnedRewardsCacheKey(userAddress),
+        data,
+        this.appConfig.values.app.cacheDuration.earnedRewards,
+      );
+    }
+
+    return data;
   }
 
   public async getArbRebateRewardDeposits(query: GetRewardsQuery) {
@@ -71,7 +92,22 @@ export class RewardService {
   }
 
   public async getArbRebatesSummary(query: GetSummaryQuery) {
-    return this.arbRebateService.getArbRebatesSummary(query.userAddress);
+    const { userAddress } = query;
+
+    let data = await this.cacheManager.get(getArbRebatesSummaryCacheKey(userAddress));
+    if (data) return data;
+
+    data = await this.arbRebateService.getArbRebatesSummary(userAddress);
+
+    if (this.appConfig.values.app.cacheDuration.rebatesData) {
+      await this.cacheManager.set(
+        getArbRebatesSummaryCacheKey(userAddress),
+        data,
+        this.appConfig.values.app.cacheDuration.rebatesData,
+      );
+    }
+
+    return data;
   }
 
   public async getOpRebateRewardDeposits(query: GetRewardsQuery) {
@@ -86,7 +122,22 @@ export class RewardService {
   }
 
   public async getOpRebatesSummary(query: GetSummaryQuery) {
-    return this.opRebateService.getOpRebatesSummary(query.userAddress);
+    const { userAddress } = query;
+
+    let data = await this.cacheManager.get(getOpRebatesSummaryCacheKey(userAddress));
+    if (data) return data;
+
+    data = await this.opRebateService.getOpRebatesSummary(userAddress);
+
+    if (this.appConfig.values.app.cacheDuration.rebatesData) {
+      await this.cacheManager.set(
+        getOpRebatesSummaryCacheKey(userAddress),
+        data,
+        this.appConfig.values.app.cacheDuration.rebatesData,
+      );
+    }
+
+    return data;
   }
 
   public async getReferralRewardDeposits(query: GetRewardsQuery) {

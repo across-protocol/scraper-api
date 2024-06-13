@@ -27,7 +27,6 @@ export function mockArbRewardEntity(overrides: Partial<ArbReward>) {
     amount: "1000000000000000000",
     amountUsd: "1",
     rewardTokenId: 1,
-    rewardTokenPriceId: 1,
     depositDate: new Date(),
     ...overrides,
   };

@@ -1,8 +1,7 @@
-import { CACHE_MANAGER, Inject, Injectable, Logger } from "@nestjs/common";
+import { Injectable, Logger } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { DataSource, In, Repository } from "typeorm";
 import BigNumber from "bignumber.js";
-import { Cache } from "cache-manager";
 import { ethers } from "ethers";
 import { DateTime } from "luxon";
 
@@ -19,8 +18,6 @@ import { WindowAlreadySetException } from "./exceptions";
 import { ReferralRewardsWindowJobResult } from "../model/RewardsWindowJobResult.entity";
 
 const OP_REBATE_RATE = 0.95;
-const getOpEarnedRewardsCacheKey = (address: string) => `opRewards:earned:${address}`;
-const getOpRebatesSummaryCacheKey = (address: string) => `opRebates:summary:${address}`;
 
 @Injectable()
 export class OpRebateService {
@@ -29,7 +26,6 @@ export class OpRebateService {
   constructor(
     @InjectRepository(Deposit) readonly depositRepository: Repository<Deposit>,
     @InjectRepository(OpReward) readonly rewardRepository: Repository<OpReward>,
-    @Inject(CACHE_MANAGER) private cacheManager: Cache,
     private marketPriceService: MarketPriceService,
     private ethProvidersService: EthProvidersService,
     private appConfig: AppConfig,
@@ -39,30 +35,17 @@ export class OpRebateService {
   public async getEarnedRewards(userAddress: string) {
     userAddress = assertValidAddress(userAddress);
 
-    const data = await this.cacheManager.get(getOpEarnedRewardsCacheKey(userAddress));
-    if (data) return data;
-
     const baseQuery = this.buildBaseQuery(this.rewardRepository.createQueryBuilder("r"), userAddress);
     const { opRewards } = await baseQuery
       .select("SUM(CAST(r.amount as DECIMAL))", "opRewards")
+      .where("r.isClaimed = :isClaimed", { isClaimed: true })
       .getRawOne<{ opRewards: string }>();
-
-    if (this.appConfig.values.app.cacheDuration.rebatesData) {
-      await this.cacheManager.set(
-        getOpEarnedRewardsCacheKey(userAddress),
-        opRewards,
-        this.appConfig.values.app.cacheDuration.rebatesData,
-      );
-    }
 
     return opRewards;
   }
 
   public async getOpRebatesSummary(userAddress: string) {
     userAddress = assertValidAddress(userAddress);
-
-    let data = await this.cacheManager.get(getOpRebatesSummaryCacheKey(userAddress));
-    if (data) return data;
 
     const baseQuery = this.buildBaseQuery(this.rewardRepository.createQueryBuilder("r"), userAddress);
     baseQuery.andWhere("r.isClaimed = :isClaimed", { isClaimed: false });
@@ -84,22 +67,12 @@ export class OpRebateService {
       // TODO: add claimable rewards
     ]);
 
-    data = {
+    return {
       depositsCount: parseInt(depositsCount),
       unclaimedRewards,
       volumeUsd,
       claimableRewards: "0",
     };
-
-    if (this.appConfig.values.app.cacheDuration.rebatesData) {
-      await this.cacheManager.set(
-        getOpRebatesSummaryCacheKey(userAddress),
-        data,
-        this.appConfig.values.app.cacheDuration.rebatesData,
-      );
-    }
-
-    return data;
   }
 
   public async getOpRebateRewards(query: GetRewardsQuery) {
@@ -109,11 +82,7 @@ export class OpRebateService {
 
     const baseQuery = this.buildBaseQuery(this.rewardRepository.createQueryBuilder("r"), userAddress);
 
-    const rewardsQuery = baseQuery
-      .leftJoinAndSelect("r.rewardToken", "rewardToken")
-      .orderBy("r.depositDate", "DESC")
-      .limit(limit)
-      .offset(offset);
+    const rewardsQuery = baseQuery.orderBy("r.depositDate", "DESC").limit(limit).offset(offset);
     const [rewards, total] = await rewardsQuery.getManyAndCount();
 
     const depositPrimaryKeys = rewards.map((reward) => reward.depositPrimaryKey);
