@@ -14,11 +14,19 @@ import {
 } from "./adapter/db/queries";
 import { AppConfig } from "../configuration/configuration.service";
 import { InvalidAddressException, DepositNotFoundException } from "./exceptions";
-import { GetDepositsV2Query, GetDepositsForTxPageQuery, GetDepositsBaseQuery } from "./entry-point/http/dto";
+import {
+  GetDepositsV2Query,
+  GetDepositsForTxPageQuery,
+  GetDepositsBaseQuery,
+  GetDepositStatusQuery,
+} from "./entry-point/http/dto";
 import { formatDeposit } from "./utils";
 import { RewardService } from "../rewards/services/reward-service";
 
 export const DEPOSITS_STATS_CACHE_KEY = "deposits:stats";
+
+const depositStatusCacheKey = (originChainId: number, depositId: number) =>
+  `deposit-status:${depositId}:${originChainId}`;
 
 @Injectable()
 export class DepositService {
@@ -281,6 +289,42 @@ export class DepositService {
     }
 
     return deposit;
+  }
+
+  public async getDepositStatus(query: GetDepositStatusQuery) {
+    const depositId = parseInt(query.depositId);
+    const originChainId = parseInt(query.originChainId);
+    const cachedData = await this.cacheManager.get(depositStatusCacheKey(originChainId, depositId));
+
+    if (cachedData) return cachedData;
+
+    const deposit = await this.depositRepository.findOne({
+      where: { depositId, sourceChainId: originChainId },
+      select: ["fillTxs", "status", "fillDeadline"],
+    });
+
+    if (!deposit) throw new DepositNotFoundException();
+
+    let status = "filled";
+    const now = new Date();
+
+    if (deposit.status === "pending") {
+      status = deposit.fillDeadline < now ? "expired" : "pending";
+    }
+
+    const data = {
+      depositId,
+      originChainId,
+      status,
+      fillTx: deposit.fillTxs.length > 0 ? deposit.fillTxs[0].hash : null,
+    };
+
+    if (status === "filled" || status === "expired") {
+      // cache filled and expired deposits for 10 minutes
+      await this.cacheManager.set(depositStatusCacheKey(originChainId, depositId), data, 60 * 10);
+    }
+
+    return data;
   }
 
   public async getEtlReferralDeposits(date: string) {
