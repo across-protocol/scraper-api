@@ -4,6 +4,7 @@ import { Deposit } from "../../deposit/model/deposit.entity";
 export enum FindMissedFillEventJobStatus {
   Checking = "checking",
   Completed = "completed",
+  Suspended = "suspended",
 }
 
 @Entity()

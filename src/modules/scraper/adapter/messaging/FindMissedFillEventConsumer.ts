@@ -6,7 +6,7 @@ import { DateTime } from "luxon";
 import { FillEventsV3QueueMessage, FindMissedFillEventQueueMessage, ScraperQueue } from ".";
 import { InjectRepository } from "@nestjs/typeorm";
 import { LessThanOrEqual, Repository } from "typeorm";
-import { FindMissedFillEventJob } from "../../model/FindMissedFillEventJob.entity";
+import { FindMissedFillEventJob, FindMissedFillEventJobStatus } from "../../model/FindMissedFillEventJob.entity";
 import { EthProvidersService } from "../../../web3/services/EthProvidersService";
 import { AcrossContractsVersion } from "../../../web3/model/across-version";
 import { Block } from "../../../web3/model/block.entity";
@@ -29,7 +29,7 @@ export class FindMissedFillEventConsumer {
     private scraperQueuesService: ScraperQueuesService,
   ) {}
 
-  @Process()
+  @Process({ concurrency: 10 })
   private async process(job: Job<FindMissedFillEventQueueMessage>) {
     const { jobId } = job.data;
     const j = await this.findMissedFillEventJobRepository.findOne({ where: { id: jobId } });
@@ -37,7 +37,13 @@ export class FindMissedFillEventConsumer {
     if (!j) return;
 
     const deposit = await this.depositRepository.findOne({ where: { id: j.depositPrimaryKey }, select: ["status"] });
-    if (deposit.status === "filled") return;
+    if (deposit.status === "filled") {
+      await this.findMissedFillEventJobRepository.update(
+        { id: jobId },
+        { status: FindMissedFillEventJobStatus.Completed },
+      );
+      return;
+    }
 
     const maxFillDate = DateTime.fromJSDate(j.depositDate).plus({ hours: 24 }).toJSDate();
     const fromBlock = await this.blockRepository.findOne({
@@ -68,7 +74,10 @@ export class FindMissedFillEventConsumer {
 
       if (diff.hours > 24) {
         this.logger.verbose(`Deposit ${j.depositPrimaryKey} is too old`);
-        return;
+        await this.findMissedFillEventJobRepository.update(
+          { id: jobId },
+          { status: FindMissedFillEventJobStatus.Suspended },
+        );
       }
     }
 
@@ -83,6 +92,10 @@ export class FindMissedFillEventConsumer {
       transactionHash: typedEvent.transactionHash,
     };
     await this.scraperQueuesService.publishMessage<FillEventsV3QueueMessage>(ScraperQueue.FillEventsV3, message);
+    await this.findMissedFillEventJobRepository.update(
+      { id: jobId },
+      { status: FindMissedFillEventJobStatus.Completed },
+    );
   }
 
   @OnQueueFailed()
