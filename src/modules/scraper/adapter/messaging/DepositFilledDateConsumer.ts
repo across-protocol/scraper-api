@@ -5,7 +5,7 @@ import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
 import { DateTime } from "luxon";
 import { EthProvidersService } from "../../../web3/services/EthProvidersService";
-import { DepositFilledDateQueueMessage, ScraperQueue, TrackFillEventQueueMessage } from ".";
+import { DepositFilledDateQueueMessage, ScraperQueue } from ".";
 import { Deposit, DepositFillTx, DepositFillTx2, DepositFillTxV3 } from "../../../deposit/model/deposit.entity";
 import { ScraperQueuesService } from "../../service/ScraperQueuesService";
 

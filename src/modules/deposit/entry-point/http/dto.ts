@@ -9,7 +9,6 @@ import {
   Max,
   Min,
   IsPositive,
-  IsBoolean,
   IsArray,
   ArrayMaxSize,
 } from "class-validator";
