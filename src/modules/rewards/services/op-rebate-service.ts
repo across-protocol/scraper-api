@@ -262,8 +262,9 @@ export class OpRebateService {
       rewardToken.symbol.toLowerCase(),
     );
     const rewardsUsd = new BigNumber(bridgeFeeUsd).multipliedBy(OP_REBATE_RATE).toFixed();
+    const positiveRewardsUsd = BigNumber.max(new BigNumber(0), rewardsUsd);
     const rewardsAmount = ethers.utils.parseEther(
-      new BigNumber(rewardsUsd).dividedBy(historicRewardTokenPrice.usd).toFixed(18),
+      new BigNumber(positiveRewardsUsd).dividedBy(historicRewardTokenPrice.usd).toFixed(18),
     );
 
     return {
