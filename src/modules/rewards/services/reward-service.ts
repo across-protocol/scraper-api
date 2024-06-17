@@ -85,7 +85,7 @@ export class RewardService {
     return {
       deposits: rewards.map((reward) => ({
         ...formatDeposit(reward.deposit),
-        rewards: this.formatOpRebate(reward),
+        rewards: this.formatArbRebate(reward),
       })),
       pagination,
     };
@@ -197,6 +197,15 @@ export class RewardService {
           : undefined,
       };
     });
+  }
+
+  public formatArbRebate(reward: ArbReward) {
+    return {
+      type: "arb-rebates",
+      rate: reward.metadata.rate,
+      amount: reward.amount,
+      usd: reward.amountUsd,
+    };
   }
 
   public formatOpRebate(reward: OpReward) {
