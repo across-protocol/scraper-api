@@ -128,7 +128,6 @@ export class DepositGapService {
             });
           }
           this.logger.debug(`chainId ${chainId} number of gaps: ${gapIntervals.length}`);
-          // console.log(`gaps: ${JSON.stringify(gapIntervals)}`);
           lastInterval = gapIntervals[gapIntervals.length - 1];
           // If we have reached the limit of gaps and the last gap is the maximum size, we can stop
           if (
