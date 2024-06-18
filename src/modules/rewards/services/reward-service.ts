@@ -164,13 +164,15 @@ export class RewardService {
 
   public async getRewardsForDepositsAndUserAddress(deposits: Deposit[], userAddress: string) {
     const depositPrimaryKeys = deposits.map((deposit) => deposit.id);
-    const [opRebateRewards, referralRewards] = await Promise.all([
+    const [opRebateRewards, arbRebateRewards, referralRewards] = await Promise.all([
       this.opRebateService.getOpRebateRewardsForDepositPrimaryKeys(depositPrimaryKeys),
+      this.arbRebateService.getArbRebateRewardsForDepositPrimaryKeys(depositPrimaryKeys),
       this.referralService.getReferralsForDepositsAndUserAddress(depositPrimaryKeys, userAddress),
     ]);
     return {
       "op-rebates": opRebateRewards,
       referrals: referralRewards,
+      arbRebateRewards,
     };
   }
 
@@ -179,22 +181,29 @@ export class RewardService {
     deposits: Deposit[],
     rewards: {
       "op-rebates": OpReward[];
+      arbRebateRewards: ArbReward[];
       referrals: DepositsMvWithRewards[];
     },
   ) {
     return deposits.map((deposit) => {
       const opRebate = rewards["op-rebates"].find((reward) => reward.depositPrimaryKey === deposit.id);
+      const arbRebate = rewards.arbRebateRewards.find((reward) => reward.depositPrimaryKey === deposit.id);
       const referral = rewards["referrals"].find((reward) => reward.id === deposit.id);
+      let formattedRewards;
+
+      if (opRebate) {
+        formattedRewards = this.formatOpRebate(opRebate);
+      } else if (arbRebate) {
+        formattedRewards = this.formatArbRebate(arbRebate);
+      } else if (referral) {
+        formattedRewards = this.formatReferral(referral, userAddress);
+      }
 
       return {
         deposit,
         // We assume that a deposit can only have one type of reward here. If this changes in the future for
         // other types of rewards, we will need to change this logic.
-        rewards: opRebate
-          ? this.formatOpRebate(opRebate)
-          : referral
-          ? this.formatReferral(referral, userAddress)
-          : undefined,
+        rewards: formattedRewards,
       };
     });
   }
