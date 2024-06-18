@@ -114,6 +114,17 @@ export class ArbRebateService {
     };
   }
 
+  public async getArbRebateRewardsForDepositPrimaryKeys(depositPrimaryKeys: number[]) {
+    if (depositPrimaryKeys.length === 0) {
+      return [];
+    }
+    const rewardsQuery = this.arbRewardRepository
+      .createQueryBuilder("r")
+      .where("r.depositPrimaryKey IN (:...depositPrimaryKeys)", { depositPrimaryKeys })
+    const rewards = await rewardsQuery.getMany();
+    return rewards;
+  }
+
   public async createArbRebatesForDeposit(depositPrimaryKey: number) {
     if (!this.appConfig.values.rewardPrograms.arbRebates.enabled) {
       this.logger.verbose(`ARB rebate rewards are disabled. Skipping...`);
