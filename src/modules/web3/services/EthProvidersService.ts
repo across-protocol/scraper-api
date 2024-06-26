@@ -196,7 +196,10 @@ export class EthProvidersService {
 
     for (const chainId of supportedChainIds) {
       if (this.appConfig.values.web3.providers[chainId]) {
-        const provider = new ethers.providers.JsonRpcProvider(this.appConfig.values.web3.providers[chainId]);
+        const provider = new ethers.providers.StaticJsonRpcProvider(
+          this.appConfig.values.web3.providers[chainId],
+          Number(chainId),
+        );
         this.providers[chainId] = provider;
       }
     }
