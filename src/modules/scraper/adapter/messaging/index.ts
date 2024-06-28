@@ -1,3 +1,5 @@
+import { BigNumber } from "ethers";
+
 export enum ScraperQueue {
   BlocksEvents = "BlocksEvents",
   FillEvents = "FillEvents",
@@ -59,13 +61,22 @@ export type FillEventsQueueMessage2 = {
 };
 
 export type FillEventsV3QueueMessage = {
+  depositId: number;
+  depositor: string;
+  exclusiveRelayer: string;
+  exclusivityDeadline: number;
+  fillDeadline: number;
+  fillType: number;
+  originChainId: number;
+  inputAmount: BigNumber;
+  inputToken: string;
+  destinationChainId: number;
+  outputAmount: BigNumber;
+  outputToken: string;
   updatedRecipient: string;
   updatedMessage: string;
   updatedOutputAmount: string;
-  fillType: number;
   transactionHash: string;
-  depositId: number;
-  originChainId: number;
 };
 
 export type FindMissedFillEventQueueMessage = {
