@@ -21,7 +21,7 @@ export class SuggestedFeesConsumer {
     @InjectRepository(Deposit) private depositRepository: Repository<Deposit>,
   ) {}
 
-  @Process()
+  @Process({ concurrency: 10 })
   private async process(job: Job<SuggestedFeesQueueMessage>) {
     const { depositId } = job.data;
 
