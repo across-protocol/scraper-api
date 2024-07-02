@@ -1,5 +1,8 @@
 import { OnQueueFailed, Process, Processor } from "@nestjs/bull";
 import { Logger } from "@nestjs/common";
+import { InjectRepository } from "@nestjs/typeorm";
+import { utils } from "@across-protocol/sdk-v2";
+import { RelayData } from "@across-protocol/sdk-v2/dist/types/interfaces";
 import { Job } from "bull";
 import {
   CappedBridgeFeeQueueMessage,
@@ -8,7 +11,6 @@ import {
   FillEventsV3QueueMessage,
   ScraperQueue,
 } from ".";
-import { InjectRepository } from "@nestjs/typeorm";
 import { Deposit, DepositFillTxV3 } from "../../../deposit/model/deposit.entity";
 import { Repository } from "typeorm";
 import { ScraperQueuesService } from "../../service/ScraperQueuesService";
@@ -45,6 +47,22 @@ export class FillEventsV3Consumer {
 
   public async processFillEventQueueMessage(deposit: Deposit, data: FillEventsV3QueueMessage) {
     const { transactionHash, fillType, updatedMessage, updatedOutputAmount, updatedRecipient } = data;
+
+    try {
+      const isValidFill = this.validateV3FillEventForDeposit(data, deposit);
+      if (!isValidFill) {
+        this.logger.log(`${ScraperQueue.FillEventsV3} Skipping event - Invalid fill found for deposit id ${deposit.id}.`);
+        this.logger.log(`${ScraperQueue.FillEventsV3} Invalid fill: ${JSON.stringify({ ...data, outputAmount: updatedOutputAmount, inputAmount: deposit.amount })}`);
+        return;
+      }
+    } catch (error) {
+      const invalidArgumentErrorCode = 'INVALID_ARGUMENT';
+      if (error.code === invalidArgumentErrorCode) {
+        this.logger.log(`${ScraperQueue.FillEventsV3} Skipping event - Missing field ${error.argument} in FillEventV3 message`);
+        return;
+      }
+    }
+
     const fillTxs = [
       ...deposit.fillTxs,
       { hash: transactionHash, fillType, updatedMessage, updatedOutputAmount, updatedRecipient },
@@ -69,8 +87,49 @@ export class FillEventsV3Consumer {
     return fillTxIndex !== -1;
   }
 
+  private validateV3FillEventForDeposit(
+    fill: FillEventsV3QueueMessage,
+    deposit: Deposit,
+  ) {
+    const fillRelayData: RelayData = {
+      originChainId: fill.originChainId,
+      depositor: fill.depositor,
+      recipient: fill.updatedRecipient,
+      depositId: fill.depositId,
+      inputToken: fill.inputToken,
+      inputAmount: fill.inputAmount,
+      outputToken: fill.outputToken,
+      outputAmount: fill.outputAmount,
+      message: fill.updatedMessage,
+      fillDeadline: fill.fillDeadline,
+      exclusiveRelayer: fill.exclusiveRelayer,
+      exclusivityDeadline: fill.exclusivityDeadline,
+    };
+    const fillRelayDataHash = utils.getRelayDataHash(fillRelayData, fill.destinationChainId);
+
+    const depositRelayData: RelayData = {
+      originChainId: deposit.sourceChainId,
+      depositor: deposit.depositorAddr,
+      recipient: deposit.recipientAddr,
+      depositId: deposit.depositId,
+      inputToken: deposit.tokenAddr,
+      inputAmount: utils.toBN(deposit.amount),
+      outputToken: deposit.outputTokenAddress,
+      outputAmount: utils.toBN(deposit.outputAmount),
+      message: deposit.message,
+      fillDeadline: deposit.fillDeadline.getTime() / 1000,
+      exclusiveRelayer: deposit.relayer,
+      exclusivityDeadline: deposit.exclusivityDeadline
+        ? deposit.exclusivityDeadline.getTime() / 1000
+        : 0,
+    };
+    const depositRelayDataHash = utils.getRelayDataHash(depositRelayData, deposit.destinationChainId);
+
+    return fillRelayDataHash === depositRelayDataHash;
+  }
+
   @OnQueueFailed()
   private onQueueFailed(job: Job, error: Error) {
-    this.logger.error(`${ScraperQueue.FillEvents} ${JSON.stringify(job.data)} failed: ${error}`);
+    this.logger.error(`${ScraperQueue.FillEventsV3} ${JSON.stringify(job.data)} failed: ${error}`);
   }
 }
