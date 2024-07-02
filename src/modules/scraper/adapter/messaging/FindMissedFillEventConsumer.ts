@@ -83,21 +83,12 @@ export class FindMissedFillEventConsumer {
 
     const typedEvent = event as FilledV3RelayEvent;
     const message: FillEventsV3QueueMessage = {
-      depositId: typedEvent.args.depositId,
-      depositor: typedEvent.args.depositor,
-      exclusiveRelayer: typedEvent.args.exclusiveRelayer,
-      exclusivityDeadline: typedEvent.args.exclusivityDeadline,
-      fillDeadline: typedEvent.args.fillDeadline,
-      fillType: typedEvent.args.relayExecutionInfo.fillType,
-      originChainId: typedEvent.args.originChainId.toNumber(),
-      inputAmount: typedEvent.args.inputAmount,
-      inputToken: typedEvent.args.inputToken,
-      destinationChainId: deposit.destinationChainId,
-      outputAmount: typedEvent.args.outputAmount,
-      outputToken: typedEvent.args.outputToken,
       updatedRecipient: typedEvent.args.relayExecutionInfo.updatedRecipient,
       updatedMessage: typedEvent.args.relayExecutionInfo.updatedMessage,
       updatedOutputAmount: typedEvent.args.relayExecutionInfo.updatedOutputAmount.toString(),
+      fillType: typedEvent.args.relayExecutionInfo.fillType,
+      depositId: typedEvent.args.depositId,
+      originChainId: typedEvent.args.originChainId.toNumber(),
       transactionHash: typedEvent.transactionHash,
     };
     await this.scraperQueuesService.publishMessage<FillEventsV3QueueMessage>(ScraperQueue.FillEventsV3, message);

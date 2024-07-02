@@ -120,7 +120,7 @@ export class ArbRebateService {
     }
     const rewardsQuery = this.arbRewardRepository
       .createQueryBuilder("r")
-      .where("r.depositPrimaryKey IN (:...depositPrimaryKeys)", { depositPrimaryKeys });
+      .where("r.depositPrimaryKey IN (:...depositPrimaryKeys)", { depositPrimaryKeys })
     const rewards = await rewardsQuery.getMany();
     return rewards;
   }
