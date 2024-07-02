@@ -81,6 +81,21 @@ export const chainIdToInfo = {
     chainId: ChainIds.mode,
     nativeSymbol: "eth",
   },
+  [ChainIds.modeTestnet]: {
+    name: "Mode Testnet",
+    chainId: ChainIds.modeTestnet,
+    nativeSymbol: "eth",
+  },
+  [ChainIds.lisk]: {
+    name: "Lisk",
+    chainId: ChainIds.lisk,
+    nativeSymbol: "eth",
+  },
+  [ChainIds.liskSepolia]: {
+    name: "Lisk Sepolia",
+    chainId: ChainIds.liskSepolia,
+    nativeSymbol: "eth",
+  },
 };
 
 export const wait = (seconds = 1) =>
