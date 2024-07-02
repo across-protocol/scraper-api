@@ -24,6 +24,8 @@ export const ChainIds = {
   lineaGoerli: 59140,
   mode: 34443,
   modeTestnet: 919,
+  lisk: 1135,
+  liskSepolia: 4202,
 };
 
 export const ChainIdToName = Object.entries(ChainIds).reduce((idToName, entry) => {
