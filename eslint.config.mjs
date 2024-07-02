@@ -51,7 +51,6 @@ export default [
         },
       ],
       "@stylistic/comma-dangle": ["error", "always-multiline"],
-      "@stylistic/semi": ["error", "always"],
     },
   },
 ];
