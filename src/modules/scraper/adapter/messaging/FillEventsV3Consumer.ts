@@ -48,11 +48,19 @@ export class FillEventsV3Consumer {
   public async processFillEventQueueMessage(deposit: Deposit, data: FillEventsV3QueueMessage) {
     const { transactionHash, fillType, updatedMessage, updatedOutputAmount, updatedRecipient } = data;
 
-    const isValidFill = this.validateV3FillEventForDeposit(data, deposit);
-    if (!isValidFill) {
-      this.logger.log(`${ScraperQueue.FillEventsV3} Skipping event - Invalid fill found for deposit id ${deposit.id}.`);
-      this.logger.log(`${ScraperQueue.FillEventsV3} Invalid fill: ${JSON.stringify({ ...data, outputAmount: updatedOutputAmount, inputAmount: deposit.amount })}`);
-      return;
+    try {
+      const isValidFill = this.validateV3FillEventForDeposit(data, deposit);
+      if (!isValidFill) {
+        this.logger.log(`${ScraperQueue.FillEventsV3} Skipping event - Invalid fill found for deposit id ${deposit.id}.`);
+        this.logger.log(`${ScraperQueue.FillEventsV3} Invalid fill: ${JSON.stringify({ ...data, outputAmount: updatedOutputAmount, inputAmount: deposit.amount })}`);
+        return;
+      }
+    } catch (error) {
+      const invalidArgumentErrorCode = 'INVALID_ARGUMENT';
+      if (error.code === invalidArgumentErrorCode) {
+        this.logger.log(`${ScraperQueue.FillEventsV3} Skipping event - Missing field ${error.argument} in FillEventV3 message`);
+        return;
+      }
     }
 
     const fillTxs = [
