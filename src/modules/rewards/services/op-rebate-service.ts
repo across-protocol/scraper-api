@@ -123,10 +123,13 @@ export class OpRebateService {
 
     const deposit = await this.depositRepository.findOne({
       where: { id: depositPrimaryKey },
+      select: ["id", "status", "destinationChainId", "sourceChainId", "depositDate", "depositTxHash", "feeBreakdown"],
     });
 
+    const validDestinationChains = [ChainIds.base, ChainIds.mode, ChainIds.optimism];
+
     if (!deposit || deposit.status === "pending") return;
-    if (deposit.destinationChainId !== ChainIds.optimism) return;
+    if (!validDestinationChains.includes(deposit.destinationChainId)) return;
 
     this.assertDepositKeys(deposit, ["depositDate", "feeBreakdown"]);
 

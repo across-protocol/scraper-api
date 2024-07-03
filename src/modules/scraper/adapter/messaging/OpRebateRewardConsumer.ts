@@ -6,7 +6,6 @@ import { Repository } from "typeorm";
 
 import { OpRebateRewardMessage, ScraperQueue } from ".";
 import { Deposit } from "../../../deposit/model/deposit.entity";
-import { ChainIds } from "../../../web3/model/ChainId";
 import { OpRebateService } from "../../../rewards/services/op-rebate-service";
 
 @Processor(ScraperQueue.OpRebateReward)
@@ -23,9 +22,6 @@ export class OpRebateRewardConsumer {
     const { depositPrimaryKey } = job.data;
 
     const deposit = await this.depositRepository.findOne({ where: { id: depositPrimaryKey } });
-
-    if (!deposit) return;
-    if (deposit.destinationChainId !== ChainIds.optimism) return;
 
     await this.opRebateService.createOpRebatesForDeposit(deposit.id);
   }
