@@ -312,7 +312,7 @@ export const configValues = () => ({
       [ChainIds.lisk]: [
         {
           address: "0x9552a0a6624A23B848060AE5901659CDDa1f83f8",
-          startBlockNumber: 2391355,
+          startBlockNumber: 2602337,
           abi: JSON.stringify(SpokePoolV3Abi),
           acrossVersion: AcrossContractsVersion.V3,
           firstDepositId: 1,
