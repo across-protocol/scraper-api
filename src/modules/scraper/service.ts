@@ -277,7 +277,6 @@ export class ScraperService {
 
       const messages: DepositReferralQueueMessage[] = deposits.map((d) => ({
         depositId: d.id,
-        rectifyStickyReferralAddress: false,
       }));
       this.logger.debug(
         `publish ${deposits.length} deposits from ${deposits[0].depositDate} to ${
