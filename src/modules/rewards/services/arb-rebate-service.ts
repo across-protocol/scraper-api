@@ -16,6 +16,7 @@ import { ArbReward } from "../model/arb-reward.entity";
 import { GetRewardsQuery } from "../entrypoints/http/dto";
 
 const ARB_REBATE_RATE = 0.95;
+const ELIGIBLE_ARB_REWARDS_CHAIN_IDS = [ChainIds.arbitrum];
 
 type PartialDeposit = Pick<
   Deposit,
@@ -137,7 +138,7 @@ export class ArbRebateService {
     });
 
     if (!deposit || deposit.status === "pending") return;
-    if (deposit.destinationChainId !== ChainIds.arbitrum) return;
+    if (!this.isDepositEligibleForArbRewards(deposit)) return;
     this.assertDepositKeys(deposit, ["depositDate", "feeBreakdown"]);
     if (!deposit.feeBreakdown.totalBridgeFeeUsd) {
       throw new Error(`Deposit with id ${depositPrimaryKey} is missing total bridge fee in USD`);
@@ -169,6 +170,10 @@ export class ArbRebateService {
       })
       .orUpdate(["recipient", "depositDate", "metadata", "amount", "amountUsd", "rewardTokenId"], ["depositPrimaryKey"])
       .execute();
+  }
+
+  public async isDepositEligibleForArbRewards(deposit: Pick<Deposit, "destinationChainId">) {
+    return ELIGIBLE_ARB_REWARDS_CHAIN_IDS.includes(deposit.destinationChainId);
   }
 
   private async calcArbRebateRewards(deposit: PartialDeposit) {

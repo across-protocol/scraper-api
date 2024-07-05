@@ -17,8 +17,9 @@ import {
 import { Deposit, DepositFillTx, DepositFillTx2, DepositFillTxV3 } from "../../../deposit/model/deposit.entity";
 import { deriveRelayerFeeComponents, makePctValuesCalculator, toWeiPct } from "../../utils";
 import { AcrossContractsVersion } from "../../../web3/model/across-version";
-import { ChainIds } from "../../../web3/model/ChainId";
 import { DepositService } from "../../../deposit/service";
+import { OpRebateService } from "../../../rewards/services/op-rebate-service";
+import { ArbRebateService } from "../../../rewards/services/arb-rebate-service";
 
 @Processor(ScraperQueue.FeeBreakdown)
 export class FeeBreakdownConsumer {
@@ -29,6 +30,8 @@ export class FeeBreakdownConsumer {
     @InjectRepository(Deposit) private depositRepository: Repository<Deposit>,
     private depositService: DepositService,
     private scraperQueuesService: ScraperQueuesService,
+    private opRebateService: OpRebateService,
+    private arbRebateService: ArbRebateService,
   ) {}
 
   @Process()
@@ -55,14 +58,13 @@ export class FeeBreakdownConsumer {
       await this.computeFeeBreakdownForV2FillEvents(deposit);
     } else if (fillEventsVersion === AcrossContractsVersion.V3) {
       await this.computeFeeBreakdownForV3FillEvents(deposit);
-      const validOpDestinationChains = [ChainIds.base, ChainIds.mode, ChainIds.optimism];
-      if (validOpDestinationChains.includes(deposit.destinationChainId)) {
-        this.scraperQueuesService.publishMessage<OpRebateRewardMessage>(ScraperQueue.OpRebateReward, {
-          depositPrimaryKey: deposit.id,
-        });
+      
+      if (this.opRebateService.isDepositEligibleForOpRewards(deposit)) {
+          this.scraperQueuesService.publishMessage<OpRebateRewardMessage>(ScraperQueue.OpRebateReward, {
+            depositPrimaryKey: deposit.id,
+          });
       }
-      const validArbDestinationChains = [ChainIds.arbitrum];
-      if (validArbDestinationChains.includes(deposit.destinationChainId)) {
+      if (this.arbRebateService.isDepositEligibleForArbRewards(deposit)) {
         this.scraperQueuesService.publishMessage<ArbRebateRewardMessage>(ScraperQueue.ArbRebateReward, {
           depositPrimaryKey: deposit.id,
         });
@@ -201,6 +203,6 @@ export class FeeBreakdownConsumer {
 
   @OnQueueFailed()
   private onQueueFailed(job: Job, error: Error) {
-    this.logger.error(`${ScraperQueue.FeeBreakdown} ${JSON.stringify(job.data)} failed: ${error}`);
+    this.logger.error(`${JSON.stringify(job.data)} failed: ${error}`);
   }
 }
