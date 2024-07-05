@@ -13,7 +13,6 @@ import {
   BlocksEventsQueueMessage,
   CappedBridgeFeeQueueMessage,
   DepositFilledDateQueueMessage,
-  DepositReferralQueueMessage,
   FeeBreakdownQueueMessage,
   MerkleDistributorBlocksEventsQueueMessage,
   ScraperQueue,
@@ -24,7 +23,6 @@ import {
   BackfillFeeBreakdownBody,
   BackfillFilledDateBody,
   RetryIncompleteDepositsBody,
-  SubmitReindexReferralAddressJobBody,
 } from "./entry-point/http/dto";
 import { Deposit } from "../deposit/model/deposit.entity";
 
@@ -257,44 +255,6 @@ export class ScraperService {
       await this.scraperQueuesService.publishMessage<BlockNumberQueueMessage>(ScraperQueue.BlockNumber, {
         depositId: deposit.id,
       });
-    }
-  }
-
-  public async reindexReferralAddress(data: SubmitReindexReferralAddressJobBody) {
-    const { fromDate, toDate } = data;
-    let page = 0;
-    const limit = 1000;
-    while (true) {
-      // Make paginated SQL queries to get all deposits without a referral address and made after the processed deposit
-      const deposits = await this.depositRepository
-        .createQueryBuilder("d")
-        .where("d.depositDate >= :fromDate", { fromDate })
-        .andWhere("d.depositDate <= :toDate", { toDate })
-        .orderBy("d.depositDate", "ASC")
-        .take(limit)
-        .skip(page * limit)
-        .getMany();
-
-      const messages: DepositReferralQueueMessage[] = deposits.map((d) => ({
-        depositId: d.id,
-      }));
-      this.logger.debug(
-        `publish ${deposits.length} deposits from ${deposits[0].depositDate} to ${
-          deposits[deposits.length - 1]
-        } to DepositReferralQueue`,
-      );
-      await this.scraperQueuesService.publishMessagesBulk<DepositReferralQueueMessage>(
-        ScraperQueue.DepositReferral,
-        messages,
-      );
-
-      // if the length of the returned deposits is lower than the limit, we processed all depositor's deposits,
-      // else go to the next page
-      if (deposits.length < limit) {
-        break;
-      } else {
-        page = page + 1;
-      }
     }
   }
 

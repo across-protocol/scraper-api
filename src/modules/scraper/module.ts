@@ -15,7 +15,6 @@ import { BlocksEventsConsumer } from "./adapter/messaging/BlocksEventsConsumer";
 import { MerkleDistributorBlocksEventsConsumer } from "./adapter/messaging/MerkleDistributorBlocksEventsConsumer";
 import { MerkleDistributorBlocksEventsConsumerV2 } from "./adapter/messaging/MerkleDistributorBlocksEventsConsumerV2";
 import { DepositFilledDateConsumer } from "./adapter/messaging/DepositFilledDateConsumer";
-import { DepositReferralConsumer } from "./adapter/messaging/DepositReferralConsumer";
 import { FillEventsConsumer } from "./adapter/messaging/FillEventsConsumer";
 import { FillEventsConsumer2 } from "./adapter/messaging/FillEventsConsumer2";
 import { FillEventsV3Consumer } from "./adapter/messaging/FillEventsV3Consumer";
@@ -86,7 +85,6 @@ export class ScraperModule {
       SpeedUpEventsV3Consumer,
       BlockNumberConsumer,
       TokenDetailsConsumer,
-      DepositReferralConsumer,
       TokenPriceConsumer,
       DepositFilledDateConsumer,
       DepositAcxPriceConsumer,
@@ -148,9 +146,6 @@ export class ScraperModule {
         }),
         BullModule.registerQueue({
           name: ScraperQueue.TokenPrice,
-        }),
-        BullModule.registerQueue({
-          name: ScraperQueue.DepositReferral,
         }),
         BullModule.registerQueue({
           name: ScraperQueue.DepositAcxPrice,

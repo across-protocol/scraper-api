@@ -8,7 +8,6 @@ import {
   BlocksEventsQueueMessage,
   MerkleDistributorBlocksEventsQueueMessage,
   DepositFilledDateQueueMessage,
-  DepositReferralQueueMessage,
   ScraperQueue,
   TokenPriceQueueMessage,
   TokenDetailsQueueMessage,
@@ -21,7 +20,6 @@ import {
 import { ScraperService } from "../../service";
 import { ScraperQueuesService } from "../../service/ScraperQueuesService";
 import {
-  SubmitReferralAddressJobBody,
   ProcessBlocksBody,
   ProcessPricesBody,
   SubmitDepositFilledDateBody,
@@ -30,7 +28,6 @@ import {
   SubmitSuggestedFeesBody,
   RetryFailedJobsBody,
   RetryIncompleteDepositsBody,
-  SubmitReindexReferralAddressJobBody,
   SubmitFeeBreakdownBody,
   OpRebateRewardBody,
   BackfillFeeBreakdownBody,
@@ -130,30 +127,6 @@ export class ScraperController {
         depositId,
       });
     }
-  }
-
-  @Post("scraper/referral-address")
-  @Roles(Role.Admin)
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @ApiBearerAuth()
-  @ApiTags("scraper")
-  async submitReferralAddressJob(@Body() body: SubmitReferralAddressJobBody) {
-    const { fromDepositId, toDepositId } = body;
-
-    for (let depositId = fromDepositId; depositId <= toDepositId; depositId++) {
-      await this.scraperQueuesService.publishMessage<DepositReferralQueueMessage>(ScraperQueue.DepositReferral, {
-        depositId,
-      });
-    }
-  }
-
-  @Post("scraper/referral-address-reindex")
-  @Roles(Role.Admin)
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @ApiBearerAuth()
-  @ApiTags("scraper")
-  async submitReindexReferralAddressJob(@Body() body: SubmitReindexReferralAddressJobBody) {
-    await this.scraperService.reindexReferralAddress(body);
   }
 
   @Post("scraper/deposit-filled-date")
