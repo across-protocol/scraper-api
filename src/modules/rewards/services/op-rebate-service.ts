@@ -18,7 +18,7 @@ import { WindowAlreadySetException } from "./exceptions";
 import { ReferralRewardsWindowJobResult } from "../model/RewardsWindowJobResult.entity";
 
 const OP_REBATE_RATE = 0.95;
-
+const ELIGIBLE_OP_REWARDS_CHAIN_IDS = [ChainIds.base, ChainIds.mode, ChainIds.optimism];
 @Injectable()
 export class OpRebateService {
   private logger = new Logger(OpRebateService.name);
@@ -123,10 +123,11 @@ export class OpRebateService {
 
     const deposit = await this.depositRepository.findOne({
       where: { id: depositPrimaryKey },
+      select: ["id", "status", "destinationChainId", "sourceChainId", "depositDate", "depositTxHash", "feeBreakdown"],
     });
 
     if (!deposit || deposit.status === "pending") return;
-    if (deposit.destinationChainId !== ChainIds.optimism) return;
+    if (!this.isDepositEligibleForOpRewards(deposit)) return;
 
     this.assertDepositKeys(deposit, ["depositDate", "feeBreakdown"]);
 
@@ -243,6 +244,10 @@ export class OpRebateService {
     }
 
     return { totalRewardsAmount: totalRewardsAmount.toFixed(), recipients };
+  }
+
+  public async isDepositEligibleForOpRewards(deposit: Pick<Deposit, "destinationChainId">) {
+    return ELIGIBLE_OP_REWARDS_CHAIN_IDS.includes(deposit.destinationChainId);
   }
 
   /**
