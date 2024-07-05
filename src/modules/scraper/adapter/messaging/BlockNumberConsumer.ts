@@ -6,7 +6,6 @@ import { Repository } from "typeorm";
 import { EthProvidersService } from "../../../web3/services/EthProvidersService";
 import {
   BlockNumberQueueMessage,
-  DepositReferralQueueMessage,
   ScraperQueue,
   TokenDetailsQueueMessage,
   SuggestedFeesQueueMessage,
@@ -32,9 +31,6 @@ export class BlockNumberConsumer {
     const block = await this.providers.getCachedBlock(deposit.sourceChainId, deposit.blockNumber);
     await this.depositRepository.update({ id: deposit.id }, { depositDate: block.date });
     await this.scraperQueuesService.publishMessage<TokenDetailsQueueMessage>(ScraperQueue.TokenDetails, {
-      depositId: deposit.id,
-    });
-    await this.scraperQueuesService.publishMessage<DepositReferralQueueMessage>(ScraperQueue.DepositReferral, {
       depositId: deposit.id,
     });
     await this.scraperQueuesService.publishMessage<SuggestedFeesQueueMessage>(ScraperQueue.SuggestedFees, {

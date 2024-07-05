@@ -26,26 +26,6 @@ export class ProcessPricesBody {
   toDepositId: number;
 }
 
-export class SubmitReferralAddressJobBody {
-  @IsInt()
-  @ApiProperty({ example: 1 })
-  fromDepositId: number;
-
-  @IsInt()
-  @ApiProperty({ example: 2 })
-  toDepositId: number;
-}
-
-export class SubmitReindexReferralAddressJobBody {
-  @IsDateString()
-  @ApiProperty({ example: "2022-11-08T11:00:00.000Z", required: true })
-  fromDate: string;
-
-  @IsDateString()
-  @ApiProperty({ example: "2022-11-08T11:00:00.000Z", required: true })
-  toDate: string;
-}
-
 export class SubmitDepositFilledDateBody {
   @IsInt()
   @ApiProperty({ example: 1 })
