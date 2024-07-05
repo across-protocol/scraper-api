@@ -20,14 +20,11 @@ export class OpRebateRewardConsumer {
   @Process()
   private async process(job: Job<OpRebateRewardMessage>) {
     const { depositPrimaryKey } = job.data;
-
-    const deposit = await this.depositRepository.findOne({ where: { id: depositPrimaryKey } });
-
-    await this.opRebateService.createOpRebatesForDeposit(deposit.id);
+    await this.opRebateService.createOpRebatesForDeposit(depositPrimaryKey);
   }
 
   @OnQueueFailed()
   private onQueueFailed(job: Job, error: Error) {
-    this.logger.error(`${ScraperQueue.OpRebateReward} ${JSON.stringify(job.data)} failed: ${error}`);
+    this.logger.error(`${JSON.stringify(job.data)} failed: ${error}`);
   }
 }
