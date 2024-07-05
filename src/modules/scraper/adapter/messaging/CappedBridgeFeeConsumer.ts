@@ -30,6 +30,8 @@ export class CappedBridgeFeeConsumer {
       relations: ["token", "outputToken", "price", "outputTokenPrice"],
     });
     if (!deposit) return;
+    if (deposit.status !== "filled") return;
+
     const version: AcrossContractsVersion = deposit.outputTokenAddress
       ? AcrossContractsVersion.V3
       : AcrossContractsVersion.V2_5;
