@@ -8,7 +8,6 @@ export enum ScraperQueue {
   BlockNumber = "BlockNumber",
   TokenDetails = "TokenDetails",
   DepositReferral = "DepositReferral",
-  RectifyStickyReferral = "RectifyStickyReferral",
   TokenPrice = "TokenPrice",
   DepositFilledDate = "DepositFilledDate",
   MerkleDistributorBlocksEvents = "MerkleDistributorBlocksEvents",
@@ -105,11 +104,6 @@ export type TokenDetailsQueueMessage = {
 };
 
 export type DepositReferralQueueMessage = {
-  depositId: number;
-  rectifyStickyReferralAddress: boolean;
-};
-
-export type RectifyStickyReferralQueueMessage = {
   depositId: number;
 };
 

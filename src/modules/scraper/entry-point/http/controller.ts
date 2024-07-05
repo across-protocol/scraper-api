@@ -143,7 +143,6 @@ export class ScraperController {
     for (let depositId = fromDepositId; depositId <= toDepositId; depositId++) {
       await this.scraperQueuesService.publishMessage<DepositReferralQueueMessage>(ScraperQueue.DepositReferral, {
         depositId,
-        rectifyStickyReferralAddress: true,
       });
     }
   }

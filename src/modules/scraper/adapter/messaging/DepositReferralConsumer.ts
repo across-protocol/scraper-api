@@ -4,7 +4,7 @@ import { Job } from "bull";
 import { Repository } from "typeorm";
 import { InjectRepository } from "@nestjs/typeorm";
 
-import { DepositReferralQueueMessage, RectifyStickyReferralQueueMessage, ScraperQueue } from ".";
+import { DepositReferralQueueMessage, ScraperQueue } from ".";
 import { ReferralService } from "../../../referral/services/service";
 import { Deposit } from "../../../deposit/model/deposit.entity";
 import { EthProvidersService } from "../../../web3/services/EthProvidersService";
@@ -23,7 +23,7 @@ export class DepositReferralConsumer {
 
   @Process({ concurrency: 10 })
   private async process(job: Job<DepositReferralQueueMessage>) {
-    const { depositId, rectifyStickyReferralAddress } = job.data;
+    const { depositId } = job.data;
     const deposit = await this.depositRepository.findOne({ where: { id: depositId } });
 
     if (!deposit) return;
@@ -38,20 +38,11 @@ export class DepositReferralConsumer {
 
     if (!transaction) throw new Error("Transaction not found");
 
-    const { referralAddress } =
-      await this.referralService.extractReferralAddressOrComputeStickyReferralAddresses({
-        blockTimestamp,
-        deposit,
-        transactionData: transaction.data,
-      });
-    if (rectifyStickyReferralAddress && referralAddress) {
-      await this.scraperQueuesService.publishMessage<RectifyStickyReferralQueueMessage>(
-        ScraperQueue.RectifyStickyReferral,
-        {
-          depositId: deposit.id,
-        },
-      );
-    }
+    await this.referralService.extractReferralAddressOrComputeStickyReferralAddresses({
+      blockTimestamp,
+      deposit,
+      transactionData: transaction.data,
+    });
   }
 
   @OnQueueFailed()

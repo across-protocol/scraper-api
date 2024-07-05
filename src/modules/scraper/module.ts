@@ -40,7 +40,6 @@ import { GasFeesService } from "./adapter/gas-fees/gas-fees-service";
 import { ModuleOptions } from "../../dynamic-module";
 import { DepositModule } from "../deposit/module";
 import { AirdropModule } from "../airdrop/module";
-import { RectifyStickyReferralConsumer } from "./adapter/messaging/RectifyStickyReferralConsumer";
 import { OpRebateRewardConsumer } from "./adapter/messaging/OpRebateRewardConsumer";
 import { ArbRebateRewardConsumer } from "./adapter/messaging/ArbRebateRewardConsumer";
 import { OpRebateService } from "../rewards/services/op-rebate-service";
@@ -93,7 +92,6 @@ export class ScraperModule {
       DepositAcxPriceConsumer,
       SuggestedFeesConsumer,
       TrackFillEventConsumer,
-      RectifyStickyReferralConsumer,
       FeeBreakdownConsumer,
       OpRebateRewardConsumer,
       ArbRebateRewardConsumer,
@@ -210,9 +208,6 @@ export class ScraperModule {
         }),
         BullModule.registerQueue({
           name: ScraperQueue.TrackFillEvent,
-        }),
-        BullModule.registerQueue({
-          name: ScraperQueue.RectifyStickyReferral,
         }),
         BullModule.registerQueue({
           name: ScraperQueue.FeeBreakdown,
