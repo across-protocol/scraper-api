@@ -246,7 +246,7 @@ export class OpRebateService {
     return { totalRewardsAmount: totalRewardsAmount.toFixed(), recipients };
   }
 
-  public async isDepositEligibleForOpRewards(deposit: Pick<Deposit, "destinationChainId">) {
+  public isDepositEligibleForOpRewards(deposit: Pick<Deposit, "destinationChainId">) {
     return ELIGIBLE_OP_REWARDS_CHAIN_IDS.includes(deposit.destinationChainId);
   }
 

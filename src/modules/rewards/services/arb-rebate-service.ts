@@ -172,7 +172,7 @@ export class ArbRebateService {
       .execute();
   }
 
-  public async isDepositEligibleForArbRewards(deposit: Pick<Deposit, "destinationChainId">) {
+  public isDepositEligibleForArbRewards(deposit: Pick<Deposit, "destinationChainId">) {
     return ELIGIBLE_ARB_REWARDS_CHAIN_IDS.includes(deposit.destinationChainId);
   }
 
