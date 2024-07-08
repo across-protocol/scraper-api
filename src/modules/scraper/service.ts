@@ -213,6 +213,34 @@ export class ScraperService {
       return 3;
     }
 
+    if (chainId === ChainIds.polygon) {
+      return 15;
+    }
+
+    if (chainId === ChainIds.arbitrum) {
+      return 120;
+    }
+
+    if (chainId === ChainIds.zkSyncMainnet) {
+      return 30;
+    }
+
+    if (chainId === ChainIds.linea) {
+      return 15;
+    }
+
+    if (chainId === ChainIds.mode) {
+      return 15;
+    }
+
+    if (chainId === ChainIds.lisk) {
+      return 15;
+    }
+
+    if (chainId === ChainIds.optimism) {
+      return 15;
+    }
+
     return 10;
   }
 
