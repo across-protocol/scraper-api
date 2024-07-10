@@ -14,6 +14,7 @@ export type ReferralRewardsWindowJobConfig = {
 export enum RewardsType {
   ReferralRewards = "referral-rewards",
   OpRewards = "op-rewards",
+  ArbRewards = "arb-rewards",
 }
 /**
  * @description This class represents a job for creating referral rewards windows

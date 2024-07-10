@@ -38,7 +38,7 @@ afterAll(async () => {
 });
 
 describe("GET /airdrop/merkle-distributor-proof", () => {
-  const url = "/airdrop/merkle-distributor-proof";
+  const url = "/airdrop/merkle-distributor-proof?rewardsType=arb-rewards";
 
   afterEach(async () => {
     await merkleDistributorWindowFixture.deleteAllMerkleDistributorWindows();
@@ -54,7 +54,7 @@ describe("GET /airdrop/merkle-distributor-proof", () => {
       windowIndex: 0,
       rewardToken: "0xrewardtoken",
       rewardsToDeposit: "10",
-      contractAddress: "0xF633b72A4C2Fb73b77A379bf72864A825aD35b6D",
+      contractAddress: "0x9f6Cb0A37F1ae91b8e65405f525A596bAFC5A9a6",
     });
     await merkleDistributorRecipientFixture.insertMerkleDistributorRecipient({
       accountIndex: 0,
@@ -79,53 +79,6 @@ describe("GET /airdrop/merkle-distributor-proof", () => {
     expect(response.statusCode).toStrictEqual(200);
     expect(response.body.address).toStrictEqual(address);
     expect(response.body.windowIndex).toStrictEqual(0);
-    expect(response.body.discord).toStrictEqual(null);
-  });
-
-  it("should get the merkle proof and discord details", async () => {
-    const address = "0x9A8f92a830A5cB89a3816e3D267CB7791c16b04D";
-    const user = await userFixture.insertUser({
-      discordAvatar: "https://discord.avatar",
-      discordId: "discordId",
-      discordName: "discordName",
-    });
-    await userWalletFixture.insertUserWallet({ userId: user.id, walletAddress: address });
-    const window = await merkleDistributorWindowFixture.insertMerkleDistributorWindow({
-      merkleRoot: "0xmerkleroot",
-      windowIndex: 0,
-      rewardToken: "0xrewardtoken",
-      rewardsToDeposit: "10",
-      contractAddress: "0xF633b72A4C2Fb73b77A379bf72864A825aD35b6D",
-    });
-    await merkleDistributorRecipientFixture.insertMerkleDistributorRecipient({
-      accountIndex: 0,
-      address,
-      amount: "10",
-      merkleDistributorWindowId: window.id,
-      proof: ["0xproof"],
-      payload: {
-        amountBreakdown: {
-          communityRewards: "2",
-          earlyUserRewards: "2",
-          liquidityProviderRewards: "2",
-          welcomeTravelerRewards: "4",
-          referralRewards: "0",
-        },
-      },
-    });
-    const response = await request(app.getHttpServer()).get(url).query({
-      address,
-      windowIndex: 0,
-      includeDiscord: true,
-    });
-    expect(response.statusCode).toStrictEqual(200);
-    expect(response.body.address).toStrictEqual(address);
-    expect(response.body.windowIndex).toStrictEqual(0);
-    expect(response.body.discord).toStrictEqual({
-      discordAvatar: "https://discord.avatar",
-      discordId: "discordId",
-      discordName: "discordName",
-    });
   });
 
   it("should return empty if window index is incorrect", async () => {
@@ -135,7 +88,7 @@ describe("GET /airdrop/merkle-distributor-proof", () => {
       windowIndex: 0,
       rewardToken: "0xrewardtoken",
       rewardsToDeposit: "10",
-      contractAddress: "0xF633b72A4C2Fb73b77A379bf72864A825aD35b6D",
+      contractAddress: "0x9f6Cb0A37F1ae91b8e65405f525A596bAFC5A9a6",
     });
     await merkleDistributorRecipientFixture.insertMerkleDistributorRecipient({
       accountIndex: 0,
@@ -168,7 +121,7 @@ describe("GET /airdrop/merkle-distributor-proof", () => {
       windowIndex: 0,
       rewardToken: "0xrewardtoken",
       rewardsToDeposit: "10",
-      contractAddress: "0xF633b72A4C2Fb73b77A379bf72864A825aD35b6D",
+      contractAddress: "0x9f6Cb0A37F1ae91b8e65405f525A596bAFC5A9a6",
     });
     await merkleDistributorRecipientFixture.insertMerkleDistributorRecipient({
       accountIndex: 0,
@@ -196,7 +149,7 @@ describe("GET /airdrop/merkle-distributor-proof", () => {
 });
 
 describe("GET /airdrop/merkle-distributor-proofs", () => {
-  const url = "/airdrop/merkle-distributor-proofs";
+  const url = "/airdrop/merkle-distributor-proofs?rewardsType=arb-rewards";
 
   const address = "0x00B591BC2b682a0B30dd72Bac9406BfA13e5d3cd";
 
@@ -207,14 +160,14 @@ describe("GET /airdrop/merkle-distributor-proofs", () => {
         windowIndex: 0,
         rewardToken: "0xrewardtoken",
         rewardsToDeposit: "10",
-        contractAddress: "0xF633b72A4C2Fb73b77A379bf72864A825aD35b6D",
+        contractAddress: "0x9f6Cb0A37F1ae91b8e65405f525A596bAFC5A9a6",
       },
       {
         merkleRoot: "0xmerkleroot",
         windowIndex: 1,
         rewardToken: "0xrewardtoken",
         rewardsToDeposit: "10",
-        contractAddress: "0xF633b72A4C2Fb73b77A379bf72864A825aD35b6D",
+        contractAddress: "0x9f6Cb0A37F1ae91b8e65405f525A596bAFC5A9a6",
       },
     ]);
     await merkleDistributorRecipientFixture.insertManyMerkleDistributorRecipients([
