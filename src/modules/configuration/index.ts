@@ -333,7 +333,7 @@ export const configValues = () => ({
           startBlockNumber: 5574280,
           abi: JSON.stringify(SpokePoolV3Abi),
           acrossVersion: AcrossContractsVersion.V3,
-          firstDepositId: 1,
+          firstDepositId: 1000000,
         },
       ],
       [ChainIds.blastSepolia]: [
@@ -342,7 +342,7 @@ export const configValues = () => ({
           startBlockNumber: 7634204,
           abi: JSON.stringify(SpokePoolV3Abi),
           acrossVersion: AcrossContractsVersion.V3,
-          firstDepositId: 1,
+          firstDepositId: 1000000,
         },
       ],
     },
