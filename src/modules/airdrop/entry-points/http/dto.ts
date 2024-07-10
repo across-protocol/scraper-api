@@ -60,7 +60,6 @@ export class EditWalletRewardsBody {
   welcomeTravellerRewards: string;
 }
 
-export const IncludeDiscordQueryValues = ["true", "false"] as const;
 export class GetMerkleDistributorProofQuery {
   @IsNumberString()
   windowIndex: number;
@@ -68,14 +67,9 @@ export class GetMerkleDistributorProofQuery {
   @IsEthereumAddress()
   address: string;
 
-  @IsEnum(IncludeDiscordQueryValues)
-  @IsOptional()
-  includeDiscord: typeof IncludeDiscordQueryValues[number];
-
   @IsEnum(RewardsType)
-  @IsOptional()
-  @ApiProperty({ example: "referrals", required: false, enum: RewardsType })
-  rewardsType?: RewardsType;
+  @ApiProperty({ example: RewardsType.ArbRewards, enum: RewardsType })
+  rewardsType: RewardsType;
 }
 
 export class GetMerkleDistributorProofsQuery {
@@ -90,8 +84,8 @@ export class GetMerkleDistributorProofsQuery {
 
   @IsEnum(RewardsType)
   @IsOptional()
-  @ApiProperty({ example: "referrals", required: false, enum: RewardsType })
-  rewardsType?: RewardsType;
+  @ApiProperty({ example: RewardsType.ArbRewards, enum: RewardsType })
+  rewardsType: RewardsType;
 }
 
 export class GetEtlMerkleDistributorRecipientsQuery {

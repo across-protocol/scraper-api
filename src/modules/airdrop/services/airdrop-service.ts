@@ -243,17 +243,15 @@ export class AirdropService {
   }
 
   public async getMerkleDistributorProof(query: GetMerkleDistributorProofQuery) {
-    const { address, windowIndex } = query;
-    const rewardsType = query.rewardsType || RewardsType.ReferralRewards;
+    const { address, windowIndex, rewardsType } = query;;
     let contractAddress: string | undefined = undefined;
 
-    if (rewardsType === RewardsType.ReferralRewards) {
-      contractAddress = this.appConfig.values.web3.merkleDistributor.address;
-    } else if (rewardsType === RewardsType.OpRewards) {
+    if (rewardsType === RewardsType.OpRewards) {
       contractAddress = this.appConfig.values.web3.merkleDistributorContracts.opRewards.address;
+    } else if (rewardsType === RewardsType.ArbRewards) {
+      contractAddress = this.appConfig.values.web3.merkleDistributorContracts.arbRewards.address;
     }
 
-    const includeDiscord = query.includeDiscord === "true";
     const checksumAddress = ethers.utils.getAddress(address);
     const cacheKey = getMerkleDistributorProofCacheKey(checksumAddress, windowIndex);
     let data = await this.cacheManager.get(cacheKey);
@@ -268,18 +266,7 @@ export class AirdropService {
       .andWhere("window.contractAddress = :contractAddress", { contractAddress });
 
     const recipient = await dbQuery.getOne();
-
     if (!recipient) return {};
-
-    let userWallet: UserWallet | undefined;
-
-    if (includeDiscord) {
-      userWallet = await this.dataSource
-        .createQueryBuilder(UserWallet, "userWallet")
-        .innerJoinAndSelect("userWallet.user", "user")
-        .where("userWallet.walletAddress = :address", { address })
-        .getOne();
-    }
 
     data = {
       accountIndex: recipient.accountIndex,
@@ -290,13 +277,6 @@ export class AirdropService {
       merkleRoot: recipient.merkleDistributorWindow.merkleRoot,
       windowIndex: recipient.merkleDistributorWindow.windowIndex,
       ipfsHash: recipient.merkleDistributorWindow.ipfsHash || null,
-      discord: userWallet
-        ? {
-            discordId: userWallet.user.discordId,
-            discordName: userWallet.user.discordName,
-            discordAvatar: userWallet.user.discordAvatar,
-          }
-        : null,
     };
 
     await this.cacheManager.set(cacheKey, data, this.appConfig.values.app.cacheDuration.distributorProofs);
@@ -306,15 +286,15 @@ export class AirdropService {
   public async getMerkleDistributorProofs(query: GetMerkleDistributorProofsQuery) {
     const { address } = query;
     const startWindowIndex = query.startWindowIndex || 0;
-    const rewardsType = query.rewardsType || RewardsType.ReferralRewards;
+    const rewardsType = query.rewardsType;
     const checksumAddress = ethers.utils.getAddress(address);
 
     let contractAddress: string | undefined = undefined;
 
-    if (rewardsType === RewardsType.ReferralRewards) {
-      contractAddress = this.appConfig.values.web3.merkleDistributor.address;
-    } else if (rewardsType === RewardsType.OpRewards) {
+    if (rewardsType === RewardsType.OpRewards) {
       contractAddress = this.appConfig.values.web3.merkleDistributorContracts.opRewards.address;
+    } else if (rewardsType === RewardsType.ArbRewards) {
+      contractAddress = this.appConfig.values.web3.merkleDistributorContracts.arbRewards.address;
     }
 
     const cacheKey = getMerkleDistributorProofsCacheKey(checksumAddress, startWindowIndex);
@@ -341,7 +321,6 @@ export class AirdropService {
       merkleRoot: recipient.merkleDistributorWindow.merkleRoot,
       windowIndex: recipient.merkleDistributorWindow.windowIndex,
       ipfsHash: recipient.merkleDistributorWindow.ipfsHash || null,
-      discord: null,
     }));
 
     if (this.appConfig.values.app.cacheDuration.distributorProofs) {
