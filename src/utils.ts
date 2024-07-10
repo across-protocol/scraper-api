@@ -96,6 +96,16 @@ export const chainIdToInfo = {
     chainId: ChainIds.liskSepolia,
     nativeSymbol: "eth",
   },
+  [ChainIds.blast]: {
+    name: "Blast",
+    chainId: ChainIds.blast,
+    nativeSymbol: "eth",
+  },
+  [ChainIds.blastSepolia]: {
+    name: "Blast Sepolia",
+    chainId: ChainIds.blastSepolia,
+    nativeSymbol: "eth",
+  },
 };
 
 export const wait = (seconds = 1) =>

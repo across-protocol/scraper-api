@@ -327,6 +327,24 @@ export const configValues = () => ({
           firstDepositId: 1,
         },
       ],
+      [ChainIds.blast]: [
+        {
+          address: "0x2D509190Ed0172ba588407D4c2df918F955Cc6E1",
+          startBlockNumber: 5574280,
+          abi: JSON.stringify(SpokePoolV3Abi),
+          acrossVersion: AcrossContractsVersion.V3,
+          firstDepositId: 1000000,
+        },
+      ],
+      [ChainIds.blastSepolia]: [
+        {
+          address: "0x5545092553Cf5Bf786e87a87192E902D50D8f022",
+          startBlockNumber: 7634204,
+          abi: JSON.stringify(SpokePoolV3Abi),
+          acrossVersion: AcrossContractsVersion.V3,
+          firstDepositId: 1000000,
+        },
+      ],
     },
     merkleDistributor: {
       address: process.env.MERKLE_DISTRIBUTOR_ADDRESS || "0xF633b72A4C2Fb73b77A379bf72864A825aD35b6D", // TODO: replace with mainnet
