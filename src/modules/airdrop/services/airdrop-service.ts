@@ -246,7 +246,9 @@ export class AirdropService {
     const { address, windowIndex, rewardsType } = query;;
     let contractAddress: string | undefined = undefined;
 
-    if (rewardsType === RewardsType.OpRewards) {
+    if (rewardsType === RewardsType.ReferralRewards) {
+      contractAddress = this.appConfig.values.web3.merkleDistributor.address;
+    } else if (rewardsType === RewardsType.OpRewards) {
       contractAddress = this.appConfig.values.web3.merkleDistributorContracts.opRewards.address;
     } else if (rewardsType === RewardsType.ArbRewards) {
       contractAddress = this.appConfig.values.web3.merkleDistributorContracts.arbRewards.address;
@@ -291,7 +293,9 @@ export class AirdropService {
 
     let contractAddress: string | undefined = undefined;
 
-    if (rewardsType === RewardsType.OpRewards) {
+    if (rewardsType === RewardsType.ReferralRewards) {
+      contractAddress = this.appConfig.values.web3.merkleDistributor.address;
+    } else if (rewardsType === RewardsType.OpRewards) {
       contractAddress = this.appConfig.values.web3.merkleDistributorContracts.opRewards.address;
     } else if (rewardsType === RewardsType.ArbRewards) {
       contractAddress = this.appConfig.values.web3.merkleDistributorContracts.arbRewards.address;
