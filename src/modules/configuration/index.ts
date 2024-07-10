@@ -75,6 +75,7 @@ export const configValues = () => ({
       59144: process.env.WEB3_NODE_URL_59144,
       34443: process.env.WEB3_NODE_URL_34443,
       919: process.env.WEB3_NODE_URL_919,
+      81457: process.env.WEB3_NODE_URL_81457,
     },
     spokePoolContracts: {
       [ChainIds.mainnet]: [
