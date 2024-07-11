@@ -29,10 +29,10 @@ import { MerkleDistributorRecipient } from "../model/merkle-distributor-recipien
 import { UserWallet } from "../../user/model/user-wallet.entity";
 import { RewardsType } from "../../rewards/model/RewardsWindowJob.entity";
 
-const getMerkleDistributorProofCacheKey = (address: string, windowIndex: number) =>
-  `distributor:proof:${address}:${windowIndex}`;
-const getMerkleDistributorProofsCacheKey = (address: string, startWindowIndex: number) =>
-  `distributor:proofs:${address}:${startWindowIndex}`;
+const getMerkleDistributorProofCacheKey = (address: string, windowIndex: number, rewardsType: string) =>
+  `distributor:proof:${rewardsType}:${address}:${windowIndex}`;
+const getMerkleDistributorProofsCacheKey = (address: string, startWindowIndex: number, rewardsType: string) =>
+  `distributor:proofs:${rewardsType}:${address}:${startWindowIndex}`;
 
 @Injectable()
 export class AirdropService {
@@ -255,7 +255,7 @@ export class AirdropService {
     }
 
     const checksumAddress = ethers.utils.getAddress(address);
-    const cacheKey = getMerkleDistributorProofCacheKey(checksumAddress, windowIndex);
+    const cacheKey = getMerkleDistributorProofCacheKey(checksumAddress, windowIndex, rewardsType);
     let data = await this.cacheManager.get(cacheKey);
 
     if (data) return data;
@@ -301,7 +301,7 @@ export class AirdropService {
       contractAddress = this.appConfig.values.web3.merkleDistributorContracts.arbRewards.address;
     }
 
-    const cacheKey = getMerkleDistributorProofsCacheKey(checksumAddress, startWindowIndex);
+    const cacheKey = getMerkleDistributorProofsCacheKey(checksumAddress, startWindowIndex, rewardsType);
     let data = await this.cacheManager.get(cacheKey);
 
     if (data) return data;
