@@ -43,6 +43,10 @@ export class TokenDetailsConsumer {
           outputTokenSymbol = "USDbC";
         } else if (sourceChainId === ChainIds.base && inputToken.symbol === "USDbC") {
           outputTokenSymbol = "USDC";
+        } else if (destinationChainId === ChainIds.blast && inputToken.symbol === "DAI") {
+          outputTokenSymbol = "USDB";
+        } else if (sourceChainId === ChainIds.blast && inputToken.symbol === "USDB") {
+          outputTokenSymbol = "DAI";
         } else {
           outputTokenSymbol = inputToken.symbol;
         }
