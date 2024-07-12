@@ -22,6 +22,7 @@ const symbolIdMap = {
   "usdc.e": "usd-coin-ethereum-bridged",
   arb: "arbitrum",
   usdb: "usdb",
+  lsk: "lisk",
 };
 
 @Injectable()
