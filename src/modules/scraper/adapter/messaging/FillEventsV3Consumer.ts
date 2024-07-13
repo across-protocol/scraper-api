@@ -2,7 +2,6 @@ import { OnQueueFailed, Process, Processor } from "@nestjs/bull";
 import { Logger } from "@nestjs/common";
 import { Job } from "bull";
 import {
-  CappedBridgeFeeQueueMessage,
   DepositFilledDateQueueMessage,
   FeeBreakdownQueueMessage,
   FillEventsV3QueueMessage,
@@ -36,9 +35,6 @@ export class FillEventsV3Consumer {
       depositId: deposit.id,
     });
     this.scraperQueuesService.publishMessage<FeeBreakdownQueueMessage>(ScraperQueue.FeeBreakdown, {
-      depositId: deposit.id,
-    });
-    this.scraperQueuesService.publishMessage<CappedBridgeFeeQueueMessage>(ScraperQueue.CappedBridgeFee, {
       depositId: deposit.id,
     });
   }
