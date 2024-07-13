@@ -40,7 +40,7 @@ export class AppModule {
       HealthModule,
       Web3Module,
       ReferralModule.forRoot(moduleOptions),
-      MarketPriceModule.forRoot(moduleOptions),
+      MarketPriceModule.forRoot(),
       ScheduleModule.forRoot(),
       DepositModule.forRoot(moduleOptions),
       AuthModule.forRoot(moduleOptions),

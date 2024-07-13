@@ -122,7 +122,7 @@ export class ScraperModule {
           FindMissedFillEventJob,
           Block,
         ]),
-        MarketPriceModule.forRoot(moduleOptions),
+        MarketPriceModule.forRoot(),
         HttpModule,
         DepositModule.forRoot(moduleOptions),
         AirdropModule.forRoot(moduleOptions),

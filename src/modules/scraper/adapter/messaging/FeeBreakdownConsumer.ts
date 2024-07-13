@@ -102,11 +102,7 @@ export class FeeBreakdownConsumer {
 
     // Bridge fee computation
     const wei = new BigNumber(10).pow(18);
-    const bridgeFeePct = this.depositService.computeBridgeFeePctForV3Deposit(deposit);
-    const bridgeFeeAmount = bridgeFeePct.multipliedBy(deposit.amount).dividedBy(wei);
-    const bridgeFeeUsd = bridgeFeeAmount
-      .multipliedBy(deposit.price.usd)
-      .dividedBy(new BigNumber(10).pow(deposit.token.decimals));
+    const { bridgeFeePct, bridgeFeeAmount, bridgeFeeUsd } = this.depositService.computeBridgeFeeForV3Deposit(deposit);
 
     // Gas fee computation
     const calcPctValues = makePctValuesCalculator(deposit.amount, deposit.price.usd, deposit.token.decimals);

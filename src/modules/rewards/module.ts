@@ -42,7 +42,7 @@ export class RewardModule {
         AppConfigModule,
         Web3Module,
         ReferralModule.forRoot(moduleOptions),
-        MarketPriceModule.forRoot(moduleOptions),
+        MarketPriceModule.forRoot(),
       ],
       exports: [RewardService, OpRebateService, ReferralService, ArbRebateService],
     };

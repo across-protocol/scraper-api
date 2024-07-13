@@ -46,7 +46,7 @@ export class CappedBridgeFeeConsumer {
 
   private async computeCappedBridgeFeePct(deposit: Deposit) {
     const wei = new BigNumber(10).pow(18);
-    const bridgeFeePct = this.depositService.computeBridgeFeePctForV3Deposit(deposit);
+    const {bridgeFeePct} = this.depositService.computeBridgeFeeForV3Deposit(deposit);
     const maxBridgeFeePct = wei.times(0.0012);
     const bridgeFeePctCapped = BigNumber.min(bridgeFeePct, maxBridgeFeePct);
     const positiveBridgeFeePct = BigNumber.max(bridgeFeePctCapped, 0);
