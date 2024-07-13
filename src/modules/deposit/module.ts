@@ -15,7 +15,7 @@ export class DepositModule {
   static forRoot(moduleOptions: ModuleOptions): DynamicModule {
     let module: DynamicModule = {
       module: DepositModule,
-      providers: [DepositService],
+      providers: [DepositService, DepositFixture],
       exports: [DepositService],
       controllers: [],
       imports: [TypeOrmModule.forFeature([Deposit, OpReward]), AppConfigModule, RewardModule.forRoot(moduleOptions)],
@@ -25,13 +25,6 @@ export class DepositModule {
       module = {
         ...module,
         controllers: [...module.controllers, DepositController, EtlController],
-      };
-    }
-
-    if (moduleOptions.runModes.includes(RunMode.Test)) {
-      module = {
-        ...module,
-        providers: [...module.providers, DepositFixture],
       };
     }
 

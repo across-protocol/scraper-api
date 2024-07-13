@@ -348,22 +348,32 @@ export class DepositService {
     }));
   }
 
-  public computeBridgeFeePctForV3Deposit(deposit: Deposit) {
-    const wei = new BigNumber(10).pow(18);
+  public computeBridgeFeeForV3Deposit(deposit: Deposit) {
+    if (!deposit.token) throw new Error("[computeBridgeFeeForV3Deposit] Token not found");
+    if (!deposit.outputToken) throw new Error("[computeBridgeFeeForV3Deposit] Output token not found");
+    if (!deposit.price) throw new Error("[computeBridgeFeeForV3Deposit] Price not found");
+    if (!deposit.outputTokenPrice) throw new Error("[computeBridgeFeeForV3Deposit] Output token price not found");
 
-    if (
-      deposit.token.symbol === deposit.outputToken.symbol ||
-      (deposit.token.symbol === "USDC" && deposit.outputToken.symbol === "USDbC") ||
-      (deposit.token.symbol === "USDbC" && deposit.outputToken.symbol === "USDC")
-    ) {
-      const fraction = new BigNumber(deposit.outputAmount).multipliedBy(wei).dividedBy(deposit.amount);
-      const feePct = wei.minus(fraction);
-      return feePct;
-    } else {
-      throw new Error(
-        `[computeBridgeFeePctForV3Deposit] Invalid token pair: ${deposit.token.symbol} -> ${deposit.outputToken.symbol}`,
-      );
-    }
+    const wei = new BigNumber(10).pow(18);
+    const inputAmountUsd = new BigNumber(deposit.amount)
+      .multipliedBy(deposit.price.usd)
+      .dividedBy(new BigNumber(10).pow(deposit.token.decimals));
+    const outputAmountUsd = new BigNumber(deposit.outputAmount)
+      .multipliedBy(deposit.outputTokenPrice.usd)
+      .dividedBy(new BigNumber(10).pow(deposit.outputToken.decimals));
+    const fraction = outputAmountUsd.multipliedBy(wei).dividedBy(inputAmountUsd);
+    const bridgeFeePct = wei.minus(fraction);
+    const bridgeFeeUsd = inputAmountUsd.minus(outputAmountUsd);
+    // bridge fee in input token giving the bridge fee usd and token price and decimals
+    const bridgeFeeAmount = bridgeFeeUsd
+      .multipliedBy(new BigNumber(10).pow(deposit.token.decimals))
+      .dividedBy(deposit.price.usd);
+
+    return {
+      bridgeFeePct,
+      bridgeFeeUsd,
+      bridgeFeeAmount,
+    };
   }
 
   public getFirstDepositIdFromSpokePoolConfig(chainId: number, throwIfNotFound = true) {
