@@ -11,7 +11,6 @@ import { ScraperQueuesService } from "./service/ScraperQueuesService";
 import {
   BlockNumberQueueMessage,
   BlocksEventsQueueMessage,
-  CappedBridgeFeeQueueMessage,
   DepositFilledDateQueueMessage,
   FeeBreakdownQueueMessage,
   MerkleDistributorBlocksEventsQueueMessage,
@@ -352,9 +351,6 @@ export class ScraperService {
     const deposits = await this.depositRepository.createQueryBuilder("d").where("d.bridgeFeePct < 0").getMany();
 
     for (const deposit of deposits) {
-      await this.scraperQueuesService.publishMessage<CappedBridgeFeeQueueMessage>(ScraperQueue.CappedBridgeFee, {
-        depositId: deposit.id,
-      });
       await this.scraperQueuesService.publishMessage<FeeBreakdownQueueMessage>(ScraperQueue.FeeBreakdown, {
         depositId: deposit.id,
       });
