@@ -182,6 +182,15 @@ export class ArbRebateService {
       this.appConfig.values.rewardPrograms.arbRebates.rewardToken.chainId,
       this.appConfig.values.rewardPrograms.arbRebates.rewardToken.address,
     );
+
+    if (new BigNumber(bridgeFeeUsd).lte(0)) {
+      return {
+        rewardToken,
+        rewardsUsd: "0",
+        rewardsAmount: new BigNumber(0),
+      };
+    }
+
     const historicRewardTokenPrice = await this.marketPriceService.getCachedHistoricMarketPrice(
       DateTime.fromJSDate(deposit.depositDate).minus({ days: 1 }).toJSDate(),
       rewardToken.symbol.toLowerCase(),
