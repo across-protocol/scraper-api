@@ -257,11 +257,19 @@ export class OpRebateService {
   private async calcOpRebateRewards(deposit: Deposit) {
     // lp fee + relayer capital fee + relayer destination gas fee
     const bridgeFeeUsd = deposit.feeBreakdown.totalBridgeFeeUsd;
-
     const rewardToken = await this.ethProvidersService.getCachedToken(
       this.appConfig.values.rewardPrograms["op-rebates"].rewardToken.chainId,
       this.appConfig.values.rewardPrograms["op-rebates"].rewardToken.address,
     );
+    
+    if (new BigNumber(bridgeFeeUsd).lte(0)) {
+      return {
+        rewardToken,
+        rewardsUsd: "0",
+        rewardsAmount: new BigNumber(0),
+      };
+    }
+
     const historicRewardTokenPrice = await this.marketPriceService.getCachedHistoricMarketPrice(
       DateTime.fromJSDate(deposit.depositDate).minus({ days: 1 }).toJSDate(),
       rewardToken.symbol.toLowerCase(),
