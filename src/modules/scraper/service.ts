@@ -1,7 +1,7 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { EthProvidersService } from "../web3/services/EthProvidersService";
 import { InjectRepository } from "@nestjs/typeorm";
-import { Repository } from "typeorm";
+import { DataSource, Repository } from "typeorm";
 
 import { ChainIds } from "../web3/model/ChainId";
 import { AppConfig } from "../configuration/configuration.service";
@@ -41,6 +41,7 @@ export class ScraperService {
     @InjectRepository(MerkleDistributorProcessedBlock)
     private merkleDistributorProcessedBlockRepository: Repository<MerkleDistributorProcessedBlock>,
     private scraperQueuesService: ScraperQueuesService,
+    private dataSource: DataSource,
   ) {
     this.run();
   }
@@ -348,7 +349,14 @@ export class ScraperService {
   }
 
   public async fixBridgeFee() {
-    const deposits = await this.depositRepository.createQueryBuilder("d").where("d.bridgeFeePct < 0").getMany();
+    const deposits = await this.depositRepository.query(`
+      select d.id
+      from deposit d
+      inner join token it on d."tokenId" = it.id
+      inner join token ot on d."outputTokenId" = ot.id
+      where (d."sourceChainId" = 81457 and it.symbol = 'USDB' and ot.symbol = 'DAI')
+          or (d."destinationChainId" = 81457 and ot.symbol = 'USDB' and it.symbol = 'DAI');  
+    `) as Pick<Deposit, "id">[];
 
     for (const deposit of deposits) {
       await this.scraperQueuesService.publishMessage<FeeBreakdownQueueMessage>(ScraperQueue.FeeBreakdown, {
