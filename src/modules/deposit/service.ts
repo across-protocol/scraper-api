@@ -22,6 +22,7 @@ import {
 } from "./entry-point/http/dto";
 import { formatDeposit } from "./utils";
 import { RewardService } from "../rewards/services/reward-service";
+import { ChainIds } from "../web3/model/ChainId";
 
 export const DEPOSITS_STATS_CACHE_KEY = "deposits:stats";
 
@@ -354,12 +355,31 @@ export class DepositService {
     if (!deposit.price) throw new Error("[computeBridgeFeeForV3Deposit] Price not found");
     if (!deposit.outputTokenPrice) throw new Error("[computeBridgeFeeForV3Deposit] Output token price not found");
 
+    let inputTokenPrice = deposit.price.usd;
+    let outputTokenPrice = deposit.outputTokenPrice.usd;
+
+    if (
+      deposit.sourceChainId === ChainIds.blast &&
+      deposit.token.symbol === "USDB" &&
+      deposit.outputToken.symbol === "DAI"
+    ) {
+      inputTokenPrice = outputTokenPrice;
+    }
+
+    if (
+      deposit.destinationChainId === ChainIds.blast &&
+      deposit.outputToken.symbol === "USDB" &&
+      deposit.token.symbol === "DAI"
+    ) {
+      outputTokenPrice = inputTokenPrice;
+    }
+
     const wei = new BigNumber(10).pow(18);
     const inputAmountUsd = new BigNumber(deposit.amount)
-      .multipliedBy(deposit.price.usd)
+      .multipliedBy(inputTokenPrice)
       .dividedBy(new BigNumber(10).pow(deposit.token.decimals));
     const outputAmountUsd = new BigNumber(deposit.outputAmount)
-      .multipliedBy(deposit.outputTokenPrice.usd)
+      .multipliedBy(outputTokenPrice)
       .dividedBy(new BigNumber(10).pow(deposit.outputToken.decimals));
     const fraction = outputAmountUsd.multipliedBy(wei).dividedBy(inputAmountUsd);
     const bridgeFeePct = wei.minus(fraction);
@@ -367,7 +387,7 @@ export class DepositService {
     // bridge fee in input token giving the bridge fee usd and token price and decimals
     const bridgeFeeAmount = bridgeFeeUsd
       .multipliedBy(new BigNumber(10).pow(deposit.token.decimals))
-      .dividedBy(deposit.price.usd);
+      .dividedBy(inputTokenPrice);
 
     return {
       bridgeFeePct,
