@@ -54,7 +54,20 @@ export class TokenDetailsConsumer {
           where: { chainId: destinationChainId, symbol: outputTokenSymbol },
         });
       } else {
-        outputToken = await this.ethProvidersService.getCachedToken(destinationChainId, deposit.outputTokenAddress);
+        try {
+          outputToken = await this.ethProvidersService.getCachedToken(destinationChainId, deposit.outputTokenAddress);
+        } catch (error) {
+          // stop if output token doesn't exist
+          if (
+            error.code === "CALL_EXCEPTION" &&
+            ["name()", "symbol()", "decimals()"].includes(error.method) &&
+            error.data === "0x"
+          ) {
+            this.logger.log(`Output token ${destinationChainId} ${deposit.outputTokenAddress} doesn't exist for deposit ${depositId}`);
+            return;
+          }
+          throw error;
+        }
       }
     }
 
