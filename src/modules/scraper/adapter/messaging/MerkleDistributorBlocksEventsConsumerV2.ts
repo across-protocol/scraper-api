@@ -82,7 +82,7 @@ private async insertClaimEvents(chainId: number, events: Record<string, ClaimedE
   for (const address of Object.keys(events)) {
     const contractEvents = events[address];
     const claims = await Promise.all(
-      contractEvents.map((event) => this.fromClaimedEventToMerkleDistributorClaim(event, chainId, address))
+      contractEvents.map((event) => this.fromClaimedEventToMerkleDistributorClaim(event, chainId, address)),
     );
     const insertResult = await this.dataSource
       .createQueryBuilder()
