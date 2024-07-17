@@ -10,10 +10,12 @@ import { AppConfig } from "../../configuration/configuration.service";
 import { EthProvidersService } from "../../web3/services/EthProvidersService";
 import { ChainIds } from "../../web3/model/ChainId";
 import { MarketPriceService } from "../../market-price/services/service";
-import { assertValidAddress } from "../../../utils";
+import { assertValidAddress, splitArrayInChunks } from "../../../utils";
 
 import { ArbReward } from "../model/arb-reward.entity";
 import { GetRewardsQuery } from "../entrypoints/http/dto";
+import { WindowAlreadySetException } from "./exceptions";
+import { ReferralRewardsWindowJobResult } from "../model/RewardsWindowJobResult.entity";
 
 const ARB_REBATE_RATE = 0.95;
 const ELIGIBLE_ARB_REWARDS_CHAIN_IDS = [ChainIds.arbitrum];
@@ -170,6 +172,81 @@ export class ArbRebateService {
       })
       .orUpdate(["recipient", "depositDate", "metadata", "amount", "amountUsd", "rewardTokenId"], ["depositPrimaryKey"])
       .execute();
+  }
+
+  public setWindowForArbRewards(jobId: number, windowIndex: number, maxDepositDate: Date) {
+    return this.dataSource.transaction(async (entityManager) => {
+      const arbRewardsWithSameWindowIndex = await entityManager
+        .createQueryBuilder()
+        .select("r")
+        .from(ArbReward, "r")
+        .where("r.windowIndex = :windowIndex", { windowIndex })
+        .getOne();
+
+      if (arbRewardsWithSameWindowIndex) {
+        throw new WindowAlreadySetException();
+      }
+
+      await entityManager
+        .createQueryBuilder()
+        .update(ArbReward)
+        .set({ windowIndex })
+        .where("windowIndex IS NULL")
+        .andWhere("depositDate <= :maxDepositDate", { maxDepositDate })
+        .execute();
+      const rewards = await entityManager
+        .createQueryBuilder()
+        .select("r")
+        .from(ArbReward, "r")
+        .where("r.windowIndex = :windowIndex", { windowIndex })
+        .getMany();
+      const { recipients, totalRewardsAmount } = this.aggregateArbRewards(rewards);
+
+      for (const recipientsChunk of splitArrayInChunks(recipients, 100)) {
+        await entityManager
+          .createQueryBuilder()
+          .insert()
+          .into(ReferralRewardsWindowJobResult)
+          .values(
+            recipientsChunk.map((recipient) => ({
+              jobId,
+              windowIndex,
+              totalRewardsAmount,
+              address: recipient.account,
+              amount: recipient.amount,
+            })),
+          )
+          .execute();
+      }
+    });
+  }
+
+  public aggregateArbRewards(rewards: ArbReward[]) {
+    // Map an address to considered deposits for referral rewards
+    const recipientArbRewardsMap = rewards.reduce((acc, r) => {
+      acc[r.recipient] = [...(acc[r.recipient] || []), r];
+      return acc;
+    }, {} as Record<string, ArbReward[]>);
+
+    let totalRewardsAmount: BigNumber = new BigNumber(0);
+    const recipients: {
+      account: string;
+      amount: string;
+    }[] = [];
+
+    for (const [address, arbRewards] of Object.entries(recipientArbRewardsMap)) {
+      const rewardsAmount = arbRewards.reduce((sum, arbReward) => {
+        return sum.plus(arbReward.amount);
+      }, new BigNumber(0));
+
+      totalRewardsAmount = totalRewardsAmount.plus(rewardsAmount);
+      recipients.push({
+        account: address,
+        amount: rewardsAmount.toFixed(),
+      });
+    }
+
+    return { totalRewardsAmount: totalRewardsAmount.toFixed(), recipients };
   }
 
   public isDepositEligibleForArbRewards(deposit: Pick<Deposit, "destinationChainId">) {
