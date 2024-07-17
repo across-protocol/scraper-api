@@ -59,10 +59,13 @@ export class TokenDetailsConsumer {
         } catch (error) {
           // stop if output token doesn't exist
           if (
-            error.code === "CALL_EXCEPTION" &&
-            ["name()", "symbol()", "decimals()"].includes(error.method) &&
-            error.data === "0x"
+            error?.code === "CALL_EXCEPTION" &&
+            ["name()", "symbol()", "decimals()"].includes(error?.method)
           ) {
+            this.logger.log(`Output token ${destinationChainId} ${deposit.outputTokenAddress} doesn't exist for deposit ${depositId}`);
+            return;
+          }
+          if (error?.code === "CALL_EXCEPTION" && error?.reason?.includes("reverted without a reason")) {
             this.logger.log(`Output token ${destinationChainId} ${deposit.outputTokenAddress} doesn't exist for deposit ${depositId}`);
             return;
           }
