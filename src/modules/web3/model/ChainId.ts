@@ -28,6 +28,8 @@ export const ChainIds = {
   liskSepolia: 4202,
   blast: 81457,
   blastSepolia: 168587773,
+  scroll: 534352,
+  scrollSepolia: 534351,
 };
 
 export const ChainIdToName = Object.entries(ChainIds).reduce((idToName, entry) => {

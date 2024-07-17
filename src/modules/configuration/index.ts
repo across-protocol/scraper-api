@@ -77,6 +77,8 @@ export const configValues = () => ({
       919: process.env.WEB3_NODE_URL_919,
       81457: process.env.WEB3_NODE_URL_81457,
       1135: process.env.WEB3_NODE_URL_1135,
+      534352: process.env.WEB3_NODE_URL_534352,
+      534351: process.env.WEB3_NODE_URL_534351,
     },
     spokePoolContracts: {
       [ChainIds.mainnet]: [
@@ -342,6 +344,24 @@ export const configValues = () => ({
         {
           address: "0x5545092553Cf5Bf786e87a87192E902D50D8f022",
           startBlockNumber: 7634204,
+          abi: JSON.stringify(SpokePoolV3Abi),
+          acrossVersion: AcrossContractsVersion.V3,
+          firstDepositId: 1000000,
+        },
+      ],
+      [ChainIds.scroll]: [
+        {
+          address: "0x3baD7AD0728f9917d1Bf08af5782dCbD516cDd96",
+          startBlockNumber: 7489705,
+          abi: JSON.stringify(SpokePoolV3Abi),
+          acrossVersion: AcrossContractsVersion.V3,
+          firstDepositId: 1000000,
+        },
+      ],
+      [ChainIds.scrollSepolia]: [
+        {
+          address: "0x95B3A7A7344BBd7b1033275CA3Ce89494baA6A40",
+          startBlockNumber: 2680586,
           abi: JSON.stringify(SpokePoolV3Abi),
           acrossVersion: AcrossContractsVersion.V3,
           firstDepositId: 1000000,
