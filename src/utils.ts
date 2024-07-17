@@ -106,6 +106,16 @@ export const chainIdToInfo = {
     chainId: ChainIds.blastSepolia,
     nativeSymbol: "eth",
   },
+  [ChainIds.scroll]: {
+    name: "Scroll",
+    chainId: ChainIds.scroll,
+    nativeSymbol: "eth",
+  },
+  [ChainIds.scrollSepolia]: {
+    name: "Scroll Sepolia",
+    chainId: ChainIds.scrollSepolia,
+    nativeSymbol: "eth",
+  },
 };
 
 export const wait = (seconds = 1) =>
