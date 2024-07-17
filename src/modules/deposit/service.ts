@@ -85,21 +85,21 @@ export class DepositService {
       );
     }
 
-    if (!query.depositorOrRecipientAddress) {
-      queryBuilder = queryBuilder.andWhere(
-        `
-        CASE
-          WHEN d.status = 'pending' AND d.depositDate <= NOW() - INTERVAL '1 days'
-              THEN false
-          WHEN d.status = 'pending' AND d.depositRelayerFeePct * :multiplier < d.suggestedRelayerFeePct 
-              THEN false
-          ELSE true
-        END`,
-        {
-          multiplier: this.appConfig.values.suggestedFees.deviationBufferMultiplier,
-        },
-      );
-    }
+    // if (!query.depositorOrRecipientAddress) {
+    //   queryBuilder = queryBuilder.andWhere(
+    //     `
+    //     CASE
+    //       WHEN d.status = 'pending' AND d.depositDate <= NOW() - INTERVAL '1 days'
+    //           THEN false
+    //       WHEN d.status = 'pending' AND d.depositRelayerFeePct * :multiplier < d.suggestedRelayerFeePct 
+    //           THEN false
+    //       ELSE true
+    //     END`,
+    //     {
+    //       multiplier: this.appConfig.values.suggestedFees.deviationBufferMultiplier,
+    //     },
+    //   );
+    // }
 
     queryBuilder = queryBuilder.addOrderBy("d.status", "DESC");
     queryBuilder = queryBuilder.addOrderBy("d.depositDate", "DESC");
