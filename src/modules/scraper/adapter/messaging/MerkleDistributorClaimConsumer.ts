@@ -9,6 +9,7 @@ import { MerkleDistributorClaim } from "../../../airdrop/model/merkle-distributo
 import { AppConfig } from "../../../configuration/configuration.service";
 import { MerkleDistributorWindow } from "../../../airdrop/model/merkle-distributor-window.entity";
 import { OpReward } from "../../../rewards/model/op-reward.entity";
+import { ArbReward } from "../../../rewards/model/arb-reward.entity";
 
 @Processor(ScraperQueue.MerkleDistributorClaim)
 export class MerkleDistributorClaimConsumer {
@@ -21,6 +22,8 @@ export class MerkleDistributorClaimConsumer {
     private merkleDistributorWindowRepository: Repository<MerkleDistributorWindow>,
     @InjectRepository(OpReward)
     private opRewardRepository: Repository<OpReward>,
+    @InjectRepository(ArbReward)
+    private arbRewardRepository: Repository<ArbReward>,
     private appConfig: AppConfig,
   ) {}
 
@@ -39,24 +42,35 @@ export class MerkleDistributorClaimConsumer {
     const window = await this.merkleDistributorWindowRepository.findOne({
       where: { id: claim.merkleDistributorWindowId },
     });
+    const merkleDistributorContracts = this.appConfig.values.web3.merkleDistributorContracts;
 
-    if (window.contractAddress !== this.appConfig.values.web3.merkleDistributorContracts.opRewards.address) {
+    if (window.contractAddress === merkleDistributorContracts.opRewards.address) {
+      await this.opRewardRepository.update(
+        {
+          recipient: claim.account,
+          windowIndex: window.windowIndex,
+        },
+        {
+          isClaimed: true,
+        },
+      );
+    } else if (window.contractAddress === merkleDistributorContracts.arbRewards.address) {
+      await this.arbRewardRepository.update(
+        {
+          recipient: claim.account,
+          windowIndex: window.windowIndex,
+        },
+        {
+          isClaimed: true,
+        },
+      );
+    } else {
       throw new Error(`Unkown rewards type for window with id: ${window.id}`);
     }
-
-    await this.opRewardRepository.update(
-      {
-        recipient: claim.account,
-        windowIndex: window.windowIndex,
-      },
-      {
-        isClaimed: true,
-      },
-    );
   }
 
   @OnQueueFailed()
   private onQueueFailed(job: Job, error: Error) {
-    this.logger.error(`${ScraperQueue.MerkleDistributorClaim} ${JSON.stringify(job.data)} failed: ${error}`);
+    this.logger.error(`${JSON.stringify(job.data)} failed: ${error}`);
   }
 }
