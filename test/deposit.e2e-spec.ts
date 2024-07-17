@@ -479,7 +479,7 @@ describe("GET /deposits/tx-page", () => {
   it("200 without query params", async () => {
     const response = await request(app.getHttpServer()).get("/deposits/tx-page");
     expect(response.status).toBe(200);
-    expect(response.body.deposits).toHaveLength(2);
+    expect(response.body.deposits).toHaveLength(4);
   });
 
   it("200 for 'depositorOrRecipientAddress' query param", async () => {
