@@ -23,6 +23,9 @@ const symbolIdMap = {
   arb: "arbitrum",
   usdb: "usdb",
   lsk: "lisk",
+  sol: "solana",
+  aero: "aerodrome-finance",
+  pepe: "pepe",
 };
 
 @Injectable()
