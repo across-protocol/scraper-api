@@ -58,6 +58,7 @@ import { CheckMissedFillEventsCron } from "./service/CheckMissedFillEventsCron";
 import { FindMissedFillEventConsumer } from "./adapter/messaging/FindMissedFillEventConsumer";
 import { FindMissedFillEventJob } from "./model/FindMissedFillEventJob.entity";
 import { Block } from "../web3/model/block.entity";
+import { ArbReward } from "../rewards/model/arb-reward.entity";
 
 @Module({})
 export class ScraperModule {
@@ -112,6 +113,7 @@ export class ScraperModule {
           FilledRelayEv,
           RequestedSpeedUpDepositEv,
           OpReward,
+          ArbReward,
           QueueJobCount,
           MerkleDistributorClaim,
           MerkleDistributorWindow,
