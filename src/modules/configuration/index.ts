@@ -376,9 +376,13 @@ export const configValues = () => ({
     },
     merkleDistributorContracts: {
       opRewards: {
-        chainId: Number(process.env.OP_REWARDS_MERKLE_DISTRIBUTOR_CHAIN_ID),
-        address: process.env.OP_REWARDS_MERKLE_DISTRIBUTOR_ADDRESS,
-        blockNumber: Number(process.env.OP_REWARDS_MERKLE_DISTRIBUTOR_BLOCK_NUMBER),
+        chainId: process.env.OP_REWARDS_MERKLE_DISTRIBUTOR_CHAIN_ID 
+          ? Number(process.env.OP_REWARDS_MERKLE_DISTRIBUTOR_CHAIN_ID) 
+          : 10,
+        address: process.env.OP_REWARDS_MERKLE_DISTRIBUTOR_ADDRESS || "0xc8b31410340d57417bE62672f6B53dfB9de30aC2",
+        blockNumber: process.env.OP_REWARDS_MERKLE_DISTRIBUTOR_BLOCK_NUMBER 
+        ? Number(process.env.OP_REWARDS_MERKLE_DISTRIBUTOR_BLOCK_NUMBER) 
+        : 114652330,
       },
       arbRewards: {
         chainId: process.env.ARB_REWARDS_MERKLE_DISTRIBUTOR_CHAIN_ID
