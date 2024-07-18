@@ -110,7 +110,11 @@ export class FeeBreakdownConsumer {
       deposit.destinationChainId,
       fillTx.hash,
     );
-    const relayGasFeePct = new BigNumber(relayGasFeeUsd).dividedBy(bridgeFeeUsd).multipliedBy(bridgeFeePct);
+    const relayGasFeePct = bridgeFeeUsd.eq(0)
+      ? new BigNumber(0)
+      : new BigNumber(relayGasFeeUsd)
+          .dividedBy(bridgeFeeUsd)
+          .multipliedBy(bridgeFeePct);
     const { pctAmount: relayGasFeeAmount } = calcPctValues(relayGasFeePct.toFixed(0));
 
     // Swap fee computation
