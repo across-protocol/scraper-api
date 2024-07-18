@@ -265,6 +265,10 @@ export class RewardService {
       );
     } else if (typedRewardsType === RewardsType.OpRewards) {
       promise = this.opRebateService.setWindowForOpRewards(job.id, windowIndex, new Date(maxDepositDate));
+    } else if (typedRewardsType === RewardsType.ArbRewards) {
+      promise = this.arbRebateService.setWindowForArbRewards(job.id, windowIndex, new Date(maxDepositDate));
+    } else {
+      throw new Error(`Unknown rewards type: ${rewardsType}`);
     }
 
     promise
@@ -357,6 +361,8 @@ export class RewardService {
       metadataAmountBreakdownKeyName = "referralRewards";
     } else if (job.rewardsType === RewardsType.OpRewards) {
       metadataAmountBreakdownKeyName = "opRewards";
+    } else if (job.rewardsType === RewardsType.ArbRewards) {
+      metadataAmountBreakdownKeyName = "arbRewards";
     }
 
     const recipients = jobResults.map((result) => ({
@@ -381,6 +387,10 @@ export class RewardService {
       chainId = this.appConfig.values.web3.merkleDistributorContracts.opRewards.chainId;
       contractAddress = this.appConfig.values.web3.merkleDistributorContracts.opRewards.address;
       rewardToken = this.appConfig.values.rewardPrograms["op-rebates"].rewardToken.address;
+    } else if (job.rewardsType === RewardsType.ArbRewards) {
+      chainId = this.appConfig.values.web3.merkleDistributorContracts.arbRewards.chainId;
+      contractAddress = this.appConfig.values.web3.merkleDistributorContracts.arbRewards.address;
+      rewardToken = this.appConfig.values.rewardPrograms.arbRebates.rewardToken.address;
     }
 
     return {
