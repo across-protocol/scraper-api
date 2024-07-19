@@ -5,7 +5,7 @@ import BigNumber from "bignumber.js";
 import { ethers } from "ethers";
 import { DateTime } from "luxon";
 
-import { Deposit } from "../../deposit/model/deposit.entity";
+import { Deposit, PartialDeposit } from "../../deposit/model/deposit.entity";
 import { AppConfig } from "../../configuration/configuration.service";
 import { EthProvidersService } from "../../web3/services/EthProvidersService";
 import { ChainIds } from "../../web3/model/ChainId";
@@ -18,20 +18,18 @@ import { WindowAlreadySetException } from "./exceptions";
 import { ReferralRewardsWindowJobResult } from "../model/RewardsWindowJobResult.entity";
 
 const ARB_REBATE_RATE = 0.95;
+const REWARDS_PERCENTAGE_LIMIT = 0.0025; // 25 bps
 const ELIGIBLE_ARB_REWARDS_CHAIN_IDS = [ChainIds.arbitrum];
 
-type PartialDeposit = Pick<
-  Deposit,
-  "id" | "status" | "destinationChainId" | "depositDate" | "feeBreakdown" | "sourceChainId" | "depositTxHash"
->;
 const partialDepositKeys: (keyof Deposit)[] = [
   "id",
-  "status",
+  "amount",
+  "sourceChainId",
   "destinationChainId",
+  "status",
+  "depositTxHash",
   "depositDate",
   "feeBreakdown",
-  "sourceChainId",
-  "depositTxHash",
 ];
 
 @Injectable()
@@ -137,11 +135,12 @@ export class ArbRebateService {
     const deposit: PartialDeposit = await this.depositRepository.findOne({
       where: { id: depositPrimaryKey },
       select: partialDepositKeys,
+      relations: ["price", "token"],
     });
 
     if (!deposit || deposit.status === "pending") return;
     if (!this.isDepositEligibleForArbRewards(deposit)) return;
-    this.assertDepositKeys(deposit, ["depositDate", "feeBreakdown"]);
+    this.assertDepositKeys(deposit, ["depositDate", "feeBreakdown", "price", "token"]);
     if (!deposit.feeBreakdown.totalBridgeFeeUsd) {
       throw new Error(`Deposit with id ${depositPrimaryKey} is missing total bridge fee in USD`);
     }
@@ -254,13 +253,13 @@ export class ArbRebateService {
   }
 
   private async calcArbRebateRewards(deposit: PartialDeposit) {
-    const bridgeFeeUsd = deposit.feeBreakdown.totalBridgeFeeUsd;
+    const bridgeFeeUsd = new BigNumber(deposit.feeBreakdown.totalBridgeFeeUsd);
     const rewardToken = await this.ethProvidersService.getCachedToken(
       this.appConfig.values.rewardPrograms.arbRebates.rewardToken.chainId,
       this.appConfig.values.rewardPrograms.arbRebates.rewardToken.address,
     );
 
-    if (new BigNumber(bridgeFeeUsd).lte(0)) {
+    if (bridgeFeeUsd.lte(0)) {
       return {
         rewardToken,
         rewardsUsd: "0",
@@ -268,11 +267,17 @@ export class ArbRebateService {
       };
     }
 
+    const inputTokenPrice = deposit.price.usd;
     const historicRewardTokenPrice = await this.marketPriceService.getCachedHistoricMarketPrice(
       DateTime.fromJSDate(deposit.depositDate).minus({ days: 1 }).toJSDate(),
       rewardToken.symbol.toLowerCase(),
     );
-    const rewardsUsd = new BigNumber(bridgeFeeUsd).multipliedBy(ARB_REBATE_RATE).toFixed();
+
+    const inputAmountUsd = new BigNumber(deposit.amount)
+      .multipliedBy(inputTokenPrice)
+      .dividedBy(new BigNumber(10).pow(deposit.token.decimals));
+    const cappedFeeForRewardsUsd = inputAmountUsd.multipliedBy(REWARDS_PERCENTAGE_LIMIT);
+    const rewardsUsd = BigNumber.min(bridgeFeeUsd, cappedFeeForRewardsUsd).multipliedBy(ARB_REBATE_RATE).toFixed();
     const rewardsAmount = ethers.utils.parseEther(
       new BigNumber(rewardsUsd).dividedBy(historicRewardTokenPrice.usd).toFixed(18),
     );

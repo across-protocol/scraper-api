@@ -5,7 +5,7 @@ import BigNumber from "bignumber.js";
 import { ethers } from "ethers";
 import { DateTime } from "luxon";
 
-import { Deposit } from "../../deposit/model/deposit.entity";
+import { Deposit, PartialDeposit } from "../../deposit/model/deposit.entity";
 import { AppConfig } from "../../configuration/configuration.service";
 import { EthProvidersService } from "../../web3/services/EthProvidersService";
 import { ChainIds } from "../../web3/model/ChainId";
@@ -18,7 +18,20 @@ import { WindowAlreadySetException } from "./exceptions";
 import { ReferralRewardsWindowJobResult } from "../model/RewardsWindowJobResult.entity";
 
 const OP_REBATE_RATE = 0.95;
+const REWARDS_PERCENTAGE_LIMIT = 0.0025; // 25 bps
 const ELIGIBLE_OP_REWARDS_CHAIN_IDS = [ChainIds.base, ChainIds.mode, ChainIds.optimism];
+
+const partialDepositKeys: (keyof Deposit)[] = [
+  "id",
+  "amount",
+  "sourceChainId",
+  "destinationChainId",
+  "status",
+  "depositTxHash",
+  "depositDate",
+  "feeBreakdown",
+];
+
 @Injectable()
 export class OpRebateService {
   private logger = new Logger(OpRebateService.name);
@@ -121,15 +134,16 @@ export class OpRebateService {
       return;
     }
 
-    const deposit = await this.depositRepository.findOne({
+    const deposit: PartialDeposit = await this.depositRepository.findOne({
       where: { id: depositPrimaryKey },
-      select: ["id", "status", "destinationChainId", "sourceChainId", "depositDate", "depositTxHash", "feeBreakdown"],
+      select: partialDepositKeys,
+      relations: ["price", "token"],
     });
 
     if (!deposit || deposit.status === "pending") return;
     if (!this.isDepositEligibleForOpRewards(deposit)) return;
 
-    this.assertDepositKeys(deposit, ["depositDate", "feeBreakdown"]);
+    this.assertDepositKeys(deposit, ["depositDate", "feeBreakdown", "price", "token"]);
 
     if (!deposit.feeBreakdown.totalBridgeFeeUsd) {
       throw new Error(`Deposit with id ${depositPrimaryKey} is missing total bridge fee in USD`);
@@ -254,15 +268,15 @@ export class OpRebateService {
    * PRIVATE METHODS
    */
 
-  private async calcOpRebateRewards(deposit: Deposit) {
+  private async calcOpRebateRewards(deposit: PartialDeposit) {
     // lp fee + relayer capital fee + relayer destination gas fee
-    const bridgeFeeUsd = deposit.feeBreakdown.totalBridgeFeeUsd;
+    const bridgeFeeUsd = new BigNumber(deposit.feeBreakdown.totalBridgeFeeUsd);
     const rewardToken = await this.ethProvidersService.getCachedToken(
       this.appConfig.values.rewardPrograms["op-rebates"].rewardToken.chainId,
       this.appConfig.values.rewardPrograms["op-rebates"].rewardToken.address,
     );
-    
-    if (new BigNumber(bridgeFeeUsd).lte(0)) {
+
+    if (bridgeFeeUsd.lte(0)) {
       return {
         rewardToken,
         rewardsUsd: "0",
@@ -270,14 +284,19 @@ export class OpRebateService {
       };
     }
 
+    const inputTokenPrice = deposit.price.usd;
     const historicRewardTokenPrice = await this.marketPriceService.getCachedHistoricMarketPrice(
       DateTime.fromJSDate(deposit.depositDate).minus({ days: 1 }).toJSDate(),
       rewardToken.symbol.toLowerCase(),
     );
-    const rewardsUsd = new BigNumber(bridgeFeeUsd).multipliedBy(OP_REBATE_RATE).toFixed();
-    const positiveRewardsUsd = BigNumber.max(new BigNumber(0), rewardsUsd);
+
+    const inputAmountUsd = new BigNumber(deposit.amount)
+      .multipliedBy(inputTokenPrice)
+      .dividedBy(new BigNumber(10).pow(deposit.token.decimals));
+    const cappedFeeForRewardsUsd = inputAmountUsd.multipliedBy(REWARDS_PERCENTAGE_LIMIT);
+    const rewardsUsd = BigNumber.min(bridgeFeeUsd, cappedFeeForRewardsUsd).multipliedBy(OP_REBATE_RATE).toFixed();
     const rewardsAmount = ethers.utils.parseEther(
-      new BigNumber(positiveRewardsUsd).dividedBy(historicRewardTokenPrice.usd).toFixed(18),
+      new BigNumber(rewardsUsd).dividedBy(historicRewardTokenPrice.usd).toFixed(18),
     );
 
     return {
@@ -288,7 +307,7 @@ export class OpRebateService {
     };
   }
 
-  private isDepositTimeAfterStart(deposit: Deposit) {
+  private isDepositTimeAfterStart(deposit: PartialDeposit) {
     const start = this.appConfig.values.rewardPrograms["op-rebates"].startDate;
 
     // If no start time is set, then the program is active for any deposit
@@ -299,7 +318,7 @@ export class OpRebateService {
     return deposit.depositDate >= start;
   }
 
-  private isDepositTimeBeforeEnd(deposit: Deposit) {
+  private isDepositTimeBeforeEnd(deposit: PartialDeposit) {
     const end = this.appConfig.values.rewardPrograms["op-rebates"].endDate;
 
     // If no end time is set, then the program is active for any deposit
@@ -310,7 +329,7 @@ export class OpRebateService {
     return deposit.depositDate < end;
   }
 
-  private assertDepositKeys(deposit: Deposit, requiredKeys: string[]) {
+  private assertDepositKeys(deposit: PartialDeposit, requiredKeys: string[]) {
     for (const key of requiredKeys) {
       if (!deposit[key]) {
         throw new Error(`Deposit with id ${deposit.id} is missing '${key}'`);

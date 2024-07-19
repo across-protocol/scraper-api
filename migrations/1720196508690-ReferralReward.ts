@@ -1,7 +1,7 @@
 import { MigrationInterface, QueryRunner } from "typeorm";
 
 export class ReferralReward1720196508690 implements MigrationInterface {
-    name = 'ReferralReward1720196508690'
+    name = 'ReferralReward1720196508690';
 
     public async up(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`

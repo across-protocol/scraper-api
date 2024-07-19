@@ -35,7 +35,7 @@ export class MerkleDistributorBlocksEventsConsumerV2 {
     const claimEvents = await this.getClaimEvents(filteredDistributorContracts, from, to);
     this.logNumberOfEventsFound(claimEvents, from, to);
     const insertResults = await this.insertClaimEvents(chainId, claimEvents);
-    const messages = insertResults.map((claim) => ({claimId: claim.id}))    
+    const messages = insertResults.map((claim) => ({claimId: claim.id}));    
     this.scraperQueuesService.publishMessagesBulk<MerkleDistributorClaimQueueMessage>(
       ScraperQueue.MerkleDistributorClaim,
       messages,
@@ -69,7 +69,7 @@ export class MerkleDistributorBlocksEventsConsumerV2 {
       const events = await this.providers.getMerkleDistributorQuerier(
         contractConfig.chainId, 
         contractConfig.address,
-      ).getClaimedEvents(from, to) as ClaimedEvent[]
+      ).getClaimedEvents(from, to) as ClaimedEvent[];
       eventsDict[contractConfig.address] = events;
   }
 

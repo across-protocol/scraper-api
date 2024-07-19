@@ -74,6 +74,11 @@ export type FeeBreakdown = {
   swapFeeAmount?: string;
 };
 
+export type PartialDeposit = Pick<
+  Deposit,
+  "id" | "status" | "depositDate" | "amount" | "destinationChainId" | "sourceChainId" | "feeBreakdown" | "depositTxHash" | "price" | "token"
+>;
+
 @Entity()
 @Unique("UK_deposit_depositId_sourceChainId", ["depositId", "sourceChainId"])
 @Index("IX_deposit_depositorAddr", ["depositorAddr"])
