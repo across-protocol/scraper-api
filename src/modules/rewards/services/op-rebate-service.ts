@@ -270,13 +270,13 @@ export class OpRebateService {
 
   private async calcOpRebateRewards(deposit: PartialDeposit) {
     // lp fee + relayer capital fee + relayer destination gas fee
-    const bridgeFeeUsd = deposit.feeBreakdown.totalBridgeFeeUsd;
+    const bridgeFeeUsd = new BigNumber(deposit.feeBreakdown.totalBridgeFeeUsd);
     const rewardToken = await this.ethProvidersService.getCachedToken(
       this.appConfig.values.rewardPrograms["op-rebates"].rewardToken.chainId,
       this.appConfig.values.rewardPrograms["op-rebates"].rewardToken.address,
     );
 
-    if (new BigNumber(bridgeFeeUsd).lte(0)) {
+    if (bridgeFeeUsd.lte(0)) {
       return {
         rewardToken,
         rewardsUsd: "0",
@@ -293,16 +293,15 @@ export class OpRebateService {
     const inputAmountUsd = new BigNumber(deposit.amount)
       .multipliedBy(inputTokenPrice)
       .dividedBy(new BigNumber(10).pow(deposit.token.decimals));
-    const maxRewardsUsd = inputAmountUsd.multipliedBy(REWARDS_PERCENTAGE_LIMIT);
-    const rewardsUsd = new BigNumber(bridgeFeeUsd).multipliedBy(OP_REBATE_RATE);
-    const cappedRewardsUsd = BigNumber.min(maxRewardsUsd, rewardsUsd).toFixed();
+    const cappedFeeForRewardsUsd = inputAmountUsd.multipliedBy(REWARDS_PERCENTAGE_LIMIT);
+    const rewardsUsd = BigNumber.min(bridgeFeeUsd, cappedFeeForRewardsUsd).multipliedBy(OP_REBATE_RATE).toFixed();
     const rewardsAmount = ethers.utils.parseEther(
-      new BigNumber(cappedRewardsUsd).dividedBy(historicRewardTokenPrice.usd).toFixed(18),
+      new BigNumber(rewardsUsd).dividedBy(historicRewardTokenPrice.usd).toFixed(18),
     );
 
     return {
       rewardToken,
-      rewardsUsd: cappedRewardsUsd,
+      rewardsUsd,
       rewardsAmount,
       historicRewardTokenPrice,
     };
