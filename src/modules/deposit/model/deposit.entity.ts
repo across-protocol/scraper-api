@@ -76,7 +76,8 @@ export type FeeBreakdown = {
 
 export type PartialDeposit = Pick<
   Deposit,
-  "id" | "status" | "depositDate" | "amount" | "destinationChainId" | "sourceChainId" | "feeBreakdown" | "depositTxHash" | "price" | "token"
+  "id" | "amount" | "sourceChainId" | "destinationChainId" | "status" | "depositTxHash" | "depositDate" |
+  "feeBreakdown" | "token" | "price" | "outputToken" | "outputTokenPrice"
 >;
 
 @Entity()
