@@ -34,7 +34,6 @@ const partialDepositKeys: (keyof Deposit)[] = [
 
 const requiredDepositRelations: (keyof Deposit)[] = ["token", "price", "outputToken", "outputTokenPrice"];
 
-
 @Injectable()
 export class OpRebateService {
   private logger = new Logger(OpRebateService.name);
