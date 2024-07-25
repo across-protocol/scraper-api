@@ -34,6 +34,19 @@ export class TokenPriceConsumer {
     if (deposit.outputTokenAddress && (!deposit.outputTokenId || !deposit.outputToken))
       throw new Error(`Deposit has no output token`);
 
+    if (this.marketPriceService.doesTokenSupportPricingApi(deposit.token.symbol) === false){
+      this.logger.error(`Token ${deposit.token.symbol} not supported by CoinGecko`);
+      return;
+    }
+
+    if (
+      deposit.outputToken &&
+      this.marketPriceService.doesTokenSupportPricingApi(deposit.outputToken.symbol) === false
+    ) {
+      this.logger.error(`Token ${deposit.outputToken.symbol} not supported by CoinGecko`);
+      return;
+    }
+
     const previousDate = DateTime.fromISO(deposit.depositDate.toISOString()).minus({ days: 1 }).toJSDate();
     const price = await this.marketPriceService.getCachedHistoricMarketPrice(
       previousDate,

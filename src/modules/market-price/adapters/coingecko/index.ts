@@ -2,7 +2,7 @@ import { HttpService } from "@nestjs/axios";
 import { Injectable } from "@nestjs/common";
 import { CGHistoricPrice } from "./model";
 
-const symbolIdMap = {
+export const symbolIdMap = {
   eth: "ethereum",
   matic: "matic-network",
   wbtc: "wrapped-bitcoin",
@@ -23,10 +23,6 @@ const symbolIdMap = {
   arb: "arbitrum",
   usdb: "usdb",
   lsk: "lisk",
-  sol: "solana",
-  aero: "aerodrome-finance",
-  pepe: "pepe",
-  ens: "ethereum-name-service",
 };
 
 @Injectable()
