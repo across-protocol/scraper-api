@@ -26,6 +26,7 @@ const symbolIdMap = {
   sol: "solana",
   aero: "aerodrome-finance",
   pepe: "pepe",
+  ens: "ethereum-name-service",
 };
 
 @Injectable()
