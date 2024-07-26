@@ -20,6 +20,7 @@ import { AcrossContractsVersion } from "../../../web3/model/across-version";
 import { DepositService } from "../../../deposit/service";
 import { OpRebateService } from "../../../rewards/services/op-rebate-service";
 import { ArbRebateService } from "../../../rewards/services/arb-rebate-service";
+import { MarketPriceService } from "../../../market-price/services/service";
 
 @Processor(ScraperQueue.FeeBreakdown)
 export class FeeBreakdownConsumer {
@@ -32,6 +33,7 @@ export class FeeBreakdownConsumer {
     private scraperQueuesService: ScraperQueuesService,
     private opRebateService: OpRebateService,
     private arbRebateService: ArbRebateService,
+    private marketPriceService: MarketPriceService,
   ) {}
 
   @Process()
@@ -50,6 +52,19 @@ export class FeeBreakdownConsumer {
     if (!deposit.price) throw new Error("Price not populated");
     if (deposit.outputTokenAddress && !deposit.outputToken) throw new Error("Output token not populated");
     if (deposit.outputTokenAddress && !deposit.outputTokenPrice) throw new Error("Output token price not populated");
+
+    if (this.marketPriceService.isTokenSupportedByPricingApi(deposit.token.symbol) === false){
+      this.logger.error(`Token ${deposit.token.symbol} not supported by CoinGecko`);
+      return;
+    }
+
+    if (
+      deposit.outputToken && 
+      this.marketPriceService.isTokenSupportedByPricingApi(deposit.outputToken.symbol) === false
+    ){
+      this.logger.error(`Token ${deposit.outputToken.symbol} not supported by CoinGecko`);
+      return;
+    }
 
     const fillEventsVersion = this.getFillEventsVersion(deposit);
     if (!fillEventsVersion) throw new Error("Fill events version not found");

@@ -2,7 +2,7 @@ import { Injectable } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { DateTime } from "luxon";
 import { Repository } from "typeorm";
-import { CoinGeckoService } from "../adapters/coingecko";
+import { CoinGeckoService, symbolIdMap } from "../adapters/coingecko";
 import { HistoricMarketPrice } from "../model/historic-market-price.entity";
 
 @Injectable()
@@ -11,6 +11,13 @@ export class MarketPriceService {
     @InjectRepository(HistoricMarketPrice) private historicMarketPriceRepository: Repository<HistoricMarketPrice>,
     private coinGeckoService: CoinGeckoService,
   ) {}
+
+  /**
+   * Check if the token is supported by the CoinGecko API
+   */
+  public isTokenSupportedByPricingApi(symbol: string): boolean {
+    return !!symbolIdMap[symbol.toLowerCase()];
+  }
 
   public async getCachedHistoricMarketPrice(date: Date, symbol: string) {
     const formattedDate = DateTime.fromJSDate(date).toFormat("dd-LL-yyyy");
