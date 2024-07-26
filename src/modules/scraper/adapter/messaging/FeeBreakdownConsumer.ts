@@ -49,12 +49,12 @@ export class FeeBreakdownConsumer {
     if (deposit.fillTxs.length === 0) return;
 
     if (!deposit.token) throw new Error("Token not populated");
+    if (deposit.outputTokenAddress && !deposit.outputToken) throw new Error("Output token not populated");
+
     if (this.marketPriceService.isTokenSupportedByPricingApi(deposit.token.symbol) === false){
       this.logger.error(`Token ${deposit.token.symbol} not supported by CoinGecko`);
       return;
     }
-    if (!deposit.price) throw new Error("Price not populated");
-    if (deposit.outputTokenAddress && !deposit.outputToken) throw new Error("Output token not populated");
     if (
       deposit.outputToken && 
       this.marketPriceService.isTokenSupportedByPricingApi(deposit.outputToken.symbol) === false
@@ -62,6 +62,8 @@ export class FeeBreakdownConsumer {
       this.logger.error(`Token ${deposit.outputToken.symbol} not supported by CoinGecko`);
       return;
     }
+
+    if (!deposit.price) throw new Error("Price not populated");
     if (deposit.outputTokenAddress && !deposit.outputTokenPrice) throw new Error("Output token price not populated");
 
     const fillEventsVersion = this.getFillEventsVersion(deposit);
