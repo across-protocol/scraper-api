@@ -15,7 +15,7 @@ export class MarketPriceService {
   /**
    * Check if the token is supported by the CoinGecko API
    */
-  public doesTokenSupportPricingApi(symbol: string): boolean {
+  public isTokenSupportedByPricingApi(symbol: string): boolean {
     return !!symbolIdMap[symbol.toLowerCase()];
   }
 

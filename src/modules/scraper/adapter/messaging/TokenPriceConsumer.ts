@@ -34,14 +34,14 @@ export class TokenPriceConsumer {
     if (deposit.outputTokenAddress && (!deposit.outputTokenId || !deposit.outputToken))
       throw new Error(`Deposit has no output token`);
 
-    if (this.marketPriceService.doesTokenSupportPricingApi(deposit.token.symbol) === false){
+    if (this.marketPriceService.isTokenSupportedByPricingApi(deposit.token.symbol) === false){
       this.logger.error(`Token ${deposit.token.symbol} not supported by CoinGecko`);
       return;
     }
 
     if (
       deposit.outputToken &&
-      this.marketPriceService.doesTokenSupportPricingApi(deposit.outputToken.symbol) === false
+      this.marketPriceService.isTokenSupportedByPricingApi(deposit.outputToken.symbol) === false
     ) {
       this.logger.error(`Token ${deposit.outputToken.symbol} not supported by CoinGecko`);
       return;
