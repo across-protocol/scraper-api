@@ -107,4 +107,29 @@ export class ScraperQueuesService {
       this.logger.error(error);
     }
   }
+
+  public async removeFailedJobs(body: RetryFailedJobsBody) {
+    const q = this.queuesMap[body.queue];
+
+    if (!q) return;
+
+    try {
+      let failedJobs: Job[] = [];
+      if (body.count > 0) {
+        failedJobs = await q.getFailed(0, body.count);
+      } else {
+        failedJobs = await q.getFailed();
+      }
+      // from whatever reason, the list can contain null values :|
+      failedJobs = failedJobs.filter((job) => !!job);
+
+      for (const failedJob of failedJobs) {
+        await failedJob.remove().catch((error) => {
+          this.logger.error(error);
+        });
+      }
+    } catch (error) {
+      this.logger.error(error);
+    }
+  }
 }

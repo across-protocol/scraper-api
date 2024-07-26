@@ -228,6 +228,15 @@ export class ScraperController {
     await this.scraperQueuesService.retryFailedJobs(body);
   }
 
+  @Post("scraper/failed-jobs/remove")
+  @ApiTags("scraper")
+  @Roles(Role.Admin)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @ApiBearerAuth()
+  async removeFailedJobs(@Body() body: RetryFailedJobsBody) {
+    await this.scraperQueuesService.removeFailedJobs(body);
+  }
+
   @Post("scraper/incomplete-deposits/retry")
   @ApiTags("scraper")
   @Roles(Role.Admin)
