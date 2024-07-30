@@ -32,6 +32,8 @@ const partialDepositKeys: (keyof Deposit)[] = [
   "feeBreakdown",
 ];
 
+const requiredDepositRelations: (keyof Deposit)[] = ["token", "price", "outputToken", "outputTokenPrice"];
+
 @Injectable()
 export class ArbRebateService {
   private logger = new Logger(ArbRebateService.name);
@@ -135,12 +137,12 @@ export class ArbRebateService {
     const deposit: PartialDeposit = await this.depositRepository.findOne({
       where: { id: depositPrimaryKey },
       select: partialDepositKeys,
-      relations: ["price", "token"],
+      relations: requiredDepositRelations,
     });
 
     if (!deposit || deposit.status === "pending") return;
     if (!this.isDepositEligibleForArbRewards(deposit)) return;
-    this.assertDepositKeys(deposit, ["depositDate", "feeBreakdown", "price", "token"]);
+    this.assertDepositKeys(deposit, [...partialDepositKeys, ...requiredDepositRelations]);
     if (!deposit.feeBreakdown.totalBridgeFeeUsd) {
       throw new Error(`Deposit with id ${depositPrimaryKey} is missing total bridge fee in USD`);
     }
@@ -267,7 +269,7 @@ export class ArbRebateService {
       };
     }
 
-    const inputTokenPrice = deposit.price.usd;
+    const inputTokenPrice = this.getInputTokenPrice(deposit);
     const historicRewardTokenPrice = await this.marketPriceService.getCachedHistoricMarketPrice(
       DateTime.fromJSDate(deposit.depositDate).minus({ days: 1 }).toJSDate(),
       rewardToken.symbol.toLowerCase(),
@@ -318,6 +320,17 @@ export class ArbRebateService {
         throw new Error(`Deposit with id ${deposit.id} is missing '${key}'`);
       }
     }
+  }
+
+  private getInputTokenPrice(deposit: PartialDeposit): string {
+    if (
+      deposit.sourceChainId === ChainIds.blast &&
+      deposit.token.symbol === "USDB" &&
+      deposit.outputToken.symbol === "DAI"
+    ) {
+      return deposit.outputTokenPrice.usd;
+    }
+    return deposit.price.usd;
   }
 
   private buildBaseQuery(qb: ReturnType<typeof this.arbRewardRepository.createQueryBuilder>, recipientAddress: string) {
