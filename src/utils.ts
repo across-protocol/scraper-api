@@ -117,7 +117,7 @@ export const chainIdToInfo = {
     nativeSymbol: "eth",
   },
   [ChainIds.redstone]: {
-    name: "REdstone",
+    name: "Redstone",
     chainId: ChainIds.redstone,
     nativeSymbol: "eth",
   },
