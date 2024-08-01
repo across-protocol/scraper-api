@@ -116,6 +116,11 @@ export const chainIdToInfo = {
     chainId: ChainIds.scrollSepolia,
     nativeSymbol: "eth",
   },
+  [ChainIds.redstone]: {
+    name: "REdstone",
+    chainId: ChainIds.redstone,
+    nativeSymbol: "eth",
+  }
 };
 
 export const wait = (seconds = 1) =>

@@ -79,6 +79,7 @@ export const configValues = () => ({
       1135: process.env.WEB3_NODE_URL_1135,
       534352: process.env.WEB3_NODE_URL_534352,
       534351: process.env.WEB3_NODE_URL_534351,
+      690: process.env.WEB3_NODE_URL_690,
     },
     spokePoolContracts: {
       [ChainIds.mainnet]: [
@@ -362,6 +363,15 @@ export const configValues = () => ({
         {
           address: "0x95B3A7A7344BBd7b1033275CA3Ce89494baA6A40",
           startBlockNumber: 2680586,
+          abi: JSON.stringify(SpokePoolV3Abi),
+          acrossVersion: AcrossContractsVersion.V3,
+          firstDepositId: 1000000,
+        },
+      ],
+      [ChainIds.redstone]: [
+        {
+          address: "0x28077B47Cd03326De7838926A63699849DD4fa87",
+          startBlockNumber: 5158526,
           abi: JSON.stringify(SpokePoolV3Abi),
           acrossVersion: AcrossContractsVersion.V3,
           firstDepositId: 1000000,
