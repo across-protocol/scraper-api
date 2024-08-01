@@ -120,7 +120,7 @@ export const chainIdToInfo = {
     name: "REdstone",
     chainId: ChainIds.redstone,
     nativeSymbol: "eth",
-  }
+  },
 };
 
 export const wait = (seconds = 1) =>
