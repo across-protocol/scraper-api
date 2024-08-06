@@ -50,7 +50,7 @@ jobs:
       - uses: ./.github/actions/setup
       - run: cp .env.sample .env.test
       - name: Start postgres and redis
-        run: docker-compose -f docker-compose.e2e.yml up -d postgres redis
+        run: docker compose -f docker-compose.e2e.yml up -d postgres redis
       - name: Run migrations
         run: yarn db:migration:run
       - name: Run e2e tests
