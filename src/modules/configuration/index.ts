@@ -80,6 +80,7 @@ export const configValues = () => ({
       534352: process.env.WEB3_NODE_URL_534352,
       534351: process.env.WEB3_NODE_URL_534351,
       690: process.env.WEB3_NODE_URL_690,
+      7777777: process.env.WEB3_NODE_URL_7777777,
     },
     spokePoolContracts: {
       [ChainIds.mainnet]: [
@@ -375,6 +376,15 @@ export const configValues = () => ({
           abi: JSON.stringify(SpokePoolV3Abi),
           acrossVersion: AcrossContractsVersion.V3,
           firstDepositId: 1,
+        },
+      ],
+      [ChainIds.zora]: [
+        {
+          address: "0xeF684C38F94F48775959ECf2012D7E864ffb9dd4",
+          startBlockNumber: 18119422,
+          abi: JSON.stringify(SpokePoolV3Abi),
+          acrossVersion: AcrossContractsVersion.V3,
+          firstDepositId: 0,
         },
       ],
     },
