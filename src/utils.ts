@@ -121,6 +121,11 @@ export const chainIdToInfo = {
     chainId: ChainIds.redstone,
     nativeSymbol: "eth",
   },
+  [ChainIds.zora]: {
+    name: "Zora",
+    chainId: ChainIds.zora,
+    nativeSymbol: "eth",
+  },
 };
 
 export const wait = (seconds = 1) =>
