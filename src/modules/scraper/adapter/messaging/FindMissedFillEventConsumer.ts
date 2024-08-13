@@ -78,6 +78,7 @@ export class FindMissedFillEventConsumer {
           { id: jobId },
           { status: FindMissedFillEventJobStatus.Suspended },
         );
+        return;
       }
     }
 
