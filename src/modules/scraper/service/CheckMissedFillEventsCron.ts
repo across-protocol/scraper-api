@@ -54,7 +54,6 @@ export class CheckMissedFillEventsCron {
       .where("d.status = :status", { status: "pending" })
       .andWhere("d.outputTokenAddress is not null")
       .andWhere("d.depositDate <= NOW() - INTERVAL '5 minutes'")
-      .andWhere("d.fillDeadline >= NOW()") // ignore expired deposits
       .andWhere("j.id is null")
       .orderBy("d.depositDate", "DESC")
       .limit(1000)
