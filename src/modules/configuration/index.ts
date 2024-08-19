@@ -380,8 +380,8 @@ export const configValues = () => ({
       ],
       [ChainIds.zora]: [
         {
-          address: "0xeF684C38F94F48775959ECf2012D7E864ffb9dd4",
-          startBlockNumber: 18119422,
+          address: "0x13fDac9F9b4777705db45291bbFF3c972c6d1d97",
+          startBlockNumber: 18382867,
           abi: JSON.stringify(SpokePoolV3Abi),
           acrossVersion: AcrossContractsVersion.V3,
           firstDepositId: 0,

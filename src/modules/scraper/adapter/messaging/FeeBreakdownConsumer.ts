@@ -51,14 +51,14 @@ export class FeeBreakdownConsumer {
     if (!deposit.token) throw new Error("Token not populated");
     if (deposit.outputTokenAddress && !deposit.outputToken) throw new Error("Output token not populated");
 
-    if (this.marketPriceService.isTokenSupportedByPricingApi(deposit.token.symbol) === false){
+    if (this.marketPriceService.isTokenSupportedByPricingApi(deposit.token.symbol) === false) {
       this.logger.error(`Token ${deposit.token.symbol} not supported by CoinGecko`);
       return;
     }
     if (
-      deposit.outputToken && 
+      deposit.outputToken &&
       this.marketPriceService.isTokenSupportedByPricingApi(deposit.outputToken.symbol) === false
-    ){
+    ) {
       this.logger.error(`Token ${deposit.outputToken.symbol} not supported by CoinGecko`);
       return;
     }
@@ -73,11 +73,11 @@ export class FeeBreakdownConsumer {
       await this.computeFeeBreakdownForV2FillEvents(deposit);
     } else if (fillEventsVersion === AcrossContractsVersion.V3) {
       await this.computeFeeBreakdownForV3FillEvents(deposit);
-      
+
       if (this.opRebateService.isDepositEligibleForOpRewards(deposit)) {
-          this.scraperQueuesService.publishMessage<OpRebateRewardMessage>(ScraperQueue.OpRebateReward, {
-            depositPrimaryKey: deposit.id,
-          });
+        this.scraperQueuesService.publishMessage<OpRebateRewardMessage>(ScraperQueue.OpRebateReward, {
+          depositPrimaryKey: deposit.id,
+        });
       }
       if (this.arbRebateService.isDepositEligibleForArbRewards(deposit)) {
         this.scraperQueuesService.publishMessage<ArbRebateRewardMessage>(ScraperQueue.ArbRebateReward, {
@@ -128,8 +128,8 @@ export class FeeBreakdownConsumer {
     const relayGasFeePct = bridgeFeeUsd.eq(0)
       ? new BigNumber(0)
       : new BigNumber(relayGasFeeUsd)
-          .dividedBy(bridgeFeeUsd)
-          .multipliedBy(bridgeFeePct);
+        .dividedBy(bridgeFeeUsd)
+        .multipliedBy(bridgeFeePct);
     const { pctAmount: relayGasFeeAmount } = calcPctValues(relayGasFeePct.toFixed(0));
 
     // Swap fee computation
