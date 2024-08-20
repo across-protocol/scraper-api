@@ -23,6 +23,7 @@ export const symbolIdMap = {
   arb: "arbitrum",
   usdb: "usdb",
   lsk: "lisk",
+  usdzc: "usd-coin-ethereum-bridged",
 };
 
 @Injectable()
