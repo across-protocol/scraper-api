@@ -5,7 +5,7 @@ import { DateTime } from "luxon";
 
 import { FillEventsV3QueueMessage, FindMissedFillEventQueueMessage, ScraperQueue } from ".";
 import { InjectRepository } from "@nestjs/typeorm";
-import { LessThanOrEqual, Repository } from "typeorm";
+import { LessThan, LessThanOrEqual, Repository } from "typeorm";
 import { FindMissedFillEventJob, FindMissedFillEventJobStatus } from "../../model/FindMissedFillEventJob.entity";
 import { EthProvidersService } from "../../../web3/services/EthProvidersService";
 import { AcrossContractsVersion } from "../../../web3/model/across-version";
@@ -47,7 +47,7 @@ export class FindMissedFillEventConsumer {
 
     const maxFillDate = DateTime.fromJSDate(j.depositDate).plus({ hours: 24 }).toJSDate();
     const fromBlock = await this.blockRepository.findOne({
-      where: { chainId: j.destinationChainId, date: LessThanOrEqual(j.depositDate) },
+      where: { chainId: j.destinationChainId, date: LessThan(j.depositDate) },
       order: { date: "DESC" },
     });
     const toBlock = await this.blockRepository.findOne({
