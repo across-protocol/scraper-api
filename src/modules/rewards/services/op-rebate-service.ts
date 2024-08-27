@@ -19,7 +19,13 @@ import { ReferralRewardsWindowJobResult } from "../model/RewardsWindowJobResult.
 
 const OP_REBATE_RATE = 0.95;
 const REWARDS_PERCENTAGE_LIMIT = 0.0025; // 25 bps
-const ELIGIBLE_OP_REWARDS_CHAIN_IDS = [ChainIds.base, ChainIds.mode, ChainIds.optimism];
+const ELIGIBLE_OP_REWARDS_CHAIN_IDS = [
+  ChainIds.base,
+  ChainIds.mode,
+  ChainIds.optimism,
+  ChainIds.zora,
+  ChainIds.redstone,
+];
 
 const partialDepositKeys: (keyof Deposit)[] = [
   "id",

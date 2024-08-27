@@ -110,3 +110,7 @@ flowchart TD
 
     H --> |TokenPriceQueueMsg| M(TokenPriceQueue)
   ```
+
+## OP Rebates
+
+Deposits sent to an OP stack chain accruel OP rewards. New chains can be added as needed by editing [this line](https://github.com/across-protocol/scraper-api/blob/master/src/modules/rewards/services/op-rebate-service.ts#L263-L265).
