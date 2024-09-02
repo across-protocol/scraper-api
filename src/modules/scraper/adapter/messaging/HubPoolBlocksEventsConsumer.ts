@@ -1,14 +1,11 @@
 import { OnQueueFailed, Process, Processor } from "@nestjs/bull";
 import { Logger } from "@nestjs/common";
 import { Job } from "bull";
-import { InjectRepository } from "@nestjs/typeorm";
-import { Repository, DataSource } from "typeorm";
+import { DataSource } from "typeorm";
 
 import { EthProvidersService } from "../../../web3/services/EthProvidersService";
 import { MerkleDistributorBlocksEventsQueueMessage, ScraperQueue } from ".";
-import { MerkleDistributorClaim } from "../../../airdrop/model/merkle-distributor-claim.entity";
 import { AppConfig } from "../../../configuration/configuration.service";
-import { MerkleDistributorWindow } from "../../../airdrop/model/merkle-distributor-window.entity";
 import { SetPoolRebalanceRoute } from "../../../web3/model/hubpool-events";
 import { SetPoolRebalanceRouteEvent } from "../../../web3/model/SetPoolRebalanceRouteEvent.entity";
 
@@ -18,10 +15,6 @@ export class HubPoolBlocksEventsConsumer {
 
   constructor(
     private providers: EthProvidersService,
-    @InjectRepository(MerkleDistributorClaim)
-    private merkleDistributorClaimRepository: Repository<MerkleDistributorClaim>,
-    @InjectRepository(MerkleDistributorWindow)
-    private merkleDistributorWindowRepository: Repository<MerkleDistributorWindow>,
     private appConfig: AppConfig,
     private dataSource: DataSource,
   ) {}

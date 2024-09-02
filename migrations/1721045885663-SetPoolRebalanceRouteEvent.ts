@@ -26,7 +26,7 @@ export class SetPoolRebalanceRouteEvent1721045885663 implements MigrationInterfa
 
   public async down(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(
-      `DROP TABLE "events"."set_pool_rebalance_route_event"`
+      `DROP TABLE "events"."set_pool_rebalance_route_event"`,
     );
   }
 }
