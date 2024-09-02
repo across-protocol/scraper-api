@@ -13,6 +13,8 @@ import EthereumSpokePool2_5Abi from "../web3/services/abi/EthereumSpokePool2_5.j
 import ArbitrumSpokePool2_5Abi from "../web3/services/abi/ArbitrumSpokePool2_5.json";
 import PolygonSpokePool2_5Abi from "../web3/services/abi/PolygonSpokePool2_5.json";
 import OptimismSpokePool2_5Abi from "../web3/services/abi/OptimismSpokePool2_5.json";
+import HubPoolAbi from "../web3/services/abi/HubPool.json";
+
 import { AcrossContractsVersion } from "../web3/model/across-version";
 
 export enum StickyReferralAddressesMechanism {
@@ -81,6 +83,13 @@ export const configValues = () => ({
       534351: process.env.WEB3_NODE_URL_534351,
       690: process.env.WEB3_NODE_URL_690,
       7777777: process.env.WEB3_NODE_URL_7777777,
+    },
+    hubPoolContracts: {
+      [ChainIds.mainnet]: {
+        address: "0xc186fA914353c44b2E33eBE05f21846F1048bEda",
+        startBlockNumber: 14819537,
+        abi: JSON.stringify(HubPoolAbi),
+      },
     },
     spokePoolContracts: {
       [ChainIds.mainnet]: [
@@ -426,6 +435,7 @@ export const configValues = () => ({
     ? process.env.SPOKE_POOLS_EVENTS_PROCESSING_CHAIN_IDS.split(",").map((chainId) => parseInt(chainId))
     : [ChainIds.mainnet, ChainIds.optimism, ChainIds.arbitrum, ChainIds.polygon],
   enableMerkleDistributorEventsProcessing: process.env.ENABLE_MERKLE_DISTRIBUTOR_EVENTS_PROCESSING === "true",
+  enableHubPoolEventsProcessing: process.env.ENABLE_HUB_POOL_EVENTS_PROCESSING === "true",
   enableReferralsMaterializedViewRefresh: process.env.ENABLE_REFERRALS_MATERIALIZED_VIEW_REFRESH === "true",
   allowWalletRewardsEdit: process.env.ALLOW_WALLET_REWARDS_EDIT === "true",
   stickyReferralAddressesMechanism: process.env.STICKY_REFERRAL_ADDRESSES_MECHANISM

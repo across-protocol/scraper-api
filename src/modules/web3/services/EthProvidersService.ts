@@ -15,11 +15,13 @@ import { SpokePoolEventsQuerier } from "./SpokePoolEventsQuerier";
 import { MerkleDistributorEventsQuerier } from "./MerkleDistributorEventsQuerier";
 import ERC20Abi from "../../web3/services/abi/ERC20.json";
 import AcrossMerkleDistributorAbi from "../../web3/services/abi/AcrossMerkleDistributor.json";
+import { HubPoolEventsQuerier } from "./HubPoolEventsQuerier";
 
 @Injectable()
 export class EthProvidersService {
   private providers: Record<string, ethers.providers.JsonRpcProvider> = {};
   private spokePoolEventQueriers: Record<string, Record<string, SpokePoolEventsQuerier>> = {};
+  private hubPoolEventQueriers: Record<string, Record<string, HubPoolEventsQuerier>> = {};
   private merkleDistributorEventQueriers: Record<string, Record<string, MerkleDistributorEventsQuerier>> = {};
 
   public constructor(
@@ -33,6 +35,7 @@ export class EthProvidersService {
     this.setProviders();
     this.setSpokePoolEventQueriers();
     this.setMerkleDistributorEventQueriers();
+    this.setHubPoolEventQueriers();
   }
 
   public getProvider(chainId: ChainId): ethers.providers.JsonRpcProvider | undefined {
@@ -48,6 +51,10 @@ export class EthProvidersService {
     version: AcrossContractsVersion,
   ): SpokePoolEventsQuerier | undefined {
     return this.spokePoolEventQueriers[chainId][version];
+  }
+
+  public getHubPoolEventQuerier(chainId: ChainId, address: string): HubPoolEventsQuerier | undefined {
+    return this.hubPoolEventQueriers[chainId][address];
   }
 
   public getSpokePoolEventQueriers() {
@@ -232,6 +239,18 @@ export class EthProvidersService {
       this.merkleDistributorEventQueriers[contractConfig.chainId] = {
         ...(this.merkleDistributorEventQueriers[contractConfig.chainId] || {}),
         [contractConfig.address]: new MerkleDistributorEventsQuerier(contract as AcrossMerkleDistributor),
+      };
+    }
+  }
+
+  private setHubPoolEventQueriers() {
+    const chains = Object.keys(this.appConfig.values.web3.hubPoolContracts).map(chainId => Number(chainId));
+    for (const chainId of chains) {
+      const hubPool = this.appConfig.values.web3.hubPoolContracts[chainId];
+      const contract = new ethers.Contract(hubPool.address, hubPool.abi, this.getProvider(chainId));
+      this.hubPoolEventQueriers[chainId] = {
+        ...(this.hubPoolEventQueriers[chainId] || {}),
+        [hubPool.address]: new HubPoolEventsQuerier(contract),
       };
     }
   }

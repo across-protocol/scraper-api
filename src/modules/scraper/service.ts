@@ -13,6 +13,7 @@ import {
   BlocksEventsQueueMessage,
   DepositFilledDateQueueMessage,
   FeeBreakdownQueueMessage,
+  HubPoolBlocksEventsQueueMessage,
   MerkleDistributorBlocksEventsQueueMessage,
   ScraperQueue,
 } from "./adapter/messaging";
@@ -24,6 +25,7 @@ import {
   RetryIncompleteDepositsBody,
 } from "./entry-point/http/dto";
 import { Deposit } from "../deposit/model/deposit.entity";
+import { HubPoolProcessedBlock } from "./model/HubPoolProcessedBlock.entity";
 
 const SPOKE_POOL_VERIFIER_CONTRACT_ADDRESS = "0x269727F088F16E1Aea52Cf5a97B1CD41DAA3f02D";
 
@@ -40,6 +42,8 @@ export class ScraperService {
     private depositRepository: Repository<Deposit>,
     @InjectRepository(MerkleDistributorProcessedBlock)
     private merkleDistributorProcessedBlockRepository: Repository<MerkleDistributorProcessedBlock>,
+    @InjectRepository(HubPoolProcessedBlock)
+    private hubPoolProcessedBlockRepository: Repository<HubPoolProcessedBlock>,
     private scraperQueuesService: ScraperQueuesService,
     private dataSource: DataSource,
   ) {
@@ -58,6 +62,10 @@ export class ScraperService {
         const merkleDistributorConfig = this.appConfig.values.web3.merkleDistributorContracts[rewardsType];
         this.publishMerkleDistributorBlocksV2(merkleDistributorConfig, 60);
       }
+    }
+
+    if (this.appConfig.values.enableHubPoolEventsProcessing) {
+      this.publishHubPoolBlocks(30);
     }
   }
 
@@ -113,6 +121,34 @@ export class ScraperService {
           const queueMsg = { chainId, ...range };
           await this.scraperQueuesService.publishMessage<MerkleDistributorBlocksEventsQueueMessage>(
             ScraperQueue.MerkleDistributorBlocksEventsV2,
+            queueMsg,
+          );
+        }
+      } catch (error) {
+        this.logger.error(error);
+      }
+      await wait(interval);
+    }
+  }
+
+  public async publishHubPoolBlocks(interval: number) {
+    while (true) {
+      try {
+        const chainId = ChainIds.mainnet;
+        const blockNumber = await this.providers.getProvider(chainId).getBlockNumber();
+        const configStartBlockNumber = this.appConfig.values.web3.hubPoolContracts[chainId].startBlockNumber;
+        const range = await this.determineBlockRange(
+          chainId,
+          blockNumber,
+          configStartBlockNumber,
+          this.hubPoolProcessedBlockRepository,
+          true,
+        );
+
+        if (!!range) {
+          const queueMsg = { chainId, ...range };
+          await this.scraperQueuesService.publishMessage<HubPoolBlocksEventsQueueMessage>(
+            ScraperQueue.HubPoolBlocksEvents,
             queueMsg,
           );
         }

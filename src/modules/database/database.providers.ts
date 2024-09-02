@@ -30,6 +30,8 @@ import { MerkleDistributorClaim } from "../airdrop/model/merkle-distributor-clai
 import { DepositGapCheck } from "../scraper/model/DepositGapCheck.entity";
 import { ArbReward } from "../rewards/model/arb-reward.entity";
 import { FindMissedFillEventJob } from "../scraper/model/FindMissedFillEventJob.entity";
+import { HubPoolProcessedBlock } from "../scraper/model/HubPoolProcessedBlock.entity";
+import { SetPoolRebalanceRouteEvent } from "../web3/model/SetPoolRebalanceRouteEvent.entity";
 
 // TODO: Add db entities here
 const entities = [
@@ -62,6 +64,8 @@ const entities = [
   DepositGapCheck,
   ArbReward,
   FindMissedFillEventJob,
+  HubPoolProcessedBlock,
+  SetPoolRebalanceRouteEvent,
 ];
 
 @Injectable()
