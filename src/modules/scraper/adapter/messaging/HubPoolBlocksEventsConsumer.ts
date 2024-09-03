@@ -4,7 +4,7 @@ import { Job } from "bull";
 import { DataSource } from "typeorm";
 
 import { EthProvidersService } from "../../../web3/services/EthProvidersService";
-import { MerkleDistributorBlocksEventsQueueMessage, ScraperQueue } from ".";
+import { HubPoolBlocksEventsQueueMessage, ScraperQueue } from ".";
 import { AppConfig } from "../../../configuration/configuration.service";
 import { SetPoolRebalanceRoute } from "../../../web3/model/hubpool-events";
 import { SetPoolRebalanceRouteEvent } from "../../../web3/model/SetPoolRebalanceRouteEvent.entity";
@@ -20,7 +20,7 @@ export class HubPoolBlocksEventsConsumer {
   ) {}
 
   @Process({ concurrency: 1 })
-  private async process(job: Job<MerkleDistributorBlocksEventsQueueMessage>) {
+  private async process(job: Job<HubPoolBlocksEventsQueueMessage>) {
     const { chainId, from, to } = job.data;
     const { address } = this.appConfig.values.web3.hubPoolContracts[chainId];
     const setPoolRebalanceRouteEvents = (await this.providers
