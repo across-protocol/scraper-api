@@ -59,6 +59,8 @@ import { FindMissedFillEventConsumer } from "./adapter/messaging/FindMissedFillE
 import { FindMissedFillEventJob } from "./model/FindMissedFillEventJob.entity";
 import { Block } from "../web3/model/block.entity";
 import { ArbReward } from "../rewards/model/arb-reward.entity";
+import { HubPoolBlocksEventsConsumer } from "./adapter/messaging/HubPoolBlocksEventsConsumer";
+import { HubPoolProcessedBlock } from "./model/HubPoolProcessedBlock.entity";
 
 @Module({})
 export class ScraperModule {
@@ -78,6 +80,7 @@ export class ScraperModule {
       BlocksEventsConsumer,
       MerkleDistributorBlocksEventsConsumer,
       MerkleDistributorBlocksEventsConsumerV2,
+      HubPoolBlocksEventsConsumer,
       FillEventsConsumer,
       FillEventsConsumer2,
       FillEventsV3Consumer,
@@ -121,6 +124,7 @@ export class ScraperModule {
           DepositGapCheck,
           FindMissedFillEventJob,
           Block,
+          HubPoolProcessedBlock,
         ]),
         MarketPriceModule.forRoot(),
         HttpModule,
@@ -218,6 +222,9 @@ export class ScraperModule {
         }),
         BullModule.registerQueue({
           name: ScraperQueue.FindMissedFillEvent,
+        }),
+        BullModule.registerQueue({
+          name: ScraperQueue.HubPoolBlocksEvents,
         }),
       ],
       exports: [ScraperQueuesService],
