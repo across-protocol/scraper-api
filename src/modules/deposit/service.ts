@@ -62,6 +62,17 @@ export class DepositService {
     const limit = parseInt(query.limit ?? "10");
     const offset = parseInt(query.offset ?? "0");
 
+    if (!query.include?.includes("token")) {
+      return {
+        deposits: [],
+        pagination: {
+          limit,
+          offset,
+          total: 0,
+        },
+      };
+    }
+
     if (offset >= 1500) {
       throw new BadRequestException({
         error: "BadRequestException",
