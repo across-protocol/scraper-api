@@ -220,6 +220,9 @@ export class GetDepositsForTxPageQuery {
   status?: "filled" | "pending";
 
   @IsOptional()
+  include: any;
+
+  @IsOptional()
   @IsInt()
   @Min(1)
   @Max(100)
