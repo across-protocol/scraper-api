@@ -477,7 +477,7 @@ describe("GET /deposits/tx-page", () => {
   });
 
   it("200 without query params", async () => {
-    const response = await request(app.getHttpServer()).get("/deposits/tx-page");
+    const response = await request(app.getHttpServer()).get("/deposits/tx-page").query({include: ["token"]});
     expect(response.status).toBe(200);
     expect(response.body.deposits).toHaveLength(4);
   });
@@ -496,6 +496,7 @@ describe("GET /deposits/tx-page", () => {
 
     const response = await request(app.getHttpServer()).get("/deposits/tx-page").query({
       depositorOrRecipientAddress: depositorAddr,
+      include: ["token"],
     });
     expect(response.status).toBe(200);
     expect(response.body.deposits).toHaveLength(2);
@@ -514,7 +515,9 @@ describe("GET /deposits/tx-page", () => {
   });
 
   it("200 for 'status' query params", async () => {
-    const response = await request(app.getHttpServer()).get("/deposits/tx-page").query({ status: "filled" });
+    const response = await request(app.getHttpServer())
+      .get("/deposits/tx-page")
+      .query({ status: "filled", include: ["token"] });
     expect(response.status).toBe(200);
     expect(response.body.deposits).toHaveLength(2);
   });
