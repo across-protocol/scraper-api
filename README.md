@@ -114,3 +114,15 @@ flowchart TD
 ## OP Rebates
 
 Deposits sent to an OP stack chain accruel OP rewards. New chains can be added as needed by editing [this line](https://github.com/across-protocol/scraper-api/blob/master/src/modules/rewards/services/op-rebate-service.ts#L263-L265).
+
+## Add new SpokePool contracts
+
+For adding SpokePool contract to query events from, these steps need to be followed:
+
+1. Make sure a provider is added in the `web3.providers` list from [here](https://github.com/across-protocol/scraper-api/blob/master/src/modules/configuration/index.ts#L61) for the chain. The env variable in the production environment must be added via [zion](https://github.com/UMAprotocol/zion/blob/master/docs/comp-doc/howto-across-api.md#update-variables).
+
+2. Add the SpokePool contract configuration [here](https://github.com/across-protocol/scraper-api/blob/master/src/modules/configuration/index.ts#L94). 
+
+3. (_Optionally_) If the scraping process requires a custom distance to be maintained from the head block, add it [here](https://github.com/across-protocol/scraper-api/blob/master/src/modules/scraper/service.ts#L212).
+
+:warning: Make sure the contract address is the proxy address, not the address of the implementation contract.
