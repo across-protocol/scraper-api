@@ -242,6 +242,14 @@ export class ScraperService {
       return 15;
     }
 
+    if (chainId === ChainIds.zora) {
+      return 15;
+    }
+
+    if (chainId === ChainIds.redstone) {
+      return 15;
+    }
+
     return 10;
   }
 
