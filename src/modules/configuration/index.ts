@@ -380,8 +380,8 @@ export const configValues = () => ({
       ],
       [ChainIds.redstone]: [
         {
-          address: "0x28077B47Cd03326De7838926A63699849DD4fa87",
-          startBlockNumber: 5158526,
+          address: "0x13fDac9F9b4777705db45291bbFF3c972c6d1d97",
+          startBlockNumber: 5512122,
           abi: JSON.stringify(SpokePoolV3Abi),
           acrossVersion: AcrossContractsVersion.V3,
           firstDepositId: 1,
