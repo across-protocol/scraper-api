@@ -123,6 +123,6 @@ For adding SpokePool contract to query events from, these steps need to be follo
 
 2. Add the SpokePool contract configuration [here](https://github.com/across-protocol/scraper-api/blob/master/src/modules/configuration/index.ts#L94). 
 
-3. (_Optionally_) If the scraping process requires a custom distance to be maintained from the head block, add it [here](https://github.com/across-protocol/scraper-api/blob/master/src/modules/scraper/service.ts#L212).
-
 :warning: Make sure the contract address is the proxy address, not the address of the implementation contract.
+
+3. (_Optionally_) If the scraping process requires a custom distance to be maintained from the head block, add it [here](https://github.com/across-protocol/scraper-api/blob/master/src/modules/scraper/service.ts#L212).
