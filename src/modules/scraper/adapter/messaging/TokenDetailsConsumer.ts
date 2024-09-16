@@ -36,41 +36,22 @@ export class TokenDetailsConsumer {
     let outputToken: Token | undefined = undefined;
 
     if (deposit.outputTokenAddress) {
-      if (deposit.outputTokenAddress === ethers.constants.AddressZero) {
-        let outputTokenSymbol: string;
-
-        if (destinationChainId === ChainIds.base && inputToken.symbol === "USDC") {
-          outputTokenSymbol = "USDbC";
-        } else if (sourceChainId === ChainIds.base && inputToken.symbol === "USDbC") {
-          outputTokenSymbol = "USDC";
-        } else if (destinationChainId === ChainIds.blast && inputToken.symbol === "DAI") {
-          outputTokenSymbol = "USDB";
-        } else if (sourceChainId === ChainIds.blast && inputToken.symbol === "USDB") {
-          outputTokenSymbol = "DAI";
-        } else {
-          outputTokenSymbol = inputToken.symbol;
+      try {
+        outputToken = await this.ethProvidersService.getCachedToken(destinationChainId, deposit.outputTokenAddress);
+      } catch (error) {
+        // stop if output token doesn't exist
+        if (
+          error?.code === "CALL_EXCEPTION" &&
+          ["name()", "symbol()", "decimals()"].includes(error?.method)
+        ) {
+          this.logger.log(`Output token ${destinationChainId} ${deposit.outputTokenAddress} doesn't exist for deposit ${depositId}`);
+          return;
         }
-        outputToken = await this.tokenRepository.findOne({
-          where: { chainId: destinationChainId, symbol: outputTokenSymbol },
-        });
-      } else {
-        try {
-          outputToken = await this.ethProvidersService.getCachedToken(destinationChainId, deposit.outputTokenAddress);
-        } catch (error) {
-          // stop if output token doesn't exist
-          if (
-            error?.code === "CALL_EXCEPTION" &&
-            ["name()", "symbol()", "decimals()"].includes(error?.method)
-          ) {
-            this.logger.log(`Output token ${destinationChainId} ${deposit.outputTokenAddress} doesn't exist for deposit ${depositId}`);
-            return;
-          }
-          if (error?.code === "CALL_EXCEPTION" && error?.reason?.includes("reverted without a reason")) {
-            this.logger.log(`Output token ${destinationChainId} ${deposit.outputTokenAddress} doesn't exist for deposit ${depositId}`);
-            return;
-          }
-          throw error;
+        if (error?.code === "CALL_EXCEPTION" && error?.reason?.includes("reverted without a reason")) {
+          this.logger.log(`Output token ${destinationChainId} ${deposit.outputTokenAddress} doesn't exist for deposit ${depositId}`);
+          return;
         }
+        throw error;
       }
     }
 
@@ -81,7 +62,6 @@ export class TokenDetailsConsumer {
       {
         tokenId: inputToken.id,
         outputTokenId: outputToken ? outputToken.id : null,
-        outputTokenAddress: outputToken ? outputToken.address : deposit.outputTokenAddress,
       },
     );
     await this.scraperQueuesService.publishMessage<TokenPriceQueueMessage>(ScraperQueue.TokenPrice, {
