@@ -1,7 +1,7 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { EthProvidersService } from "../web3/services/EthProvidersService";
 import { InjectRepository } from "@nestjs/typeorm";
-import { DataSource, Repository } from "typeorm";
+import { Repository } from "typeorm";
 
 import { ChainIds } from "../web3/model/ChainId";
 import { AppConfig } from "../configuration/configuration.service";
@@ -45,7 +45,6 @@ export class ScraperService {
     @InjectRepository(HubPoolProcessedBlock)
     private hubPoolProcessedBlockRepository: Repository<HubPoolProcessedBlock>,
     private scraperQueuesService: ScraperQueuesService,
-    private dataSource: DataSource,
   ) {
     this.run();
   }
