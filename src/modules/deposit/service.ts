@@ -23,6 +23,7 @@ import {
 import { formatDeposit } from "./utils";
 import { RewardService } from "../rewards/services/reward-service";
 import { ChainIds } from "../web3/model/ChainId";
+import { SetPoolRebalanceRouteEvent } from "../web3/model/SetPoolRebalanceRouteEvent.entity";
 
 export const DEPOSITS_STATS_CACHE_KEY = "deposits:stats";
 
@@ -34,10 +35,37 @@ export class DepositService {
   constructor(
     private appConfig: AppConfig,
     @InjectRepository(Deposit) private depositRepository: Repository<Deposit>,
+    @InjectRepository(SetPoolRebalanceRouteEvent) 
+    private setPoolRebalanceRouteRepository: Repository<SetPoolRebalanceRouteEvent>,
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
     private dataSource: DataSource,
     private rewardService: RewardService,
   ) {}
+
+  public async deriveOutputTokenAddress(originChainId: number, inputTokenAddress: string, destinationChainId: number) {
+    const inputTokenRelabalanceRoute = await this.setPoolRebalanceRouteRepository.findOne({
+      where: {
+        destinationChainId: originChainId,
+        destinationToken: inputTokenAddress,
+      },
+      order: {
+        blockNumber: "DESC",
+      },
+    });
+    const l1Token = inputTokenRelabalanceRoute.l1Token;
+    const outputTokenRelabalanceRoute = await this.setPoolRebalanceRouteRepository.findOne({
+      where: {
+        destinationChainId,
+        l1Token,
+      },
+    });
+
+    if (!outputTokenRelabalanceRoute) {
+      throw new Error(`Output token not found for ${l1Token} on chain ${destinationChainId}`);
+    }
+
+    return outputTokenRelabalanceRoute.destinationToken;
+  }
 
   public async getCachedGeneralStats() {
     let data = await this.cacheManager.get(DEPOSITS_STATS_CACHE_KEY);
