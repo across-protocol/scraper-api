@@ -2,7 +2,7 @@ import { OnQueueFailed, Process, Processor } from "@nestjs/bull";
 import { Logger } from "@nestjs/common";
 import { Job } from "bull";
 import { InjectRepository } from "@nestjs/typeorm";
-import { Repository } from "typeorm";
+import { LessThanOrEqual, Repository } from "typeorm";
 import { ethers } from "ethers";
 
 import { ScraperQueue, TokenDetailsQueueMessage, TokenPriceQueueMessage } from ".";
@@ -11,6 +11,8 @@ import { EthProvidersService } from "../../../web3/services/EthProvidersService"
 import { ScraperQueuesService } from "../../service/ScraperQueuesService";
 import { Token } from "../../../web3/model/token.entity";
 import { ChainIds } from "../../../web3/model/ChainId";
+import { SetPoolRebalanceRouteEvent } from "../../../web3/model/SetPoolRebalanceRouteEvent.entity";
+import { Block } from "../../../web3/model/block.entity";
 
 @Processor(ScraperQueue.TokenDetails)
 export class TokenDetailsConsumer {
@@ -18,7 +20,10 @@ export class TokenDetailsConsumer {
 
   constructor(
     @InjectRepository(Deposit) private depositRepository: Repository<Deposit>,
-    @InjectRepository(Token) private tokenRepository: Repository<Token>,
+    @InjectRepository(SetPoolRebalanceRouteEvent)
+    private rebalanceRouteRepository: Repository<SetPoolRebalanceRouteEvent>,
+    @InjectRepository(Block)
+    private blockRepository: Repository<Block>,
     private ethProvidersService: EthProvidersService,
     private scraperQueuesService: ScraperQueuesService,
   ) {}
@@ -36,41 +41,52 @@ export class TokenDetailsConsumer {
     let outputToken: Token | undefined = undefined;
 
     if (deposit.outputTokenAddress) {
-      if (deposit.outputTokenAddress === ethers.constants.AddressZero) {
-        let outputTokenSymbol: string;
-
-        if (destinationChainId === ChainIds.base && inputToken.symbol === "USDC") {
-          outputTokenSymbol = "USDbC";
-        } else if (sourceChainId === ChainIds.base && inputToken.symbol === "USDbC") {
-          outputTokenSymbol = "USDC";
-        } else if (destinationChainId === ChainIds.blast && inputToken.symbol === "DAI") {
-          outputTokenSymbol = "USDB";
-        } else if (sourceChainId === ChainIds.blast && inputToken.symbol === "USDB") {
-          outputTokenSymbol = "DAI";
+      try {
+        if (deposit.outputTokenAddress === ethers.constants.AddressZero) {
+          const mainnetBlock = await this.blockRepository.findOne({
+            where: {
+              chainId: ChainIds.mainnet,
+              date: LessThanOrEqual(deposit.depositDate),
+            },
+            order: { date: "DESC" },
+          });
+          const l1Token = await this.rebalanceRouteRepository.findOne({
+            where: {
+              destinationToken: inputToken.address,
+              destinationChainId: deposit.sourceChainId,
+              blockNumber: LessThanOrEqual(mainnetBlock.blockNumber),
+            },
+            order: { blockNumber: "DESC" },
+          });
+          const destinationToken = await this.rebalanceRouteRepository.findOne({
+            where: {
+              l1Token: l1Token.l1Token,
+              destinationChainId: deposit.destinationChainId,
+              blockNumber: LessThanOrEqual(mainnetBlock.blockNumber),
+            },
+            order: { blockNumber: "DESC" },
+          });
+          outputToken = await this.ethProvidersService.getCachedToken(
+            destinationChainId,
+            destinationToken.destinationToken,
+          );
         } else {
-          outputTokenSymbol = inputToken.symbol;
-        }
-        outputToken = await this.tokenRepository.findOne({
-          where: { chainId: destinationChainId, symbol: outputTokenSymbol },
-        });
-      } else {
-        try {
           outputToken = await this.ethProvidersService.getCachedToken(destinationChainId, deposit.outputTokenAddress);
-        } catch (error) {
-          // stop if output token doesn't exist
-          if (
-            error?.code === "CALL_EXCEPTION" &&
-            ["name()", "symbol()", "decimals()"].includes(error?.method)
-          ) {
-            this.logger.log(`Output token ${destinationChainId} ${deposit.outputTokenAddress} doesn't exist for deposit ${depositId}`);
-            return;
-          }
-          if (error?.code === "CALL_EXCEPTION" && error?.reason?.includes("reverted without a reason")) {
-            this.logger.log(`Output token ${destinationChainId} ${deposit.outputTokenAddress} doesn't exist for deposit ${depositId}`);
-            return;
-          }
-          throw error;
         }
+      } catch (error) {
+        // stop if output token doesn't exist
+        if (
+          error?.code === "CALL_EXCEPTION" &&
+          ["name()", "symbol()", "decimals()"].includes(error?.method)
+        ) {
+          this.logger.log(`Output token ${destinationChainId} ${deposit.outputTokenAddress} doesn't exist for deposit ${depositId}`);
+          return;
+        }
+        if (error?.code === "CALL_EXCEPTION" && error?.reason?.includes("reverted without a reason")) {
+          this.logger.log(`Output token ${destinationChainId} ${deposit.outputTokenAddress} doesn't exist for deposit ${depositId}`);
+          return;
+        }
+        throw error;
       }
     }
 
