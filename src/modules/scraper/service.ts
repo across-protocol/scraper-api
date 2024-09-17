@@ -218,7 +218,7 @@ export class ScraperService {
     }
 
     if (chainId === ChainIds.arbitrum) {
-      return 120;
+      return 270;
     }
 
     if (chainId === ChainIds.zkSyncMainnet) {
