@@ -56,7 +56,7 @@ export class CheckMissedFillEventsCron {
       .andWhere("d.depositDate <= NOW() - INTERVAL '5 minutes'")
       .andWhere("j.id is null")
       .orderBy("d.depositDate", "DESC")
-      .limit(1000)
+      .limit(50000)
       .getMany();
     this.logger.verbose(`Found ${deposits.length} deposits to check`);
     const filteredDeposits = deposits.filter((d) => d.outputTokenAddress !== ethers.constants.AddressZero);
