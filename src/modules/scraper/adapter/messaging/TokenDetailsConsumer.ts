@@ -50,7 +50,7 @@ export class TokenDetailsConsumer {
             },
             order: { date: "DESC" },
           });
-          const l1Token = await this.rebalanceRouteRepository.findOne({
+          const inputTokenRebalanceRoute = await this.rebalanceRouteRepository.findOne({
             where: {
               destinationToken: inputToken.address,
               destinationChainId: deposit.sourceChainId,
@@ -58,9 +58,10 @@ export class TokenDetailsConsumer {
             },
             order: { blockNumber: "DESC" },
           });
-          const destinationToken = await this.rebalanceRouteRepository.findOne({
+          const l1Token = inputTokenRebalanceRoute.l1Token;
+          const outputTokenRebalanceRoute = await this.rebalanceRouteRepository.findOne({
             where: {
-              l1Token: l1Token.l1Token,
+              l1Token: l1Token,
               destinationChainId: deposit.destinationChainId,
               blockNumber: LessThanOrEqual(mainnetBlock.blockNumber),
             },
@@ -68,7 +69,7 @@ export class TokenDetailsConsumer {
           });
           outputToken = await this.ethProvidersService.getCachedToken(
             destinationChainId,
-            destinationToken.destinationToken,
+            outputTokenRebalanceRoute.destinationToken,
           );
         } else {
           outputToken = await this.ethProvidersService.getCachedToken(destinationChainId, deposit.outputTokenAddress);
