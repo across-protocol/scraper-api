@@ -32,6 +32,7 @@ export const ChainIds = {
   scrollSepolia: 534351,
   redstone: 690,
   zora: 7777777,
+  worldChain: 480,
 };
 
 export const ChainIdToName = Object.entries(ChainIds).reduce((idToName, entry) => {
