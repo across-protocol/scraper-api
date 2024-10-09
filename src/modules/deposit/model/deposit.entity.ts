@@ -239,6 +239,9 @@ export class Deposit {
   @Column({ type: "decimal", nullable: true })
   swapTokenAmount?: string;
 
+  @Column({ nullable: true })
+  quoteTimestamp?: Date;
+
   @CreateDateColumn()
   createdAt: Date;
 
