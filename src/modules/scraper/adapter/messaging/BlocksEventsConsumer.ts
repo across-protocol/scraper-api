@@ -415,6 +415,7 @@ export class BlocksEventsConsumer {
       exclusivityDeadline,
       relayer,
       message,
+      quoteTimestamp,
     } = depositEvent.args;
     const wei = BigNumber.from(10).pow(18);
     const feePct = inputAmount.eq(0) ? BigNumber.from(0) : wei.sub(outputAmount.mul(wei).div(inputAmount));
@@ -448,6 +449,7 @@ export class BlocksEventsConsumer {
       outputAmount: outputAmount.toString(),
       outputTokenAddress: outputToken,
       fillDeadline: new Date(fillDeadline * 1000),
+      quoteTimestamp: new Date(quoteTimestamp * 1000),
       exclusivityDeadline: exclusivityDeadlineDate,
       relayer,
       message,
