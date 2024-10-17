@@ -355,24 +355,10 @@ export class RewardService {
     if (!job) throw new RewardsWindowJobNotFoundException(job.id);
 
     const jobResults = await this.referralRewardsWindowJobResultRepository.find({ where: { jobId: job.id } });
-    let metadataAmountBreakdownKeyName = undefined;
-
-    if (job.rewardsType === RewardsType.ReferralRewards) {
-      metadataAmountBreakdownKeyName = "referralRewards";
-    } else if (job.rewardsType === RewardsType.OpRewards) {
-      metadataAmountBreakdownKeyName = "opRewards";
-    } else if (job.rewardsType === RewardsType.ArbRewards) {
-      metadataAmountBreakdownKeyName = "arbRewards";
-    }
 
     const recipients = jobResults.map((result) => ({
       account: result.address,
       amount: result.amount,
-      metadata: {
-        amountBreakdown: {
-          [metadataAmountBreakdownKeyName]: result.amount,
-        },
-      },
     }));
 
     let chainId = undefined;
