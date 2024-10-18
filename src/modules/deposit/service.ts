@@ -1,6 +1,6 @@
 import { BadRequestException, CACHE_MANAGER, Inject, Injectable } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
-import { Brackets, DataSource, In, Repository } from "typeorm";
+import { Brackets, DataSource, In, LessThanOrEqual, Repository } from "typeorm";
 import { utils } from "ethers";
 import { Cache } from "cache-manager";
 import BigNumber from "bignumber.js";
@@ -22,6 +22,7 @@ import {
 } from "./entry-point/http/dto";
 import { formatDeposit } from "./utils";
 import { RewardService } from "../rewards/services/reward-service";
+import { Block } from "../web3/model/block.entity";
 import { ChainIds } from "../web3/model/ChainId";
 import { SetPoolRebalanceRouteEvent } from "../web3/model/SetPoolRebalanceRouteEvent.entity";
 
@@ -35,36 +36,56 @@ export class DepositService {
   constructor(
     private appConfig: AppConfig,
     @InjectRepository(Deposit) private depositRepository: Repository<Deposit>,
-    @InjectRepository(SetPoolRebalanceRouteEvent) 
+    @InjectRepository(Block) private blockRepository: Repository<Block>,
+    @InjectRepository(SetPoolRebalanceRouteEvent)
     private setPoolRebalanceRouteRepository: Repository<SetPoolRebalanceRouteEvent>,
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
     private dataSource: DataSource,
     private rewardService: RewardService,
   ) {}
 
-  public async deriveOutputTokenAddress(originChainId: number, inputTokenAddress: string, destinationChainId: number) {
-    const inputTokenRelabalanceRoute = await this.setPoolRebalanceRouteRepository.findOne({
+  public async deriveOutputTokenAddress(
+    originChainId: number,
+    inputTokenAddress: string,
+    destinationChainId: number,
+    depositBlockNumber: number,
+    quoteTimestamp: number) {
+    const quoteDatetime = new Date(quoteTimestamp * 1000);
+    const mainnetBlockNumber = originChainId === ChainIds.mainnet
+      ? depositBlockNumber : (await this.blockRepository.findOne({
+        where: {
+          chainId: ChainIds.mainnet,
+          date: LessThanOrEqual(quoteDatetime),
+        },
+        order: { date: "DESC" },
+      })).blockNumber;
+    const inputTokenRebalanceRoute = await this.setPoolRebalanceRouteRepository.findOne({
       where: {
         destinationChainId: originChainId,
         destinationToken: inputTokenAddress,
+        blockNumber: LessThanOrEqual(mainnetBlockNumber),
       },
       order: {
         blockNumber: "DESC",
       },
     });
-    const l1Token = inputTokenRelabalanceRoute.l1Token;
-    const outputTokenRelabalanceRoute = await this.setPoolRebalanceRouteRepository.findOne({
+    const l1Token = inputTokenRebalanceRoute.l1Token;
+    const outputTokenRebalanceRoute = await this.setPoolRebalanceRouteRepository.findOne({
       where: {
         destinationChainId,
         l1Token,
+        blockNumber: LessThanOrEqual(mainnetBlockNumber),
+      },
+      order: {
+        blockNumber: "DESC",
       },
     });
 
-    if (!outputTokenRelabalanceRoute) {
+    if (!outputTokenRebalanceRoute) {
       throw new Error(`Output token not found for ${l1Token} on chain ${destinationChainId}`);
     }
 
-    return outputTokenRelabalanceRoute.destinationToken;
+    return outputTokenRebalanceRoute.destinationToken;
   }
 
   public async getCachedGeneralStats() {

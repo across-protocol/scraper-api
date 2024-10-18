@@ -10,6 +10,7 @@ import { EtlController } from "./entry-point/http/etl-controller";
 import { RewardModule } from "../rewards/module";
 import { OpReward } from "../rewards/model/op-reward.entity";
 import { SetPoolRebalanceRouteEvent } from "../web3/model/SetPoolRebalanceRouteEvent.entity";
+import { Block } from "../web3/model/block.entity";
 
 @Module({})
 export class DepositModule {
@@ -21,6 +22,7 @@ export class DepositModule {
       controllers: [],
       imports: [
         TypeOrmModule.forFeature([
+          Block,
           Deposit,
           OpReward,
           SetPoolRebalanceRouteEvent,

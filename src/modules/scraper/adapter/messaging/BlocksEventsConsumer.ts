@@ -426,10 +426,12 @@ export class BlocksEventsConsumer {
     const outputTokenAddress =
       outputToken === ethers.constants.AddressZero
         ? await this.depositService.deriveOutputTokenAddress(
-            chainId,
-            inputToken,
-            destinationChainId.toNumber(),
-          )
+          chainId,
+          inputToken,
+          destinationChainId.toNumber(),
+          blockNumber,
+          quoteTimestamp,
+        )
         : outputToken;
     let trueDepositor = depositor;
     let exclusivityDeadlineDate = undefined;
