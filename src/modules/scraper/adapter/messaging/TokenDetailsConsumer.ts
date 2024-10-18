@@ -3,14 +3,12 @@ import { Logger } from "@nestjs/common";
 import { Job } from "bull";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
-import { ethers } from "ethers";
 
 import { ScraperQueue, TokenDetailsQueueMessage, TokenPriceQueueMessage } from ".";
 import { Deposit } from "../../../deposit/model/deposit.entity";
 import { EthProvidersService } from "../../../web3/services/EthProvidersService";
 import { ScraperQueuesService } from "../../service/ScraperQueuesService";
 import { Token } from "../../../web3/model/token.entity";
-import { ChainIds } from "../../../web3/model/ChainId";
 
 @Processor(ScraperQueue.TokenDetails)
 export class TokenDetailsConsumer {
