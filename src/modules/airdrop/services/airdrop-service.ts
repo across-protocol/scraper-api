@@ -213,7 +213,7 @@ export class AirdropService {
               amount: recipient["amount"],
               accountIndex: recipient["accountIndex"],
               proof: recipient["proof"],
-              payload: recipient["metadata"],
+              payload: recipient["metadata"] || {},
             })
             .execute();
         }
