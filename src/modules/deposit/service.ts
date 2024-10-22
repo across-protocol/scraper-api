@@ -48,22 +48,13 @@ export class DepositService {
     originChainId: number,
     inputTokenAddress: string,
     destinationChainId: number,
-    depositBlockNumber: number,
     quoteTimestamp: number) {
     const quoteDatetime = new Date(quoteTimestamp * 1000);
-    const mainnetBlockNumber = originChainId === ChainIds.mainnet
-      ? depositBlockNumber : (await this.blockRepository.findOne({
-        where: {
-          chainId: ChainIds.mainnet,
-          date: LessThanOrEqual(quoteDatetime),
-        },
-        order: { date: "DESC" },
-      })).blockNumber;
     const inputTokenRebalanceRoute = await this.setPoolRebalanceRouteRepository.findOne({
       where: {
         destinationChainId: originChainId,
         destinationToken: inputTokenAddress,
-        blockNumber: LessThanOrEqual(mainnetBlockNumber),
+        date: LessThanOrEqual(quoteDatetime),
       },
       order: {
         blockNumber: "DESC",
@@ -74,7 +65,7 @@ export class DepositService {
       where: {
         destinationChainId,
         l1Token,
-        blockNumber: LessThanOrEqual(mainnetBlockNumber),
+        date: LessThanOrEqual(quoteDatetime),
       },
       order: {
         blockNumber: "DESC",

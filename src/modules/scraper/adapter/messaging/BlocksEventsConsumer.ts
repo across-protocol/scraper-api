@@ -429,7 +429,6 @@ export class BlocksEventsConsumer {
           chainId,
           inputToken,
           destinationChainId.toNumber(),
-          blockNumber,
           quoteTimestamp,
         )
         : outputToken;
