@@ -154,7 +154,7 @@ export class ScraperService {
       } catch (error) {
         this.logger.error(error);
       }
-      // await wait(interval);
+      await wait(interval);
     }
   }
 
