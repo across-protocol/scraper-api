@@ -18,6 +18,9 @@ export class SetPoolRebalanceRouteEvent {
   transactionIndex: number;
 
   @Column()
+  date: Date;
+
+  @Column()
   address: string;
 
   @Column()
