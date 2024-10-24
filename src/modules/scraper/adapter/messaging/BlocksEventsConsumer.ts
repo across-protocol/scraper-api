@@ -3,7 +3,7 @@ import { Logger } from "@nestjs/common";
 import { Job } from "bull";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository, QueryFailedError } from "typeorm";
-import { BigNumber, Event } from "ethers";
+import { BigNumber, ethers, Event } from "ethers";
 
 import { EthProvidersService } from "../../../web3/services/EthProvidersService";
 import {
@@ -17,6 +17,7 @@ import {
   SpeedUpEventsV3QueueMessage,
 } from ".";
 import { Deposit } from "../../../deposit/model/deposit.entity";
+import { DepositService } from "../../../deposit/service";
 import { ScraperQueuesService } from "../../service/ScraperQueuesService";
 import {
   FundsDepositedEvent2,
@@ -46,6 +47,7 @@ export class BlocksEventsConsumer {
     @InjectRepository(Deposit) private depositRepository: Repository<Deposit>,
     private scraperQueuesService: ScraperQueuesService,
     private appConfig: AppConfig,
+    private depositService: DepositService,
   ) {}
 
   @Process({ concurrency: 20 })
@@ -421,6 +423,15 @@ export class BlocksEventsConsumer {
     const feePct = inputAmount.eq(0) ? BigNumber.from(0) : wei.sub(outputAmount.mul(wei).div(inputAmount));
     const txReceipt = await this.providers.getCachedTransactionReceipt(chainId, transactionHash);
     const swapToken = swapEvent ? await this.providers.getCachedToken(chainId, swapEvent.args.swapToken) : undefined;
+    const outputTokenAddress =
+      outputToken === ethers.constants.AddressZero
+        ? await this.depositService.deriveOutputTokenAddress(
+          chainId,
+          inputToken,
+          destinationChainId.toNumber(),
+          quoteTimestamp,
+        )
+        : outputToken;
     let trueDepositor = depositor;
     let exclusivityDeadlineDate = undefined;
 
@@ -447,7 +458,7 @@ export class BlocksEventsConsumer {
       //relayerFeePct = realizedLpFeePct + (gasFeePct + capitalCostFeePct)(old usage of relayerFeePct)
       // v3 properties
       outputAmount: outputAmount.toString(),
-      outputTokenAddress: outputToken,
+      outputTokenAddress,
       fillDeadline: new Date(fillDeadline * 1000),
       quoteTimestamp: new Date(quoteTimestamp * 1000),
       exclusivityDeadline: exclusivityDeadlineDate,
