@@ -30,12 +30,30 @@ import {
   RequestedSpeedUpV3DepositEvent,
 } from "../../../web3/model";
 import SwapAndBridgeAbi from "../../../web3/services/abi/SwapAndBridge.json";
+import WethMainnetAbi from "../../../web3/services/abi/WETH_1.json";
+import WethOptimismAbi from "../../../web3/services/abi/WETH_10.json";
+import WethArbitrumAbi from "../../../web3/services/abi/WETH_42161.json";
+import WethLineaAbi from "../../../web3/services/abi/WETH_59144.json";
+import WethBaseAbi from "../../../web3/services/abi/WETH_8453.json";
 import { SwapBeforeBridgeEvent } from "../../../web3/model/swap-and-bridge-events";
+import { ChainIds } from "../../../web3/model/ChainId";
+import {
+  WethDepositEvent,
+  WethDepositEventBase,
+  WethDepositEventLinea,
+  WethDepositEventOptimism,
+  WethTransferEventArbitrum,
+} from "../../../web3/model/weth-events";
 import { AppConfig } from "../../../configuration/configuration.service";
 import { splitBlockRanges } from "../../utils";
 import { AcrossContractsVersion } from "../../../web3/model/across-version";
 
 const SPOKE_POOL_VERIFIER_CONTRACT_ADDRESS = "0x269727F088F16E1Aea52Cf5a97B1CD41DAA3f02D";
+type EnrichedDepositEvent = {
+  depositEvent: FundsDepositedV3Event;
+  swapEvent?: SwapBeforeBridgeEvent;
+  wethEvent?: any;
+};
 
 @Processor(ScraperQueue.BlocksEvents)
 export class BlocksEventsConsumer {
@@ -204,38 +222,24 @@ export class BlocksEventsConsumer {
     const depositEventsByTxHash = typedEvents.reduce((acc, event) => {
       acc[event.transactionHash] = [...(acc[event.transactionHash] || []), event];
       return acc;
-    }, {} as Record<string, FundsDepositedV3Event[]>);
-    const swapEventsByTxHash: Record<string, SwapBeforeBridgeEvent[]> = {};
+    }, {} as { [txHash: string]: FundsDepositedV3Event[] });
+    const swapEventsByTxHash = await this.extractSwapEvents(depositEventsByTxHash, chainId);
+    const wethEventsByTxHash = await this.extractWethEvents(depositEventsByTxHash, chainId);
+    const matchedEvents = this.matchDepositEventsWithSwapEvents(
+      depositEventsByTxHash,
+      swapEventsByTxHash,
+      wethEventsByTxHash,
+      chainId,
+    );
+    await this.saveDepositEvents(chainId, matchedEvents);
+  }
 
-    for (const transactionHash of Object.keys(depositEventsByTxHash)) {
-      const txReceipt = await this.providers.getCachedTransactionReceipt(chainId, transactionHash);
-      const swapBeforeBridgeEvents = this.providers.parseTransactionReceiptLogs(
-        txReceipt,
-        "SwapBeforeBridge",
-        SwapAndBridgeAbi,
-      ) as unknown as SwapBeforeBridgeEvent[];
-      swapEventsByTxHash[transactionHash] = swapBeforeBridgeEvents;
-    }
-
-    for (const transactionHash of Object.keys(depositEventsByTxHash)) {
-      const pairs: [FundsDepositedV3Event, SwapBeforeBridgeEvent | undefined][] = [];
-      const depositEvents = depositEventsByTxHash[transactionHash].sort((d1, d2) => d1.logIndex - d2.logIndex);
-      const swapEvents = swapEventsByTxHash[transactionHash].sort((s1, s2) => s1.logIndex - s2.logIndex);
-
-      for (const depositEvent of depositEvents) {
-        const swapEventIndex = swapEvents.findIndex((e) => e.logIndex < depositEvent.logIndex);
-
-        if (swapEventIndex >= 0) {
-          pairs.push([depositEvent, swapEvents[swapEventIndex]]);
-          swapEvents.splice(swapEventIndex, 1);
-        } else {
-          pairs.push([depositEvent, undefined]);
-        }
-      }
-
-      for (const [depositEvent, swapEvent] of pairs) {
+  async saveDepositEvents(chainId: number, events: { [txHash: string]: EnrichedDepositEvent[] }) {
+    for (const txHash of Object.keys(events)) {
+      for (const matchedEvent of events[txHash]) {
         try {
-          const deposit = await this.fromFundsDepositedV3EventToDeposit(chainId, depositEvent, swapEvent);
+          const { depositEvent, swapEvent, wethEvent } = matchedEvent;
+          const deposit = await this.fromFundsDepositedV3EventToDeposit(chainId, depositEvent, swapEvent, wethEvent);
           const result = await this.depositRepository.insert(deposit);
           await this.scraperQueuesService.publishMessage<BlockNumberQueueMessage>(ScraperQueue.BlockNumber, {
             depositId: result.identifiers[0].id,
@@ -250,6 +254,178 @@ export class BlocksEventsConsumer {
         }
       }
     }
+  }
+
+  public matchDepositEventsWithSwapEvents(
+    depositEventsByTxHash: { [txHash: string]: FundsDepositedV3Event[] },
+    swapEventsByTxHash: { [txHash: string]: SwapBeforeBridgeEvent[] },
+    wethEventsByTxHash: { [txHash: string]: any[] },
+    chainId: number,
+  ) {
+    const events: { [txHash: string]: EnrichedDepositEvent[] } = {};
+
+    for (const transactionHash of Object.keys(depositEventsByTxHash)) {
+      const depositEvents = depositEventsByTxHash[transactionHash].sort((d1, d2) => d1.logIndex - d2.logIndex);
+      const swapEvents = swapEventsByTxHash[transactionHash].sort((s1, s2) => s1.logIndex - s2.logIndex);
+      const wethEvents = wethEventsByTxHash[transactionHash].sort((s1, s2) => s1.logIndex - s2.logIndex);
+
+      for (const depositEvent of depositEvents) {
+        const spokePoolAddresses = this.appConfig.values.web3.spokePoolContracts[chainId].map((sp) => sp.address);
+        const wethEventIndex = wethEvents.findIndex((e) => {
+          if (chainId === ChainIds.mainnet) {
+            const typedEvent = e as WethDepositEvent;
+            return (
+              e.logIndex < depositEvent.logIndex &&
+              typedEvent.args.wad.eq(depositEvent.args.inputAmount) &&
+              spokePoolAddresses.includes(typedEvent.args.dst)
+            );
+          } else if (chainId === ChainIds.optimism) {
+            const typedEvent = e as WethDepositEventOptimism;
+            return (
+              e.logIndex < depositEvent.logIndex &&
+              typedEvent.args.wad.eq(depositEvent.args.inputAmount) &&
+              spokePoolAddresses.includes(typedEvent.args.dst)
+            );
+          } else if (chainId === ChainIds.arbitrum) {
+            const typedEvent = e as WethTransferEventArbitrum;
+            return (
+              e.logIndex < depositEvent.logIndex &&
+              typedEvent.args.value.eq(depositEvent.args.inputAmount) &&
+              spokePoolAddresses.includes(typedEvent.args.to)
+            );
+          } else if (chainId === ChainIds.linea) {
+            const typedEvent = e as WethDepositEventLinea;
+            return (
+              e.logIndex < depositEvent.logIndex &&
+              typedEvent.args.wad.eq(depositEvent.args.inputAmount) &&
+              spokePoolAddresses.includes(typedEvent.args.dst)
+            );
+          } else if (chainId === ChainIds.base) {
+            const typedEvent = e as WethDepositEventBase;
+            return (
+              e.logIndex < depositEvent.logIndex &&
+              typedEvent.args.wad.eq(depositEvent.args.inputAmount) &&
+              spokePoolAddresses.includes(typedEvent.args.dst)
+            );
+          } else {
+            throw new Error(`Unkown match criteria for weth event on chainId ${chainId}`);
+          }
+        });
+
+        const swapEventIndex = swapEvents.findIndex((e) => e.logIndex < depositEvent.logIndex);
+        events[transactionHash] = [
+          ...(events[transactionHash] || []),
+          {
+            depositEvent,
+            swapEvent: swapEventIndex >= 0 ? swapEvents[swapEventIndex] : undefined,
+            wethEvent: wethEventIndex >= 0 ? wethEvents[wethEventIndex] : undefined,
+          },
+        ];
+
+        if (wethEventIndex >= 0) {
+          wethEvents.splice(wethEventIndex, 1);
+        }
+
+        if (swapEventIndex >= 0) {
+          swapEvents.splice(swapEventIndex, 1);
+        }
+      }
+    }
+
+    return events;
+  }
+
+  private async extractSwapEvents(
+    depositEventsByTxHash: { [txHash: string]: FundsDepositedV3Event[] },
+    chainId: number,
+  ) {
+    const swapEventsByTxHash: { [txHash: string]: SwapBeforeBridgeEvent[] } = {};
+
+    for (const transactionHash of Object.keys(depositEventsByTxHash)) {
+      const txReceipt = await this.providers.getCachedTransactionReceipt(chainId, transactionHash);
+      const swapBeforeBridgeEvents = this.providers.parseTransactionReceiptLogs(
+        txReceipt,
+        "SwapBeforeBridge",
+        SwapAndBridgeAbi,
+      ) as unknown as SwapBeforeBridgeEvent[];
+      swapEventsByTxHash[transactionHash] = swapBeforeBridgeEvents;
+    }
+    return swapEventsByTxHash;
+  }
+
+  private async extractWethEvents(
+    depositEventsByTxHash: { [txHash: string]: FundsDepositedV3Event[] },
+    chainId: number,
+  ) {
+    const wethEventsByTxHash: { [txHash: string]: any[] } = {};
+    const supportedChainIds = [ChainIds.mainnet, ChainIds.optimism, ChainIds.arbitrum, ChainIds.linea, ChainIds.base];
+
+    if (!supportedChainIds.includes(chainId)) {
+      for (const transactionHash of Object.keys(depositEventsByTxHash)) {
+        wethEventsByTxHash[transactionHash] = [];
+      }
+      return wethEventsByTxHash;
+    }
+
+    const eventName = this.getWethEventNameByChainId(chainId);
+    const abi = this.getWethContractAbiByChainId(chainId);
+
+    for (const transactionHash of Object.keys(depositEventsByTxHash)) {
+      const txReceipt = await this.providers.getCachedTransactionReceipt(chainId, transactionHash);
+      const wethEvents = this.providers.parseTransactionReceiptLogs(txReceipt, eventName, abi) as any;
+      wethEventsByTxHash[transactionHash] = wethEvents;
+    }
+
+    return wethEventsByTxHash;
+  }
+
+  private getWethContractAbiByChainId(chainId: number) {
+    let abi = undefined;
+    switch (chainId) {
+      case ChainIds.mainnet:
+        abi = WethMainnetAbi;
+        break;
+      case ChainIds.optimism:
+        abi = WethOptimismAbi;
+        break;
+      case ChainIds.arbitrum:
+        abi = WethArbitrumAbi;
+        break;
+      case ChainIds.linea:
+        abi = WethLineaAbi;
+        break;
+      case ChainIds.base:
+        abi = WethBaseAbi;
+        break;
+      default:
+        throw new Error(`Unkown weth event name for chainId ${chainId}`);
+    }
+    return abi;
+  }
+
+  private getWethEventNameByChainId(chainId: number) {
+    let eventName = "";
+
+    switch (chainId) {
+      case ChainIds.mainnet:
+        eventName = "Deposit";
+        break;
+      case ChainIds.optimism:
+        eventName = "Deposit";
+        break;
+      case ChainIds.arbitrum:
+        eventName = "Transfer";
+        break;
+      case ChainIds.linea:
+        eventName = "Deposit";
+        break;
+      case ChainIds.base:
+        eventName = "Deposit";
+        break;
+      default:
+        throw new Error(`Unkown weth event name for chainId ${chainId}`);
+    }
+    return eventName;
   }
 
   private async processFillEvents(chainId: number, events: Event[]) {
@@ -400,6 +576,7 @@ export class BlocksEventsConsumer {
     chainId: number,
     depositEvent: FundsDepositedV3Event,
     swapEvent?: SwapBeforeBridgeEvent,
+    wethEvent?: any,
   ) {
     const { transactionHash, blockNumber } = depositEvent;
     const {
@@ -420,7 +597,6 @@ export class BlocksEventsConsumer {
     const wei = BigNumber.from(10).pow(18);
     const feePct = inputAmount.eq(0) ? BigNumber.from(0) : wei.sub(outputAmount.mul(wei).div(inputAmount));
     const txReceipt = await this.providers.getCachedTransactionReceipt(chainId, transactionHash);
-    const swapToken = swapEvent ? await this.providers.getCachedToken(chainId, swapEvent.args.swapToken) : undefined;
     let trueDepositor = depositor;
     let exclusivityDeadlineDate = undefined;
 
@@ -428,6 +604,7 @@ export class BlocksEventsConsumer {
     if (depositor === SPOKE_POOL_VERIFIER_CONTRACT_ADDRESS) {
       trueDepositor = txReceipt.from;
     }
+    const swapTokenValues = await this.extractSwapTokenValues(chainId, swapEvent, wethEvent);
 
     return this.depositRepository.create({
       depositId,
@@ -454,10 +631,60 @@ export class BlocksEventsConsumer {
       relayer,
       message,
       // swap event properties
-      swapTokenId: swapToken?.id,
-      swapTokenAmount: swapEvent?.args.swapTokenAmount.toString(),
-      swapTokenAddress: swapEvent?.args.swapToken,
+      ...swapTokenValues,
     });
+  }
+
+  private async extractSwapTokenValues(chainId: number, swapEvent: SwapBeforeBridgeEvent, wethEvent: any) {
+    let swapTokenValues = {
+      swapTokenId: undefined,
+      swapTokenAmount: undefined,
+      swapTokenAddress: undefined,
+    };
+
+    if (swapEvent) {
+      const swapToken = await this.providers.getCachedToken(chainId, swapEvent.args.swapToken);
+      swapTokenValues = {
+        swapTokenId: swapToken.id,
+        swapTokenAmount: swapEvent.args.swapTokenAmount.toString(),
+        swapTokenAddress: swapEvent.args.swapToken,
+      };
+    } else if (wethEvent) {
+      if (chainId === ChainIds.mainnet) {
+        swapTokenValues = {
+          swapTokenId: undefined,
+          swapTokenAmount: (wethEvent as WethDepositEvent).args.wad.toString(),
+          swapTokenAddress: "native",
+        };
+      } else if (chainId === ChainIds.optimism) {
+        swapTokenValues = {
+          swapTokenId: undefined,
+          swapTokenAmount: (wethEvent as WethDepositEventOptimism).args.wad.toString(),
+          swapTokenAddress: "native",
+        };
+      } else if (chainId === ChainIds.arbitrum) {
+        swapTokenValues = {
+          swapTokenId: undefined,
+          swapTokenAmount: (wethEvent as WethTransferEventArbitrum).args.value.toString(),
+          swapTokenAddress: "native",
+        };
+      } else if (chainId === ChainIds.linea) {
+        swapTokenValues = {
+          swapTokenId: undefined,
+          swapTokenAmount: (wethEvent as WethDepositEventLinea).args.wad.toString(),
+          swapTokenAddress: "native",
+        };
+      } else if (chainId === ChainIds.base) {
+        swapTokenValues = {
+          swapTokenId: undefined,
+          swapTokenAmount: (wethEvent as WethDepositEventBase).args.wad.toString(),
+          swapTokenAddress: "native",
+        };
+      } else {
+        throw new Error(`Unkown swap token values for chainId ${chainId}`);
+      }
+    }
+    return swapTokenValues;
   }
 
   // private async insertRawDepositEvent(chainId: number, event: Event) {
