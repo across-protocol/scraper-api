@@ -9,6 +9,8 @@ import { DepositFixture } from "./adapter/db/deposit-fixture";
 import { EtlController } from "./entry-point/http/etl-controller";
 import { RewardModule } from "../rewards/module";
 import { OpReward } from "../rewards/model/op-reward.entity";
+import { SetPoolRebalanceRouteEvent } from "../web3/model/SetPoolRebalanceRouteEvent.entity";
+import { Block } from "../web3/model/block.entity";
 
 @Module({})
 export class DepositModule {
@@ -18,7 +20,16 @@ export class DepositModule {
       providers: [DepositService, DepositFixture],
       exports: [DepositService],
       controllers: [],
-      imports: [TypeOrmModule.forFeature([Deposit, OpReward]), AppConfigModule, RewardModule.forRoot(moduleOptions)],
+      imports: [
+        TypeOrmModule.forFeature([
+          Block,
+          Deposit,
+          OpReward,
+          SetPoolRebalanceRouteEvent,
+        ]),
+        AppConfigModule,
+        RewardModule.forRoot(moduleOptions),
+      ],
     };
 
     if (moduleOptions.runModes.includes(RunMode.Normal) || moduleOptions.runModes.includes(RunMode.Test)) {
