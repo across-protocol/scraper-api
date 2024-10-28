@@ -1,7 +1,7 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { DataSource } from "typeorm";
 import { ethers } from "ethers";
-import { Cron, CronExpression } from "@nestjs/schedule";
+import { CronExpression } from "@nestjs/schedule";
 
 import { Deposit } from "../../deposit/model/deposit.entity";
 import { ScraperQueuesService } from "./ScraperQueuesService";
@@ -11,6 +11,7 @@ import {
   TokenDetailsQueueMessage,
 } from "../adapter/messaging";
 import { DepositService } from "../../deposit/service";
+import { EnhancedCron } from "../../../utils";
 
 @Injectable()
 export class FixOutputTokenAddressCron {
@@ -23,7 +24,7 @@ export class FixOutputTokenAddressCron {
     private depositService: DepositService,
   ) {}
 
-  @Cron(CronExpression.EVERY_MINUTE)
+  @EnhancedCron(CronExpression.EVERY_5_SECONDS)
   async run() {
     try {
       if (this.lock) {
@@ -42,7 +43,7 @@ export class FixOutputTokenAddressCron {
   private async fixOutputTokenAddress() {
     const query = this.dataSource
       .createQueryBuilder()
-      .select()
+      .select("d")
       .from(Deposit, "d")
       .where("d.outputTokenAddress = :address", { address: ethers.constants.AddressZero })
       .andWhere("d.depositDate > '2024-01-01'");
