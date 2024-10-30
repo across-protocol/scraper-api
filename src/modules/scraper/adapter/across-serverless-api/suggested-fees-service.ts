@@ -5,7 +5,8 @@ import { AppConfig } from "../../../configuration/configuration.service";
 
 type SuggestedFeesApiParams = {
   amount: string;
-  token: string;
+  inputToken: string;
+  outputToken: string;
   destinationChainId: number;
   originChainId: number;
 };

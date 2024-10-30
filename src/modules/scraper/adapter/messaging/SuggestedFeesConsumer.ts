@@ -49,7 +49,8 @@ export class SuggestedFeesConsumer {
       // For deposits that were made tolerable hours ago, we assume somewhat constant suggested fees.
       const suggestedFeesFromApi = await this.suggestedFeesService.getFromApi({
         amount: deposit.amount,
-        token: deposit.tokenAddr,
+        inputToken: deposit.tokenAddr,
+        outputToken: deposit.outputTokenAddress,
         destinationChainId: deposit.destinationChainId,
         originChainId: deposit.sourceChainId,
       });
