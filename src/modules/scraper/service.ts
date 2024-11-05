@@ -221,6 +221,10 @@ export class ScraperService {
       return 120;
     }
 
+    if (chainId === ChainIds.alephZero) {
+      return 120;
+    }
+
     if (chainId === ChainIds.zkSyncMainnet) {
       return 30;
     }
