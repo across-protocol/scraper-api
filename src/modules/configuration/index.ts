@@ -409,8 +409,8 @@ export const configValues = () => ({
       ],
       [ChainIds.alephZero]: [
         {
-          address: "0x09aea4b2242abC8bb4BB78D537A67a245A7bEC64",
-          startBlockNumber: 4112376,
+          address: "0x13fDac9F9b4777705db45291bbFF3c972c6d1d97",
+          startBlockNumber: 4240318,
           abi: JSON.stringify(SpokePoolV3Abi),
           acrossVersion: AcrossContractsVersion.V3,
           firstDepositId: 0,
