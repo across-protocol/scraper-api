@@ -93,7 +93,7 @@ export class AirdropController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @UseInterceptors(
     FileInterceptor("file", {
-      limits: { fileSize: 200 * 1024 * 1024 },
+      limits: { fileSize: 250 * 1024 * 1024 },
       dest: "./uploads",
     }),
   )
