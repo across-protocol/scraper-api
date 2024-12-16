@@ -225,14 +225,13 @@ export class DepositService {
     query = query.take(limit);
     query = query.skip(offset);
 
-    const [userDeposits, total] = await query.getManyAndCount();
+    const userDeposits = await query.getMany();
 
     return {
       deposits: userDeposits.map(formatDeposit),
       pagination: {
         limit,
         offset,
-        total,
       },
     };
   }
