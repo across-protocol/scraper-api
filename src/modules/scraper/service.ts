@@ -245,6 +245,10 @@ export class ScraperService {
       return 15;
     }
 
+    if (chainId === ChainIds.blast) {
+      return 15;
+    }
+
     return 10;
   }
 
