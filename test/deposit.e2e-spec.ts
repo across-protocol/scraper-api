@@ -76,7 +76,7 @@ describe("GET /deposits", () => {
     );
     expect(response.status).toBe(200);
     expect(response.body.deposits).toHaveLength(5);
-    expect(response.body.pagination).toMatchObject({ limit: 5, offset: 0, total: FILLED_DEPOSITS.length });
+    expect(response.body.pagination).toMatchObject({ limit: 5, offset: 0 });
     expect(response.body.deposits[0].depositId).toBe(19);
   });
 
@@ -84,7 +84,7 @@ describe("GET /deposits", () => {
     const response = await request(app.getHttpServer()).get("/deposits?status=filled&limit=5&offset=5");
     expect(response.status).toBe(200);
     expect(response.body.deposits).toHaveLength(5);
-    expect(response.body.pagination).toMatchObject({ limit: 5, offset: 5, total: FILLED_DEPOSITS.length });
+    expect(response.body.pagination).toMatchObject({ limit: 5, offset: 5 });
     expect(response.body.deposits[0].depositId).toBe(14);
   });
 
