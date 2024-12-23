@@ -249,6 +249,10 @@ export class ScraperService {
       return 15;
     }
 
+    if (chainId === ChainIds.ink) {
+      return 15;
+    }
+
     return 10;
   }
 

@@ -34,6 +34,7 @@ export const ChainIds = {
   zora: 7777777,
   worldChain: 480,
   alephZero: 41455,
+  ink: 57073,
 };
 
 export const ChainIdToName = Object.entries(ChainIds).reduce((idToName, entry) => {
