@@ -19,7 +19,7 @@ import { ReferralRewardsWindowJobResult } from "../model/RewardsWindowJobResult.
 
 const OP_REBATE_RATE = 0.95;
 const REWARDS_PERCENTAGE_LIMIT = 0.0025; // 25 bps
-const ELIGIBLE_OP_REWARDS_CHAIN_IDS = [
+export const ELIGIBLE_OP_REWARDS_CHAIN_IDS = [
   ChainIds.base,
   ChainIds.lisk,
   ChainIds.mode,

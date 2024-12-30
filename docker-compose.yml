@@ -1,5 +1,9 @@
 version: "3.7"
 
+networks:
+  test-network:
+    external: true
+
 services:
   backend:
     container_name: scraper-api-backend
@@ -18,6 +22,8 @@ services:
     depends_on:
       - postgres
       - redis
+    networks:
+      - test-network
   postgres:
     container_name: scraper-api-postgres
     image: postgres:12.2
@@ -27,16 +33,19 @@ services:
       POSTGRES_PASSWORD: ${DB_PASSWORD}
       POSTGRES_DB: ${DB_DATABASE_NAME}
       PG_DATA: /var/lib/postgresql/data
+    command: ["postgres", "-c", "log_statement=all"]
     ports:
-      - 5432:5432
+      - 5433:5432
     volumes:
       - scraper-api-pgdata:/var/lib/postgresql/data
+    networks:
+      - test-network
   redis:
     container_name: scraper-api-redis
     image: redis:6.2-alpine
     restart: always
     ports:
-      - 6379:6379
+      - 6378:6379
     command: ["redis-server", "--appendonly", "yes"]
     environment:
       REDIS_PASSWORD: ${REDIS_PASSWORD}

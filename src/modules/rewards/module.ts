@@ -22,19 +22,24 @@ import { RewardsWindowJobFixture } from "./adapter/db/rewards-window-job-fixture
 import { ArbRebateService } from "./services/arb-rebate-service";
 import { ArbReward } from "./model/arb-reward.entity";
 import { ArbRewardFixture } from "./adapter/db/arb-reward-fixture";
+import { CopyIndexerDepositsCron } from "./services/CopyIndexerDepositsCron";
+import { RewardedDeposit } from "./model/RewardedDeposit.entity";
 
 @Module({})
 export class RewardModule {
   static forRoot(moduleOptions: ModuleOptions): DynamicModule {
+    const services = [RewardService, OpRebateService, ReferralService, ReferralRewardsService, ArbRebateService];
+    const crons = [CopyIndexerDepositsCron];
     const module: DynamicModule = {
       module: RewardModule,
       controllers: [RewardController],
-      providers: [RewardService, OpRebateService, ReferralService, ReferralRewardsService, ArbRebateService],
+      providers: [...services, ...crons],
       imports: [
         TypeOrmModule.forFeature([
           Deposit,
           OpReward,
           DepositsMv,
+          RewardedDeposit,
           RewardsWindowJob,
           ReferralRewardsWindowJobResult,
           ArbReward,
