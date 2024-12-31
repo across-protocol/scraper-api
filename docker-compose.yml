@@ -51,6 +51,8 @@ services:
       REDIS_PASSWORD: ${REDIS_PASSWORD}
     volumes:
       - scraper-api-redis-volume:/data
+    networks:
+      - test-network
 volumes:
   backend-node-modules:
   scraper-api-pgdata:

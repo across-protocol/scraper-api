@@ -62,11 +62,15 @@ import { Block } from "../web3/model/block.entity";
 import { ArbReward } from "../rewards/model/arb-reward.entity";
 import { HubPoolBlocksEventsConsumer } from "./adapter/messaging/HubPoolBlocksEventsConsumer";
 import { HubPoolProcessedBlock } from "./model/HubPoolProcessedBlock.entity";
+import { CopyIndexerDepositsCron } from "./service/CopyIndexerDepositsCron";
+import { OpRewardV2 } from "../rewards/model/OpRewardV2.entity";
+import { OpRebateRewardConsumerV2 } from "./adapter/messaging/OpRebateRewardConsumerV2";
 
 @Module({})
 export class ScraperModule {
   static forRoot(moduleOptions: ModuleOptions): DynamicModule {
     const crons = [
+      CopyIndexerDepositsCron,
       QueuesMonitoringCron,
       DepositsGapDetectionCron,
       CheckMissedFillEventsCron,
@@ -101,6 +105,7 @@ export class ScraperModule {
       TrackFillEventConsumer,
       FeeBreakdownConsumer,
       OpRebateRewardConsumer,
+      OpRebateRewardConsumerV2,
       ArbRebateRewardConsumer,
       MerkleDistributorClaimConsumer,
       FindMissedFillEventConsumer,
@@ -122,6 +127,7 @@ export class ScraperModule {
           FilledRelayEv,
           RequestedSpeedUpDepositEv,
           OpReward,
+          OpRewardV2,
           ArbReward,
           QueueJobCount,
           MerkleDistributorClaim,
@@ -231,6 +237,9 @@ export class ScraperModule {
         }),
         BullModule.registerQueue({
           name: ScraperQueue.HubPoolBlocksEvents,
+        }),
+        BullModule.registerQueue({
+          name: ScraperQueue.OpRebateRewardV2,
         }),
       ],
       exports: [ScraperQueuesService],

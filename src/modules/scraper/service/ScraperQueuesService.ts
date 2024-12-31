@@ -31,6 +31,7 @@ export class ScraperQueuesService {
     @InjectQueue(ScraperQueue.MerkleDistributorClaim) private merkleDistributorClaimQueue: Queue,
     @InjectQueue(ScraperQueue.FindMissedFillEvent) private findMissedFillEventQueue: Queue,
     @InjectQueue(ScraperQueue.HubPoolBlocksEvents) private hubPoolBlocksEventsQueue: Queue,
+    @InjectQueue(ScraperQueue.OpRebateRewardV2) private opRebateRewardsV2Queue: Queue,
   ) {
     this.queuesMap = {
       [ScraperQueue.BlocksEvents]: this.blocksEventsQueue,
@@ -54,6 +55,7 @@ export class ScraperQueuesService {
       [ScraperQueue.MerkleDistributorClaim]: this.merkleDistributorClaimQueue,
       [ScraperQueue.FindMissedFillEvent]: this.findMissedFillEventQueue,
       [ScraperQueue.HubPoolBlocksEvents]: this.hubPoolBlocksEventsQueue,
+      [ScraperQueue.OpRebateRewardV2]: this.opRebateRewardsV2Queue,
     };
   }
 
