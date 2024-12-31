@@ -98,9 +98,8 @@ export class CopyIndexerDepositsCron {
     performance.mark("query-end");
     performance.measure("query", "query-start", "query-end");
 
-    const portionDeposits = newFilledDeposits.slice(0,10);
     performance.mark("insert-start");
-    const insertResults = await Promise.all(splitArrayInChunks(portionDeposits, 2).map(deps=> this.dataSource
+    const insertResults = await Promise.all(splitArrayInChunks(newFilledDeposits, 2).map(deps=> this.dataSource
       .getRepository(RewardedDeposit)
       .createQueryBuilder()
       .insert()
