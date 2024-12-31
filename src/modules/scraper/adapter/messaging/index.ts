@@ -20,7 +20,13 @@ export enum ScraperQueue {
   MerkleDistributorClaim = "MerkleDistributorClaim",
   FindMissedFillEvent = "FindMissedFillEvent",
   HubPoolBlocksEvents = "HubPoolBlocksEvents",
+  OpRebateRewardV2 = "OpRebateRewardV2",
 }
+
+export type OpRebateRewardV2Message = {
+  depositId: number;
+  originChainId: number;
+};
 
 export type BlocksEventsQueueMessage = {
   chainId: number;

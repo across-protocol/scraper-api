@@ -1,26 +1,28 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
-import { DataSource, In, Repository } from "typeorm";
+import { DataSource, Repository } from "typeorm";
 import BigNumber from "bignumber.js";
 import { ethers } from "ethers";
 import { DateTime } from "luxon";
 
-import { Deposit, PartialDeposit } from "../../deposit/model/deposit.entity";
+import { RewardedDeposit } from "../model/RewardedDeposit.entity";
 import { AppConfig } from "../../configuration/configuration.service";
 import { EthProvidersService } from "../../web3/services/EthProvidersService";
 import { ChainIds } from "../../web3/model/ChainId";
 import { MarketPriceService } from "../../market-price/services/service";
 import { assertValidAddress, splitArrayInChunks } from "../../../utils";
 
-import { OpReward } from "../model/op-reward.entity";
-import { GetRewardsQuery } from "../entrypoints/http/dto";
+import { OpRewardV2 } from "../model/OpRewardV2.entity";
+// import { GetRewardsQuery } from "../entrypoints/http/dto";
 import { WindowAlreadySetException } from "./exceptions";
 import { ReferralRewardsWindowJobResult } from "../model/RewardsWindowJobResult.entity";
+import { Token } from "src/modules/web3/model/token.entity";
 
 const OP_REBATE_RATE = 0.95;
 const REWARDS_PERCENTAGE_LIMIT = 0.0025; // 25 bps
 export const ELIGIBLE_OP_REWARDS_CHAIN_IDS = [
   ChainIds.base,
+  ChainIds.ink,
   ChainIds.lisk,
   ChainIds.mode,
   ChainIds.optimism,
@@ -29,26 +31,13 @@ export const ELIGIBLE_OP_REWARDS_CHAIN_IDS = [
   ChainIds.zora,
 ];
 
-const partialDepositKeys: (keyof Deposit)[] = [
-  "id",
-  "amount",
-  "sourceChainId",
-  "destinationChainId",
-  "status",
-  "depositTxHash",
-  "depositDate",
-  "feeBreakdown",
-];
-
-const requiredDepositRelations: (keyof Deposit)[] = ["token", "price", "outputToken", "outputTokenPrice"];
-
 @Injectable()
-export class OpRebateService {
-  private logger = new Logger(OpRebateService.name);
+export class OpRebateServiceV2 {
+  private logger = new Logger(OpRebateServiceV2.name);
 
   constructor(
-    @InjectRepository(Deposit) readonly depositRepository: Repository<Deposit>,
-    @InjectRepository(OpReward) readonly rewardRepository: Repository<OpReward>,
+    @InjectRepository(RewardedDeposit) readonly depositRepository: Repository<RewardedDeposit>,
+    @InjectRepository(OpRewardV2) readonly rewardRepository: Repository<OpRewardV2>,
     private marketPriceService: MarketPriceService,
     private ethProvidersService: EthProvidersService,
     private appConfig: AppConfig,
@@ -98,33 +87,34 @@ export class OpRebateService {
     };
   }
 
-  public async getOpRebateRewards(query: GetRewardsQuery) {
-    const limit = parseInt(query.limit ?? "10");
-    const offset = parseInt(query.offset ?? "0");
-    const userAddress = assertValidAddress(query.userAddress);
+  // public async getOpRebateRewards(query: GetRewardsQuery) {
+  //   const limit = parseInt(query.limit ?? "10");
+  //   const offset = parseInt(query.offset ?? "0");
+  //   const userAddress = assertValidAddress(query.userAddress);
 
-    const baseQuery = this.buildBaseQuery(this.rewardRepository.createQueryBuilder("r"), userAddress);
+  //   const baseQuery = this.buildBaseQuery(this.rewardRepository.createQueryBuilder("r"), userAddress);
 
-    const rewardsQuery = baseQuery.orderBy("r.depositDate", "DESC").limit(limit).offset(offset);
-    const [rewards, total] = await rewardsQuery.getManyAndCount();
+  //   const rewardsQuery = baseQuery.orderBy("r.depositDate", "DESC").limit(limit).offset(offset);
+  //   const [rewards, total] = await rewardsQuery.getManyAndCount();
+     
+  //   // JOIN instead of query deposits separately 
+  //   const depositPrimaryKeys = rewards.map((reward) => reward.depositPrimaryKey);
+  //   const deposits = await this.depositRepository.find({
+  //     where: { id: In(depositPrimaryKeys) },
+  //   });
 
-    const depositPrimaryKeys = rewards.map((reward) => reward.depositPrimaryKey);
-    const deposits = await this.depositRepository.find({
-      where: { id: In(depositPrimaryKeys) },
-    });
-
-    return {
-      rewards: rewards.map((reward) => ({
-        ...reward,
-        deposit: deposits.find((deposit) => deposit.id === reward.depositPrimaryKey),
-      })),
-      pagination: {
-        limit,
-        offset,
-        total,
-      },
-    };
-  }
+  //   return {
+  //     rewards: rewards.map((reward) => ({
+  //       ...reward,
+  //       deposit: deposits.find((deposit) => deposit.id === reward.depositPrimaryKey),
+  //     })),
+  //     pagination: {
+  //       limit,
+  //       offset,
+  //       total,
+  //     },
+  //   };
+  // }
 
   public async getOpRebateRewardsForDepositPrimaryKeys(depositPrimaryKeys: number[]) {
     if (depositPrimaryKeys.length === 0) {
@@ -138,45 +128,42 @@ export class OpRebateService {
     return rewards;
   }
 
-  public async createOpRebatesForDeposit(depositPrimaryKey: number) {
+  public async createOpRebatesForDeposit(depositId: number, originChainId: number) {
     if (!this.appConfig.values.rewardPrograms["op-rebates"].enabled) {
       this.logger.verbose(`OP rebate rewards are disabled. Skipping...`);
       return;
     }
 
-    const deposit: PartialDeposit = await this.depositRepository.findOne({
-      where: { id: depositPrimaryKey },
-      select: partialDepositKeys,
-      relations: requiredDepositRelations,
+    const deposit: RewardedDeposit = await this.depositRepository.findOne({
+      where: { depositId, originChainId },
     });
 
-    if (!deposit || deposit.status === "pending") return;
+    if (!deposit || !deposit.fillTxHash) return;
     if (!this.isDepositEligibleForOpRewards(deposit)) return;
-    this.assertDepositKeys(deposit, [...partialDepositKeys, ...requiredDepositRelations]);
-    if (!deposit.feeBreakdown.totalBridgeFeeUsd) {
-      throw new Error(`Deposit with id ${depositPrimaryKey} is missing total bridge fee in USD`);
+    if (!deposit.totalBridgeFeeUsd) {
+      throw new Error(`Missing total bridge fee in USD (depositId: ${depositId}, originChainId: ${originChainId}).`);
     }
     if (!this.isDepositTimeAfterStart(deposit)) return;
     if (!this.isDepositTimeBeforeEnd(deposit)) return;
 
     // We use the `from` address of the deposit transaction as the reward receiver
     // to also take into accounts deposits routed through the SpokePoolVerifier contract.
-    const provider = this.ethProvidersService.getProvider(deposit.sourceChainId);
-    const depositTransaction = await provider.getTransaction(deposit.depositTxHash);
+    const provider = this.ethProvidersService.getProvider(deposit.originChainId);
+    const depositTransaction = await provider.getTransaction(deposit.depositTxHash); // This could also be part of the indexer data
     const rewardReceiver = depositTransaction.from;
 
     const { rewardToken, rewardsUsd, rewardsAmount } = await this.calcOpRebateRewards(deposit);
 
     let reward = await this.rewardRepository.findOne({
       where: {
-        depositPrimaryKey: depositPrimaryKey,
+        depositId, originChainId,
         recipient: rewardReceiver,
       },
     });
 
     if (!reward) {
       reward = this.rewardRepository.create({
-        depositPrimaryKey: depositPrimaryKey,
+        depositId, originChainId,
         recipient: rewardReceiver,
         depositDate: deposit.depositDate,
       });
@@ -184,9 +171,7 @@ export class OpRebateService {
 
     await this.rewardRepository.save({
       ...reward,
-      metadata: {
-        rate: OP_REBATE_RATE,
-      },
+      rate: OP_REBATE_RATE.toString(),
       amount: rewardsAmount.toString(),
       amountUsd: rewardsUsd,
       rewardTokenId: rewardToken.id,
@@ -198,7 +183,7 @@ export class OpRebateService {
       const opRewardsWithSameWindowIndex = await entityManager
         .createQueryBuilder()
         .select("r")
-        .from(OpReward, "r")
+        .from(OpRewardV2, "r")
         .where("r.windowIndex = :windowIndex", { windowIndex })
         .getOne();
 
@@ -208,7 +193,7 @@ export class OpRebateService {
 
       await entityManager
         .createQueryBuilder()
-        .update(OpReward)
+        .update(OpRewardV2)
         .set({ windowIndex })
         .where("windowIndex IS NULL")
         .andWhere("depositDate <= :maxDepositDate", { maxDepositDate })
@@ -216,7 +201,7 @@ export class OpRebateService {
       const rewards = await entityManager
         .createQueryBuilder()
         .select("r")
-        .from(OpReward, "r")
+        .from(OpRewardV2, "r")
         .where("r.windowIndex = :windowIndex", { windowIndex })
         .getMany();
       const { recipients, totalRewardsAmount } = this.aggregateOpRewards(rewards);
@@ -240,12 +225,12 @@ export class OpRebateService {
     });
   }
 
-  public aggregateOpRewards(rewards: OpReward[]) {
+  public aggregateOpRewards(rewards: OpRewardV2[]) {
     // Map an address to considered deposits for referral rewards
     const recipientOpRewardsMap = rewards.reduce((acc, r) => {
       acc[r.recipient] = [...(acc[r.recipient] || []), r];
       return acc;
-    }, {} as Record<string, OpReward[]>);
+    }, {} as Record<string, OpRewardV2[]>);
 
     let totalRewardsAmount: BigNumber = new BigNumber(0);
     const recipients: {
@@ -268,7 +253,7 @@ export class OpRebateService {
     return { totalRewardsAmount: totalRewardsAmount.toFixed(), recipients };
   }
 
-  public isDepositEligibleForOpRewards(deposit: Pick<Deposit, "destinationChainId">) {
+  public isDepositEligibleForOpRewards(deposit: Pick<RewardedDeposit, "destinationChainId">) {
     return ELIGIBLE_OP_REWARDS_CHAIN_IDS.includes(deposit.destinationChainId);
   }
 
@@ -276,9 +261,9 @@ export class OpRebateService {
    * PRIVATE METHODS
    */
 
-  private async calcOpRebateRewards(deposit: PartialDeposit) {
+  private async calcOpRebateRewards(deposit: RewardedDeposit) {
     // lp fee + relayer capital fee + relayer destination gas fee
-    const bridgeFeeUsd = new BigNumber(deposit.feeBreakdown.totalBridgeFeeUsd);
+    const bridgeFeeUsd = new BigNumber(deposit.totalBridgeFeeUsd);
     const rewardToken = await this.ethProvidersService.getCachedToken(
       this.appConfig.values.rewardPrograms["op-rebates"].rewardToken.chainId,
       this.appConfig.values.rewardPrograms["op-rebates"].rewardToken.address,
@@ -292,15 +277,15 @@ export class OpRebateService {
       };
     }
 
-    const inputTokenPrice = this.getInputTokenPrice(deposit);
-    const historicRewardTokenPrice = await this.marketPriceService.getCachedHistoricMarketPrice(
-      DateTime.fromJSDate(deposit.depositDate).minus({ days: 1 }).toJSDate(),
-      rewardToken.symbol.toLowerCase(),
-    );
+    const inputToken = await this.ethProvidersService.getCachedToken(deposit.originChainId, deposit.inputToken);
+    const outputToken = await this.ethProvidersService.getCachedToken(deposit.originChainId, deposit.outputToken);
+    
+    const inputTokenPrice = await this.getInputTokenPrice(deposit, inputToken, outputToken); // This could also be part of the indexer data
+    const historicRewardTokenPrice = await this.getTokenPrice(deposit.depositDate, rewardToken);
 
-    const inputAmountUsd = new BigNumber(deposit.amount)
+    const inputAmountUsd = new BigNumber(deposit.inputAmount)
       .multipliedBy(inputTokenPrice)
-      .dividedBy(new BigNumber(10).pow(deposit.token.decimals));
+      .dividedBy(new BigNumber(10).pow(inputToken.decimals));
     const cappedFeeForRewardsUsd = inputAmountUsd.multipliedBy(REWARDS_PERCENTAGE_LIMIT);
     const rewardsUsd = BigNumber.min(bridgeFeeUsd, cappedFeeForRewardsUsd).multipliedBy(OP_REBATE_RATE).toFixed();
     const rewardsAmount = ethers.utils.parseEther(
@@ -315,7 +300,7 @@ export class OpRebateService {
     };
   }
 
-  private isDepositTimeAfterStart(deposit: PartialDeposit) {
+  private isDepositTimeAfterStart(deposit: RewardedDeposit) {
     const start = this.appConfig.values.rewardPrograms["op-rebates"].startDate;
 
     // If no start time is set, then the program is active for any deposit
@@ -326,7 +311,7 @@ export class OpRebateService {
     return deposit.depositDate >= start;
   }
 
-  private isDepositTimeBeforeEnd(deposit: PartialDeposit) {
+  private isDepositTimeBeforeEnd(deposit: RewardedDeposit) {
     const end = this.appConfig.values.rewardPrograms["op-rebates"].endDate;
 
     // If no end time is set, then the program is active for any deposit
@@ -337,23 +322,23 @@ export class OpRebateService {
     return deposit.depositDate < end;
   }
 
-  private assertDepositKeys(deposit: PartialDeposit, requiredKeys: string[]) {
-    for (const key of requiredKeys) {
-      if (!deposit[key]) {
-        throw new Error(`Deposit with id ${deposit.id} is missing '${key}'`);
-      }
+  private async getInputTokenPrice(deposit: RewardedDeposit, inputToken: Token, outputToken: Token): Promise<string> {
+    if (
+      deposit.originChainId === ChainIds.blast &&
+      inputToken.symbol === "USDB" &&
+      outputToken.symbol === "DAI"
+    ) {
+      const outputTokenPrice = await this.getTokenPrice(deposit.depositDate, outputToken);
+       return outputTokenPrice.usd;
     }
+    const inputTokenPrice = await this.getTokenPrice(deposit.depositDate, inputToken);
+    return inputTokenPrice.usd;
   }
 
-  private getInputTokenPrice(deposit: PartialDeposit): string {
-    if (
-      deposit.sourceChainId === ChainIds.blast &&
-      deposit.token.symbol === "USDB" &&
-      deposit.outputToken.symbol === "DAI"
-    ) {
-      return deposit.outputTokenPrice.usd;
-    }
-    return deposit.price.usd;
+  private async getTokenPrice(depositDate: Date, token: Token){
+    return await this.marketPriceService.getCachedHistoricMarketPrice(
+      DateTime.fromJSDate(depositDate).minus({ days: 1 }).toJSDate(),
+      token.symbol.toLowerCase());
   }
 
   private buildBaseQuery(qb: ReturnType<typeof this.rewardRepository.createQueryBuilder>, recipientAddress: string) {
