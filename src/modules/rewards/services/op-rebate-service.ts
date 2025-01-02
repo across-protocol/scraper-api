@@ -27,6 +27,7 @@ const ELIGIBLE_OP_REWARDS_CHAIN_IDS = [
   ChainIds.redstone,
   ChainIds.worldChain,
   ChainIds.zora,
+  ChainIds.ink,
 ];
 
 const partialDepositKeys: (keyof Deposit)[] = [
