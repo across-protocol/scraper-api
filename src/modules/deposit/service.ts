@@ -93,7 +93,7 @@ export class DepositService {
         totalVolumeUsd: parseInt(totalVolumeResult[0]["totalVolumeUsd"]) + 264_950_594.44,
         avgFillTime: parseInt(avgFillTime[0]["avgFillTime"]),
       };
-      await this.cacheManager.set(DEPOSITS_STATS_CACHE_KEY, data, 60);
+      await this.cacheManager.set(DEPOSITS_STATS_CACHE_KEY, data, 60 * 30);
     }
     return data;
   }
