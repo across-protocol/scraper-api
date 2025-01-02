@@ -423,7 +423,7 @@ export const configValues = () => ({
           startBlockNumber: 1139240,
           abi: JSON.stringify(SpokePoolV3Abi),
           acrossVersion: AcrossContractsVersion.V3,
-          firstDepositId: 0,
+          firstDepositId: 1,
         },
       ],
     },
