@@ -32,6 +32,7 @@ import { ArbReward } from "../rewards/model/arb-reward.entity";
 import { FindMissedFillEventJob } from "../scraper/model/FindMissedFillEventJob.entity";
 import { HubPoolProcessedBlock } from "../scraper/model/HubPoolProcessedBlock.entity";
 import { SetPoolRebalanceRouteEvent } from "../web3/model/SetPoolRebalanceRouteEvent.entity";
+import { OpRewardsStats } from "../rewards/model/op-rewards-stats.entity";
 
 // TODO: Add db entities here
 const entities = [
@@ -66,6 +67,7 @@ const entities = [
   FindMissedFillEventJob,
   HubPoolProcessedBlock,
   SetPoolRebalanceRouteEvent,
+  OpRewardsStats,
 ];
 
 @Injectable()
