@@ -86,6 +86,7 @@ export const configValues = () => ({
       480: process.env.WEB3_NODE_URL_480,
       41455: process.env.WEB3_NODE_URL_41455,
       57073: process.env.WEB3_NODE_URL_57073,
+      1868: process.env.WEB3_NODE_URL_1868,
     },
     hubPoolContracts: {
       [ChainIds.mainnet]: {
