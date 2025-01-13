@@ -253,6 +253,10 @@ export class ScraperService {
       return 15;
     }
 
+    if (chainId === ChainIds.cher) {
+      return 15;
+    }
+
     return 10;
   }
 
