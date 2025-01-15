@@ -55,7 +55,6 @@ import { DepositGapCheck } from "./model/DepositGapCheck.entity";
 import { DepositGapCheckFixture } from "./adapter/db/DepositGapCheckFixture";
 import { DepositGapService } from "./service/DepositGapService";
 import { CheckMissedFillEventsCron } from "./service/CheckMissedFillEventsCron";
-import { FixOutputTokenAddressCron } from "./service/FixOutputTokenAddressCron";
 import { FindMissedFillEventConsumer } from "./adapter/messaging/FindMissedFillEventConsumer";
 import { FindMissedFillEventJob } from "./model/FindMissedFillEventJob.entity";
 import { Block } from "../web3/model/block.entity";
@@ -70,7 +69,6 @@ export class ScraperModule {
       QueuesMonitoringCron,
       DepositsGapDetectionCron,
       CheckMissedFillEventsCron,
-      FixOutputTokenAddressCron,
     ];
     const fixtures = [DepositGapCheckFixture];
     const services = [
