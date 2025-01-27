@@ -31,6 +31,7 @@ import { AppConfig } from "../../configuration/configuration.service";
 // Cache Keys
 const getArbRebatesSummaryCacheKey = (address: string) => `arbRebates:summary:${address}`;
 const getOpRebatesSummaryCacheKey = (address: string) => `opRebates:summary:${address}`;
+const getOpRebatesStatsCacheKey = () => `opRebates:stats`;
 const getEarnedRewardsCacheKey = (address: string) => `earnedRewards:${address}`;
 
 @Injectable()
@@ -119,6 +120,23 @@ export class RewardService {
       })),
       pagination,
     };
+  }
+
+  public async getOpRebatesStats() {
+    let data = await this.cacheManager.get(getOpRebatesStatsCacheKey());
+    if (data) return data;
+
+    data = await this.opRebateService.getOpRebatesStats();
+
+    if (this.appConfig.values.app.cacheDuration.rebatesData) {
+      await this.cacheManager.set(
+        getOpRebatesStatsCacheKey(),
+        data,
+        60,
+      );
+    }
+
+    return data;
   }
 
   public async getOpRebatesSummary(query: GetSummaryQuery) {

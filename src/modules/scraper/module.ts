@@ -61,6 +61,7 @@ import { Block } from "../web3/model/block.entity";
 import { ArbReward } from "../rewards/model/arb-reward.entity";
 import { HubPoolBlocksEventsConsumer } from "./adapter/messaging/HubPoolBlocksEventsConsumer";
 import { HubPoolProcessedBlock } from "./model/HubPoolProcessedBlock.entity";
+import { OpRewardsStats } from "../rewards/model/op-rewards-stats.entity";
 
 @Module({})
 export class ScraperModule {
@@ -129,6 +130,7 @@ export class ScraperModule {
           FindMissedFillEventJob,
           Block,
           HubPoolProcessedBlock,
+          OpRewardsStats,
         ]),
         MarketPriceModule.forRoot(),
         HttpModule,

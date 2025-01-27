@@ -46,6 +46,12 @@ export class RewardController {
     return this.rewardService.getOpRebateRewardDeposits(query);
   }
 
+  @Get("rewards/op-rebates/stats")
+  @ApiTags("rewards")
+  getOpRebatesStats() {
+    return this.rewardService.getOpRebatesStats();
+  }
+
   @Get("rewards/referrals/summary")
   @ApiTags("rewards")
   getReferralsSummary(@Query() query: GetReferralRewardsSummaryQuery) {
