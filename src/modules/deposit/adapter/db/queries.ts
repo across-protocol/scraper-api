@@ -27,6 +27,19 @@ export const getAvgFillTimeQuery = () => {
   `;
 };
 
+export const getMedianFillTimeQuery = () => {
+  return `
+      SELECT
+        extract(epoch from PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY "filledDate" - "depositDate")) AS "medianFillTime"
+      FROM deposit
+      where status = 'filled' and
+        "filledDate" is not null and
+        "depositDate" > NOW() - INTERVAL '1 days' and
+        "sourceChainId" != 1 and
+        "destinationChainId" != 1;
+  `;
+};
+
 export const getReferralsForEtl = () => {
   return `
     select
