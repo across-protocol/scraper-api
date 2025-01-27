@@ -8,6 +8,7 @@ import BigNumber from "bignumber.js";
 import { Deposit } from "./model/deposit.entity";
 import {
   getAvgFillTimeQuery,
+  getMedianFillTimeQuery,
   getReferralsForEtl,
   getTotalDepositsQuery,
   getTotalVolumeQuery,
@@ -83,15 +84,17 @@ export class DepositService {
     let data = await this.cacheManager.get(DEPOSITS_STATS_CACHE_KEY);
 
     if (!data) {
-      const [totalVolumeResult, totalDepositsResult, avgFillTime] = await Promise.all([
+      const [totalVolumeResult, totalDepositsResult, avgFillTime, medianFillTime] = await Promise.all([
         this.depositRepository.query(getTotalVolumeQuery()),
         this.depositRepository.query(getTotalDepositsQuery()),
         this.depositRepository.query(getAvgFillTimeQuery()),
+        this.depositRepository.query(getMedianFillTimeQuery()),
       ]);
       data = {
         totalDeposits: parseInt(totalDepositsResult[0]["totalDeposits"]) + 13_955,
         totalVolumeUsd: parseInt(totalVolumeResult[0]["totalVolumeUsd"]) + 264_950_594.44,
         avgFillTime: parseInt(avgFillTime[0]["avgFillTime"]),
+        medianFillTime: parseInt(medianFillTime[0]["medianFillTime"]),
       };
       await this.cacheManager.set(DEPOSITS_STATS_CACHE_KEY, data, 60 * 30);
     }
