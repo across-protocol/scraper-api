@@ -1,6 +1,6 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
-import { DataSource, In, Repository } from "typeorm";
+import { DataSource, In, IsNull, Not, Repository } from "typeorm";
 import BigNumber from "bignumber.js";
 import { ethers } from "ethers";
 import { DateTime } from "luxon";
@@ -16,6 +16,7 @@ import { OpReward } from "../model/op-reward.entity";
 import { GetRewardsQuery } from "../entrypoints/http/dto";
 import { WindowAlreadySetException } from "./exceptions";
 import { ReferralRewardsWindowJobResult } from "../model/RewardsWindowJobResult.entity";
+import { OpRewardsStats } from "../model/op-rewards-stats.entity";
 
 const OP_REBATE_RATE = 0.95;
 const REWARDS_PERCENTAGE_LIMIT = 0.0025; // 25 bps
@@ -51,6 +52,8 @@ export class OpRebateService {
   constructor(
     @InjectRepository(Deposit) readonly depositRepository: Repository<Deposit>,
     @InjectRepository(OpReward) readonly rewardRepository: Repository<OpReward>,
+    @InjectRepository(OpRewardsStats)
+    readonly opRewardsStatsRepository: Repository<OpRewardsStats>,
     private marketPriceService: MarketPriceService,
     private ethProvidersService: EthProvidersService,
     private appConfig: AppConfig,
@@ -97,6 +100,17 @@ export class OpRebateService {
       unclaimedRewards,
       volumeUsd,
       claimableRewards: "0",
+    };
+  }
+
+  public async getOpRebatesStats() {
+    const opRebatesStats = await this.opRewardsStatsRepository.findOne({
+      select: ["totalTokenAmount"],
+      where: { id: Not(IsNull()) },
+    });
+
+    return {
+      totalTokenAmount: opRebatesStats?.totalTokenAmount,
     };
   }
 
