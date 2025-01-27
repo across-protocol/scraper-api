@@ -246,7 +246,7 @@ export class ScraperService {
     }
 
     if (chainId === ChainIds.blast) {
-      return 15;
+      return 20;
     }
 
     if (chainId === ChainIds.ink) {
