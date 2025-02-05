@@ -17,21 +17,8 @@ import { EthProvidersService } from "../../web3/services/EthProvidersService";
 import { ChainIds } from "../../web3/model/ChainId";
 import { RewardsWindowJob } from "../../rewards/model/RewardsWindowJob.entity";
 import { ReferralRewardsWindowJobResult } from "../../rewards/model/RewardsWindowJobResult.entity";
-import { GetReferralsSummaryQuery } from "../entry-points/http/dto";
 
 const REFERRAL_ADDRESS_DELIMITER = "d00dfeeddeadbeef";
-const getReferralsSummaryCacheKey = (address: string) => `referrals:summary:${address}`;
-const getReferralRateCacheKey = (address: string) => `referrals:rate:${address}`;
-
-type ReferralsSummary = {
-  referreeWallets: number;
-  transfers: number;
-  volume: number;
-  referralRate: number;
-  rewardsAmount: number;
-  tier: number;
-  activeRefereesCount: number;
-};
 
 @Injectable()
 export class ReferralService {
