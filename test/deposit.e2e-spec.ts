@@ -181,63 +181,6 @@ describe("GET /deposits/details", () => {
   });
 });
 
-describe("GET /etl/referral-deposits", () => {
-  const date = "2022-01-01";
-
-  beforeAll(async () => {
-    referralService = app.get(ReferralService);
-    priceFixture = app.get(HistoricMarketPriceFixture);
-    tokenFixture = app.get(TokenFixture);
-    [token, price] = await Promise.all([
-      tokenFixture.insertToken({ ...usdc }),
-      priceFixture.insertPrice({ symbol: usdc.symbol, usd: "1" }),
-    ]);
-
-    const depositorAddr = "0x9A8f92a830A5cB89a3816e3D267CB7791c16b04D";
-    const deposits = mockManyDepositEntities(5, {
-      depositIdStartIndex: 10,
-      overrides: {
-        status: "filled",
-        depositorAddr,
-        amount: "10",
-        filled: "10",
-        referralAddress: depositorAddr,
-        stickyReferralAddress: depositorAddr,
-        depositDate: new Date(date),
-        bridgeFeePct: ethers.utils.parseEther("0.01").toString(),
-        priceId: price.id,
-        tokenId: token.id,
-      },
-    });
-
-    await app.get(DepositFixture).insertManyDeposits(deposits);
-    await referralService.cumputeReferralStats();
-    await referralService.refreshMaterializedView();
-  });
-
-  afterAll(async () => {
-    await app.get(DepositFixture).deleteAllDeposits();
-    await Promise.all([tokenFixture.deleteAllTokens(), priceFixture.deleteAllPrices()]);
-  });
-
-  it("should fail if date is not provided", async () => {
-    const response = await request(app.getHttpServer()).get("/etl/referral-deposits");
-    expect(response.status).toBe(400);
-  });
-
-  it("should return referral deposits", async () => {
-    const response = await request(app.getHttpServer()).get("/etl/referral-deposits").query({ date });
-    expect(response.status).toBe(200);
-    expect(response.body.length).toBe(5);
-  });
-
-  it("should return no referral deposits", async () => {
-    const response = await request(app.getHttpServer()).get("/etl/referral-deposits").query({ date: "2022-01-02" });
-    expect(response.status).toBe(200);
-    expect(response.body.length).toBe(0);
-  });
-});
-
 describe("GET /deposits/pending", () => {
   beforeAll(async () => {
     depositFixture = app.get(DepositFixture);
@@ -492,7 +435,6 @@ describe("GET /deposits/tx-page", () => {
       rewardTokenId: token.id,
     });
     await referralService.cumputeReferralStats();
-    await referralService.refreshMaterializedView();
 
     const response = await request(app.getHttpServer()).get("/deposits/tx-page").query({
       depositorOrRecipientAddress: depositorAddr,
@@ -500,7 +442,6 @@ describe("GET /deposits/tx-page", () => {
     });
     expect(response.status).toBe(200);
     expect(response.body.deposits).toHaveLength(2);
-    expect(response.body.deposits[0].rewards.type).toBe("referrals");
     expect(response.body.deposits[1].rewards.type).toBe("op-rebates");
   });
 

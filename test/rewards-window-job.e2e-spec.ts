@@ -69,7 +69,7 @@ describe("POST /rewards-window-job", () => {
       .send({
         windowIndex: 1,
         maxDepositDate: new Date(Date.now()),
-        rewardsType: RewardsType.ReferralRewards,
+        rewardsType: RewardsType.OpRewards,
       });
     expect(response.status).toBe(201);
     expect(response.body.id).toBe(1);
@@ -94,7 +94,7 @@ describe("POST /rewards-window-job", () => {
 
   it("should not create duplicated windows if job is in progress", async () => {
     rewardsWindowJobFixture.insert({
-      rewardsType: RewardsType.ReferralRewards,
+      rewardsType: RewardsType.OpRewards,
       windowIndex: 0,
       status: RewardsWindowJobStatus.InProgress,
     });
@@ -104,7 +104,7 @@ describe("POST /rewards-window-job", () => {
       .send({
         windowIndex: 0,
         maxDepositDate: new Date(Date.now()),
-        rewardsType: RewardsType.ReferralRewards,
+        rewardsType: RewardsType.OpRewards,
       });
     expect(response.status).toBe(400);
   });
