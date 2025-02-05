@@ -1,6 +1,6 @@
 import { ApiProperty } from "@nestjs/swagger";
 import { Type } from "class-transformer";
-import { IsInt, IsOptional, Max, Min, IsString, IsArray, IsEnum, IsDateString, IsNumberString } from "class-validator";
+import { IsInt, IsOptional, Max, Min, IsString, IsEnum, IsDateString, IsNumberString } from "class-validator";
 import { RewardsType } from "../../model/RewardsWindowJob.entity";
 
 export class GetSummaryQuery {
@@ -8,19 +8,6 @@ export class GetSummaryQuery {
   @Type(() => String)
   @ApiProperty({ example: "0x", required: true })
   userAddress: string;
-}
-
-export class GetReferralRewardsSummaryQuery extends GetSummaryQuery {
-  @IsOptional()
-  @IsArray()
-  @IsEnum(
-    {
-      REFERRAL_RATE: "referralRate",
-    },
-    { each: true, message: "Must be one of: 'referralRate'" },
-  )
-  @ApiProperty({ example: ["referralRate"], required: false })
-  fields: Array<"referralRate">;
 }
 
 export class GetRewardsQuery {

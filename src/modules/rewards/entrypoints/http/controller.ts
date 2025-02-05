@@ -4,7 +4,6 @@ import { ApiBearerAuth, ApiTags } from "@nestjs/swagger";
 import {
   GetRewardsQuery,
   GetSummaryQuery,
-  GetReferralRewardsSummaryQuery,
   CreateRewardsWindowJobBody,
   GetRewardsWindowJobParams,
 } from "./dto";
@@ -50,18 +49,6 @@ export class RewardController {
   @ApiTags("rewards")
   getOpRebatesStats() {
     return this.rewardService.getOpRebatesStats();
-  }
-
-  @Get("rewards/referrals/summary")
-  @ApiTags("rewards")
-  getReferralsSummary(@Query() query: GetReferralRewardsSummaryQuery) {
-    return this.rewardService.getReferralRewardsSummary(query);
-  }
-
-  @Get("rewards/referrals")
-  @ApiTags("rewards")
-  getReferralRewards(@Query() query: GetRewardsQuery) {
-    return this.rewardService.getReferralRewardDeposits(query);
   }
 
   @Post("rewards-window-job")

@@ -122,7 +122,6 @@ describe("GET /rewards/earned", () => {
       depositDate: DateTime.fromISO("2024-05-01T00:00:00.000Z").toJSDate(),
     });
     await referralService.cumputeReferralStats();
-    await referralService.refreshMaterializedView();
   });
 
   it("200 with params 'userAddress'", async () => {
@@ -132,7 +131,6 @@ describe("GET /rewards/earned", () => {
     expect(response.status).toBe(200);
     expect(response.body["op-rebates"]).toBe("123000");
     expect(response.body["arb-rebates"]).toBe("153000");
-    expect(response.body.referrals).toBe("400000000000000000"); // 0.4 ACX
   });
 
   it("400 without params 'userAddress'", async () => {
@@ -261,104 +259,6 @@ describe("GET /rewards/op-rebates/summary", () => {
   afterAll(async () => {
     await tokenFixture.deleteAllTokens();
     await priceFixture.deleteAllPrices();
-  });
-});
-
-describe("GET /rewards/referrals", () => {
-  beforeAll(async () => {
-    [token, price] = await Promise.all([
-      tokenFixture.insertToken({ ...usdc }),
-      priceFixture.insertPrice({
-        symbol: usdc.symbol,
-        usd: "1",
-      }),
-    ]);
-  });
-
-  beforeEach(async () => {
-    await depositFixture.insertManyDeposits([
-      {
-        depositId: 1,
-        status: "filled",
-        sourceChainId: 1,
-        destinationChainId: 42161,
-        amount: "10000000", // 10 USDC
-        tokenAddr: usdc.address,
-        tokenId: token.id,
-        priceId: price.id,
-        stickyReferralAddress: userAddress,
-        bridgeFeePct: "100000000000000000", // 10%
-        depositDate: DateTime.fromISO("2024-05-01T00:00:00.000Z").toJSDate(),
-      },
-      {
-        depositId: 2,
-        status: "filled",
-        sourceChainId: 1,
-        destinationChainId: 42161,
-        amount: "10000000", // 10 USDC
-        tokenAddr: usdc.address,
-        tokenId: token.id,
-        priceId: price.id,
-        depositorAddr: userAddress,
-        stickyReferralAddress: "0x",
-        bridgeFeePct: "100000000000000000", // 10%
-        depositDate: DateTime.fromISO("2024-05-01T00:00:00.000Z").toJSDate(),
-      },
-      {
-        depositId: 3,
-        status: "filled",
-        sourceChainId: 1,
-        destinationChainId: 42161,
-        amount: "10000000", // 10 USDC
-        tokenAddr: usdc.address,
-        tokenId: token.id,
-        priceId: price.id,
-        depositorAddr: userAddress,
-        stickyReferralAddress: userAddress,
-        bridgeFeePct: "100000000000000000", // 10%
-        depositDate: DateTime.fromISO("2024-05-01T00:00:00.000Z").toJSDate(),
-      },
-    ]);
-    await referralService.cumputeReferralStats();
-    await referralService.refreshMaterializedView();
-  });
-
-  it("200 with params 'userAddress'", async () => {
-    const response = await request(app.getHttpServer()).get("/rewards/referrals").query({
-      userAddress,
-    });
-    expect(response.status).toBe(200);
-    expect(response.body.deposits).toHaveLength(3);
-
-    // userAddress is referrer
-    expect(response.body.deposits[0].rewards.userRate).toBe(0.75);
-    expect(response.body.deposits[0].rewards.referralRate).toBe(0.4);
-    expect(response.body.deposits[0].rewards.rate).toBe(0.3); // 0.75 * 0.4
-
-    // userAddress is depositor
-    expect(response.body.deposits[1].rewards.userRate).toBe(0.25);
-    expect(response.body.deposits[1].rewards.referralRate).toBe(0.4);
-    expect(response.body.deposits[1].rewards.rate).toBe(0.1); // 0.25 * 0.4
-
-    // userAddress is both referrer and depositor
-    expect(response.body.deposits[2].rewards.userRate).toBe(1);
-    expect(response.body.deposits[2].rewards.referralRate).toBe(0.4);
-    expect(response.body.deposits[2].rewards.rate).toBe(0.4); // 1 * 0.4
-  });
-
-  it("400 without params 'userAddress'", async () => {
-    const response = await request(app.getHttpServer()).get("/rewards/op-rebates/summary");
-    expect(response.status).toBe(400);
-  });
-
-  afterEach(async () => {
-    await depositFixture.deleteAllDeposits();
-  });
-
-  afterAll(async () => {
-    await tokenFixture.deleteAllTokens();
-    await priceFixture.deleteAllPrices();
-    await arbRewardFixture.deleteAllArbRewards();
   });
 });
 
