@@ -186,7 +186,7 @@ describe("GET /rewards/op-rebates", () => {
     });
     expect(response.status).toBe(200);
     expect(response.body.deposits).toHaveLength(1);
-    expect(response.body.deposits[0].depositId).toBe(1);
+    expect(response.body.deposits[0].depositId).toBe("1");
   });
 
   it("400 without params 'userAddress'", async () => {
@@ -301,7 +301,7 @@ describe("GET /rewards/arb-rebates", () => {
     });
     expect(response.status).toBe(200);
     expect(response.body.deposits).toHaveLength(1);
-    expect(response.body.deposits[0].depositId).toBe(1);
+    expect(response.body.deposits[0].depositId).toBe("1");
   });
 
   it("400 without params 'userAddress'", async () => {
