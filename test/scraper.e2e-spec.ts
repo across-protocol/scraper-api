@@ -20,16 +20,16 @@ describe("Scraper module", () => {
   });
 
   it("should not store the same deposit twice", async () => {
-    await app.get(DepositFixture).insertDeposit({ depositId: 1, sourceChainId: 1, destinationChainId: 10 });
+    await app.get(DepositFixture).insertDeposit({ depositId: "1", sourceChainId: 1, destinationChainId: 10 });
     await expect(
-      app.get(DepositFixture).insertDeposit({ depositId: 1, sourceChainId: 1, destinationChainId: 10 }),
+      app.get(DepositFixture).insertDeposit({ depositId: "1", sourceChainId: 1, destinationChainId: 10 }),
     ).rejects.toThrow(QueryFailedError);
   });
 
   it("should not process the same fill event twice", async () => {
     let deposit = await app
       .get(DepositFixture)
-      .insertDeposit({ depositId: 1, sourceChainId: 1, destinationChainId: 10 });
+      .insertDeposit({ depositId: "1", sourceChainId: 1, destinationChainId: 10 });
     const fillEventMessage: FillEventsQueueMessage = {
       appliedRelayerFeePct: "0",
       depositId: 1,
