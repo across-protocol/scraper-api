@@ -25,8 +25,8 @@ export class FindMissedFillEventJob {
   @Column()
   destinationChainId: number;
 
-  @Column()
-  depositId: number;
+  @Column({ type: "decimal" })
+  depositId: string;
 
   @Column()
   depositDate: Date;

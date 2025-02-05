@@ -20,7 +20,12 @@ export class SpeedUpEventsV3Consumer {
   @Process()
   private async process(job: Job<SpeedUpEventsV3QueueMessage>) {
     const { depositId, depositSourceChainId } = job.data;
-    const deposit = await this.depositRepository.findOne({ where: { sourceChainId: depositSourceChainId, depositId } });
+    const deposit = await this.depositRepository.findOne({
+      where: {
+        sourceChainId: depositSourceChainId,
+        depositId: depositId.toString(),
+      },
+    });
 
     if (!deposit) throw new Error("Deposit not found");
 

@@ -64,7 +64,7 @@ describe("GET /rewards/earned", () => {
   beforeEach(async () => {
     await depositFixture.insertManyDeposits([
       {
-        depositId: 1,
+        depositId: "1",
         status: "filled",
         sourceChainId: 1,
         destinationChainId: 10,
@@ -75,7 +75,7 @@ describe("GET /rewards/earned", () => {
         depositDate: DateTime.fromISO("2024-05-01T00:00:00.000Z").toJSDate(),
       },
       {
-        depositId: 2,
+        depositId: "2",
         status: "filled",
         sourceChainId: 137,
         destinationChainId: 42161,
@@ -90,7 +90,7 @@ describe("GET /rewards/earned", () => {
         depositDate: DateTime.fromISO("2024-05-01T00:00:00.000Z").toJSDate(),
       },
       {
-        depositId: 3,
+        depositId: "3",
         status: "filled",
         sourceChainId: 1,
         destinationChainId: 42161,
@@ -155,7 +155,7 @@ describe("GET /rewards/op-rebates", () => {
   beforeEach(async () => {
     await depositFixture.insertManyDeposits([
       {
-        depositId: 1,
+        depositId: "1",
         status: "filled",
         sourceChainId: 1,
         destinationChainId: 10,
@@ -163,7 +163,7 @@ describe("GET /rewards/op-rebates", () => {
         tokenId: token.id,
       },
       {
-        depositId: 2,
+        depositId: "2",
         status: "filled",
         sourceChainId: 137,
         destinationChainId: 42161,
@@ -186,7 +186,7 @@ describe("GET /rewards/op-rebates", () => {
     });
     expect(response.status).toBe(200);
     expect(response.body.deposits).toHaveLength(1);
-    expect(response.body.deposits[0].depositId).toBe(1);
+    expect(response.body.deposits[0].depositId).toBe("1");
   });
 
   it("400 without params 'userAddress'", async () => {
@@ -217,7 +217,7 @@ describe("GET /rewards/op-rebates/summary", () => {
   beforeEach(async () => {
     await depositFixture.insertManyDeposits([
       {
-        depositId: 1,
+        depositId: "1",
         status: "filled",
         sourceChainId: 1,
         destinationChainId: 10,
@@ -270,7 +270,7 @@ describe("GET /rewards/arb-rebates", () => {
   beforeEach(async () => {
     await depositFixture.insertManyDeposits([
       {
-        depositId: 1,
+        depositId: "1",
         status: "filled",
         sourceChainId: 1,
         destinationChainId: 42161,
@@ -278,7 +278,7 @@ describe("GET /rewards/arb-rebates", () => {
         tokenId: token.id,
       },
       {
-        depositId: 2,
+        depositId: "2",
         status: "filled",
         sourceChainId: 137,
         destinationChainId: 10,
@@ -301,7 +301,7 @@ describe("GET /rewards/arb-rebates", () => {
     });
     expect(response.status).toBe(200);
     expect(response.body.deposits).toHaveLength(1);
-    expect(response.body.deposits[0].depositId).toBe(1);
+    expect(response.body.deposits[0].depositId).toBe("1");
   });
 
   it("400 without params 'userAddress'", async () => {
@@ -333,7 +333,7 @@ describe("GET /rewards/arb-rebates/summary", () => {
   beforeEach(async () => {
     await depositFixture.insertManyDeposits([
       {
-        depositId: 1,
+        depositId: "1",
         status: "filled",
         sourceChainId: 1,
         destinationChainId: 10,
