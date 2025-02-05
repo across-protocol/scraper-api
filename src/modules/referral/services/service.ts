@@ -8,16 +8,6 @@ import { ethers } from "ethers";
 import { Cache } from "cache-manager";
 
 import { Deposit } from "../../deposit/model/deposit.entity";
-import {
-  getActiveRefereesCountQuery,
-  getReferralsQuery,
-  getReferralsTotalQuery,
-  getReferralTransfersQuery,
-  getReferralVolumeQuery,
-  getReferreeWalletsQuery,
-  getTotalReferralRewardsQuery,
-  getRefreshMaterializedView,
-} from "./queries";
 import { AppConfig } from "../../configuration/configuration.service";
 import { DepositsFilteredReferrals } from "../model/DepositsFilteredReferrals.entity";
 import { DepositReferralStat } from "../../deposit/model/deposit-referral-stat.entity";
@@ -58,125 +48,6 @@ export class ReferralService {
     private dataSource: DataSource,
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
   ) {}
-
-  public async getReferralSummaryHandler(query: GetReferralsSummaryQuery) {
-    const { address, fields } = query;
-
-    if (fields && fields.length > 0 && fields.includes("referralRate")) {
-      return this.getReferralRate(address);
-    } else {
-      return this.getReferralSummary(address);
-    }
-  }
-
-  public async getReferralSummary(address: string): Promise<ReferralsSummary> {
-    let data = await this.cacheManager.get<ReferralsSummary>(getReferralsSummaryCacheKey(address));
-
-    if (data) return data;
-
-    const referreeWalletsQuery = getReferreeWalletsQuery();
-    const referralTransfersQuery = getReferralTransfersQuery();
-    const referralVolumeQuery = getReferralVolumeQuery();
-    const totalReferralRewardsQuery = getTotalReferralRewardsQuery();
-    const activeRefereesCountQuery = getActiveRefereesCountQuery();
-    const [
-      referreeWalletsResult,
-      transfersResult,
-      volumeResult,
-      totalReferralRewardsResult,
-      activeRefereesCountResult,
-    ] = await Promise.all([
-      this.depositRepository.query(referreeWalletsQuery, [address]),
-      this.depositRepository.query(referralTransfersQuery, [address]),
-      this.depositRepository.query(referralVolumeQuery, [address]),
-      this.depositRepository.query(totalReferralRewardsQuery, [address]),
-      this.depositRepository.query(activeRefereesCountQuery, [address]),
-    ]);
-
-    const rewardsAmount = totalReferralRewardsResult[0]?.acxRewards || "0";
-    const transfers = parseInt(transfersResult[0].count);
-    const referreeWallets = parseInt(referreeWalletsResult[0].count);
-    const volume = volumeResult[0].volume || 0;
-    const { referralRate, tier } = this.getTierLevelAndBonus(referreeWallets, volume);
-    const activeRefereesCount = parseInt(activeRefereesCountResult[0].count);
-
-    data = {
-      referreeWallets,
-      transfers,
-      volume,
-      referralRate,
-      rewardsAmount,
-      tier,
-      activeRefereesCount,
-    };
-
-    if (this.appConfig.values.app.cacheDuration.referralsSummary) {
-      await this.cacheManager.set(
-        getReferralsSummaryCacheKey(address),
-        data,
-        this.appConfig.values.app.cacheDuration.referralsSummary,
-      );
-    }
-
-    return data;
-  }
-
-  public async getReferralRate(address: string) {
-    let data = await this.cacheManager.get(getReferralRateCacheKey(address));
-
-    if (data) return data;
-
-    const referreeWalletsQuery = getReferreeWalletsQuery();
-    const referralVolumeQuery = getReferralVolumeQuery();
-    const [referreeWalletsResult, volumeResult] = await Promise.all([
-      this.depositRepository.query(referreeWalletsQuery, [address]),
-      this.depositRepository.query(referralVolumeQuery, [address]),
-    ]);
-
-    const referreeWallets = parseInt(referreeWalletsResult[0].count);
-    const volume = volumeResult[0].volume || 0;
-    const { referralRate, tier } = this.getTierLevelAndBonus(referreeWallets, volume);
-
-    data = {
-      referralRate,
-      tier,
-    };
-
-    if (this.appConfig.values.app.cacheDuration.referralsSummary) {
-      await this.cacheManager.set(
-        getReferralRateCacheKey(address),
-        data,
-        this.appConfig.values.app.cacheDuration.referralsSummary,
-      );
-    }
-
-    return data;
-  }
-
-  public async getEarnedRewards(address: string) {
-    const query = getTotalReferralRewardsQuery();
-    const result = await this.depositRepository.query(query, [address]);
-    return result[0].acxRewards;
-  }
-
-  public async getReferrals(address: string, limit = 10, offset = 0) {
-    const query = getReferralsQuery();
-    const totalQuery = getReferralsTotalQuery();
-    const [result, totalResult] = await Promise.all([
-      this.depositRepository.manager.query(query, [address, limit, offset]),
-      this.depositRepository.query(totalQuery, [address]),
-    ]);
-    const total = parseInt(totalResult[0].count);
-
-    return {
-      referrals: result.map((item) => ({ ...item, acxRewards: item.acxRewards })),
-      pagination: {
-        limit,
-        offset,
-        total,
-      },
-    };
-  }
 
   public async revertReferralsMerkleDistribution(windowIndex: number) {
     await this.depositRepository.update({ rewardsWindowIndex: windowIndex }, { rewardsWindowIndex: null });
@@ -252,10 +123,6 @@ export class ReferralService {
       }
     }
     return undefined;
-  }
-
-  public refreshMaterializedView() {
-    return this.depositRepository.query(getRefreshMaterializedView());
   }
 
   public cumputeReferralStats() {

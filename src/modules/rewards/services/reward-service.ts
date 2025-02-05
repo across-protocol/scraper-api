@@ -16,7 +16,6 @@ import { OpReward } from "../model/op-reward.entity";
 import {
   GetRewardsQuery,
   GetSummaryQuery,
-  GetReferralRewardsSummaryQuery,
   CreateRewardsWindowJobBody,
 } from "../entrypoints/http/dto";
 import { RewardsType, RewardsWindowJob, RewardsWindowJobStatus } from "../model/RewardsWindowJob.entity";
@@ -53,8 +52,8 @@ export class RewardService {
     let data = await this.cacheManager.get(getEarnedRewardsCacheKey(userAddress));
     if (data) return data;
 
-    const [arbRewards, opRewards, referralRewards] = await Promise.all(
-      [this.arbRebateService, this.opRebateService, this.referralService].map((service) =>
+    const [arbRewards, opRewards] = await Promise.all(
+      [this.arbRebateService, this.opRebateService].map((service) =>
         service.getEarnedRewards(userAddress),
       ),
     );
@@ -62,7 +61,6 @@ export class RewardService {
     data = {
       "arb-rebates": arbRewards,
       "op-rebates": opRewards,
-      referrals: referralRewards,
     };
 
     if (this.appConfig.values.app.cacheDuration.rebatesData) {
@@ -151,13 +149,6 @@ export class RewardService {
     }
 
     return data;
-  }
-
-  public async getReferralRewardsSummary(query: GetReferralRewardsSummaryQuery) {
-    return this.referralService.getReferralSummaryHandler({
-      ...query,
-      address: query.userAddress,
-    });
   }
 
   public async getRewardsForDepositsAndUserAddress(deposits: Deposit[]) {
