@@ -209,55 +209,44 @@ export class ScraperService {
   }
 
   public getFollowingDistance(chainId: number) {
-    if (chainId === ChainIds.mainnet) {
-      return 3;
+    switch (chainId) {
+      case ChainIds.arbitrum:
+        return 240;
+      case ChainIds.alephZero:
+        return 90;
+      case ChainIds.base:
+        return 60;
+      case ChainIds.blast:
+        return 60;
+      case ChainIds.cher:
+        return 60;
+      case ChainIds.ink:
+        return 120;
+      case ChainIds.linea:
+        return 40;
+      case ChainIds.lisk:
+        return 60;
+      case ChainIds.mode:
+        return 60;
+      case ChainIds.optimism:
+        return 60;
+      case ChainIds.mainnet:
+        return 8;
+      case ChainIds.polygon:
+        return 80;
+      case ChainIds.scroll:
+        return 40;
+      case ChainIds.redstone:
+        return 60;
+      case ChainIds.worldChain:
+        return 60;
+      case ChainIds.zora:
+        return 60;
+      case ChainIds.zkSyncMainnet:
+        return 120;
     }
 
-    if (chainId === ChainIds.polygon) {
-      return 15;
-    }
-
-    if (chainId === ChainIds.arbitrum) {
-      return 120;
-    }
-
-    if (chainId === ChainIds.alephZero) {
-      return 120;
-    }
-
-    if (chainId === ChainIds.zkSyncMainnet) {
-      return 30;
-    }
-
-    if (chainId === ChainIds.linea) {
-      return 15;
-    }
-
-    if (chainId === ChainIds.mode) {
-      return 15;
-    }
-
-    if (chainId === ChainIds.lisk) {
-      return 15;
-    }
-
-    if (chainId === ChainIds.optimism) {
-      return 15;
-    }
-
-    if (chainId === ChainIds.blast) {
-      return 20;
-    }
-
-    if (chainId === ChainIds.ink) {
-      return 15;
-    }
-
-    if (chainId === ChainIds.cher) {
-      return 15;
-    }
-
-    return 10;
+    return 60;
   }
 
   /**
