@@ -49,13 +49,10 @@ import { MerkleDistributorClaim } from "../airdrop/model/merkle-distributor-clai
 import { MerkleDistributorWindow } from "../airdrop/model/merkle-distributor-window.entity";
 import { SpeedUpEventsV3Consumer } from "./adapter/messaging/SpeedUpEventsV3Consumer";
 import { Token } from "../web3/model/token.entity";
-import { DepositsGapDetectionCron } from "./service/DepositsGapDetectionCron";
 import { MonitoringModule } from "../monitoring/module";
 import { DepositGapCheck } from "./model/DepositGapCheck.entity";
 import { DepositGapCheckFixture } from "./adapter/db/DepositGapCheckFixture";
 import { DepositGapService } from "./service/DepositGapService";
-import { CheckMissedFillEventsCron } from "./service/CheckMissedFillEventsCron";
-import { FindMissedFillEventConsumer } from "./adapter/messaging/FindMissedFillEventConsumer";
 import { FindMissedFillEventJob } from "./model/FindMissedFillEventJob.entity";
 import { Block } from "../web3/model/block.entity";
 import { ArbReward } from "../rewards/model/arb-reward.entity";
@@ -68,8 +65,6 @@ export class ScraperModule {
   static forRoot(moduleOptions: ModuleOptions): DynamicModule {
     const crons = [
       QueuesMonitoringCron,
-      DepositsGapDetectionCron,
-      CheckMissedFillEventsCron,
     ];
     const fixtures = [DepositGapCheckFixture];
     const services = [
@@ -102,7 +97,6 @@ export class ScraperModule {
       OpRebateRewardConsumer,
       ArbRebateRewardConsumer,
       MerkleDistributorClaimConsumer,
-      FindMissedFillEventConsumer,
     ];
     const providers: Provider<any>[] = [...crons, ...fixtures, ...services, ...consumers];
 

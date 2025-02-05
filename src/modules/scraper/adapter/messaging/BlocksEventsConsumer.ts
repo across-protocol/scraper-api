@@ -441,7 +441,7 @@ export class BlocksEventsConsumer {
     }
 
     return this.depositRepository.create({
-      depositId,
+      depositId: depositId.toString(),
       sourceChainId: chainId,
       destinationChainId: destinationChainId.toNumber(),
       status: "pending",

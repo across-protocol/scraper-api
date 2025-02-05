@@ -1,4 +1,4 @@
-FROM node:18 AS development
+FROM node:20 AS development
 
 WORKDIR /usr/src/app
 COPY package*.json ./
@@ -7,7 +7,7 @@ RUN yarn install --frozen-lockfile --ignore-scripts
 COPY . .
 RUN yarn build
 
-FROM node:18 AS production
+FROM node:20 AS production
 
 ARG NODE_ENV=production
 ENV NODE_ENV=${NODE_ENV}

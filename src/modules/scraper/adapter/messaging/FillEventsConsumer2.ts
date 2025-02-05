@@ -20,7 +20,9 @@ export class FillEventsConsumer2 {
   @Process()
   private async process(job: Job<FillEventsQueueMessage2>) {
     const { depositId, originChainId } = job.data;
-    const deposit = await this.depositRepository.findOne({ where: { sourceChainId: originChainId, depositId } });
+    const deposit = await this.depositRepository.findOne({
+      where: { sourceChainId: originChainId, depositId: depositId.toString() },
+    });
 
     if (!deposit) {
       throw new Error("Deposit not found in db");

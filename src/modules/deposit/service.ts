@@ -29,7 +29,7 @@ import { SetPoolRebalanceRouteEvent } from "../web3/model/SetPoolRebalanceRouteE
 
 export const DEPOSITS_STATS_CACHE_KEY = "deposits:stats";
 
-const depositStatusCacheKey = (originChainId: number, depositId: number) =>
+const depositStatusCacheKey = (originChainId: number, depositId: string) =>
   `deposit-status:${depositId}:${originChainId}`;
 
 @Injectable()
@@ -346,7 +346,7 @@ export class DepositService {
   }
 
   public async getDepositStatus(query: GetDepositStatusQuery) {
-    const depositId = parseInt(query.depositId);
+    const depositId = query.depositId;
     const originChainId = parseInt(query.originChainId);
     const cachedData = await this.cacheManager.get(depositStatusCacheKey(originChainId, depositId));
 

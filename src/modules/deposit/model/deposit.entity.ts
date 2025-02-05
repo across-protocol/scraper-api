@@ -94,8 +94,8 @@ export class Deposit {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column()
-  depositId: number;
+  @Column({ type: "decimal" })
+  depositId: string;
 
   @Column()
   sourceChainId: number;

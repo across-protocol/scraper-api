@@ -24,7 +24,9 @@ export class FillEventsV3Consumer {
   @Process()
   private async process(job: Job<FillEventsV3QueueMessage>) {
     const { depositId, originChainId } = job.data;
-    const deposit = await this.depositRepository.findOne({ where: { sourceChainId: originChainId, depositId } });
+    const deposit = await this.depositRepository.findOne({
+      where: { sourceChainId: originChainId, depositId: depositId.toString() },
+    });
 
     if (!deposit) return;
     if (this.fillTxAlreadyProcessed(deposit, job.data)) return;

@@ -27,7 +27,7 @@
   },
   "dependencies": {
     "@across-protocol/contracts-v2": "^2.5.10",
-    "@across-protocol/sdk-v2": "^0.23.8",
+    "@across-protocol/sdk": "^4.0.1",
     "@amplitude/analytics-node": "^1.0.1",
     "@nestjs/axios": "^0.0.8",
     "@nestjs/bull": "^0.5.5",

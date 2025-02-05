@@ -19,7 +19,12 @@ export class SpeedUpEventsConsumer {
   @Process()
   private async process(job: Job<SpeedUpEventsQueueMessage>) {
     const { depositId, depositSourceChainId } = job.data;
-    const deposit = await this.depositRepository.findOne({ where: { sourceChainId: depositSourceChainId, depositId } });
+    const deposit = await this.depositRepository.findOne({
+      where: {
+        sourceChainId: depositSourceChainId,
+        depositId: depositId.toString(),
+      },
+    });
 
     if (!deposit) {
       throw new Error(

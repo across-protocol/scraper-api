@@ -26,7 +26,7 @@ export class DepositFixture {
 
 export function mockDepositEntity(overrides: Partial<Deposit>) {
   return {
-    depositId: getRandomInt(),
+    depositId: getRandomInt().toString(),
     sourceChainId: 1,
     destinationChainId: 1,
     depositDate: new Date(),
@@ -61,7 +61,7 @@ export function mockManyDepositEntities(
     .fill(0)
     .map((zero, i) =>
       mockDepositEntity({
-        depositId: depositIdStartIndex + i,
+        depositId: (depositIdStartIndex + i).toString(),
         depositDate: DateTime.now()
           .minus(Duration.fromObject({ days: n - i }))
           .toJSDate(),
