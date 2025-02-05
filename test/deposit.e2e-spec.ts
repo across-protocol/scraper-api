@@ -244,7 +244,7 @@ describe("GET /v2/deposits", () => {
         recipientAddr: depositorAddress,
       },
       {
-        depositId: 3,
+        depositId: "3",
         status: "filled",
         sourceChainId: 1,
         destinationChainId: 10,
@@ -253,7 +253,7 @@ describe("GET /v2/deposits", () => {
         tokenId: token.id,
       },
       {
-        depositId: 4,
+        depositId: "4",
         status: "filled",
         sourceChainId: 137,
         destinationChainId: 42161,
@@ -365,7 +365,7 @@ describe("GET /deposits/tx-page", () => {
   beforeEach(async () => {
     await depositFixture.insertManyDeposits([
       {
-        depositId: 1,
+        depositId: "1",
         status: "pending",
         sourceChainId: 1,
         destinationChainId: 10,
@@ -375,7 +375,7 @@ describe("GET /deposits/tx-page", () => {
         suggestedRelayerFeePct: "1",
       },
       {
-        depositId: 2,
+        depositId: "2",
         status: "pending",
         sourceChainId: 137,
         destinationChainId: 42161,
@@ -385,7 +385,7 @@ describe("GET /deposits/tx-page", () => {
       },
       {
         id: 3,
-        depositId: 3,
+        depositId: "3",
         status: "filled",
         sourceChainId: 1,
         destinationChainId: 10,
@@ -402,7 +402,7 @@ describe("GET /deposits/tx-page", () => {
       },
       {
         id: 4,
-        depositId: 4,
+        depositId: "4",
         status: "filled",
         sourceChainId: 137,
         destinationChainId: 42161,
