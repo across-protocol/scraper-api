@@ -1,7 +1,6 @@
 import { DynamicModule, Module } from "@nestjs/common";
 import { TypeOrmModule } from "@nestjs/typeorm";
 import { AppConfigModule } from "../configuration/configuration.module";
-import { DepositsMv } from "../deposit/model/DepositsMv.entity";
 import { Deposit } from "../deposit/model/deposit.entity";
 import { ReferralController } from "./entry-points/http/controller";
 import { ReferralService } from "./services/service";
@@ -26,7 +25,6 @@ export class ReferralModule {
           ...module.imports,
           TypeOrmModule.forFeature([
             Deposit,
-            DepositsMv,
             RewardsWindowJob,
             ReferralRewardsWindowJobResult,
             DepositReferralStat,
@@ -46,7 +44,6 @@ export class ReferralModule {
           ...module.imports,
           TypeOrmModule.forFeature([
             Deposit,
-            DepositsMv,
             RewardsWindowJob,
             ReferralRewardsWindowJobResult,
             DepositReferralStat,

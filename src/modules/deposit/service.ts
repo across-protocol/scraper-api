@@ -176,7 +176,7 @@ export class DepositService {
 
     if (query.depositorOrRecipientAddress) {
       const userAddress = this.assertValidAddress(query.depositorOrRecipientAddress);
-      const rewards = await this.rewardService.getRewardsForDepositsAndUserAddress(deposits, userAddress);
+      const rewards = await this.rewardService.getRewardsForDepositsAndUserAddress(deposits);
       const enrichedDeposits = this.rewardService.enrichDepositsWithRewards(userAddress, deposits, rewards);
       return {
         deposits: enrichedDeposits.map(({ deposit, rewards }) => {

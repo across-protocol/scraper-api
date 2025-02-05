@@ -1,16 +1,13 @@
 import { CACHE_MANAGER, Inject, Injectable } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { DataSource, Repository } from "typeorm";
-import BigNumber from "bignumber.js";
 import { Cache } from "cache-manager";
-import { ethers } from "ethers";
 import { QueryDeepPartialEntity } from "typeorm/query-builder/QueryPartialEntity";
 
 import { Deposit } from "../../deposit/model/deposit.entity";
 import { formatDeposit } from "../../deposit/utils";
-import { DepositsMvWithRewards } from "../../deposit/model/DepositsMv.entity";
+
 import { ReferralService } from "../../referral/services/service";
-import { assertValidAddress } from "../../../utils";
 
 import { ArbReward } from "../model/arb-reward.entity";
 import { ArbRebateService } from "./arb-rebate-service";
@@ -24,7 +21,6 @@ import {
 } from "../entrypoints/http/dto";
 import { RewardsType, RewardsWindowJob, RewardsWindowJobStatus } from "../model/RewardsWindowJob.entity";
 import { InvalidRewardsWindowJobException, RewardsWindowJobNotFoundException } from "./exceptions";
-import { ReferralRewardsService } from "./referral-rewards-service";
 import { ReferralRewardsWindowJobResult } from "../model/RewardsWindowJobResult.entity";
 import { AppConfig } from "../../configuration/configuration.service";
 
@@ -47,7 +43,6 @@ export class RewardService {
     private arbRebateService: ArbRebateService,
     private opRebateService: OpRebateService,
     private referralService: ReferralService,
-    private referralRewardsService: ReferralRewardsService,
     private appConfig: AppConfig,
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
   ) {}
@@ -158,21 +153,6 @@ export class RewardService {
     return data;
   }
 
-  public async getReferralRewardDeposits(query: GetRewardsQuery) {
-    const { referrals, pagination } = await this.referralService.getReferralsWithJoinedDeposit(
-      query.userAddress,
-      parseInt(query.limit || "10"),
-      parseInt(query.offset || "0"),
-    );
-    return {
-      deposits: referrals.map((referral) => ({
-        ...formatDeposit(referral.deposit),
-        rewards: this.formatReferral(referral, query.userAddress),
-      })),
-      pagination,
-    };
-  }
-
   public async getReferralRewardsSummary(query: GetReferralRewardsSummaryQuery) {
     return this.referralService.getReferralSummaryHandler({
       ...query,
@@ -180,16 +160,14 @@ export class RewardService {
     });
   }
 
-  public async getRewardsForDepositsAndUserAddress(deposits: Deposit[], userAddress: string) {
+  public async getRewardsForDepositsAndUserAddress(deposits: Deposit[]) {
     const depositPrimaryKeys = deposits.map((deposit) => deposit.id);
-    const [opRebateRewards, arbRebateRewards, referralRewards] = await Promise.all([
+    const [opRebateRewards, arbRebateRewards] = await Promise.all([
       this.opRebateService.getOpRebateRewardsForDepositPrimaryKeys(depositPrimaryKeys),
       this.arbRebateService.getArbRebateRewardsForDepositPrimaryKeys(depositPrimaryKeys),
-      this.referralService.getReferralsForDepositsAndUserAddress(depositPrimaryKeys, userAddress),
     ]);
     return {
       "op-rebates": opRebateRewards,
-      referrals: referralRewards,
       arbRebateRewards,
     };
   }
@@ -200,21 +178,17 @@ export class RewardService {
     rewards: {
       "op-rebates": OpReward[];
       arbRebateRewards: ArbReward[];
-      referrals: DepositsMvWithRewards[];
     },
   ) {
     return deposits.map((deposit) => {
       const opRebate = rewards["op-rebates"].find((reward) => reward.depositPrimaryKey === deposit.id);
       const arbRebate = rewards.arbRebateRewards.find((reward) => reward.depositPrimaryKey === deposit.id);
-      const referral = rewards["referrals"].find((reward) => reward.id === deposit.id);
       let formattedRewards;
 
       if (opRebate) {
         formattedRewards = this.formatOpRebate(opRebate);
       } else if (arbRebate) {
         formattedRewards = this.formatArbRebate(arbRebate);
-      } else if (referral) {
-        formattedRewards = this.formatReferral(referral, userAddress);
       }
 
       return {
@@ -244,28 +218,6 @@ export class RewardService {
     };
   }
 
-  public formatReferral(referral: DepositsMvWithRewards, userAddress: string) {
-    userAddress = assertValidAddress(userAddress);
-    const userRate =
-      referral.depositorAddr === userAddress && referral.referralAddress === userAddress
-        ? 1
-        : referral.depositorAddr === userAddress
-        ? 0.25
-        : 0.75;
-    return {
-      type: "referrals",
-      tier: this.referralService.getTierLevelByRate(Number(referral.referralRate)),
-      rate: new BigNumber(userRate).multipliedBy(referral.referralRate).multipliedBy(referral.multiplier).toNumber(),
-      userRate,
-      referralRate: Number(referral.referralRate),
-      multiplier: referral.multiplier,
-      amount: referral.acxRewards,
-      usd: new BigNumber(referral.acxUsdPrice)
-        .multipliedBy(ethers.utils.formatUnits(referral.acxRewards, 18))
-        .toFixed(),
-    };
-  }
-
   public async createRewardsWindowJob(body: CreateRewardsWindowJobBody) {
     const { maxDepositDate, rewardsType, windowIndex } = body;
     const typedRewardsType = rewardsType as RewardsType;
@@ -275,13 +227,7 @@ export class RewardService {
     const start = new Date().getTime();
     let promise: Promise<void> = undefined;
 
-    if (typedRewardsType === RewardsType.ReferralRewards) {
-      promise = this.referralRewardsService.computeReferralRewardsForWindow(
-        job.id,
-        windowIndex,
-        new Date(maxDepositDate),
-      );
-    } else if (typedRewardsType === RewardsType.OpRewards) {
+    if (typedRewardsType === RewardsType.OpRewards) {
       promise = this.opRebateService.setWindowForOpRewards(job.id, windowIndex, new Date(maxDepositDate));
     } else if (typedRewardsType === RewardsType.ArbRewards) {
       promise = this.arbRebateService.setWindowForArbRewards(job.id, windowIndex, new Date(maxDepositDate));

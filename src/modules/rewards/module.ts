@@ -11,13 +11,11 @@ import { RewardService } from "./services/reward-service";
 import { ReferralService } from "../referral/services/service";
 import { ReferralModule } from "../referral/module";
 import { OpReward } from "./model/op-reward.entity";
-import { DepositsMv } from "../deposit/model/DepositsMv.entity";
 import { RewardsWindowJob } from "./model/RewardsWindowJob.entity";
 import { ReferralRewardsWindowJobResult } from "./model/RewardsWindowJobResult.entity";
 import { MarketPriceModule } from "../market-price/module";
 import { ModuleOptions, RunMode } from "../../dynamic-module";
 import { RewardFixture } from "./adapter/db/op-reward-fixture";
-import { ReferralRewardsService } from "./services/referral-rewards-service";
 import { RewardsWindowJobFixture } from "./adapter/db/rewards-window-job-fixture";
 import { ArbRebateService } from "./services/arb-rebate-service";
 import { ArbReward } from "./model/arb-reward.entity";
@@ -35,7 +33,6 @@ export class RewardModule {
         RewardService,
         OpRebateService,
         ReferralService,
-        ReferralRewardsService,
         ArbRebateService,
         OpRewardsStatsCron,
       ],
@@ -43,7 +40,6 @@ export class RewardModule {
         TypeOrmModule.forFeature([
           Deposit,
           OpReward,
-          DepositsMv,
           RewardsWindowJob,
           ReferralRewardsWindowJobResult,
           ArbReward,

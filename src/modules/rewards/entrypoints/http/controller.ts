@@ -58,12 +58,6 @@ export class RewardController {
     return this.rewardService.getReferralRewardsSummary(query);
   }
 
-  @Get("rewards/referrals")
-  @ApiTags("rewards")
-  getReferralRewards(@Query() query: GetRewardsQuery) {
-    return this.rewardService.getReferralRewardDeposits(query);
-  }
-
   @Post("rewards-window-job")
   @Roles(Role.Admin)
   @UseGuards(JwtAuthGuard, RolesGuard)

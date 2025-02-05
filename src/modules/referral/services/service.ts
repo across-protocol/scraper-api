@@ -1,6 +1,6 @@
 import { CACHE_MANAGER, Inject, Injectable, Logger } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
-import { DataSource, EntityManager, In, IsNull, LessThanOrEqual, Not, Repository } from "typeorm";
+import { DataSource, EntityManager, IsNull, LessThanOrEqual, Not, Repository } from "typeorm";
 import BigNumber from "bignumber.js";
 import { performance } from "perf_hooks";
 import Bluebird from "bluebird";
@@ -17,10 +17,8 @@ import {
   getReferreeWalletsQuery,
   getTotalReferralRewardsQuery,
   getRefreshMaterializedView,
-  getReferralsByDepositIdsQuery,
 } from "./queries";
 import { AppConfig } from "../../configuration/configuration.service";
-import { DepositsMv, DepositsMvWithRewards } from "../../deposit/model/DepositsMv.entity";
 import { DepositsFilteredReferrals } from "../model/DepositsFilteredReferrals.entity";
 import { DepositReferralStat } from "../../deposit/model/deposit-referral-stat.entity";
 import { splitArrayInChunks } from "../../../utils";
@@ -55,7 +53,6 @@ export class ReferralService {
     readonly referralRewardsWindowJobRepository: Repository<RewardsWindowJob>,
     @InjectRepository(ReferralRewardsWindowJobResult)
     readonly referralRewardsWindowJobResultRepository: Repository<ReferralRewardsWindowJobResult>,
-    @InjectRepository(DepositsMv) readonly depositsMvRepository: Repository<DepositsMv>,
     private ethProvidersService: EthProvidersService,
     private appConfig: AppConfig,
     private dataSource: DataSource,
@@ -179,38 +176,6 @@ export class ReferralService {
         total,
       },
     };
-  }
-
-  public async getReferralsWithJoinedDeposit(address: string, limit = 10, offset = 0) {
-    const [referrals, [{ count }]]: [DepositsMvWithRewards[], [{ count: string }]] = await Promise.all([
-      this.depositRepository.query(getReferralsQuery(), [address, limit, offset]),
-      this.depositRepository.query(getReferralsTotalQuery(), [address]),
-    ]);
-
-    const depositPrimaryKeys = referrals.map((referral) => referral.id);
-    const deposits = await this.depositRepository.find({
-      where: { id: In(depositPrimaryKeys) },
-    });
-
-    return {
-      referrals: referrals.map((referral) => ({
-        ...referral,
-        deposit: deposits.find((deposit) => deposit.id === referral.id),
-      })),
-      pagination: {
-        limit,
-        offset,
-        total: parseInt(count),
-      },
-    };
-  }
-
-  public async getReferralsForDepositsAndUserAddress(depositPrimaryKeys: number[], userAddress: string) {
-    const referrals: DepositsMvWithRewards[] = await this.depositsMvRepository.query(getReferralsByDepositIdsQuery(), [
-      userAddress,
-      depositPrimaryKeys,
-    ]);
-    return referrals;
   }
 
   public async revertReferralsMerkleDistribution(windowIndex: number) {
