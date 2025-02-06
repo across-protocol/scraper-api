@@ -90,7 +90,7 @@ export type SpeedUpEventsQueueMessage = {
 
 export type SpeedUpEventsV3QueueMessage = {
   depositSourceChainId: number;
-  depositId: number;
+  depositId: string;
   transactionHash: string;
   blockNumber: number;
   depositor: string;

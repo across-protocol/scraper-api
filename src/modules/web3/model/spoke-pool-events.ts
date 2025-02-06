@@ -258,6 +258,18 @@ export interface RequestedSpeedUpV3DepositEvent extends Event {
   };
 }
 
+
+export interface RequestedSpeedUpV3_5DepositEvent extends Event {
+  args: [BigNumber, BigNumber, string, string, string, string] & {
+    updatedOutputAmount: BigNumber;
+    depositId: BigNumber;
+    depositor: string;
+    updatedRecipient: string;
+    updatedMessage: string;
+    depositorSignature: string;
+  };
+}
+
 export interface FilledRelayEvent3_5 extends Event {
   args: [
     string,

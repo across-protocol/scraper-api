@@ -31,6 +31,7 @@ import {
   RequestedSpeedUpV3DepositEvent,
   FundsDepositedV3_5Event,
   FilledRelayEvent3_5,
+  RequestedSpeedUpV3_5DepositEvent,
 } from "../../../web3/model";
 import SwapAndBridgeAbi from "../../../web3/services/abi/SwapAndBridge.json";
 import { SwapBeforeBridgeEvent } from "../../../web3/model/swap-and-bridge-events";
@@ -95,6 +96,7 @@ export class BlocksEventsConsumer {
     await this.processFillV3_5Events(chainId, fillV3_5Events);
     await this.processSpeedUpEvents(chainId, speedUpEvents);
     await this.processSpeedUpV3Events(chainId, speedUpV3Events);
+    await this.processSpeedUpV3_5Events(chainId, speedUpV3_5Events);
   }
 
   private async getEvents(
@@ -424,7 +426,29 @@ export class BlocksEventsConsumer {
       const { transactionHash, blockNumber, args } = event as RequestedSpeedUpV3DepositEvent;
       const message: SpeedUpEventsV3QueueMessage = {
         depositSourceChainId: chainId,
-        depositId: args.depositId,
+        depositId: args.depositId.toString(),
+        transactionHash,
+        blockNumber,
+        depositor: args.depositor,
+        depositorSignature: args.depositorSignature,
+        updatedOutputAmount: args.updatedOutputAmount.toString(),
+        updatedRecipient: args.updatedRecipient,
+        updatedMessage: args.updatedMessage,
+      };
+
+      await this.scraperQueuesService.publishMessage<SpeedUpEventsV3QueueMessage>(
+        ScraperQueue.SpeedUpEventsV3,
+        message,
+      );
+    }
+  }
+
+  private async processSpeedUpV3_5Events(chainId: number, events: Event[]) {
+    for (const event of events) {
+      const { transactionHash, blockNumber, args } = event as RequestedSpeedUpV3_5DepositEvent;
+      const message: SpeedUpEventsV3QueueMessage = {
+        depositSourceChainId: chainId,
+        depositId: args.depositId.toString(),
         transactionHash,
         blockNumber,
         depositor: args.depositor,
