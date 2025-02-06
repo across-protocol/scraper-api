@@ -150,7 +150,7 @@ export const chainIdToInfo = {
     name: "Doctor Who",
     chainId: ChainIds.doctorWho,
     nativeSymbol: "eth",
-  }
+  },
 };
 
 export const wait = (seconds = 1) =>
