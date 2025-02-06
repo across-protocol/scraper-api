@@ -65,6 +65,38 @@ export interface FundsDepositedV3Event extends Event {
   };
 }
 
+export interface FundsDepositedV3_5Event extends Event {
+  args: [
+    string,
+    string,
+    BigNumber,
+    BigNumber,
+    BigNumber,
+    BigNumber,
+    number,
+    number,
+    number,
+    string,
+    string,
+    string,
+    string,
+  ] & {
+    inputToken: string;
+    outputToken: string;
+    inputAmount: BigNumber;
+    outputAmount: BigNumber;
+    destinationChainId: BigNumber;
+    depositId: BigNumber;
+    quoteTimestamp: number;
+    fillDeadline: number;
+    exclusivityDeadline: number;
+    depositor: string;
+    recipient: string;
+    exclusiveRelayer: string;
+    message: string;
+  };
+}
+
 export interface FilledRelayEvent2 extends Event {
   args: [
     BigNumber,
@@ -224,4 +256,49 @@ export interface RequestedSpeedUpV3DepositEvent extends Event {
     updatedMessage: string;
     depositorSignature: string;
   };
+}
+
+export interface FilledRelayEvent3_5 extends Event {
+  args: [
+    string,
+    string,
+    BigNumber,
+    BigNumber,
+    BigNumber,
+    BigNumber,
+    number,
+    number,
+    string,
+    string,
+    string,
+    string,
+    string,
+    [string,string,BigNumber,number] & {
+      updatedRecipient: string;
+      updatedMessageHash: string;
+      updatedOutputAmount: BigNumber;
+      fillType: number;
+    },
+  ] & {
+    inputToken: string;
+    outputToken: string;
+    inputAmount: BigNumber;
+    outputAmount: BigNumber;
+    repaymentChainId: BigNumber;
+    originChainId: BigNumber;
+    depositId: BigNumber;
+    fillDeadline: number;
+    exclusivityDeadline: number;
+    exclusiveRelayer: string;
+    relayer: string;
+    depositor: string;
+    recipient: string;
+    messageHash: string;
+    relayExecutionInfo: [string,string,BigNumber,number] & {
+      updatedRecipient: string,
+      updatedMessageHash: string,
+      updatedOutputAmount: BigNumber,
+      fillType: number
+    }
+  }
 }

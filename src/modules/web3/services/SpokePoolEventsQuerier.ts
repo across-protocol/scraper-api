@@ -23,6 +23,18 @@ export class SpokePoolEventsQuerier extends EventsQuerier {
     return this.getEvents(from, to, this.getFilledV3RelayEventsFilter());
   }
 
+  public async getFundsDepositedV3_5Events(from: number, to: number): Promise<Event[]> {
+    return this.getEvents(from, to, this.getFundsDepositedV3_5EventsFilters());
+  }
+
+  public async getFilledV3_5RelayEvents(from: number, to: number): Promise<Event[]> {
+    return this.getEvents(from, to, this.getFilledV3_5RelayEventsFilters());
+  }
+
+  public async getRequestedSpeedUpV3_5DepositEvents(from: number, to: number): Promise<Event[]> {
+    return this.getEvents(from, to, this.getRequestedSpeedUpV3_5DepositEventsFilters());
+  }
+
   public async getFilledV3RelayEvent(
     from: number,
     to: number,
@@ -83,5 +95,17 @@ export class SpokePoolEventsQuerier extends EventsQuerier {
 
   private getRequestedSpeedUpV3DepositEventsFilters() {
     return this.spokePool.filters.RequestedSpeedUpV3Deposit();
+  }
+
+  private getFundsDepositedV3_5EventsFilters() {
+    return this.spokePool.filters.FundsDeposited();
+  }
+
+  private getFilledV3_5RelayEventsFilters() {
+    return this.spokePool.filters.FilledRelay();
+  }
+
+  private getRequestedSpeedUpV3_5DepositEventsFilters() {
+    return this.spokePool.filters.RequestedSpeedUpDeposit();
   }
 }

@@ -68,7 +68,7 @@ export type FillEventsV3QueueMessage = {
   updatedOutputAmount: string;
   fillType: number;
   transactionHash: string;
-  depositId: number;
+  depositId: string;
   originChainId: number;
 };
 

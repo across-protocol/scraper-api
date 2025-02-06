@@ -9,52 +9,33 @@ export function splitBlockRanges(
   from: number,
   to: number,
 ) {
-  if (contracts[0].startBlockNumber > from) return undefined;
+  if (contracts.length === 0 || contracts[0].startBlockNumber > from) return undefined;
 
   const intervals: { from: number; to: number; address: string; acrossVersion: AcrossContractsVersion }[] = [];
 
-  if (contracts.length === 1) {
-    return [{ from, to, address: contracts[0].address, acrossVersion: contracts[0].acrossVersion }];
-  }
+  for (let i = 0; i < contracts.length; i++) {
+    const currentContract = contracts[i];
 
-  for (let i = 0; i < contracts.length - 1; i++) {
-    if (intervals.length === 0) {
-      if (contracts[i].startBlockNumber <= from && contracts[i + 1].startBlockNumber > from) {
-        intervals.push({
-          from,
-          to: Math.min(to, contracts[i + 1].startBlockNumber - 1),
-          address: contracts[i].address,
-          acrossVersion: contracts[i].acrossVersion,
-        });
-      } else if (
-        contracts[i].startBlockNumber <= from &&
-        contracts[i + 1].startBlockNumber <= from &&
-        i === contracts.length - 2
-      ) {
-        intervals.push({
-          from,
-          to,
-          address: contracts[i + 1].address,
-          acrossVersion: contracts[i + 1].acrossVersion,
-        });
+    if (currentContract.startBlockNumber > to) break;
+
+    const intervalFrom = Math.max(from, currentContract.startBlockNumber);
+    let intervalTo = to;
+
+    // Determine the end of the current contract's interval
+    for (let j = i + 1; j < contracts.length; j++) {
+      if (contracts[j].startBlockNumber > currentContract.startBlockNumber) {
+        intervalTo = Math.min(to, contracts[j].startBlockNumber - 1);
+        break;
       }
-    } else {
-      if (contracts[i].startBlockNumber > to) break;
+    }
+
+    if (intervalFrom <= intervalTo) {
       intervals.push({
-        from: contracts[i].startBlockNumber,
-        to: Math.min(to, contracts[i + 1].startBlockNumber - 1),
-        address: contracts[i].address,
-        acrossVersion: contracts[i].acrossVersion,
+        from: intervalFrom,
+        to: intervalTo,
+        address: currentContract.address,
+        acrossVersion: currentContract.acrossVersion,
       });
-
-      if (i === contracts.length - 2 && contracts[i + 1].startBlockNumber <= to) {
-        intervals.push({
-          from: contracts[i + 1].startBlockNumber,
-          to,
-          address: contracts[i + 1].address,
-          acrossVersion: contracts[i + 1].acrossVersion,
-        });
-      }
     }
   }
 
