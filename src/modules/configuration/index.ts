@@ -87,6 +87,7 @@ export const configValues = () => ({
       41455: process.env.WEB3_NODE_URL_41455,
       57073: process.env.WEB3_NODE_URL_57073,
       1868: process.env.WEB3_NODE_URL_1868,
+      130: process.env.WEB3_NODE_URL_130,
     },
     hubPoolContracts: {
       [ChainIds.mainnet]: {
@@ -431,6 +432,15 @@ export const configValues = () => ({
         {
           address: "0x3baD7AD0728f9917d1Bf08af5782dCbD516cDd96",
           startBlockNumber: 1709997,
+          abi: JSON.stringify(SpokePoolV3_5Abi),
+          acrossVersion: AcrossContractsVersion.V3,
+          firstDepositId: 1,
+        },
+      ],
+      [ChainIds.doctorWho]: [
+        {
+          address: "0x09aea4b2242abC8bb4BB78D537A67a245A7bEC64",
+          startBlockNumber: 7915488,
           abi: JSON.stringify(SpokePoolV3_5Abi),
           acrossVersion: AcrossContractsVersion.V3,
           firstDepositId: 1,

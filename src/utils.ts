@@ -146,6 +146,11 @@ export const chainIdToInfo = {
     chainId: ChainIds.cher,
     nativeSymbol: "eth",
   },
+  [ChainIds.doctorWho]: {
+    name: "Doctor Who",
+    chainId: ChainIds.doctorWho,
+    nativeSymbol: "eth",
+  },
 };
 
 export const wait = (seconds = 1) =>

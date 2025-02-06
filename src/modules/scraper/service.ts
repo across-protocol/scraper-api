@@ -220,6 +220,8 @@ export class ScraperService {
         return 60;
       case ChainIds.cher:
         return 60;
+      case ChainIds.doctorWho:
+        return 60;
       case ChainIds.ink:
         return 120;
       case ChainIds.linea:
