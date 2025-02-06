@@ -8,6 +8,8 @@ import {
   ScraperQueue,
 } from ".";
 import { InjectRepository } from "@nestjs/typeorm";
+import { utils } from "@across-protocol/sdk";
+
 import { Deposit, DepositFillTxV3 } from "../../../deposit/model/deposit.entity";
 import { Repository } from "typeorm";
 import { ScraperQueuesService } from "../../service/ScraperQueuesService";
@@ -53,7 +55,7 @@ export class FillEventsV3Consumer {
       {
         status: "filled",
         outputAmount: updatedOutputAmount,
-        recipientAddr: updatedRecipient,
+        recipientAddr: utils.toAddress(updatedRecipient),
         fillTxs,
       },
     );

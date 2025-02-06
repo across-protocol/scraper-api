@@ -68,7 +68,7 @@ export type FillEventsV3QueueMessage = {
   updatedOutputAmount: string;
   fillType: number;
   transactionHash: string;
-  depositId: number;
+  depositId: string;
   originChainId: number;
 };
 
@@ -90,7 +90,7 @@ export type SpeedUpEventsQueueMessage = {
 
 export type SpeedUpEventsV3QueueMessage = {
   depositSourceChainId: number;
-  depositId: number;
+  depositId: string;
   transactionHash: string;
   blockNumber: number;
   depositor: string;

@@ -4,7 +4,7 @@ import { Job } from "bull";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository, QueryFailedError } from "typeorm";
 import { BigNumber, ethers, Event } from "ethers";
-
+import { utils} from "@across-protocol/sdk";
 import { EthProvidersService } from "../../../web3/services/EthProvidersService";
 import {
   BlockNumberQueueMessage,
@@ -29,6 +29,9 @@ import {
   FundsDepositedV3Event,
   FilledV3RelayEvent,
   RequestedSpeedUpV3DepositEvent,
+  FundsDepositedV3_5Event,
+  FilledRelayEvent3_5,
+  RequestedSpeedUpV3_5DepositEvent,
 } from "../../../web3/model";
 import SwapAndBridgeAbi from "../../../web3/services/abi/SwapAndBridge.json";
 import { SwapBeforeBridgeEvent } from "../../../web3/model/swap-and-bridge-events";
@@ -60,24 +63,40 @@ export class BlocksEventsConsumer {
     // Split the block range in case multiple SpokePool contracts need to be queried
     const blocksToQuery = splitBlockRanges(ascSpokePoolConfigs, from, to);
     // Get the events from the SpokePool contracts
-    const { depositEvents, depositV3Events, fillEvents, fillV3Events, speedUpEvents, speedUpV3Events } =
-      await this.getEvents(blocksToQuery, chainId);
+    const {
+      depositEvents,
+      depositV3Events,
+      depositV3_5Events,
+      fillEvents,
+      fillV3Events,
+      fillV3_5Events,
+      speedUpEvents,
+      speedUpV3Events,
+      speedUpV3_5Events,
+    } = await this.getEvents(blocksToQuery, chainId);
+    // console.log(fillV3_5Events[0].args);
     const eventsCount = {
       depositEvents: depositEvents.length,
       depositV3Events: depositV3Events.length,
+      depositV3_5Events: depositV3_5Events.length,
       fillEvents: fillEvents.length,
       fillV3Events: fillV3Events.length,
+      fillV3_5Events: fillV3_5Events.length,
       speedUpEvents: speedUpEvents.length,
       speedUpV3Events: speedUpV3Events.length,
+      speedUpV3_5Events: speedUpV3_5Events.length,
     };
     this.logger.log(`${from}-${to} - chainId ${chainId} - ${JSON.stringify(eventsCount)}`);
 
     await this.processDepositEvents(chainId, depositEvents);
     await this.processDepositV3Events(chainId, depositV3Events);
+    await this.processDepositV3_5Events(chainId, depositV3_5Events);
     await this.processFillEvents(chainId, fillEvents);
     await this.processFillEvents(chainId, fillV3Events);
+    await this.processFillV3_5Events(chainId, fillV3_5Events);
     await this.processSpeedUpEvents(chainId, speedUpEvents);
     await this.processSpeedUpV3Events(chainId, speedUpV3Events);
+    await this.processSpeedUpV3_5Events(chainId, speedUpV3_5Events);
   }
 
   private async getEvents(
@@ -87,98 +106,86 @@ export class BlocksEventsConsumer {
     // TODO: Add all types of events
     const depositEvents: Event[] = [];
     const depositV3Events: Event[] = [];
+    const depositV3_5Events: Event[] = [];
     const fillEvents: Event[] = [];
     const fillV3Events: Event[] = [];
+    const fillV3_5Events: Event[] = [];
     const speedUpEvents: Event[] = [];
     const speedUpV3Events: Event[] = [];
+    const speedUpV3_5Events: Event[] = [];
 
     for (const blocks of blocksToQuery) {
       const spokePoolEventQuerier = this.providers.getSpokePoolEventQuerier(chainId, blocks.acrossVersion);
-      let depositEventsPromises = [];
-      let fillEventsPromises = [];
-      let speedUpEventsPromises = [];
+      let depositEventsPromises: Promise<Event[]> = Promise.resolve([]);
+      let depositV3EventsPromises: Promise<Event[]> = Promise.resolve([]);
+      let depositV3_5EventsPromises: Promise<Event[]> = Promise.resolve([]);
+      let fillEventsPromises: Promise<Event[]> = Promise.resolve([]);
+      let fillV3EventsPromises: Promise<Event[]> = Promise.resolve([]);
+      let fillV3_5EventsPromises: Promise<Event[]> = Promise.resolve([]);
+      let speedUpEventsPromises: Promise<Event[]> = Promise.resolve([]);
+      let speedUpV3EventsPromises: Promise<Event[]> = Promise.resolve([]);
+      let speedUpV3_5EventsPromises: Promise<Event[]> = Promise.resolve([]);
 
       if (blocks.acrossVersion === AcrossContractsVersion.V2) {
-        depositEventsPromises = [
-          spokePoolEventQuerier.getFundsDepositEvents(blocks.from, blocks.to),
-          new Promise((res) => {
-            res([]);
-          }),
-        ];
-        fillEventsPromises = [
-          spokePoolEventQuerier.getFilledRelayEvents(blocks.from, blocks.to),
-          new Promise((res) => {
-            res([]);
-          }),
-        ];
-        speedUpEventsPromises = [
-          spokePoolEventQuerier.getRequestedSpeedUpDepositEvents(blocks.from, blocks.to),
-          new Promise((res) => {
-            res([]);
-          }),
-        ];
+        depositEventsPromises = spokePoolEventQuerier.getFundsDepositEvents(blocks.from, blocks.to);
+        fillEventsPromises = spokePoolEventQuerier.getFilledRelayEvents(blocks.from, blocks.to);
+        speedUpEventsPromises = spokePoolEventQuerier.getRequestedSpeedUpDepositEvents(blocks.from, blocks.to);
       } else if (blocks.acrossVersion === AcrossContractsVersion.V2_5) {
-        depositEventsPromises = [
-          spokePoolEventQuerier.getFundsDepositEvents(blocks.from, blocks.to),
-          new Promise((res) => {
-            res([]);
-          }),
-        ];
-        fillEventsPromises = [
-          spokePoolEventQuerier.getFilledRelayEvents(blocks.from, blocks.to),
-          new Promise((res) => {
-            res([]);
-          }),
-        ];
-        speedUpEventsPromises = [
-          spokePoolEventQuerier.getRequestedSpeedUpDepositEvents(blocks.from, blocks.to),
-          new Promise((res) => {
-            res([]);
-          }),
-        ];
+        depositEventsPromises = spokePoolEventQuerier.getFundsDepositEvents(blocks.from, blocks.to);
+        fillEventsPromises = spokePoolEventQuerier.getFilledRelayEvents(blocks.from, blocks.to);
+        speedUpEventsPromises = spokePoolEventQuerier.getRequestedSpeedUpDepositEvents(blocks.from, blocks.to);
       } else if (blocks.acrossVersion === AcrossContractsVersion.V3) {
-        depositEventsPromises = [
-          new Promise((res) => {
-            res([]);
-          }),
-          spokePoolEventQuerier.getFundsDepositedV3Events(blocks.from, blocks.to),
-        ];
-        fillEventsPromises = [
-          spokePoolEventQuerier.getFilledRelayEvents(blocks.from, blocks.to),
-          spokePoolEventQuerier.getFilledV3RelayEvents(blocks.from, blocks.to),
-        ];
-        speedUpEventsPromises = [
-          new Promise((res) => {
-            res([]);
-          }),
-          spokePoolEventQuerier.getRequestedSpeedUpV3DepositEvents(blocks.from, blocks.to),
-        ];
+        depositV3EventsPromises = spokePoolEventQuerier.getFundsDepositedV3Events(blocks.from, blocks.to);
+        fillV3EventsPromises = spokePoolEventQuerier.getFilledV3RelayEvents(blocks.from, blocks.to);
+        speedUpV3EventsPromises = spokePoolEventQuerier.getRequestedSpeedUpV3DepositEvents(blocks.from, blocks.to);
+        depositV3_5EventsPromises = spokePoolEventQuerier.getFundsDepositedV3_5Events(blocks.from, blocks.to);
+        fillV3_5EventsPromises = spokePoolEventQuerier.getFilledV3_5RelayEvents(blocks.from, blocks.to);
+        speedUpV3_5EventsPromises = spokePoolEventQuerier.getRequestedSpeedUpV3_5DepositEvents(blocks.from, blocks.to);
       }
-      const promises = [...depositEventsPromises, ...fillEventsPromises, ...speedUpEventsPromises];
+      const promises = [
+        depositEventsPromises,
+        depositV3EventsPromises,
+        depositV3_5EventsPromises,
+        fillEventsPromises,
+        fillV3EventsPromises,
+        fillV3_5EventsPromises,
+        speedUpEventsPromises,
+        speedUpV3EventsPromises,
+        speedUpV3_5EventsPromises,
+      ];
       const [
         depositEventsChunk,
         depositV3EventsChunk,
+        depositV3_5EventsChunk,
         fillEventsChunk,
         fillV3EventsChunk,
+        fillV3_5EventsChunk,
         speedUpEventsChunk,
         speedUpV3EventsChunk,
+        speedUpV3_5EventsChunk,
       ] = await Promise.all(promises);
 
       depositEvents.push(...depositEventsChunk);
       depositV3Events.push(...depositV3EventsChunk);
+      depositV3_5Events.push(...depositV3_5EventsChunk);
       fillEvents.push(...fillEventsChunk);
       fillV3Events.push(...fillV3EventsChunk);
+      fillV3_5Events.push(...fillV3_5EventsChunk);
       speedUpEvents.push(...speedUpEventsChunk);
       speedUpV3Events.push(...speedUpV3EventsChunk);
+      speedUpV3_5Events.push(...speedUpV3_5EventsChunk);
     }
 
     return {
       depositEvents,
       depositV3Events,
+      depositV3_5Events,
       fillEvents,
       fillV3Events,
+      fillV3_5Events,
       speedUpEvents,
       speedUpV3Events,
+      speedUpV3_5Events,
     };
   }
 
@@ -254,6 +261,59 @@ export class BlocksEventsConsumer {
     }
   }
 
+  private async processDepositV3_5Events(chainId: number, events: Event[]) {
+    const typedEvents = events as FundsDepositedV3_5Event[];
+    const depositEventsByTxHash = typedEvents.reduce((acc, event) => {
+      acc[event.transactionHash] = [...(acc[event.transactionHash] || []), event];
+      return acc;
+    }, {} as Record<string, FundsDepositedV3_5Event[]>);
+    const swapEventsByTxHash: Record<string, SwapBeforeBridgeEvent[]> = {};
+
+    for (const transactionHash of Object.keys(depositEventsByTxHash)) {
+      const txReceipt = await this.providers.getCachedTransactionReceipt(chainId, transactionHash);
+      const swapBeforeBridgeEvents = this.providers.parseTransactionReceiptLogs(
+        txReceipt,
+        "SwapBeforeBridge",
+        SwapAndBridgeAbi,
+      ) as unknown as SwapBeforeBridgeEvent[];
+      swapEventsByTxHash[transactionHash] = swapBeforeBridgeEvents;
+    }
+
+    for (const transactionHash of Object.keys(depositEventsByTxHash)) {
+      const pairs: [FundsDepositedV3_5Event, SwapBeforeBridgeEvent | undefined][] = [];
+      const depositEvents = depositEventsByTxHash[transactionHash].sort((d1, d2) => d1.logIndex - d2.logIndex);
+      const swapEvents = swapEventsByTxHash[transactionHash].sort((s1, s2) => s1.logIndex - s2.logIndex);
+
+      for (const depositEvent of depositEvents) {
+        const swapEventIndex = swapEvents.findIndex((e) => e.logIndex < depositEvent.logIndex);
+
+        if (swapEventIndex >= 0) {
+          pairs.push([depositEvent, swapEvents[swapEventIndex]]);
+          swapEvents.splice(swapEventIndex, 1);
+        } else {
+          pairs.push([depositEvent, undefined]);
+        }
+      }
+
+      for (const [depositEvent, swapEvent] of pairs) {
+        try {
+          const deposit = await this.fromFundsDepositedV3_5EventToDeposit(chainId, depositEvent, swapEvent);
+          const result = await this.depositRepository.insert(deposit);
+          await this.scraperQueuesService.publishMessage<BlockNumberQueueMessage>(ScraperQueue.BlockNumber, {
+            depositId: result.identifiers[0].id,
+          });
+        } catch (error) {
+          if (error instanceof QueryFailedError && error.driverError?.code === "23505") {
+            // Ignore duplicate key value violates unique constraint error.
+            this.logger.warn(error);
+          } else {
+            throw error;
+          }
+        }
+      }
+    }
+  }
+
   private async processFillEvents(chainId: number, events: Event[]) {
     // await this.insertRawFillEvents(chainId, events);
 
@@ -291,7 +351,7 @@ export class BlocksEventsConsumer {
           updatedMessage: typedEvent.args.relayExecutionInfo.updatedMessage,
           updatedOutputAmount: typedEvent.args.relayExecutionInfo.updatedOutputAmount.toString(),
           fillType: typedEvent.args.relayExecutionInfo.fillType,
-          depositId: typedEvent.args.depositId,
+          depositId: typedEvent.args.depositId.toString(),
           originChainId: typedEvent.args.originChainId.toNumber(),
           transactionHash: typedEvent.transactionHash,
         };
@@ -299,6 +359,22 @@ export class BlocksEventsConsumer {
       } else {
         throw new Error("Unknown fill event type");
       }
+    }
+  }
+
+  private async processFillV3_5Events(chainId: number, events: Event[]) {
+    for (const event of events) {
+        const typedEvent = event as FilledRelayEvent3_5;
+        const message: FillEventsV3QueueMessage = {
+          updatedRecipient: typedEvent.args.relayExecutionInfo.updatedRecipient,
+          updatedMessage: typedEvent.args.relayExecutionInfo.updatedMessageHash,
+          updatedOutputAmount: typedEvent.args.relayExecutionInfo.updatedOutputAmount.toString(),
+          fillType: typedEvent.args.relayExecutionInfo.fillType,
+          depositId: typedEvent.args.depositId.toString(),
+          originChainId: typedEvent.args.originChainId.toNumber(),
+          transactionHash: typedEvent.transactionHash,
+        };
+        await this.scraperQueuesService.publishMessage<FillEventsV3QueueMessage>(ScraperQueue.FillEventsV3, message);
     }
   }
 
@@ -350,7 +426,29 @@ export class BlocksEventsConsumer {
       const { transactionHash, blockNumber, args } = event as RequestedSpeedUpV3DepositEvent;
       const message: SpeedUpEventsV3QueueMessage = {
         depositSourceChainId: chainId,
-        depositId: args.depositId,
+        depositId: args.depositId.toString(),
+        transactionHash,
+        blockNumber,
+        depositor: args.depositor,
+        depositorSignature: args.depositorSignature,
+        updatedOutputAmount: args.updatedOutputAmount.toString(),
+        updatedRecipient: args.updatedRecipient,
+        updatedMessage: args.updatedMessage,
+      };
+
+      await this.scraperQueuesService.publishMessage<SpeedUpEventsV3QueueMessage>(
+        ScraperQueue.SpeedUpEventsV3,
+        message,
+      );
+    }
+  }
+
+  private async processSpeedUpV3_5Events(chainId: number, events: Event[]) {
+    for (const event of events) {
+      const { transactionHash, blockNumber, args } = event as RequestedSpeedUpV3_5DepositEvent;
+      const message: SpeedUpEventsV3QueueMessage = {
+        depositSourceChainId: chainId,
+        depositId: args.depositId.toString(),
         transactionHash,
         blockNumber,
         depositor: args.depositor,
@@ -463,6 +561,79 @@ export class BlocksEventsConsumer {
       quoteTimestamp: new Date(quoteTimestamp * 1000),
       exclusivityDeadline: exclusivityDeadlineDate,
       relayer,
+      message,
+      // swap event properties
+      swapTokenId: swapToken?.id,
+      swapTokenAmount: swapEvent?.args.swapTokenAmount.toString(),
+      swapTokenAddress: swapEvent?.args.swapToken,
+    });
+  }
+
+  private async fromFundsDepositedV3_5EventToDeposit(
+    chainId: number,
+    depositEvent: FundsDepositedV3_5Event,
+    swapEvent?: SwapBeforeBridgeEvent,
+  ) {
+    const { transactionHash, blockNumber } = depositEvent;
+    const {
+      depositId,
+      destinationChainId,
+      inputAmount,
+      inputToken,
+      outputAmount,
+      outputToken,
+      depositor,
+      recipient,
+      fillDeadline,
+      exclusivityDeadline,
+      exclusiveRelayer,
+      message,
+      quoteTimestamp,
+    } = depositEvent.args;
+    const wei = BigNumber.from(10).pow(18);
+    const feePct = inputAmount.eq(0) ? BigNumber.from(0) : wei.sub(outputAmount.mul(wei).div(inputAmount));
+    const txReceipt = await this.providers.getCachedTransactionReceipt(chainId, transactionHash);
+    const swapToken = swapEvent ? await this.providers.getCachedToken(chainId, swapEvent.args.swapToken) : undefined;
+    const outputTokenAddress =
+      utils.toAddress(outputToken) === ethers.constants.AddressZero
+        ? await this.depositService.deriveOutputTokenAddress(
+          chainId,
+          inputToken,
+          destinationChainId.toNumber(),
+          quoteTimestamp,
+        )
+        : utils.toAddress(outputToken);
+    let trueDepositor = utils.toAddress(depositor);
+    let exclusivityDeadlineDate = undefined;
+
+    if (exclusivityDeadline > 0) exclusivityDeadlineDate = new Date(exclusivityDeadline * 1000);
+    if (depositor === SPOKE_POOL_VERIFIER_CONTRACT_ADDRESS) {
+      trueDepositor = txReceipt.from;
+    }
+
+    return this.depositRepository.create({
+      depositId: depositId.toString(),
+      sourceChainId: chainId,
+      destinationChainId: destinationChainId.toNumber(),
+      status: "pending",
+      amount: inputAmount.toString(),
+      filled: "0",
+      tokenAddr: utils.toAddress(inputToken),
+      depositTxHash: transactionHash,
+      fillTxs: [],
+      blockNumber,
+      depositorAddr: trueDepositor,
+      recipientAddr: utils.toAddress(recipient),
+      depositRelayerFeePct: feePct.toString(),
+      initialRelayerFeePct: feePct.toString(),
+      //relayerFeePct = realizedLpFeePct + (gasFeePct + capitalCostFeePct)(old usage of relayerFeePct)
+      // v3 properties
+      outputAmount: outputAmount.toString(),
+      outputTokenAddress,
+      fillDeadline: new Date(fillDeadline * 1000),
+      quoteTimestamp: new Date(quoteTimestamp * 1000),
+      exclusivityDeadline: exclusivityDeadlineDate,
+      relayer: utils.toAddress(exclusiveRelayer),
       message,
       // swap event properties
       swapTokenId: swapToken?.id,
