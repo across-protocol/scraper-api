@@ -609,6 +609,7 @@ export class BlocksEventsConsumer {
       outputTokenAddress: utils.toAddress(outputToken),
       chainId,
       inputToken,
+      inputTokenAddress: utils.toAddress(inputToken),
       destinationChainId: destinationChainId.toNumber(),
       quoteTimestamp,
       depositId: depositId.toString(),
@@ -617,7 +618,7 @@ export class BlocksEventsConsumer {
       utils.toAddress(outputToken) === ethers.constants.AddressZero
         ? await this.depositService.deriveOutputTokenAddress(
           chainId,
-          inputToken,
+          utils.toAddress(inputToken),
           destinationChainId.toNumber(),
           quoteTimestamp,
         )
