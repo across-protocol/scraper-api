@@ -521,6 +521,15 @@ export class BlocksEventsConsumer {
     const feePct = inputAmount.eq(0) ? BigNumber.from(0) : wei.sub(outputAmount.mul(wei).div(inputAmount));
     const txReceipt = await this.providers.getCachedTransactionReceipt(chainId, transactionHash);
     const swapToken = swapEvent ? await this.providers.getCachedToken(chainId, swapEvent.args.swapToken) : undefined;
+    this.logger.debug({
+      function: "fromFundsDepositedV3EventToDeposit",
+      outputToken,
+      chainId,
+      inputToken,
+      destinationChainId: destinationChainId.toNumber(),
+      quoteTimestamp,
+      depositId: depositId.toString(),
+    });
     const outputTokenAddress =
       outputToken === ethers.constants.AddressZero
         ? await this.depositService.deriveOutputTokenAddress(
@@ -594,6 +603,16 @@ export class BlocksEventsConsumer {
     const feePct = inputAmount.eq(0) ? BigNumber.from(0) : wei.sub(outputAmount.mul(wei).div(inputAmount));
     const txReceipt = await this.providers.getCachedTransactionReceipt(chainId, transactionHash);
     const swapToken = swapEvent ? await this.providers.getCachedToken(chainId, swapEvent.args.swapToken) : undefined;
+    this.logger.debug({
+      function: "fromFundsDepositedV3_5EventToDeposit",
+      outputToken: outputToken,
+      outputTokenAddress: utils.toAddress(outputToken),
+      chainId,
+      inputToken,
+      destinationChainId: destinationChainId.toNumber(),
+      quoteTimestamp,
+      depositId: depositId.toString(),
+    });
     const outputTokenAddress =
       utils.toAddress(outputToken) === ethers.constants.AddressZero
         ? await this.depositService.deriveOutputTokenAddress(
