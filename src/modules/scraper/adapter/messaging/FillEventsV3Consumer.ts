@@ -30,7 +30,7 @@ export class FillEventsV3Consumer {
       where: { sourceChainId: originChainId, depositId: depositId.toString() },
     });
 
-    if (!deposit) return;
+    if (!deposit) throw new Error(`Deposit not found for ${depositId} on chain ${originChainId}`);
     if (this.fillTxAlreadyProcessed(deposit, job.data)) return;
 
     await this.processFillEventQueueMessage(deposit, job.data);
