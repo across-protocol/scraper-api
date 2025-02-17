@@ -161,6 +161,17 @@ export class OpRebateService {
       return;
     }
 
+    const opRebatesStats = await this.opRewardsStatsRepository.findOne({ where: { id: Not(IsNull()) } });
+    const opRebatesThreshold = ethers.utils.parseEther("749000");
+    const isOpRebatesThresholdReached = new BigNumber(
+      opRebatesStats.totalTokenAmount,
+    ).isGreaterThanOrEqualTo(opRebatesThreshold.toString());
+
+    if (isOpRebatesThresholdReached) {
+      this.logger.verbose(`OP rebate rewards threshold reached. Skipping...`);
+      return;
+    }
+
     const deposit: PartialDeposit = await this.depositRepository.findOne({
       where: { id: depositPrimaryKey },
       select: partialDepositKeys,
