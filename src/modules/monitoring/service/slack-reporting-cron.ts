@@ -46,7 +46,7 @@ export class SlackReportingCron {
 
     for (const jobCount of jobCounts) {
       const { active, completed, delayed, failed, paused, waiting } = jobCount;
-      const aboveThreshold = [active, completed, delayed, failed, paused, waiting].some((count) => count >= 100);
+      const aboveThreshold = [active, completed, delayed, failed, paused, waiting].some((count) => count >= 200);
       if (aboveThreshold) postToSlack = true;
     }
 
