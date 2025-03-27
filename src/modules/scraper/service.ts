@@ -246,6 +246,8 @@ export class ScraperService {
         return 60;
       case ChainIds.zkSyncMainnet:
         return 120;
+      case ChainIds.lens:
+        return 120; // Same as zkSync
     }
 
     return 60;

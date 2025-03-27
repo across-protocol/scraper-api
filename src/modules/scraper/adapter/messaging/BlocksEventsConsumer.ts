@@ -4,7 +4,7 @@ import { Job } from "bull";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository, QueryFailedError } from "typeorm";
 import { BigNumber, ethers, Event } from "ethers";
-import { utils} from "@across-protocol/sdk";
+import { utils } from "@across-protocol/sdk";
 import { EthProvidersService } from "../../../web3/services/EthProvidersService";
 import {
   BlockNumberQueueMessage,
