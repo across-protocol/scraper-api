@@ -6,7 +6,7 @@ import { DataSource, Repository } from "typeorm";
 
 import { AppConfig } from "../../configuration/configuration.service";
 import { Block } from "../model/block.entity";
-import { ChainId } from "../model/ChainId";
+import { ChainId, ChainIds } from "../model/ChainId";
 import { Token } from "../model/token.entity";
 import { Transaction } from "../model/transaction.entity";
 import { TransactionReceipt } from "../model/tx-receipt.entity";
@@ -203,10 +203,21 @@ export class EthProvidersService {
 
     for (const chainId of supportedChainIds) {
       if (this.appConfig.values.web3.providers[chainId]) {
-        const provider = new ethers.providers.StaticJsonRpcProvider(
-          this.appConfig.values.web3.providers[chainId],
-          Number(chainId),
-        );
+        let provider: ethers.providers.JsonRpcProvider;
+        if (chainId === ChainIds.lens.toString()) {
+          // Note: we need to include headers for Lens provider
+          provider = new ethers.providers.StaticJsonRpcProvider(
+            {url:this.appConfig.values.web3.providers[chainId], headers: {
+              auth: this.appConfig.values.web3.lensAuthHeader,
+            }},
+            Number(chainId),
+          );
+        } else {
+          provider = new ethers.providers.StaticJsonRpcProvider(
+            this.appConfig.values.web3.providers[chainId],
+            Number(chainId),
+          );
+        }
         this.providers[chainId] = provider;
       }
     }

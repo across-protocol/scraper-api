@@ -37,6 +37,7 @@ export const ChainIds = {
   ink: 57073,
   cher: 1868,
   doctorWho: 130,
+  lens: 232,
 };
 
 export const ChainIdToName = Object.entries(ChainIds).reduce((idToName, entry) => {
