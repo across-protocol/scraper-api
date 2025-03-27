@@ -207,9 +207,12 @@ export class EthProvidersService {
         if (chainId === ChainIds.lens.toString()) {
           // Note: we need to include headers for Lens provider
           provider = new ethers.providers.StaticJsonRpcProvider(
-            {url:this.appConfig.values.web3.providers[chainId], headers: {
-              auth: this.appConfig.values.web3.lensAuthHeader,
-            }},
+            {
+              url: this.appConfig.values.web3.providers[chainId],
+              headers: {
+                auth: this.appConfig.values.web3.lensAuthHeader,
+              },
+            },
             Number(chainId),
           );
         } else {
