@@ -512,7 +512,7 @@ export const configValues = () => ({
   },
   suggestedFees: {
     apiUrl: process.env.SUGGESTED_FEES_API_URL || "https://across.to/api/suggested-fees",
-    fallbackThresholdHours: Number(process.env.SUGGESTED_FEES_FALLBACK_THRESHOLD_HOURS || "4"),
+    fallbackThresholdHours: Number(process.env.SUGGESTED_FEES_FALLBACK_THRESHOLD_HOURS || "1"),
     deviationBufferMultiplier: Number(process.env.SUGGESTED_FEES_DEVIATION_BUFFER_MULTIPLIER || "1.25"),
   },
   amplitude: {
