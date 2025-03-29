@@ -25,6 +25,7 @@ export const symbolIdMap = {
   lsk: "lisk",
   usdzc: "usd-coin-ethereum-bridged",
   azero: "aleph-zero",
+  gho: "gho",
 };
 
 @Injectable()
