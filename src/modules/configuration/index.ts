@@ -90,7 +90,6 @@ export const configValues = () => ({
       130: process.env.WEB3_NODE_URL_130,
       232: process.env.WEB3_NODE_URL_232,
     },
-    lensAuthHeader: process.env.LENS_AUTH_HEADER,
     hubPoolContracts: {
       [ChainIds.mainnet]: {
         address: "0xc186fA914353c44b2E33eBE05f21846F1048bEda",
