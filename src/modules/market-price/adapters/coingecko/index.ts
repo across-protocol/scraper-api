@@ -26,6 +26,7 @@ export const symbolIdMap = {
   usdzc: "usd-coin-ethereum-bridged",
   azero: "aleph-zero",
   gho: "gho",
+  wgho: "gho",
 };
 
 @Injectable()
@@ -37,7 +38,7 @@ export class CoinGeckoService {
   public async getHistoricPrice(date: string, symbol: string): Promise<CGHistoricPrice> {
     const id = symbolIdMap[symbol];
 
-    if (!id) throw new Error("Symbol not supported");
+    if (!id) throw new Error(`Symbol not supported: ${symbol}`);
     const response = await this.httpService.axiosRef.get(`${this.baseUrl}/coins/${id}/history`, {
       params: {
         date,
